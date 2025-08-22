@@ -202,14 +202,14 @@ export default function ProjectManagement() {
   });
 
   const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (project.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (project.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || project.status === selectedStatus;
-    
+
     if (currentUser?.role === 'user') {
-      return matchesSearch && matchesStatus && project.assignedUsers.includes(currentUser.id);
+      return matchesSearch && matchesStatus && (project.assignedUsers || []).includes(currentUser.id);
     }
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -885,17 +885,17 @@ export default function ProjectManagement() {
                     <div key={user.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`edit-${user.id}`}
-                        checked={newProject.assignedUsers.includes(user.id)}
+                        checked={(newProject.assignedUsers || []).includes(user.id)}
                         onCheckedChange={(checked) => {
                           if (checked) {
                             setNewProject({
                               ...newProject,
-                              assignedUsers: [...newProject.assignedUsers, user.id]
+                              assignedUsers: [...(newProject.assignedUsers || []), user.id]
                             });
                           } else {
                             setNewProject({
                               ...newProject,
-                              assignedUsers: newProject.assignedUsers.filter(id => id !== user.id)
+                              assignedUsers: (newProject.assignedUsers || []).filter(id => id !== user.id)
                             });
                           }
                         }}
