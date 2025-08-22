@@ -592,7 +592,7 @@ export default function ProjectManagement() {
                           </Badge>
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
-                            ${project.rates.ratePerFile}/file
+                            ${project.rates?.ratePerFile || 0}/file
                           </div>
                         </div>
                       </div>
