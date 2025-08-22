@@ -404,6 +404,352 @@ const mockJobs: FileProcessingJob[] = [
   }
 ];
 
+// File Allocation Component
+function FileAllocationTab() {
+  const { user: currentUser } = useAuth();
+  const [fileAllocations, setFileAllocations] = useState<FileAllocation[]>(mockFileAllocations);
+  const [userRequests, setUserRequests] = useState<UserFileRequest[]>(mockUserRequests);
+  const [fileTasks, setFileTasks] = useState<FileTask[]>(mockFileTasks);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [selectedAllocation, setSelectedAllocation] = useState<FileAllocation | null>(null);
+  const [requestCount, setRequestCount] = useState(500);
+  const [uploadFile, setUploadFile] = useState<{
+    fileName: string;
+    totalRecords: number;
+    recordsPerUser: number;
+  }>({
+    fileName: '',
+    totalRecords: 0,
+    recordsPerUser: 800
+  });
+
+  const canManageAllocations = currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager';
+
+  const handleFileUpload = () => {
+    const newAllocation: FileAllocation = {
+      id: (fileAllocations.length + 1).toString(),
+      fileName: uploadFile.fileName,
+      uploadDate: new Date().toISOString(),
+      totalRecords: uploadFile.totalRecords,
+      recordsPerUser: uploadFile.recordsPerUser,
+      availableRecords: uploadFile.totalRecords,
+      allocatedRecords: 0,
+      status: 'uploaded',
+      uploadedBy: {
+        id: currentUser?.id || '',
+        name: currentUser?.name || 'Unknown'
+      }
+    };
+
+    setFileAllocations([newAllocation, ...fileAllocations]);
+    setUploadFile({ fileName: '', totalRecords: 0, recordsPerUser: 800 });
+    setIsUploadDialogOpen(false);
+  };
+
+  const handleRequestFile = () => {
+    if (!selectedAllocation) return;
+
+    const newRequest: UserFileRequest = {
+      id: (userRequests.length + 1).toString(),
+      userId: currentUser?.id || '',
+      userName: currentUser?.name || 'Unknown',
+      allocationId: selectedAllocation.id,
+      requestedCount: requestCount,
+      requestedDate: new Date().toISOString(),
+      status: 'pending'
+    };
+
+    setUserRequests([newRequest, ...userRequests]);
+    setIsRequestDialogOpen(false);
+    setSelectedAllocation(null);
+    setRequestCount(500);
+  };
+
+  const handleApproveRequest = (requestId: string) => {
+    const request = userRequests.find(r => r.id === requestId);
+    if (!request) return;
+
+    const fileName = `${request.userName.toLowerCase().replace(' ', '_')}_${new Date().toLocaleDateString('en-GB').replace(/\//g, '-')}_set1.xlsx`;
+
+    setUserRequests(userRequests.map(r =>
+      r.id === requestId
+        ? {
+            ...r,
+            status: 'approved',
+            approvedBy: {
+              id: currentUser?.id || '',
+              name: currentUser?.name || 'Unknown'
+            },
+            approvedDate: new Date().toISOString(),
+            downloadLink: `/downloads/${fileName}`,
+            taskId: `task_${Date.now()}`
+          }
+        : r
+    ));
+
+    // Create task
+    const newTask: FileTask = {
+      id: `task_${Date.now()}`,
+      requestId,
+      userId: request.userId,
+      userName: request.userName,
+      fileName,
+      recordCount: request.requestedCount,
+      assignedDate: new Date().toISOString(),
+      dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days
+      status: 'assigned',
+      completedCount: 0
+    };
+
+    setFileTasks([newTask, ...fileTasks]);
+
+    // Update allocation
+    setFileAllocations(fileAllocations.map(alloc =>
+      alloc.id === request.allocationId
+        ? {
+            ...alloc,
+            availableRecords: alloc.availableRecords - request.requestedCount,
+            allocatedRecords: alloc.allocatedRecords + request.requestedCount
+          }
+        : alloc
+    ));
+  };
+
+  const getUserRequests = () => {
+    if (currentUser?.role === 'user') {
+      return userRequests.filter(req => req.userId === currentUser.id);
+    }
+    return userRequests;
+  };
+
+  const getUserTasks = () => {
+    if (currentUser?.role === 'user') {
+      return fileTasks.filter(task => task.userId === currentUser.id);
+    }
+    return fileTasks;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Upload Section for Managers */}
+      {canManageAllocations && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              File Upload & Management
+            </CardTitle>
+            <CardDescription>
+              Upload Excel/CSV files for user allocation (300k records per file, 500-1000 per user)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => setIsUploadDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Upload New File
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Available Files for Users */}
+      {currentUser?.role === 'user' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Request File Allocation</CardTitle>
+            <CardDescription>
+              Request your daily file allocation from available uploads
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {fileAllocations.filter(alloc => alloc.availableRecords > 0).map(allocation => (
+                <div key={allocation.id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium">{allocation.fileName}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Available: {allocation.availableRecords.toLocaleString()} records
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setSelectedAllocation(allocation);
+                        setIsRequestDialogOpen(true);
+                      }}
+                      disabled={allocation.availableRecords < 500}
+                    >
+                      Request Files
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* My Requests & Tasks */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {currentUser?.role === 'user' ? 'My Requests & Tasks' : 'All User Requests'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {canManageAllocations && <TableHead>User</TableHead>}
+                <TableHead>File</TableHead>
+                <TableHead>Records</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {getUserRequests().map(request => (
+                <TableRow key={request.id}>
+                  {canManageAllocations && (
+                    <TableCell>{request.userName}</TableCell>
+                  )}
+                  <TableCell>
+                    {fileAllocations.find(a => a.id === request.allocationId)?.fileName || 'Unknown'}
+                  </TableCell>
+                  <TableCell>{request.requestedCount.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <Badge className={
+                      request.status === 'completed' ? 'bg-green-100 text-green-800' :
+                      request.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                      request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }>
+                      {request.status.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(request.requestedDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {request.status === 'pending' && canManageAllocations && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveRequest(request.id)}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    {request.status === 'approved' && request.downloadLink && (
+                      <Button size="sm" variant="outline">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Upload Dialog */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload File for Allocation</DialogTitle>
+            <DialogDescription>
+              Upload Excel/CSV file with customer data for user allocation
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fileName">File Name</Label>
+              <Input
+                id="fileName"
+                value={uploadFile.fileName}
+                onChange={(e) => setUploadFile({ ...uploadFile, fileName: e.target.value })}
+                placeholder="customer_data_2024_01_21.xlsx"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="totalRecords">Total Records</Label>
+              <Input
+                id="totalRecords"
+                type="number"
+                value={uploadFile.totalRecords}
+                onChange={(e) => setUploadFile({ ...uploadFile, totalRecords: parseInt(e.target.value) || 0 })}
+                placeholder="300000"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="recordsPerUser">Records Per User (500-1000)</Label>
+              <Input
+                id="recordsPerUser"
+                type="number"
+                min="500"
+                max="1000"
+                value={uploadFile.recordsPerUser}
+                onChange={(e) => setUploadFile({ ...uploadFile, recordsPerUser: parseInt(e.target.value) || 800 })}
+                placeholder="800"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleFileUpload}>
+              Upload File
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Request Dialog */}
+      <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request File Allocation</DialogTitle>
+            <DialogDescription>
+              Request your daily allocation from {selectedAllocation?.fileName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Available Records</Label>
+              <div className="text-2xl font-bold text-green-600">
+                {selectedAllocation?.availableRecords.toLocaleString()}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="requestCount">Request Count (500-1000)</Label>
+              <Input
+                id="requestCount"
+                type="number"
+                min="500"
+                max={Math.min(1000, selectedAllocation?.availableRecords || 0)}
+                value={requestCount}
+                onChange={(e) => setRequestCount(parseInt(e.target.value) || 500)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRequestDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRequestFile}>
+              Request Files
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [jobs, setJobs] = useState<FileProcessingJob[]>(mockJobs);
