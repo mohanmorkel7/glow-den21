@@ -631,7 +631,7 @@ export default function ProjectManagement() {
                     <TableCell>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span>{project.fileCounts.totalCompleted.toLocaleString()} files</span>
+                          <span>{(project.fileCounts?.totalCompleted || 0).toLocaleString()} files</span>
                           <span className="text-muted-foreground">
                             {progress.toFixed(0)}%
                           </span>
