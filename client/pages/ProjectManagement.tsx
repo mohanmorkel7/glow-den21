@@ -311,11 +311,11 @@ export default function ProjectManagement() {
   };
 
   const getProgressPercentage = (project: Project) => {
-    const target = project.type === 'monthly' 
-      ? project.fileTargets.monthly 
-      : project.type === 'weekly' 
-        ? project.fileTargets.weekly 
-        : Math.max(project.fileTargets.monthly || 0, project.fileTargets.weekly || 0);
+    const target = project.type === 'monthly'
+      ? project.fileTargets?.monthly
+      : project.type === 'weekly'
+        ? project.fileTargets?.weekly
+        : Math.max(project.fileTargets?.monthly || 0, project.fileTargets?.weekly || 0);
     
     const completed = project.type === 'monthly' 
       ? project.fileCounts.monthlyCompleted 
