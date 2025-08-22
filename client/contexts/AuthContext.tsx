@@ -54,16 +54,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
     try {
       // Mock authentication - in real app, call backend API
+      let mockUser: User | null = null;
+
+      // Demo credentials for different roles
       if (email === 'admin@websyntactic.com' && password === 'admin123') {
-        const mockUser: User = {
+        mockUser = {
           id: '1',
           email: 'admin@websyntactic.com',
-          name: 'Super Admin',
+          name: 'John Smith',
           role: 'super_admin',
           permissions: ['all']
         };
+      } else if (email === 'pm@websyntactic.com' && password === 'pm123') {
+        mockUser = {
+          id: '2',
+          email: 'pm@websyntactic.com',
+          name: 'Emily Wilson',
+          role: 'project_manager',
+          permissions: ['project_management', 'file_process', 'user_assignment']
+        };
+      } else if (email === 'user@websyntactic.com' && password === 'user123') {
+        mockUser = {
+          id: '3',
+          email: 'user@websyntactic.com',
+          name: 'Sarah Johnson',
+          role: 'user',
+          permissions: ['file_request', 'daily_counts']
+        };
+      }
+
+      if (mockUser) {
         setUser(mockUser);
         localStorage.setItem('token', 'mock-jwt-token');
+        localStorage.setItem('user', JSON.stringify(mockUser));
         return true;
       }
       return false;
