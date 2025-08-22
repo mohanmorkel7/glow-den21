@@ -188,13 +188,13 @@ export default function Layout({ children }: LayoutProps) {
             <Button variant="ghost" className="w-full justify-start gap-3 h-12">
               <Avatar className="h-8 w-8">
                 <AvatarFallback>
-                  {user.name.split(' ').map(n => n[0]).join('')}
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
-                <p className="text-sm font-medium">{user.name}</p>
+                <p className="text-sm font-medium">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground capitalize">
-                  {user.role.replace('_', ' ')}
+                  {user?.role ? user.role.replace('_', ' ') : 'User'}
                 </p>
               </div>
             </Button>
