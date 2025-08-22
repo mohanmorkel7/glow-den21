@@ -158,6 +158,20 @@ const mockDailyUpdateSettings: DailyUpdateSettings = {
 
 export default function Settings() {
   const { user: currentUser } = useAuth();
+
+  // Only allow super admin to access settings
+  if (currentUser?.role !== 'super_admin') {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-red-600">Access Denied</h3>
+          <p className="text-sm text-muted-foreground">This page is only accessible to administrators.</p>
+        </div>
+      </div>
+    );
+  }
+
   const [companySettings, setCompanySettings] = useState<CompanySettings>(mockCompanySettings);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(mockSystemSettings);
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>(mockSecuritySettings);
@@ -177,7 +191,7 @@ export default function Settings() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const canManageSystem = currentUser?.role === 'super_admin';
-  const canManageCompany = currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager';
+  const canManageCompany = currentUser?.role === 'super_admin';
 
   const handleSaveCompanySettings = () => {
     console.log('Saving company settings:', companySettings);
