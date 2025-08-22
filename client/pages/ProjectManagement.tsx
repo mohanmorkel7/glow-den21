@@ -632,9 +632,8 @@ export default function ProjectManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        {new Date(project.endDate).toLocaleDateString()}
+                      <div className="text-sm">
+                        {project.client}
                       </div>
                     </TableCell>
                     {canManageProjects && (
