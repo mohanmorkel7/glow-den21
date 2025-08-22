@@ -664,7 +664,7 @@ export default function ProjectManagement() {
                         <div className="text-xs space-y-0.5">
                           <div className="flex justify-between">
                             <span className="text-green-600">USD: ${earnings.usd.toFixed(2)}</span>
-                            <span className="text-blue-600">INR: ₹{earnings.inr.toFixed(0)}</span>
+                            <span className="text-blue-600">INR: ���{earnings.inr.toFixed(0)}</span>
                           </div>
                         </div>
                       </div>
@@ -741,198 +741,114 @@ export default function ProjectManagement() {
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
             <DialogDescription>
-              Update project information, targets, and assignments.
+              Update project information.
             </DialogDescription>
           </DialogHeader>
-          <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="targets">File Targets</TabsTrigger>
-              <TabsTrigger value="team">Team & Rates</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="basic" className="space-y-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Project Name</Label>
+              <Input
+                id="edit-name"
+                value={newProject.name}
+                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                placeholder="e.g., MO Project - Data Processing"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                placeholder="Describe the project goals and requirements"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Project Name</Label>
+                <Label htmlFor="edit-type">Project Type</Label>
+                <Select value={newProject.type} onValueChange={(value: any) => setNewProject({ ...newProject, type: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="both">Both</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status</Label>
+                <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-priority">Priority</Label>
+                <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-client">Client</Label>
+              <Select value={newProject.client} onValueChange={(value: any) => setNewProject({ ...newProject, client: value, customClient: '' })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mobius_dataservice">Mobius Dataservice</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {newProject.client === 'other' && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-customClient">Client Name</Label>
                 <Input
-                  id="edit-name"
-                  value={newProject.name}
-                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                  id="edit-customClient"
+                  value={newProject.customClient}
+                  onChange={(e) => setNewProject({ ...newProject, customClient: e.target.value })}
+                  placeholder="Enter client name"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={newProject.description}
-                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-type">Project Type</Label>
-                  <Select value={newProject.type} onValueChange={(value: any) => setNewProject({ ...newProject, type: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="both">Both</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-status">Status</Label>
-                  <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="planning">Planning</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="on_hold">On Hold</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-priority">Priority</Label>
-                  <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-startDate">Start Date</Label>
-                  <Input
-                    id="edit-startDate"
-                    type="date"
-                    value={newProject.startDate}
-                    onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-endDate">End Date</Label>
-                  <Input
-                    id="edit-endDate"
-                    type="date"
-                    value={newProject.endDate}
-                    onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="targets" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-dailyCapacity">Daily Capacity (Files per Day)</Label>
-                <Input
-                  id="edit-dailyCapacity"
-                  type="number"
-                  value={newProject.fileTargets.dailyCapacity}
-                  onChange={(e) => setNewProject({ 
-                    ...newProject, 
-                    fileTargets: { 
-                      ...newProject.fileTargets, 
-                      dailyCapacity: parseInt(e.target.value) || 0 
-                    } 
-                  })}
-                />
-              </div>
-              {(newProject.type === 'monthly' || newProject.type === 'both') && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-monthlyTarget">Monthly Target (Files)</Label>
-                  <Input
-                    id="edit-monthlyTarget"
-                    type="number"
-                    value={newProject.fileTargets.monthly}
-                    onChange={(e) => setNewProject({ 
-                      ...newProject, 
-                      fileTargets: { 
-                        ...newProject.fileTargets, 
-                        monthly: parseInt(e.target.value) || 0 
-                      } 
-                    })}
-                  />
-                </div>
-              )}
-              {(newProject.type === 'weekly' || newProject.type === 'both') && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-weeklyTarget">Weekly Target (Files)</Label>
-                  <Input
-                    id="edit-weeklyTarget"
-                    type="number"
-                    value={newProject.fileTargets.weekly}
-                    onChange={(e) => setNewProject({ 
-                      ...newProject, 
-                      fileTargets: { 
-                        ...newProject.fileTargets, 
-                        weekly: parseInt(e.target.value) || 0 
-                      } 
-                    })}
-                  />
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="team" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-ratePerFile">Rate per File (USD)</Label>
-                <Input
-                  id="edit-ratePerFile"
-                  type="number"
-                  step="0.01"
-                  value={newProject.rates.ratePerFile}
-                  onChange={(e) => setNewProject({ 
-                    ...newProject, 
-                    rates: { 
-                      ...newProject.rates, 
-                      ratePerFile: parseFloat(e.target.value) || 0 
-                    } 
-                  })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Assigned Users</Label>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {mockUsers.map((user) => (
-                    <div key={user.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`edit-${user.id}`}
-                        checked={(newProject.assignedUsers || []).includes(user.id)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setNewProject({
-                              ...newProject,
-                              assignedUsers: [...(newProject.assignedUsers || []), user.id]
-                            });
-                          } else {
-                            setNewProject({
-                              ...newProject,
-                              assignedUsers: (newProject.assignedUsers || []).filter(id => id !== user.id)
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor={`edit-${user.id}`} className="text-sm font-normal">
-                        {user.name} ({user.role})
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-perFileCost">Per File Cost (USD)</Label>
+              <Input
+                id="edit-perFileCost"
+                type="number"
+                step="0.001"
+                min="0"
+                value={newProject.rates.ratePerFile}
+                onChange={(e) => setNewProject({
+                  ...newProject,
+                  rates: {
+                    ...newProject.rates,
+                    ratePerFile: parseFloat(e.target.value) || 0
+                  }
+                })}
+                placeholder="e.g., 0.008"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter the cost per file in USD (e.g., 0.008 for $0.008 per file)
+              </p>
+            </div>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditingProject(null); resetNewProject(); }}>
               Cancel
