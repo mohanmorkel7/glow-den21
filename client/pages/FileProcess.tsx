@@ -257,41 +257,87 @@ export default function FileProcess() {
     setIsCreateDialogOpen(false);
   };
 
+  const generateCSVFile = (process: FileProcess, startRow: number, endRow: number, userName: string) => {
+    // Generate sample CSV content based on row range
+    const headers = ['ID', 'Name', 'Email', 'Phone', 'Address', 'City', 'Country', 'Status'];
+    let csvContent = headers.join(',') + '\n';
+
+    // Generate rows with realistic data
+    for (let i = startRow; i <= endRow; i++) {
+      const row = [
+        i,
+        `User ${i}`,
+        `user${i}@example.com`,
+        `+1234567${String(i).padStart(4, '0')}`,
+        `${i} Main Street`,
+        `City ${Math.floor(i / 100) + 1}`,
+        'USA',
+        i % 2 === 0 ? 'Active' : 'Pending'
+      ];
+      csvContent += row.join(',') + '\n';
+    }
+
+    // Create downloadable file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const fileName = `${userName.toLowerCase().replace(/\s+/g, '_')}_${process.name.toLowerCase().replace(/\s+/g, '_')}_${startRow}_${endRow}.csv`;
+
+    // Create download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    return `/downloads/${fileName}`;
+  };
+
   const handleApproveRequest = (requestId: string, processId: string, assignedCount: number) => {
     const process = fileProcesses.find(p => p.id === processId);
     const request = fileRequests.find(r => r.id === requestId);
-    
+
     if (!process || !request) return;
 
     const startRow = process.processedRows + 1;
     const endRow = process.processedRows + assignedCount;
 
-    // Update request
-    setFileRequests(fileRequests.map(r => 
-      r.id === requestId 
-        ? { 
-            ...r, 
+    // Generate CSV file for the user
+    const downloadLink = generateCSVFile(process, startRow, endRow, request.userName);
+
+    // Update request with download link and assignment details
+    setFileRequests(fileRequests.map(r =>
+      r.id === requestId
+        ? {
+            ...r,
             status: 'assigned',
             assignedBy: currentUser?.name,
             assignedDate: new Date().toISOString(),
             assignedCount,
             startRow,
-            endRow
+            endRow,
+            downloadLink,
+            fileProcessId: processId,
+            fileProcessName: process.name
           }
         : r
     ));
 
     // Update file process
-    setFileProcesses(fileProcesses.map(p => 
-      p.id === processId 
-        ? { 
-            ...p, 
+    setFileProcesses(fileProcesses.map(p =>
+      p.id === processId
+        ? {
+            ...p,
             processedRows: p.processedRows + assignedCount,
             availableRows: p.availableRows - assignedCount,
             activeUsers: p.activeUsers + 1
           }
         : p
     ));
+
+    // Show success message
+    alert(`File generated and assigned to ${request.userName}!\nRows ${startRow}-${endRow} (${assignedCount} files)\nDownload will be available in their Request Files page.`);
   };
 
   const getPendingRequests = () => {
