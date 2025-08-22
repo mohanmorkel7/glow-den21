@@ -492,7 +492,7 @@ export default function ProjectManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projects.reduce((sum, p) => sum + p.fileCounts.totalCompleted, 0).toLocaleString()}
+              {projects.reduce((sum, p) => sum + (p.fileCounts?.totalCompleted || 0), 0).toLocaleString()}
             </div>
           </CardContent>
         </Card>
