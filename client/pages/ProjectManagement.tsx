@@ -456,6 +456,27 @@ export default function ProjectManagement() {
                     />
                   </div>
                 )}
+                <div className="space-y-2">
+                  <Label htmlFor="perFileCost">Per File Cost (USD)</Label>
+                  <Input
+                    id="perFileCost"
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={newProject.rates.ratePerFile}
+                    onChange={(e) => setNewProject({
+                      ...newProject,
+                      rates: {
+                        ...newProject.rates,
+                        ratePerFile: parseFloat(e.target.value) || 0
+                      }
+                    })}
+                    placeholder="e.g., 0.008"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the cost per file in USD (e.g., 0.008 for $0.008 per file)
+                  </p>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetNewProject(); }}>
