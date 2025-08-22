@@ -622,6 +622,170 @@ export interface ProjectProgressChart {
   weeklyProgress: ChartDataPoint[];
 }
 
+// ===== FILE PROCESSING TYPES =====
+export type FileProcessingJobType = 'mo_monthly' | 'mo_weekly';
+export type AssignmentType = 'automation' | 'manual';
+export type FileProcessingJobStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
+export type JobAssignmentStatus = 'pending' | 'assigned' | 'in_progress' | 'completed';
+
+export interface FileProcessingJob {
+  id: string;
+  name: string;
+  type: FileProcessingJobType;
+  description?: string;
+
+  // File and billing details
+  totalFileCount: number;
+  completedFileCount: number;
+  ratePerFile: number; // USD per file
+  totalValue: number; // totalFileCount * ratePerFile
+
+  // Timeline
+  startDate: string;
+  targetEndDate: string;
+  actualEndDate?: string;
+
+  // Assignment
+  assignmentType: AssignmentType;
+  assignedUsers: string[]; // User IDs for manual assignment
+  automationSettings?: {
+    dailyCapacity: number;
+    workingHours: {
+      start: string;
+      end: string;
+    };
+    workingDays: number[]; // 0-6 (Sunday-Saturday)
+  };
+
+  // Progress tracking
+  dailyTargets: {
+    date: string;
+    targetFiles: number;
+    completedFiles: number;
+    assignedTo?: string; // User ID or 'automation'
+  }[];
+
+  status: FileProcessingJobStatus;
+  progress: number; // 0-100
+  estimatedCompletionDate?: string;
+
+  // Metadata
+  createdBy: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateFileProcessingJobRequest {
+  name: string;
+  type: FileProcessingJobType;
+  description?: string;
+  totalFileCount: number;
+  targetEndDate: string;
+  assignmentType: AssignmentType;
+  assignedUsers?: string[];
+  automationSettings?: {
+    dailyCapacity: number;
+    workingHours: {
+      start: string;
+      end: string;
+    };
+    workingDays: number[];
+  };
+}
+
+export interface UpdateFileProcessingJobRequest {
+  name?: string;
+  description?: string;
+  totalFileCount?: number;
+  targetEndDate?: string;
+  assignmentType?: AssignmentType;
+  assignedUsers?: string[];
+  automationSettings?: {
+    dailyCapacity: number;
+    workingHours: {
+      start: string;
+      end: string;
+    };
+    workingDays: number[];
+  };
+  status?: FileProcessingJobStatus;
+}
+
+export interface FileProcessingAssignment {
+  id: string;
+  jobId: string;
+  jobName: string;
+  userId?: string; // null for automation
+  userName?: string;
+  assignmentType: AssignmentType;
+
+  // File allocation
+  allocatedFiles: number;
+  completedFiles: number;
+  remainingFiles: number;
+
+  // Timeline
+  assignedDate: string;
+  dueDate: string;
+  completedDate?: string;
+
+  status: JobAssignmentStatus;
+  progress: number;
+
+  // Daily breakdown
+  dailyProgress: {
+    date: string;
+    targetFiles: number;
+    completedFiles: number;
+    efficiency: number;
+  }[];
+}
+
+export interface FileProcessingDailyUpdate {
+  id: string;
+  jobId: string;
+  assignmentId?: string;
+  userId?: string; // null for automation
+  date: string;
+
+  targetFiles: number;
+  completedFiles: number;
+  balanceFiles: number;
+
+  notes?: string;
+  submittedAt: string;
+  approvedAt?: string;
+  approvedBy?: {
+    id: string;
+    name: string;
+  };
+
+  status: DailyCountStatus;
+}
+
+export interface FileProcessingBilling {
+  jobId: string;
+  jobName: string;
+  jobType: FileProcessingJobType;
+
+  totalFiles: number;
+  completedFiles: number;
+  ratePerFile: number;
+
+  amountUSD: number;
+  amountINR: number;
+  conversionRate: number;
+
+  period: string; // YYYY-MM format
+  status: 'draft' | 'finalized' | 'invoiced' | 'paid';
+
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ===== UTILITY TYPES =====
 export type SortOrder = 'asc' | 'desc';
 
