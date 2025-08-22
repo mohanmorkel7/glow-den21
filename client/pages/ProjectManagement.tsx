@@ -546,7 +546,7 @@ export default function ProjectManagement() {
                 <TableHead>File Targets</TableHead>
                 <TableHead>Progress & Earnings</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Deadline</TableHead>
+                <TableHead>Client</TableHead>
                 {canManageProjects && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
