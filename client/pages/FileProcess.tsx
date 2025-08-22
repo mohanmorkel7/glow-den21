@@ -39,7 +39,8 @@ import {
   CheckCircle,
   Settings,
   Download,
-  Upload
+  Upload,
+  BarChart3
 } from 'lucide-react';
 import { format, addDays, differenceInDays } from 'date-fns';
 
