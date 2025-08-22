@@ -128,6 +128,8 @@ export default function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
+  console.log('Layout user:', user); // Debug log
+
   if (!user) return null;
 
   const handleLogout = () => {
