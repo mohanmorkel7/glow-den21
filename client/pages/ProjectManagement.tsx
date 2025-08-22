@@ -262,7 +262,8 @@ export default function ProjectManagement() {
       rates: {
         ratePerFile: 0,
         currency: 'USD' as 'USD'
-      }
+      },
+      assignedUsers: [] as string[]
     });
   };
 
