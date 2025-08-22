@@ -420,6 +420,16 @@ export default function FileProcess() {
     completedCount: 0,
     notes: ''
   });
+
+  // File Allocation System State
+  const [fileAllocations, setFileAllocations] = useState<FileAllocation[]>(mockFileAllocations);
+  const [userRequests, setUserRequests] = useState<UserFileRequest[]>(mockUserRequests);
+  const [fileTasks, setFileTasks] = useState<FileTask[]>(mockFileTasks);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [selectedAllocation, setSelectedAllocation] = useState<FileAllocation | null>(null);
+  const [requestCount, setRequestCount] = useState(500);
+  const [activeTab, setActiveTab] = useState('processing');
   const [newJob, setNewJob] = useState({
     name: '',
     type: 'mo_monthly' as 'mo_monthly' | 'mo_weekly',
