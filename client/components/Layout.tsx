@@ -117,7 +117,7 @@ const navigationItems: NavItem[] = [
     label: 'Settings',
     path: '/settings',
     icon: Settings,
-    roles: ['super_admin', 'project_manager', 'user']
+    roles: ['super_admin']
   }
 ];
 
