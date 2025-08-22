@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Target, 
   Plus, 
@@ -26,7 +28,14 @@ import {
   BarChart3,
   Filter,
   Download,
-  Upload
+  Upload,
+  FileText,
+  Timer,
+  Zap,
+  Bell,
+  Settings,
+  Activity,
+  Minus
 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 
@@ -37,20 +46,90 @@ interface DailyCount {
   projectId: string;
   projectName: string;
   date: string;
+  
+  // File-based counts
+  targetFileCount: number;
+  submittedFileCount: number;
+  completedFileCount: number;
+  balanceFileCount: number;
+  
+  // Legacy compatibility
   targetCount: number;
   submittedCount: number;
+  
   status: 'pending' | 'submitted' | 'approved' | 'rejected';
   notes: string;
   submittedAt: string;
+  autoSubmittedAt?: string;
   approvedBy?: string;
+  rejectionReason?: string;
 }
 
 interface Project {
   id: string;
   name: string;
-  targetCount: number;
+  type: 'monthly' | 'weekly' | 'both';
+  fileTargets: {
+    monthly?: number;
+    weekly?: number;
+    dailyCapacity: number;
+  };
+  rates: {
+    ratePerFile: number;
+    currency: 'USD';
+  };
   isAssigned: boolean;
+  status: 'active' | 'completed' | 'on_hold';
 }
+
+const mockProjects: Project[] = [
+  { 
+    id: '1', 
+    name: 'MO Project - Data Processing', 
+    type: 'both',
+    fileTargets: {
+      monthly: 300000,
+      weekly: 50000,
+      dailyCapacity: 20000
+    },
+    rates: {
+      ratePerFile: 0.05,
+      currency: 'USD'
+    },
+    isAssigned: true,
+    status: 'active'
+  },
+  { 
+    id: '2', 
+    name: 'Customer Support Processing', 
+    type: 'weekly',
+    fileTargets: {
+      weekly: 25000,
+      dailyCapacity: 5000
+    },
+    rates: {
+      ratePerFile: 0.08,
+      currency: 'USD'
+    },
+    isAssigned: true,
+    status: 'active'
+  },
+  { 
+    id: '3', 
+    name: 'Invoice Processing', 
+    type: 'monthly',
+    fileTargets: {
+      monthly: 150000,
+      dailyCapacity: 10000
+    },
+    rates: {
+      ratePerFile: 0.12,
+      currency: 'USD'
+    },
+    isAssigned: false,
+    status: 'completed'
+  }
+];
 
 const mockDailyCounts: DailyCount[] = [
   {
@@ -58,27 +137,36 @@ const mockDailyCounts: DailyCount[] = [
     userId: '3',
     userName: 'Sarah Johnson',
     projectId: '1',
-    projectName: 'Data Entry Project Alpha',
+    projectName: 'MO Project - Data Processing',
     date: '2024-01-15',
-    targetCount: 100,
-    submittedCount: 95,
+    targetFileCount: 20000,
+    submittedFileCount: 18500,
+    completedFileCount: 18500,
+    balanceFileCount: 1500,
+    targetCount: 20000,
+    submittedCount: 18500,
     status: 'submitted',
-    notes: 'Completed all customer registration forms for the day',
-    submittedAt: '2024-01-15 17:30',
-    approvedBy: 'John Smith'
+    notes: 'Completed data processing files for the day. System was slightly slow in the afternoon.',
+    submittedAt: '2024-01-15 20:00',
+    autoSubmittedAt: '2024-01-15 20:00'
   },
   {
     id: '2',
     userId: '4',
     userName: 'Mike Davis',
     projectId: '1',
-    projectName: 'Data Entry Project Alpha',
+    projectName: 'MO Project - Data Processing',
     date: '2024-01-15',
-    targetCount: 80,
-    submittedCount: 72,
+    targetFileCount: 20000,
+    submittedFileCount: 19200,
+    completedFileCount: 19200,
+    balanceFileCount: 800,
+    targetCount: 20000,
+    submittedCount: 19200,
     status: 'approved',
-    notes: 'Some forms required additional verification',
-    submittedAt: '2024-01-15 18:00',
+    notes: 'Good progress today. All files processed within quality standards.',
+    submittedAt: '2024-01-15 20:00',
+    autoSubmittedAt: '2024-01-15 20:00',
     approvedBy: 'John Smith'
   },
   {
@@ -86,9 +174,13 @@ const mockDailyCounts: DailyCount[] = [
     userId: '3',
     userName: 'Sarah Johnson',
     projectId: '2',
-    projectName: 'Customer Support Portal',
+    projectName: 'Customer Support Processing',
     date: '2024-01-15',
-    targetCount: 50,
+    targetFileCount: 5000,
+    submittedFileCount: 0,
+    completedFileCount: 3200,
+    balanceFileCount: 1800,
+    targetCount: 5000,
     submittedCount: 0,
     status: 'pending',
     notes: '',
@@ -99,21 +191,20 @@ const mockDailyCounts: DailyCount[] = [
     userId: '5',
     userName: 'Emily Wilson',
     projectId: '2',
-    projectName: 'Customer Support Portal',
+    projectName: 'Customer Support Processing',
     date: '2024-01-14',
-    targetCount: 75,
-    submittedCount: 82,
+    targetFileCount: 5000,
+    submittedFileCount: 5420,
+    completedFileCount: 5420,
+    balanceFileCount: 0,
+    targetCount: 5000,
+    submittedCount: 5420,
     status: 'approved',
-    notes: 'Exceeded target due to high ticket volume',
-    submittedAt: '2024-01-14 16:45',
+    notes: 'Exceeded target due to high ticket volume. Quality maintained.',
+    submittedAt: '2024-01-14 20:00',
+    autoSubmittedAt: '2024-01-14 20:00',
     approvedBy: 'Super Admin'
   }
-];
-
-const mockProjects: Project[] = [
-  { id: '1', name: 'Data Entry Project Alpha', targetCount: 100, isAssigned: true },
-  { id: '2', name: 'Customer Support Portal', targetCount: 50, isAssigned: true },
-  { id: '3', name: 'Invoice Processing System', targetCount: 75, isAssigned: false }
 ];
 
 export default function DailyCounts() {
@@ -130,13 +221,39 @@ export default function DailyCounts() {
   });
   const [newSubmission, setNewSubmission] = useState({
     projectId: '',
-    count: 0,
+    submittedFileCount: 0,
+    completedFileCount: 0,
     notes: ''
   });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Auto-update settings (could come from settings/API)
+  const autoUpdateTime = '20:00'; // 8 PM
+  const autoUpdateTimezone = 'Asia/Kolkata';
+  const autoUpdateEnabled = true;
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const isUser = currentUser?.role === 'user';
   const canManageCounts = currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager';
+
+  // Update current time every minute for auto-update check
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Check for auto-update time
+  const isAutoUpdateTime = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const [targetHour, targetMinute] = autoUpdateTime.split(':').map(Number);
+    
+    return currentHour === targetHour && currentMinute === targetMinute;
+  };
 
   // Filter counts based on user role and filters
   const filteredCounts = dailyCounts.filter(count => {
@@ -145,7 +262,6 @@ export default function DailyCounts() {
     const matchesProject = selectedProject === 'all' || count.projectId === selectedProject;
     const matchesStatus = selectedStatus === 'all' || count.status === selectedStatus;
     
-    // Users can only see their own counts
     if (isUser) {
       return matchesSearch && matchesProject && matchesStatus && count.userId === currentUser?.id;
     }
@@ -154,7 +270,7 @@ export default function DailyCounts() {
   });
 
   // Get user's assigned projects
-  const userProjects = mockProjects.filter(p => p.isAssigned);
+  const userProjects = mockProjects.filter(p => p.isAssigned && p.status === 'active');
 
   // Get today's submissions for current user
   const todaySubmissions = dailyCounts.filter(count => 
@@ -162,22 +278,27 @@ export default function DailyCounts() {
   );
 
   const handleSubmitCount = () => {
+    const project = mockProjects.find(p => p.id === newSubmission.projectId);
     const submission: DailyCount = {
       id: (dailyCounts.length + 1).toString(),
       userId: currentUser?.id || '',
       userName: currentUser?.name || '',
       projectId: newSubmission.projectId,
-      projectName: mockProjects.find(p => p.id === newSubmission.projectId)?.name || '',
+      projectName: project?.name || '',
       date: format(selectedDate, 'yyyy-MM-dd'),
-      targetCount: mockProjects.find(p => p.id === newSubmission.projectId)?.targetCount || 0,
-      submittedCount: newSubmission.count,
+      targetFileCount: project?.fileTargets.dailyCapacity || 0,
+      submittedFileCount: newSubmission.submittedFileCount,
+      completedFileCount: newSubmission.completedFileCount,
+      balanceFileCount: (project?.fileTargets.dailyCapacity || 0) - newSubmission.completedFileCount,
+      targetCount: project?.fileTargets.dailyCapacity || 0,
+      submittedCount: newSubmission.submittedFileCount,
       status: 'submitted',
       notes: newSubmission.notes,
       submittedAt: new Date().toISOString()
     };
     
     setDailyCounts([...dailyCounts, submission]);
-    setNewSubmission({ projectId: '', count: 0, notes: '' });
+    setNewSubmission({ projectId: '', submittedFileCount: 0, completedFileCount: 0, notes: '' });
     setIsSubmitDialogOpen(false);
   };
 
@@ -189,10 +310,10 @@ export default function DailyCounts() {
     ));
   };
 
-  const handleRejectCount = (countId: string) => {
+  const handleRejectCount = (countId: string, reason: string) => {
     setDailyCounts(dailyCounts.map(count =>
       count.id === countId
-        ? { ...count, status: 'rejected' as const, approvedBy: currentUser?.name }
+        ? { ...count, status: 'rejected' as const, approvedBy: currentUser?.name, rejectionReason: reason }
         : count
     ));
   };
@@ -207,8 +328,8 @@ export default function DailyCounts() {
     }
   };
 
-  const getProgressColor = (submitted: number, target: number) => {
-    const percentage = (submitted / target) * 100;
+  const getProgressColor = (completed: number, target: number) => {
+    const percentage = (completed / target) * 100;
     if (percentage >= 100) return 'text-green-600';
     if (percentage >= 80) return 'text-blue-600';
     if (percentage >= 60) return 'text-orange-600';
@@ -217,12 +338,27 @@ export default function DailyCounts() {
 
   const calculateStats = () => {
     const todayCounts = dailyCounts.filter(count => count.date === today);
-    const totalTarget = todayCounts.reduce((sum, count) => sum + count.targetCount, 0);
-    const totalSubmitted = todayCounts.reduce((sum, count) => sum + count.submittedCount, 0);
+    const totalTargetFiles = todayCounts.reduce((sum, count) => sum + count.targetFileCount, 0);
+    const totalSubmittedFiles = todayCounts.reduce((sum, count) => sum + count.submittedFileCount, 0);
+    const totalCompletedFiles = todayCounts.reduce((sum, count) => sum + count.completedFileCount, 0);
+    const totalBalanceFiles = todayCounts.reduce((sum, count) => sum + count.balanceFileCount, 0);
     const pendingSubmissions = todayCounts.filter(count => count.status === 'pending').length;
     const approvedToday = todayCounts.filter(count => count.status === 'approved').length;
 
-    return { totalTarget, totalSubmitted, pendingSubmissions, approvedToday };
+    return { 
+      totalTargetFiles, 
+      totalSubmittedFiles, 
+      totalCompletedFiles,
+      totalBalanceFiles,
+      pendingSubmissions, 
+      approvedToday 
+    };
+  };
+
+  const calculateEarnings = (fileCount: number, ratePerFile: number) => {
+    const usdAmount = fileCount * ratePerFile;
+    const inrAmount = usdAmount * 83; // Assuming 1 USD = 83 INR
+    return { usd: usdAmount, inr: inrAmount };
   };
 
   const stats = calculateStats();
@@ -232,119 +368,239 @@ export default function DailyCounts() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Daily Count Management</h1>
+          <h1 className="text-3xl font-bold text-foreground">Daily File Counts</h1>
           <p className="text-muted-foreground mt-1">
-            Track and manage daily count submissions and targets.
+            Track daily file processing progress with automatic updates at {autoUpdateTime} IST.
           </p>
         </div>
-        {isUser && (
-          <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Submit Count
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Submit Daily Count</DialogTitle>
-                <DialogDescription>
-                  Submit your work count for today or a specific date.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(selectedDate, 'PPP')}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={(date) => date && setSelectedDate(date)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="project">Project</Label>
-                  <Select value={newSubmission.projectId} onValueChange={(value) => setNewSubmission({ ...newSubmission, projectId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {userProjects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name} (Target: {project.targetCount})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="count">Count Completed</Label>
-                  <Input
-                    id="count"
-                    type="number"
-                    value={newSubmission.count}
-                    onChange={(e) => setNewSubmission({ ...newSubmission, count: parseInt(e.target.value) || 0 })}
-                    placeholder="Enter completed count"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (Optional)</Label>
-                  <Textarea
-                    id="notes"
-                    value={newSubmission.notes}
-                    onChange={(e) => setNewSubmission({ ...newSubmission, notes: e.target.value })}
-                    placeholder="Add any notes or comments..."
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsSubmitDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmitCount} disabled={!newSubmission.projectId}>
+        <div className="flex gap-2">
+          {/* Auto-update status indicator */}
+          {autoUpdateEnabled && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Auto-update: {autoUpdateTime} IST
+            </Badge>
+          )}
+          {isUser && (
+            <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
                   Submit Count
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Submit Daily File Count</DialogTitle>
+                  <DialogDescription>
+                    Submit your file processing count for today or a specific date.
+                  </DialogDescription>
+                </DialogHeader>
+                <Tabs defaultValue="submit" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="submit">Submit Count</TabsTrigger>
+                    <TabsTrigger value="details">File Details</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="submit" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {format(selectedDate, 'PPP')}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => date && setSelectedDate(date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="project">Project</Label>
+                      <Select value={newSubmission.projectId} onValueChange={(value) => {
+                        const project = mockProjects.find(p => p.id === value);
+                        setNewSubmission({ 
+                          ...newSubmission, 
+                          projectId: value,
+                          completedFileCount: 0,
+                          submittedFileCount: 0
+                        });
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {userProjects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              <div className="flex flex-col">
+                                <span>{project.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Daily Capacity: {project.fileTargets.dailyCapacity.toLocaleString()} files
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="completedFiles">Files Completed</Label>
+                        <Input
+                          id="completedFiles"
+                          type="number"
+                          value={newSubmission.completedFileCount}
+                          onChange={(e) => setNewSubmission({ 
+                            ...newSubmission, 
+                            completedFileCount: parseInt(e.target.value) || 0 
+                          })}
+                          placeholder="e.g., 18500"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="submittedFiles">Files Submitted</Label>
+                        <Input
+                          id="submittedFiles"
+                          type="number"
+                          value={newSubmission.submittedFileCount}
+                          onChange={(e) => setNewSubmission({ 
+                            ...newSubmission, 
+                            submittedFileCount: parseInt(e.target.value) || 0 
+                          })}
+                          placeholder="e.g., 18500"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Notes (Optional)</Label>
+                      <Textarea
+                        id="notes"
+                        value={newSubmission.notes}
+                        onChange={(e) => setNewSubmission({ ...newSubmission, notes: e.target.value })}
+                        placeholder="Add any notes about today's work..."
+                        rows={3}
+                      />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="details" className="space-y-4">
+                    {newSubmission.projectId ? (() => {
+                      const project = mockProjects.find(p => p.id === newSubmission.projectId);
+                      const earnings = calculateEarnings(newSubmission.completedFileCount, project?.rates.ratePerFile || 0);
+                      const balanceFiles = (project?.fileTargets.dailyCapacity || 0) - newSubmission.completedFileCount;
+                      
+                      return (
+                        <div className="space-y-4">
+                          <div className="p-4 border rounded-lg space-y-3">
+                            <h4 className="font-medium">Project: {project?.name}</h4>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <div className="text-muted-foreground">Daily Capacity</div>
+                                <div className="font-medium">{project?.fileTargets.dailyCapacity.toLocaleString()} files</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Rate per File</div>
+                                <div className="font-medium">${project?.rates.ratePerFile}</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Files Completed</div>
+                                <div className="font-medium">{newSubmission.completedFileCount.toLocaleString()} files</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Balance Files</div>
+                                <div className={`font-medium ${balanceFiles > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                  {balanceFiles.toLocaleString()} files
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Earnings (USD)</div>
+                                <div className="font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Earnings (INR)</div>
+                                <div className="font-medium text-blue-600">₹{earnings.inr.toFixed(0)}</div>
+                              </div>
+                            </div>
+                            <Progress 
+                              value={(newSubmission.completedFileCount / (project?.fileTargets.dailyCapacity || 1)) * 100} 
+                              className="h-2"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <Alert>
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          Please select a project first to see file details.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </TabsContent>
+                </Tabs>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsSubmitDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSubmitCount} disabled={!newSubmission.projectId}>
+                    Submit Count
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Target</CardTitle>
+            <CardTitle className="text-sm font-medium">Target Files</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTarget.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.totalTargetFiles.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Today's capacity</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalCompletedFiles.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Across all projects
+              {stats.totalTargetFiles > 0 ? `${((stats.totalCompletedFiles / stats.totalTargetFiles) * 100).toFixed(1)}% of target` : 'No target'}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Submitted</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSubmitted.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.totalTarget > 0 ? `${((stats.totalSubmitted / stats.totalTarget) * 100).toFixed(1)}% of target` : 'No target set'}
-            </p>
+            <div className="text-2xl font-bold">{stats.totalSubmittedFiles.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Files submitted</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Balance</CardTitle>
+            <Minus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalBalanceFiles.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Files remaining</p>
           </CardContent>
         </Card>
         <Card>
@@ -354,65 +610,108 @@ export default function DailyCounts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingSubmissions}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting submission
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.approvedToday}</div>
-            <p className="text-xs text-muted-foreground">
-              Today
-            </p>
+            <p className="text-xs text-muted-foreground">Submissions</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Today's Quick Actions for Users */}
+      {/* Auto-update Alert */}
+      {autoUpdateEnabled && isAutoUpdateTime() && (
+        <Alert>
+          <Bell className="h-4 w-4" />
+          <AlertDescription>
+            Automatic daily update is scheduled for {autoUpdateTime} IST. Make sure to submit your counts before this time.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Today's Progress for Users */}
       {isUser && (
         <Card>
           <CardHeader>
-            <CardTitle>Today's Progress</CardTitle>
-            <CardDescription>Your assigned projects for today</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Today's File Processing Progress
+            </CardTitle>
+            <CardDescription>Your assigned projects and daily file targets</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {userProjects.map((project) => {
                 const todayCount = todaySubmissions.find(ts => ts.projectId === project.id);
-                const progress = todayCount ? (todayCount.submittedCount / project.targetCount) * 100 : 0;
+                const completedFiles = todayCount?.completedFileCount || 0;
+                const targetFiles = project.fileTargets.dailyCapacity;
+                const balanceFiles = targetFiles - completedFiles;
+                const progress = (completedFiles / targetFiles) * 100;
+                const earnings = calculateEarnings(completedFiles, project.rates.ratePerFile);
                 
                 return (
-                  <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium">{project.name}</h4>
-                      <div className="flex items-center gap-4 mt-2">
+                  <div key={project.id} className="p-4 border rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">{project.name}</h4>
                         <div className="text-sm text-muted-foreground">
-                          Target: {project.targetCount}
+                          {project.type === 'both' ? 'Monthly + Weekly' : 
+                           project.type === 'monthly' ? 'Monthly Project' : 'Weekly Project'}
                         </div>
-                        <div className="text-sm">
-                          Submitted: {todayCount?.submittedCount || 0}
-                        </div>
-                        <Badge className={getStatusBadgeColor(todayCount?.status || 'pending')}>
-                          {(todayCount?.status || 'pending').toUpperCase()}
-                        </Badge>
                       </div>
-                      <Progress value={progress} className="mt-2" />
+                      {todayCount && (
+                        <Badge className={getStatusBadgeColor(todayCount.status)}>
+                          {todayCount.status.toUpperCase()}
+                        </Badge>
+                      )}
                     </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">Daily Target</div>
+                        <div className="font-medium">{targetFiles.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Completed</div>
+                        <div className={`font-medium ${getProgressColor(completedFiles, targetFiles)}`}>
+                          {completedFiles.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Balance</div>
+                        <div className={`font-medium ${balanceFiles > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                          {balanceFiles.toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Earnings</div>
+                        <div className="font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span className={getProgressColor(completedFiles, targetFiles)}>
+                          {progress.toFixed(1)}%
+                        </span>
+                      </div>
+                      <Progress value={progress} className="h-3" />
+                    </div>
+                    
                     {!todayCount && (
-                      <Button 
-                        size="sm" 
-                        onClick={() => {
-                          setNewSubmission({ ...newSubmission, projectId: project.id });
-                          setIsSubmitDialogOpen(true);
-                        }}
-                      >
-                        Submit
-                      </Button>
+                      <div className="flex justify-end">
+                        <Button 
+                          size="sm" 
+                          onClick={() => {
+                            setNewSubmission({ 
+                              ...newSubmission, 
+                              projectId: project.id,
+                              completedFileCount: 0,
+                              submittedFileCount: 0
+                            });
+                            setIsSubmitDialogOpen(true);
+                          }}
+                        >
+                          Submit Count
+                        </Button>
+                      </div>
                     )}
                   </div>
                 );
@@ -436,7 +735,7 @@ export default function DailyCounts() {
               />
             </div>
             <Select value={selectedProject} onValueChange={setSelectedProject}>
-              <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filter by project" />
               </SelectTrigger>
               <SelectContent>
@@ -468,7 +767,7 @@ export default function DailyCounts() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Daily Counts ({filteredCounts.length})</span>
+            <span>Daily File Counts ({filteredCounts.length})</span>
             {canManageCounts && (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -483,102 +782,129 @@ export default function DailyCounts() {
             )}
           </CardTitle>
           <CardDescription>
-            Track daily count submissions and approvals.
+            Track daily file processing counts with automatic submissions at {autoUpdateTime} IST.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Project</TableHead>
+                <TableHead>User & Project</TableHead>
                 <TableHead>Date</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submitted At</TableHead>
+                <TableHead>File Progress</TableHead>
+                <TableHead>Earnings</TableHead>
+                <TableHead>Status & Time</TableHead>
                 {canManageCounts && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCounts.map((count) => (
-                <TableRow key={count.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{count.userName}</div>
-                      {count.notes && (
-                        <div className="text-sm text-muted-foreground">
-                          {count.notes.length > 50 ? `${count.notes.substring(0, 50)}...` : count.notes}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{count.projectName}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <CalendarIcon className="h-3 w-3 text-muted-foreground" />
-                      {new Date(count.date).toLocaleDateString()}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{count.submittedCount}</span>
-                        <span className="text-muted-foreground">
-                          / {count.targetCount}
-                        </span>
+              {filteredCounts.map((count) => {
+                const project = mockProjects.find(p => p.id === count.projectId);
+                const earnings = calculateEarnings(count.completedFileCount, project?.rates.ratePerFile || 0);
+                
+                return (
+                  <TableRow key={count.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{count.userName}</div>
+                        <div className="text-sm text-muted-foreground">{count.projectName}</div>
+                        {count.notes && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {count.notes.length > 60 ? `${count.notes.substring(0, 60)}...` : count.notes}
+                          </div>
+                        )}
                       </div>
-                      <Progress 
-                        value={(count.submittedCount / count.targetCount) * 100} 
-                        className="h-2"
-                      />
-                      <div className={`text-xs ${getProgressColor(count.submittedCount, count.targetCount)}`}>
-                        {count.targetCount > 0 ? `${((count.submittedCount / count.targetCount) * 100).toFixed(1)}%` : '0%'}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadgeColor(count.status)}>
-                      {count.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {count.submittedAt ? new Date(count.submittedAt).toLocaleString() : '-'}
-                    </div>
-                    {count.approvedBy && (
-                      <div className="text-xs text-muted-foreground">
-                        by {count.approvedBy}
-                      </div>
-                    )}
-                  </TableCell>
-                  {canManageCounts && (
-                    <TableCell className="text-right">
-                      {count.status === 'submitted' && (
-                        <div className="flex gap-2 justify-end">
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleApproveCount(count.id)}
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Approve
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleRejectCount(count.id)}
-                          >
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      )}
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <CalendarIcon className="h-3 w-3 text-muted-foreground" />
+                        {new Date(count.date).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <div className="text-muted-foreground">Target</div>
+                            <div className="font-medium">{count.targetFileCount.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Completed</div>
+                            <div className="font-medium text-green-600">{count.completedFileCount.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <div className="text-muted-foreground">Balance</div>
+                            <div className={`font-medium ${count.balanceFileCount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                              {count.balanceFileCount.toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <Progress 
+                          value={(count.completedFileCount / count.targetFileCount) * 100} 
+                          className="h-2"
+                        />
+                        <div className={`text-xs ${getProgressColor(count.completedFileCount, count.targetFileCount)}`}>
+                          {count.targetFileCount > 0 ? `${((count.completedFileCount / count.targetFileCount) * 100).toFixed(1)}%` : '0%'}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
+                        <div className="text-xs text-blue-600">₹{earnings.inr.toFixed(0)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          @${project?.rates.ratePerFile}/file
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge className={getStatusBadgeColor(count.status)}>
+                          {count.status.toUpperCase()}
+                        </Badge>
+                        {count.autoSubmittedAt && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Zap className="h-3 w-3" />
+                            Auto-submitted
+                          </div>
+                        )}
+                        <div className="text-xs text-muted-foreground">
+                          {count.submittedAt ? new Date(count.submittedAt).toLocaleString() : '-'}
+                        </div>
+                        {count.approvedBy && (
+                          <div className="text-xs text-muted-foreground">
+                            by {count.approvedBy}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    {canManageCounts && (
+                      <TableCell className="text-right">
+                        {count.status === 'submitted' && (
+                          <div className="flex gap-2 justify-end">
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleApproveCount(count.id)}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Approve
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleRejectCount(count.id, 'Requires review')}
+                            >
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
