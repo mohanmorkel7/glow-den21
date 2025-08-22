@@ -98,6 +98,75 @@ interface FileCountUpdate {
   notes?: string;
 }
 
+interface FileAllocation {
+  id: string;
+  fileName: string;
+  uploadDate: string;
+  totalRecords: number;
+  recordsPerUser: number;
+  availableRecords: number;
+  allocatedRecords: number;
+  status: 'uploaded' | 'allocating' | 'allocated' | 'completed';
+  uploadedBy: {
+    id: string;
+    name: string;
+  };
+}
+
+interface UserFileRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  allocationId: string;
+  requestedCount: number;
+  requestedDate: string;
+  status: 'pending' | 'approved' | 'rejected' | 'downloaded' | 'completed';
+  approvedBy?: {
+    id: string;
+    name: string;
+  };
+  approvedDate?: string;
+  downloadLink?: string;
+  taskId?: string;
+  completedDate?: string;
+  notes?: string;
+}
+
+interface FileTask {
+  id: string;
+  requestId: string;
+  userId: string;
+  userName: string;
+  fileName: string;
+  recordCount: number;
+  assignedDate: string;
+  dueDate: string;
+  status: 'assigned' | 'in_progress' | 'completed' | 'overdue';
+  completedDate?: string;
+  completedCount?: number;
+  notes?: string;
+}
+
+interface AllocationAnalytics {
+  totalFiles: number;
+  totalRecords: number;
+  completedRecords: number;
+  activeUsers: number;
+  averageCompletion: number;
+  dailyProgress: {
+    date: string;
+    completed: number;
+    assigned: number;
+  }[];
+  userProgress: {
+    userId: string;
+    userName: string;
+    assigned: number;
+    completed: number;
+    inProgress: number;
+  }[];
+}
+
 const mockUsers: User[] = [
   { id: '2', name: 'John Smith', email: 'john.smith@websyntactic.com', role: 'project_manager' },
   { id: '3', name: 'Sarah Johnson', email: 'sarah.johnson@websyntactic.com', role: 'user' },
