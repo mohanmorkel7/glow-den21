@@ -358,9 +358,9 @@ export default function FileProcess() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateProcess}
-                disabled={!newProcess.name || !newProcess.projectId || !newProcess.fileName || newProcess.totalRows <= 0}
+                disabled={!newProcess.name || !newProcess.projectId || !newProcess.uploadedFile || newProcess.totalRows <= 0}
               >
                 Create Process
               </Button>
