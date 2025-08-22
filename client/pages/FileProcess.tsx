@@ -158,6 +158,16 @@ export default function FileProcess() {
     );
   }
 
+  const resetForm = () => {
+    setNewProcess({ name: '', projectId: '', fileName: '', totalRows: 0, uploadedFile: null });
+
+    // Clear file input
+    const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
