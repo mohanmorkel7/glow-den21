@@ -513,7 +513,7 @@ export default function RequestFiles() {
                 Work History
               </CardTitle>
               <CardDescription>
-                View your completed file processing history
+                View and manage your file processing history. You can change status if needed.
               </CardDescription>
             </CardHeader>
             <CardContent>
