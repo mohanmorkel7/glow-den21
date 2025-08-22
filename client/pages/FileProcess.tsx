@@ -203,6 +203,13 @@ export default function FileProcess() {
     
     setFileProcesses([process, ...fileProcesses]);
     setNewProcess({ name: '', projectId: '', fileName: '', totalRows: 0, uploadedFile: null });
+
+    // Clear file input
+    const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+
     setIsCreateDialogOpen(false);
   };
 
