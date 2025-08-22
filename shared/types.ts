@@ -54,6 +54,25 @@ export interface ChangePasswordRequest {
 // ===== PROJECT TYPES =====
 export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed';
 export type ProjectPriority = 'low' | 'medium' | 'high';
+export type ProjectType = 'monthly' | 'weekly' | 'both';
+
+export interface FileTargets {
+  monthly?: number;
+  weekly?: number;
+  dailyCapacity: number;
+}
+
+export interface FileCounts {
+  monthlyCompleted: number;
+  weeklyCompleted: number;
+  dailyCompleted: number;
+  totalCompleted: number;
+}
+
+export interface ProjectRates {
+  ratePerFile: number; // USD per file
+  currency: 'USD';
+}
 
 export interface Project {
   id: string;
@@ -61,11 +80,20 @@ export interface Project {
   description?: string;
   status: ProjectStatus;
   priority: ProjectPriority;
+  type: ProjectType;
   startDate?: string;
   endDate?: string;
+
+  // File-based tracking
+  fileTargets: FileTargets;
+  fileCounts: FileCounts;
+  rates: ProjectRates;
+
+  // Legacy counts for compatibility
   targetCount: number;
   currentCount: number;
   progressPercentage: number;
+
   assignedUsersCount: number;
   createdBy: {
     id: string;
@@ -84,10 +112,14 @@ export interface CreateProjectRequest {
   description?: string;
   status: ProjectStatus;
   priority: ProjectPriority;
+  type: ProjectType;
   startDate?: string;
   endDate?: string;
-  targetCount: number;
+  fileTargets: FileTargets;
+  rates: ProjectRates;
   assignedUsers: string[];
+  // Legacy for compatibility
+  targetCount?: number;
 }
 
 export interface UpdateProjectRequest {
@@ -95,10 +127,14 @@ export interface UpdateProjectRequest {
   description?: string;
   status?: ProjectStatus;
   priority?: ProjectPriority;
+  type?: ProjectType;
   startDate?: string;
   endDate?: string;
-  targetCount?: number;
+  fileTargets?: FileTargets;
+  rates?: ProjectRates;
   assignedUsers?: string[];
+  // Legacy for compatibility
+  targetCount?: number;
 }
 
 export interface ProjectAssignmentRequest {
@@ -116,11 +152,21 @@ export interface DailyCount {
   projectId: string;
   projectName: string;
   date: string;
+
+  // File-based counts
+  targetFileCount: number;
+  submittedFileCount: number;
+  completedFileCount: number;
+  balanceFileCount: number;
+
+  // Legacy counts for compatibility
   targetCount: number;
   submittedCount: number;
+
   status: DailyCountStatus;
   notes?: string;
   submittedAt?: string;
+  autoSubmittedAt?: string; // For automatic daily updates
   approvedBy?: {
     id: string;
     name: string;
@@ -132,13 +178,19 @@ export interface DailyCount {
 export interface CreateDailyCountRequest {
   projectId: string;
   date: string;
-  submittedCount: number;
+  submittedFileCount: number;
+  completedFileCount: number;
   notes?: string;
+  // Legacy for compatibility
+  submittedCount?: number;
 }
 
 export interface UpdateDailyCountRequest {
-  submittedCount?: number;
+  submittedFileCount?: number;
+  completedFileCount?: number;
   notes?: string;
+  // Legacy for compatibility
+  submittedCount?: number;
 }
 
 export interface ApproveDailyCountRequest {
@@ -150,11 +202,16 @@ export interface RejectDailyCountRequest {
 }
 
 export interface DailyCountStatistics {
-  totalTarget: number;
-  totalSubmitted: number;
+  totalTargetFiles: number;
+  totalSubmittedFiles: number;
+  totalCompletedFiles: number;
+  totalBalanceFiles: number;
   pendingCount: number;
   approvedCount: number;
   rejectedCount: number;
+  // Legacy for compatibility
+  totalTarget: number;
+  totalSubmitted: number;
 }
 
 // ===== NOTIFICATION TYPES =====
@@ -261,6 +318,12 @@ export interface CompanySettings {
     start: string;
     end: string;
   };
+  // Daily update configuration
+  dailyUpdateTime: string; // HH:MM format (e.g., '20:00' for 8 PM)
+  dailyUpdateTimezone: string; // e.g., 'Asia/Kolkata'
+  autoUpdateEnabled: boolean;
+  // Currency conversion
+  usdToInrRate: number;
 }
 
 export interface SystemSettings {
@@ -504,6 +567,59 @@ export interface ActivityLog {
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;
+}
+
+// ===== BILLING TYPES =====
+export interface ProjectBilling {
+  projectId: string;
+  projectName: string;
+  month: string; // YYYY-MM format
+  filesCompleted: number;
+  ratePerFile: number;
+  amountUSD: number;
+  amountINR: number;
+  conversionRate: number;
+  status: 'draft' | 'finalized' | 'paid';
+  createdAt: string;
+}
+
+export interface MonthlyBillingSummary {
+  month: string;
+  totalFilesCompleted: number;
+  totalAmountUSD: number;
+  totalAmountINR: number;
+  conversionRate: number;
+  projectsCount: number;
+  projects: ProjectBilling[];
+}
+
+export interface BillingExportRequest {
+  month?: string;
+  projectId?: string;
+  format: 'csv' | 'excel' | 'pdf';
+  currency: 'USD' | 'INR' | 'both';
+}
+
+// ===== CHART DATA TYPES =====
+export interface ChartDataPoint {
+  label: string;
+  value: number;
+  date?: string;
+}
+
+export interface ProductivityChartData {
+  daily: ChartDataPoint[];
+  weekly: ChartDataPoint[];
+  monthly: ChartDataPoint[];
+}
+
+export interface ProjectProgressChart {
+  projectId: string;
+  projectName: string;
+  targetFiles: number;
+  completedFiles: number;
+  dailyProgress: ChartDataPoint[];
+  weeklyProgress: ChartDataPoint[];
 }
 
 // ===== UTILITY TYPES =====
