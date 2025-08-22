@@ -172,11 +172,28 @@ export default function FileProcess() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const fileName = file.name.toLowerCase();
+
+    // Handle Excel files differently since they're binary ZIP archives
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+      console.log('Excel file detected - requires manual row count entry');
+      setNewProcess({
+        ...newProcess,
+        fileName: file.name,
+        totalRows: 0, // Must be entered manually for Excel files
+        uploadedFile: file
+      });
+      return;
+    }
+
+    // For CSV and other text files, attempt to read and count rows
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      if (!text) {
-        // If file can't be read as text, set to 0 and let user enter manually
+
+      if (!text || text.startsWith('PK')) {
+        // If file can't be read as text or is binary, require manual entry
+        console.log('Binary file detected or read failed - requires manual entry');
         setNewProcess({
           ...newProcess,
           fileName: file.name,
@@ -186,27 +203,14 @@ export default function FileProcess() {
         return;
       }
 
-      // Count rows for all file types
-      let rowCount = 0;
-
-      // Split text into lines using different line endings
+      // Count rows for text-based files
       const lines = text.split(/\r?\n/);
-      console.log('File content preview:', text.substring(0, 200));
+      const nonEmptyLines = lines.filter(line => line.trim() !== '');
+      const rowCount = nonEmptyLines.length;
+
+      console.log('File content preview:', text.substring(0, 100));
       console.log('Total lines found:', lines.length);
-
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        // For CSV files, count lines that have content (may or may not have commas)
-        const nonEmptyLines = lines.filter(line => line.trim() !== '');
-        rowCount = nonEmptyLines.length;
-        console.log('CSV non-empty lines:', rowCount);
-      } else {
-        // For other files, count non-empty lines
-        const nonEmptyLines = lines.filter(line => line.trim() !== '');
-        rowCount = nonEmptyLines.length;
-        console.log('Non-empty lines:', rowCount);
-      }
-
-      console.log('Final row count:', rowCount);
+      console.log('Non-empty lines:', rowCount);
 
       setNewProcess({
         ...newProcess,
@@ -217,7 +221,7 @@ export default function FileProcess() {
     };
 
     reader.onerror = () => {
-      // If reading fails, set filename but let user enter count manually
+      console.log('File reading error - requires manual entry');
       setNewProcess({
         ...newProcess,
         fileName: file.name,
@@ -226,7 +230,6 @@ export default function FileProcess() {
       });
     };
 
-    // Try to read the file as text
     reader.readAsText(file, 'UTF-8');
   };
 
