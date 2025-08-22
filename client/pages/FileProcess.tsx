@@ -413,21 +413,6 @@ export default function FileProcess() {
                       />
                     </div>
                   </div>
-                  {newJob.totalFileCount > 0 && (
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <h4 className="font-medium text-green-900 mb-2">Job Value Calculation</h4>
-                      <div className="space-y-1 text-sm text-green-700">
-                        <div className="flex justify-between">
-                          <span>{newJob.totalFileCount.toLocaleString()} files @ $0.008/file:</span>
-                          <span>{formatCurrency(newJob.totalFileCount * 0.008)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>INR Equivalent (₹83/USD):</span>
-                          <span>₹{(newJob.totalFileCount * 0.008 * 83).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </TabsContent>
                 
                 <TabsContent value="assignment" className="space-y-4">
