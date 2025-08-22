@@ -82,6 +82,96 @@ interface Project {
   status: 'active' | 'completed' | 'on_hold';
 }
 
+interface FileProcessingJob {
+  id: string;
+  name: string;
+  type: 'mo_monthly' | 'mo_weekly';
+  totalFileCount: number;
+  completedFileCount: number;
+  ratePerFile: number;
+  assignmentType: 'automation' | 'manual';
+  assignedUsers: string[];
+  status: 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
+  targetEndDate: string;
+  dailyTarget?: number;
+}
+
+interface JobDailyUpdate {
+  id: string;
+  jobId: string;
+  jobName: string;
+  userId?: string;
+  userName?: string;
+  date: string;
+  targetFiles: number;
+  completedFiles: number;
+  balanceFiles: number;
+  notes?: string;
+  submittedAt?: string;
+  status: 'pending' | 'submitted' | 'approved' | 'rejected';
+  assignmentType: 'automation' | 'manual';
+}
+
+const mockFileProcessingJobs: FileProcessingJob[] = [
+  {
+    id: 'job1',
+    name: 'MO Monthly Batch #2024-001',
+    type: 'mo_monthly',
+    totalFileCount: 300000,
+    completedFileCount: 187500,
+    ratePerFile: 0.008,
+    assignmentType: 'manual',
+    assignedUsers: ['3', '4', '6'],
+    status: 'active',
+    targetEndDate: '2024-01-31',
+    dailyTarget: 20000
+  },
+  {
+    id: 'job2',
+    name: 'MO Weekly Batch #2024-W03',
+    type: 'mo_weekly',
+    totalFileCount: 75000,
+    completedFileCount: 68200,
+    ratePerFile: 0.008,
+    assignmentType: 'automation',
+    assignedUsers: [],
+    status: 'active',
+    targetEndDate: '2024-01-21',
+    dailyTarget: 12000
+  }
+];
+
+const mockJobDailyUpdates: JobDailyUpdate[] = [
+  {
+    id: 'update1',
+    jobId: 'job1',
+    jobName: 'MO Monthly Batch #2024-001',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    date: '2024-01-15',
+    targetFiles: 20000,
+    completedFiles: 18500,
+    balanceFiles: 1500,
+    notes: 'Good progress on monthly batch',
+    submittedAt: '2024-01-15T20:00:00Z',
+    status: 'submitted',
+    assignmentType: 'manual'
+  },
+  {
+    id: 'update2',
+    jobId: 'job2',
+    jobName: 'MO Weekly Batch #2024-W03',
+    date: '2024-01-15',
+    targetFiles: 12000,
+    completedFiles: 12000,
+    balanceFiles: 0,
+    notes: 'Automated processing completed successfully',
+    submittedAt: '2024-01-15T20:00:00Z',
+    status: 'approved',
+    assignmentType: 'automation'
+  }
+];
+
 const mockProjects: Project[] = [
   { 
     id: '1', 
@@ -210,10 +300,12 @@ const mockDailyCounts: DailyCount[] = [
 export default function DailyCounts() {
   const { user: currentUser } = useAuth();
   const [dailyCounts, setDailyCounts] = useState<DailyCount[]>(mockDailyCounts);
+  const [jobDailyUpdates, setJobDailyUpdates] = useState<JobDailyUpdate[]>(mockJobDailyUpdates);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProject, setSelectedProject] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isJobSubmitDialogOpen, setIsJobSubmitDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: addDays(new Date(), -7),
@@ -223,6 +315,11 @@ export default function DailyCounts() {
     projectId: '',
     submittedFileCount: 0,
     completedFileCount: 0,
+    notes: ''
+  });
+  const [newJobSubmission, setNewJobSubmission] = useState({
+    jobId: '',
+    completedFiles: 0,
     notes: ''
   });
   const [currentTime, setCurrentTime] = useState(new Date());
