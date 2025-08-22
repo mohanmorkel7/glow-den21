@@ -942,7 +942,15 @@ export default function FileProcess() {
         )}
       </div>
 
-      {/* Stats Cards */}
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="processing">Job Processing</TabsTrigger>
+          <TabsTrigger value="allocation">File Allocation</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="processing" className="space-y-6">
+          {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1371,6 +1379,12 @@ export default function FileProcess() {
         </CardContent>
       </Card>
       )}
+        </TabsContent>
+
+        <TabsContent value="allocation" className="space-y-6">
+          <FileAllocationTab />
+        </TabsContent>
+      </Tabs>
 
       {/* File Count Update Dialog */}
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
