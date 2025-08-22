@@ -524,7 +524,7 @@ export default function RequestFiles() {
                     <TableHead>Files Processed</TableHead>
                     <TableHead>Date Range</TableHead>
                     <TableHead>Completed Date</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Status Control</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
