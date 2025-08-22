@@ -1,0 +1,511 @@
+import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  FileText,
+  Plus,
+  Download,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  History,
+  RefreshCw
+} from 'lucide-react';
+import { format } from 'date-fns';
+
+interface FileRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  requestedCount: number;
+  requestedDate: string;
+  status: 'pending' | 'assigned' | 'received' | 'in_progress' | 'completed';
+  fileProcessId?: string;
+  fileProcessName?: string;
+  assignedBy?: string;
+  assignedDate?: string;
+  downloadLink?: string;
+  completedDate?: string;
+  startRow?: number;
+  endRow?: number;
+}
+
+interface DailyStats {
+  date: string;
+  completedCount: number;
+  totalAssigned: number;
+}
+
+const mockFileRequests: FileRequest[] = [
+  {
+    id: '1',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    requestedCount: 1000,
+    requestedDate: '2024-01-20T10:30:00Z',
+    status: 'in_progress',
+    fileProcessId: 'fp_1',
+    fileProcessName: 'Aug-2025-File',
+    assignedBy: 'John Smith',
+    assignedDate: '2024-01-20T11:00:00Z',
+    downloadLink: '/downloads/sarah_johnson_aug_2025_1001_2000.xlsx',
+    startRow: 1001,
+    endRow: 2000
+  },
+  {
+    id: '2',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    requestedCount: 800,
+    requestedDate: '2024-01-19T14:20:00Z',
+    status: 'completed',
+    fileProcessId: 'fp_1',
+    fileProcessName: 'Aug-2025-File',
+    assignedBy: 'Emily Wilson',
+    assignedDate: '2024-01-19T15:00:00Z',
+    downloadLink: '/downloads/sarah_johnson_aug_2025_1_800.xlsx',
+    completedDate: '2024-01-19T18:30:00Z',
+    startRow: 1,
+    endRow: 800
+  }
+];
+
+const mockDailyStats: DailyStats[] = [
+  { date: '2024-01-20', completedCount: 1000, totalAssigned: 1000 },
+  { date: '2024-01-19', completedCount: 800, totalAssigned: 800 },
+  { date: '2024-01-18', completedCount: 1200, totalAssigned: 1200 }
+];
+
+export default function RequestFiles() {
+  const { user: currentUser } = useAuth();
+  const [fileRequests, setFileRequests] = useState<FileRequest[]>(mockFileRequests);
+  const [dailyStats, setDailyStats] = useState<DailyStats[]>(mockDailyStats);
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
+  const [requestCount, setRequestCount] = useState(500);
+  const [activeTab, setActiveTab] = useState('current');
+
+  // Only allow users to access this page
+  if (currentUser?.role !== 'user') {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-red-600">Access Denied</h3>
+          <p className="text-sm text-muted-foreground">This page is only accessible to regular users.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getCurrentUserRequests = () => {
+    return fileRequests.filter(request => request.userId === currentUser.id);
+  };
+
+  const getTodayStats = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayStats = dailyStats.find(stat => stat.date === today);
+    return todayStats || { date: today, completedCount: 0, totalAssigned: 0 };
+  };
+
+  const handleFileRequest = () => {
+    const newRequest: FileRequest = {
+      id: (fileRequests.length + 1).toString(),
+      userId: currentUser.id,
+      userName: currentUser.name,
+      requestedCount: requestCount,
+      requestedDate: new Date().toISOString(),
+      status: 'pending'
+    };
+    
+    setFileRequests([newRequest, ...fileRequests]);
+    setIsRequestDialogOpen(false);
+    setRequestCount(500);
+  };
+
+  const handleDownload = (requestId: string) => {
+    setFileRequests(fileRequests.map(request => 
+      request.id === requestId && request.status === 'assigned'
+        ? { ...request, status: 'received' }
+        : request
+    ));
+  };
+
+  const handleStatusUpdate = (requestId: string, newStatus: 'in_progress' | 'completed') => {
+    setFileRequests(fileRequests.map(request => 
+      request.id === requestId
+        ? { 
+            ...request, 
+            status: newStatus,
+            completedDate: newStatus === 'completed' ? new Date().toISOString() : undefined
+          }
+        : request
+    ));
+
+    if (newStatus === 'completed') {
+      const request = fileRequests.find(r => r.id === requestId);
+      if (request) {
+        // Update daily stats
+        const today = new Date().toISOString().split('T')[0];
+        setDailyStats(stats => {
+          const existingStats = stats.find(s => s.date === today);
+          if (existingStats) {
+            return stats.map(s => 
+              s.date === today 
+                ? { ...s, completedCount: s.completedCount + request.requestedCount }
+                : s
+            );
+          } else {
+            return [{
+              date: today,
+              completedCount: request.requestedCount,
+              totalAssigned: request.requestedCount
+            }, ...stats];
+          }
+        });
+      }
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'assigned': return 'bg-blue-100 text-blue-800';
+      case 'received': return 'bg-purple-100 text-purple-800';
+      case 'in_progress': return 'bg-orange-100 text-orange-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const currentRequests = getCurrentUserRequests();
+  const pendingRequests = currentRequests.filter(r => ['pending', 'assigned', 'received', 'in_progress'].includes(r.status));
+  const completedRequests = currentRequests.filter(r => r.status === 'completed');
+  const todayStats = getTodayStats();
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Request Files</h1>
+          <p className="text-muted-foreground mt-1">
+            Request file allocations and track your processing progress.
+          </p>
+        </div>
+        <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Request Files
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Request File Allocation</DialogTitle>
+              <DialogDescription>
+                Request your daily file allocation for processing
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Today's Completed</Label>
+                  <div className="text-2xl font-bold text-green-600">
+                    {todayStats.completedCount.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-muted-foreground">files processed today</p>
+                </div>
+                <div>
+                  <Label>Pending Requests</Label>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {pendingRequests.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground">awaiting processing</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="requestCount">Request Count</Label>
+                <Input
+                  id="requestCount"
+                  type="number"
+                  min="100"
+                  max="2000"
+                  value={requestCount}
+                  onChange={(e) => setRequestCount(parseInt(e.target.value) || 500)}
+                  placeholder="500"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Recommended range: 500-1500 files per request
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRequestDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleFileRequest}>
+                Submit Request
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Daily Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            Today's Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {todayStats.completedCount.toLocaleString()}
+              </div>
+              <div className="text-sm text-green-700">Files Completed Today</div>
+            </div>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {pendingRequests.reduce((sum, req) => sum + req.requestedCount, 0).toLocaleString()}
+              </div>
+              <div className="text-sm text-blue-700">Files In Queue</div>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                {pendingRequests.length}
+              </div>
+              <div className="text-sm text-purple-700">Active Requests</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="current">Current Requests</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="current" className="space-y-6">
+          {/* Active Requests */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Requests</CardTitle>
+              <CardDescription>
+                Track your current file requests and downloads
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendingRequests.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground">No active requests</h3>
+                  <p className="text-sm text-muted-foreground">Request files to get started with your daily processing.</p>
+                  <Button className="mt-4" onClick={() => setIsRequestDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Request Files
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingRequests.map((request) => (
+                    <Card key={request.id} className="border-l-4 border-l-blue-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium">
+                              {request.fileProcessName || 'File Request'}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {request.requestedCount.toLocaleString()} files requested
+                            </p>
+                            {request.startRow && request.endRow && (
+                              <p className="text-xs text-muted-foreground">
+                                Rows: {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusBadgeColor(request.status)}>
+                              {request.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            {request.status === 'assigned' && request.downloadLink && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleDownload(request.id)}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </Button>
+                            )}
+                            {request.status === 'received' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleStatusUpdate(request.id, 'in_progress')}
+                              >
+                                Start Work
+                              </Button>
+                            )}
+                            {request.status === 'in_progress' && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => handleStatusUpdate(request.id, 'completed')}
+                              >
+                                Mark Complete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground">
+                          Requested: {new Date(request.requestedDate).toLocaleString()}
+                          {request.assignedBy && (
+                            <span className="ml-4">
+                              Assigned by: {request.assignedBy}
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Need More Files Option */}
+          {pendingRequests.length === 0 && completedRequests.length > 0 && (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <RefreshCw className="h-8 w-8 text-blue-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">Need More Files?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You've completed your current assignments. Request more files to continue working.
+                </p>
+                <Button onClick={() => setIsRequestDialogOpen(true)}>
+                  Request More Files
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="history" className="space-y-6">
+          {/* Completed History */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Work History
+              </CardTitle>
+              <CardDescription>
+                View your completed file processing history
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>File Process</TableHead>
+                    <TableHead>Files Processed</TableHead>
+                    <TableHead>Date Range</TableHead>
+                    <TableHead>Completed Date</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {completedRequests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{request.fileProcessName || 'File Request'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Assigned by: {request.assignedBy}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{request.requestedCount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        {request.startRow && request.endRow ? (
+                          <span className="text-sm">
+                            {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
+                          </span>
+                        ) : (
+                          'N/A'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {request.completedDate ? (
+                          new Date(request.completedDate).toLocaleDateString()
+                        ) : (
+                          'N/A'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusBadgeColor(request.status)}>
+                          {request.status.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {completedRequests.length === 0 && (
+                <div className="text-center py-8">
+                  <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground">No history yet</h3>
+                  <p className="text-sm text-muted-foreground">Your completed work will appear here.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Daily Stats History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Daily Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {dailyStats.map((stat) => (
+                  <div key={stat.date} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">
+                        {new Date(stat.date).toLocaleDateString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {stat.date === new Date().toISOString().split('T')[0] ? 'Today' : 
+                         stat.date === new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0] ? 'Yesterday' :
+                         format(new Date(stat.date), 'EEEE')}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-green-600">
+                        {stat.completedCount.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground">files completed</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
