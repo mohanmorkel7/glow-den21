@@ -299,6 +299,33 @@ export default function RequestFiles() {
         </Dialog>
       </div>
 
+      {/* New Files Available Alert */}
+      {assignedRequests.length > 0 && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-green-800">
+                  🎉 New files are ready for download!
+                </h3>
+                <p className="text-sm text-green-700">
+                  You have {assignedRequests.length} file{assignedRequests.length > 1 ? 's' : ''} ready for download and processing.
+                </p>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold text-green-600">
+                  {assignedRequests.reduce((sum, req) => sum + (req.assignedCount || req.requestedCount), 0).toLocaleString()}
+                </div>
+                <div className="text-xs text-green-700">files ready</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Daily Stats */}
       <Card>
         <CardHeader>
