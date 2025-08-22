@@ -483,9 +483,6 @@ export default function FileProcess() {
                             <p className="text-sm text-blue-700">
                               <strong>Files per user:</strong> {Math.ceil(newJob.totalFileCount / newJob.assignedUsers.length).toLocaleString()} files
                             </p>
-                            <p className="text-sm text-blue-700">
-                              <strong>Earnings per user:</strong> {formatCurrency((newJob.totalFileCount * 0.008) / newJob.assignedUsers.length)}
-                            </p>
                           </div>
                         )}
                       </div>
