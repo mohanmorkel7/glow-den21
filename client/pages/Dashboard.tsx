@@ -29,6 +29,7 @@ import {
   LineChart,
   Line,
   PieChart as RechartsPieChart,
+  Pie,
   Cell,
   XAxis,
   YAxis,
