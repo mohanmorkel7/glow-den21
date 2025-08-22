@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import ProjectManagement from "./pages/ProjectManagement";
+import DailyCounts from "./pages/DailyCounts";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import { Users, FolderOpen, Target, BarChart3, Shield, Mail, Settings } from "lucide-react";
@@ -89,11 +90,7 @@ function AppRoutes() {
 
         <Route path="/daily-counts" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Daily Count Management"
-              description="Track and manage daily count submissions and targets."
-              icon={Target}
-            />
+            <DailyCounts />
           </ProtectedRoute>
         } />
 
