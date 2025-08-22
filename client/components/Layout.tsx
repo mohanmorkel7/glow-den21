@@ -206,7 +206,7 @@ export default function Layout({ children }: LayoutProps) {
               Notifications
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+            <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </DropdownMenuItem>
