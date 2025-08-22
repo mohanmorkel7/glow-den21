@@ -13,6 +13,9 @@ import UserManagement from "./pages/UserManagement";
 import ProjectManagement from "./pages/ProjectManagement";
 import DailyCounts from "./pages/DailyCounts";
 import Reports from "./pages/Reports";
+import Permissions from "./pages/Permissions";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import { Users, FolderOpen, Target, BarChart3, Shield, Mail, Settings } from "lucide-react";
@@ -103,31 +106,19 @@ function AppRoutes() {
 
         <Route path="/permissions" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Permissions Management"
-              description="Configure role-based access control and permissions."
-              icon={Shield}
-            />
+            <Permissions />
           </ProtectedRoute>
         } />
 
         <Route path="/notifications" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Notifications"
-              description="Manage email alerts and in-app notifications."
-              icon={Mail}
-            />
+            <Notifications />
           </ProtectedRoute>
         } />
 
         <Route path="/settings" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Settings"
-              description="Configure application settings and preferences."
-              icon={Settings}
-            />
+            <Settings />
           </ProtectedRoute>
         } />
 
