@@ -243,6 +243,7 @@ export default function RequestFiles() {
   const currentRequests = getCurrentUserRequests();
   const pendingRequests = currentRequests.filter(r => ['pending', 'assigned', 'in_progress'].includes(r.status));
   const completedRequests = currentRequests.filter(r => r.status === 'completed');
+  const allHistoryRequests = currentRequests.filter(r => ['completed', 'in_progress'].includes(r.status));
   const assignedRequests = currentRequests.filter(r => r.status === 'assigned');
   const todayStats = getTodayStats();
 
