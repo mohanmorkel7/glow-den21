@@ -126,12 +126,14 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   if (!user) return null;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+    setShowLogoutDialog(false);
   };
 
   const filteredNavItems = navigationItems.filter(item => 
