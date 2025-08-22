@@ -19,6 +19,7 @@ import Reports from "./pages/Reports";
 import Permissions from "./pages/Permissions";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import { Users, FolderOpen, Target, BarChart3, Shield, Mail } from "lucide-react";
