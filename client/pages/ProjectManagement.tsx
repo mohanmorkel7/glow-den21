@@ -601,13 +601,13 @@ export default function ProjectManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1 text-sm">
-                        {project.fileTargets.monthly && (
+                        {project.fileTargets?.monthly && (
                           <div className="flex items-center gap-1">
                             <Target className="h-3 w-3" />
                             Monthly: {project.fileTargets.monthly.toLocaleString()}
                           </div>
                         )}
-                        {project.fileTargets.weekly && (
+                        {project.fileTargets?.weekly && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             Weekly: {project.fileTargets.weekly.toLocaleString()}
