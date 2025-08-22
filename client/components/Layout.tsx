@@ -197,7 +197,12 @@ export default function Layout({ children }: LayoutProps) {
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 z-50">
+          <DropdownMenuContent
+            align="start"
+            side="right"
+            className="w-56 z-[100] bg-popover border shadow-lg"
+            sideOffset={10}
+          >
             <DropdownMenuItem onClick={() => navigate('/profile')}>
               Profile Settings
             </DropdownMenuItem>
