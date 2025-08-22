@@ -590,6 +590,115 @@ function FileAllocationTab() {
         </Card>
       )}
 
+      {/* Task Progress Tracking */}
+      {currentUser?.role === 'user' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>My Active Tasks</CardTitle>
+            <CardDescription>
+              Track progress on your assigned file processing tasks
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {getUserTasks().filter(task => task.status !== 'completed').map(task => {
+                const progress = task.completedCount ? (task.completedCount / task.recordCount) * 100 : 0;
+                const isOverdue = new Date() > new Date(task.dueDate);
+
+                return (
+                  <Card key={task.id} className={`border-l-4 ${
+                    isOverdue ? 'border-l-red-500' : 'border-l-blue-500'
+                  }`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium">{task.fileName}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {task.recordCount.toLocaleString()} records assigned
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const completed = prompt(`Enter completed count (max ${task.recordCount}):`, task.completedCount?.toString() || '0');
+                              if (completed && parseInt(completed) >= 0 && parseInt(completed) <= task.recordCount) {
+                                const completedCount = parseInt(completed);
+                                setFileTasks(fileTasks.map(t =>
+                                  t.id === task.id
+                                    ? {
+                                        ...t,
+                                        completedCount,
+                                        status: completedCount >= task.recordCount ? 'completed' : 'in_progress',
+                                        completedDate: completedCount >= task.recordCount ? new Date().toISOString() : undefined
+                                      }
+                                    : t
+                                ));
+
+                                // Update request status if task is completed
+                                if (completedCount >= task.recordCount) {
+                                  setUserRequests(userRequests.map(req =>
+                                    req.id === task.requestId
+                                      ? { ...req, status: 'completed', completedDate: new Date().toISOString() }
+                                      : req
+                                  ));
+                                }
+                              }
+                            }}
+                          >
+                            Update Progress
+                          </Button>
+                          {task.status === 'completed' && (
+                            <Badge className="bg-green-100 text-green-800">
+                              Completed
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4 mb-3">
+                        <div>
+                          <div className="text-xs text-muted-foreground">Progress</div>
+                          <div className="font-medium">{progress.toFixed(1)}%</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Completed</div>
+                          <div className="font-medium text-green-600">{task.completedCount || 0}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground">Due Date</div>
+                          <div className={`font-medium ${isOverdue ? 'text-red-600' : 'text-muted-foreground'}`}>
+                            {new Date(task.dueDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Progress value={progress} className="h-2" />
+
+                      {isOverdue && task.status !== 'completed' && (
+                        <div className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Task is overdue
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+
+              {getUserTasks().filter(task => task.status !== 'completed').length === 0 && (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground">No active tasks</h3>
+                  <p className="text-sm text-muted-foreground">Request file allocation to get started.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* My Requests & Tasks */}
       <Card>
         <CardHeader>
