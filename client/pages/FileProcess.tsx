@@ -192,7 +192,7 @@ export default function FileProcess() {
       projectName: mockProjects.find(p => p.id === newProcess.projectId)?.name || 'Unknown Project',
       fileName: newProcess.fileName,
       totalRows: newProcess.totalRows,
-      headerRows: newProcess.headerRows,
+      headerRows: 0,
       processedRows: 0,
       availableRows: availableRows,
       uploadDate: new Date().toISOString(),
