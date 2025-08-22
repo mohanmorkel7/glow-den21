@@ -272,8 +272,8 @@ export default function FileProcess() {
     const startRow = process.processedRows + 1;
     const endRow = process.processedRows + assignedCount;
 
-    // Generate CSV file for the user
-    const downloadLink = generateCSVFile(process, startRow, endRow, request.userName);
+    // Generate download link for the user (no auto-download)
+    const downloadLink = generateDownloadLink(process, startRow, endRow, request.userName);
 
     // Update request with download link and assignment details
     setFileRequests(fileRequests.map(r =>
