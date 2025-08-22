@@ -336,8 +336,8 @@ export default function ProjectManagement() {
   };
 
   const calculateEarnings = (project: Project) => {
-    const totalCompleted = project.fileCounts.totalCompleted;
-    const ratePerFile = project.rates.ratePerFile;
+    const totalCompleted = project.fileCounts?.totalCompleted || 0;
+    const ratePerFile = project.rates?.ratePerFile || 0;
     const usdAmount = totalCompleted * ratePerFile;
     const inrAmount = usdAmount * 83; // Assuming 1 USD = 83 INR
     return { usd: usdAmount, inr: inrAmount };
