@@ -365,7 +365,10 @@ export default function FileProcess() {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                resetForm();
+                setIsCreateDialogOpen(false);
+              }}>
                 Cancel
               </Button>
               <Button
