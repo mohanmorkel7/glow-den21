@@ -317,6 +317,16 @@ export default function FileProcess() {
     return fileRequests.filter(r => r.fileProcessId === processId);
   };
 
+  const getProcessStatusCounts = (processId: string) => {
+    const requests = getProcessRequests(processId);
+    return {
+      completed: requests.filter(r => r.status === 'completed').length,
+      inProgress: requests.filter(r => r.status === 'in_progress').length,
+      pending: requests.filter(r => r.status === 'pending').length,
+      assigned: requests.filter(r => r.status === 'assigned').length
+    };
+  };
+
   const openProcessOverview = (process: FileProcess) => {
     setSelectedProcess(process);
     setIsOverviewDialogOpen(true);
