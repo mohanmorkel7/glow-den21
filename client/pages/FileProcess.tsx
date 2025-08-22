@@ -172,22 +172,29 @@ export default function FileProcess() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // For Excel files, we can't accurately count rows with JavaScript FileReader
+    // So we'll set a default and let user edit
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      setNewProcess({
+        ...newProcess,
+        fileName: file.name,
+        totalRows: 0, // User must manually enter count for Excel files
+        uploadedFile: file
+      });
+      return;
+    }
+
+    // For CSV/TXT files, attempt to count rows
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
       if (!text) return;
 
-      // Improved row counting logic
-      let rowCount = 0;
-      if (file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
-        // For CSV files, count actual data rows
-        const lines = text.split(/\r?\n/);
-        rowCount = lines.filter(line => line.trim() !== '').length;
-      } else {
-        // For other files, basic line counting
-        const lines = text.split(/\r?\n/);
-        rowCount = lines.filter(line => line.trim() !== '').length;
-      }
+      // Improved row counting for CSV/text files
+      const lines = text.split(/\r?\n/);
+      // Filter out completely empty lines
+      const nonEmptyLines = lines.filter(line => line.trim() !== '');
+      const rowCount = nonEmptyLines.length;
 
       setNewProcess({
         ...newProcess,
@@ -197,7 +204,6 @@ export default function FileProcess() {
       });
     };
 
-    // Use UTF-8 encoding for better compatibility
     reader.readAsText(file, 'UTF-8');
   };
 
