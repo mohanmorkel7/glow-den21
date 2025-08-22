@@ -192,7 +192,7 @@ export default function Layout({ children }: LayoutProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
-                <p className="text-sm font-medium">{user?.name || 'User'}</p>
+                <p className="text-sm font-medium text-foreground">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground capitalize">
                   {user?.role ? user.role.replace('_', ' ') : 'User'}
                 </p>
