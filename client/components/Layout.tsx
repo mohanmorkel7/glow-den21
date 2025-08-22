@@ -63,7 +63,13 @@ const navigationItems: NavItem[] = [
     label: 'File Process',
     path: '/file-process',
     icon: FileText,
-    roles: ['super_admin', 'project_manager', 'user']
+    roles: ['super_admin', 'project_manager']
+  },
+  {
+    label: 'Request Files',
+    path: '/request-files',
+    icon: Upload,
+    roles: ['user']
   },
   {
     label: 'Daily Counts',
