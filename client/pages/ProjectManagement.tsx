@@ -194,6 +194,10 @@ export default function ProjectManagement() {
       monthly: 0,
       weekly: 0,
       dailyCapacity: 0
+    },
+    rates: {
+      ratePerFile: 0,
+      currency: 'USD' as 'USD'
     }
   });
 
