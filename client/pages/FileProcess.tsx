@@ -410,8 +410,10 @@ export default function FileProcess() {
                   />
                   <p className="text-xs text-muted-foreground">
                     {newProcess.totalRows > 0
-                      ? `Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
-                      : 'Could not auto-detect row count. Please enter the total number of data rows manually.'
+                      ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
+                      : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
+                        ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
+                        : '⚠️ Could not auto-detect row count. Please enter the total number of data rows manually.'
                     }
                   </p>
                 </div>
