@@ -727,9 +727,9 @@ export default function FileProcess() {
                 <Progress value={(selectedProcess.processedRows / (selectedProcess.totalRows - selectedProcess.headerRows)) * 100} className="h-3" />
               </div>
 
-              {/* Request History */}
+              {/* Request History with Full Status Tracking */}
               <div>
-                <h4 className="font-medium mb-3">Request History</h4>
+                <h4 className="font-medium mb-3">File Assignment & Status Tracking</h4>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -737,30 +737,81 @@ export default function FileProcess() {
                       <TableHead>Rows</TableHead>
                       <TableHead>Range</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Assigned Date</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {getProcessRequests(selectedProcess.id).map(request => (
                       <TableRow key={request.id}>
-                        <TableCell>{request.userName}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{request.userName}</div>
+                            {request.assignedBy && (
+                              <div className="text-xs text-muted-foreground">
+                                Assigned by: {request.assignedBy}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{(request.assignedCount || request.requestedCount).toLocaleString()}</TableCell>
                         <TableCell>
                           {request.startRow && request.endRow ? (
-                            <span className="text-sm">
+                            <span className="text-sm font-mono">
                               {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
                             </span>
                           ) : (
-                            'N/A'
+                            <span className="text-muted-foreground">Pending</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge className={getRequestStatusBadgeColor(request.status)}>
-                            {request.status.toUpperCase()}
-                          </Badge>
+                          <div className="space-y-1">
+                            <Badge className={getRequestStatusBadgeColor(request.status)}>
+                              {request.status.replace('_', ' ').toUpperCase()}
+                            </Badge>
+                            {request.status === 'assigned' && (
+                              <div className="text-xs text-blue-600">File ready for download</div>
+                            )}
+                            {request.status === 'in_progress' && (
+                              <div className="text-xs text-orange-600">Currently working</div>
+                            )}
+                            {request.status === 'completed' && (
+                              <div className="text-xs text-green-600">Work completed</div>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {new Date(request.assignedDate || request.requestedDate).toLocaleDateString()}
+                          <div className="text-sm">
+                            <div>{new Date(request.assignedDate || request.requestedDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {new Date(request.assignedDate || request.requestedDate).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {request.downloadLink && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = request.downloadLink || '';
+                                  link.download = request.downloadLink?.split('/').pop() || 'file.csv';
+                                  link.click();
+                                }}
+                              >
+                                <Download className="h-3 w-3 mr-1" />
+                                View File
+                              </Button>
+                            )}
+                            {request.status === 'completed' && (
+                              <Badge variant="outline" className="text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Done
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
