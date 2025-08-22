@@ -402,9 +402,9 @@ export default function FileProcess() {
                     min="1"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {newProcess.fileName?.endsWith('.xlsx') || newProcess.fileName?.endsWith('.xls')
-                      ? 'Excel files require manual row count entry. Please enter the total number of data rows.'
-                      : `Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
+                    {newProcess.totalRows > 0
+                      ? `Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
+                      : 'Could not auto-detect row count. Please enter the total number of data rows manually.'
                     }
                   </p>
                 </div>
