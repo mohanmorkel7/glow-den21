@@ -41,7 +41,29 @@ interface ProjectBilling {
   createdAt: string;
   finalizedAt?: string;
   paidAt?: string;
+  type: 'project';
 }
+
+interface FileProcessingJobBilling {
+  jobId: string;
+  jobName: string;
+  jobType: 'mo_monthly' | 'mo_weekly';
+  month: string;
+  filesCompleted: number;
+  totalFiles: number;
+  ratePerFile: number;
+  amountUSD: number;
+  amountINR: number;
+  conversionRate: number;
+  status: 'draft' | 'finalized' | 'paid';
+  assignmentType: 'automation' | 'manual';
+  createdAt: string;
+  finalizedAt?: string;
+  paidAt?: string;
+  type: 'job';
+}
+
+type BillingItem = ProjectBilling | FileProcessingJobBilling;
 
 interface MonthlyBillingSummary {
   month: string;
@@ -49,18 +71,74 @@ interface MonthlyBillingSummary {
   totalAmountUSD: number;
   totalAmountINR: number;
   conversionRate: number;
-  projectsCount: number;
+  itemsCount: number;
   projects: ProjectBilling[];
+  jobs: FileProcessingJobBilling[];
+  allItems: BillingItem[];
 }
+
+const mockJobBillingData: FileProcessingJobBilling[] = [
+  {
+    jobId: 'job1',
+    jobName: 'MO Monthly Batch #2024-001',
+    jobType: 'mo_monthly',
+    month: '2024-01',
+    filesCompleted: 187500,
+    totalFiles: 300000,
+    ratePerFile: 0.008,
+    amountUSD: 1500.00,
+    amountINR: 124500.00,
+    conversionRate: 83.00,
+    status: 'finalized',
+    assignmentType: 'manual',
+    createdAt: '2024-01-31T18:00:00Z',
+    finalizedAt: '2024-02-01T10:00:00Z',
+    type: 'job'
+  },
+  {
+    jobId: 'job2',
+    jobName: 'MO Weekly Batch #2024-W03',
+    jobType: 'mo_weekly',
+    month: '2024-01',
+    filesCompleted: 75000,
+    totalFiles: 75000,
+    ratePerFile: 0.008,
+    amountUSD: 600.00,
+    amountINR: 49800.00,
+    conversionRate: 83.00,
+    status: 'paid',
+    assignmentType: 'automation',
+    createdAt: '2024-01-21T18:00:00Z',
+    finalizedAt: '2024-01-22T10:00:00Z',
+    paidAt: '2024-01-25T14:30:00Z',
+    type: 'job'
+  },
+  {
+    jobId: 'job3',
+    jobName: 'MO Monthly Batch #2024-002',
+    jobType: 'mo_monthly',
+    month: '2024-02',
+    filesCompleted: 125000,
+    totalFiles: 250000,
+    ratePerFile: 0.008,
+    amountUSD: 1000.00,
+    amountINR: 83000.00,
+    conversionRate: 83.00,
+    status: 'draft',
+    assignmentType: 'manual',
+    createdAt: '2024-02-15T18:00:00Z',
+    type: 'job'
+  }
+];
 
 const mockBillingData: MonthlyBillingSummary[] = [
   {
     month: '2024-01',
-    totalFilesCompleted: 863500,
-    totalAmountUSD: 60845.00,
-    totalAmountINR: 5050135.00,
+    totalFilesCompleted: 1126000, // 863500 (projects) + 262500 (jobs)
+    totalAmountUSD: 62945.00, // 60845.00 (projects) + 2100.00 (jobs)
+    totalAmountINR: 5224435.00,
     conversionRate: 83.00,
-    projectsCount: 3,
+    itemsCount: 5, // 3 projects + 2 jobs
     projects: [
       {
         projectId: '1',
