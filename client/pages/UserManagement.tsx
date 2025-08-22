@@ -107,7 +107,7 @@ export default function UserManagement() {
     name: '',
     email: '',
     phone: '',
-    role: 'user' as const,
+    role: 'user' as 'super_admin' | 'project_manager' | 'user',
     password: ''
   });
 
