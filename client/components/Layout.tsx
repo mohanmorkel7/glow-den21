@@ -25,7 +25,8 @@ import {
   Target,
   Shield,
   Mail,
-  Receipt
+  Receipt,
+  FileText
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -57,6 +58,12 @@ const navigationItems: NavItem[] = [
     path: '/projects',
     icon: FolderOpen,
     roles: ['super_admin', 'project_manager']
+  },
+  {
+    label: 'File Process',
+    path: '/file-process',
+    icon: FileText,
+    roles: ['super_admin', 'project_manager', 'user']
   },
   {
     label: 'Daily Counts',
