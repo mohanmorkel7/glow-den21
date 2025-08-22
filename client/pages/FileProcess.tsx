@@ -386,6 +386,9 @@ export default function FileProcess() {
                   <p className="text-sm text-blue-700">
                     <strong>Available for processing:</strong> {newProcess.totalRows.toLocaleString()} rows
                   </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    This will be the total number of data rows available for user allocation.
+                  </p>
                 </div>
               )}
             </div>
