@@ -128,8 +128,8 @@ export default function ProjectManagement() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    status: 'planning' as const,
-    priority: 'medium' as const,
+    status: 'planning' as 'planning' | 'active' | 'on_hold' | 'completed',
+    priority: 'medium' as 'low' | 'medium' | 'high',
     startDate: '',
     endDate: '',
     targetCount: 0,
