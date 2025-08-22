@@ -541,6 +541,53 @@ export default function FileProcess() {
         </Card>
       </div>
 
+      {/* File Status Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-blue-500" />
+            File Assignment Summary
+          </CardTitle>
+          <CardDescription>
+            Overview of all file assignments across all processes
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center p-3 bg-yellow-50 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">
+                {fileRequests.filter(r => r.status === 'pending').length}
+              </div>
+              <div className="text-xs text-yellow-700">Pending Approval</div>
+            </div>
+            <div className="text-center p-3 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {fileRequests.filter(r => r.status === 'assigned').length}
+              </div>
+              <div className="text-xs text-blue-700">Files Ready</div>
+            </div>
+            <div className="text-center p-3 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">
+                {fileRequests.filter(r => r.status === 'received').length}
+              </div>
+              <div className="text-xs text-purple-700">Downloaded</div>
+            </div>
+            <div className="text-center p-3 bg-orange-50 rounded-lg">
+              <div className="text-2xl font-bold text-orange-600">
+                {fileRequests.filter(r => r.status === 'in_progress').length}
+              </div>
+              <div className="text-xs text-orange-700">In Progress</div>
+            </div>
+            <div className="text-center p-3 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {fileRequests.filter(r => r.status === 'completed').length}
+              </div>
+              <div className="text-xs text-green-700">Completed</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Pending Requests */}
       {getPendingRequests().length > 0 && (
         <Card>
