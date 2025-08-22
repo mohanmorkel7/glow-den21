@@ -189,20 +189,24 @@ export default function FileProcess() {
       // Count rows for all file types
       let rowCount = 0;
 
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        // For CSV files, split by lines and count non-empty rows
-        const lines = text.split(/\r?\n/);
-        rowCount = lines.filter(line => line.trim() !== '' && line.includes(',')).length;
+      // Split text into lines using different line endings
+      const lines = text.split(/\r?\n/);
+      console.log('File content preview:', text.substring(0, 200));
+      console.log('Total lines found:', lines.length);
 
-        // If no commas found, treat as simple text file
-        if (rowCount === 0) {
-          rowCount = lines.filter(line => line.trim() !== '').length;
-        }
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        // For CSV files, count lines that have content (may or may not have commas)
+        const nonEmptyLines = lines.filter(line => line.trim() !== '');
+        rowCount = nonEmptyLines.length;
+        console.log('CSV non-empty lines:', rowCount);
       } else {
-        // For other files (Excel read as text, TXT, etc.), count non-empty lines
-        const lines = text.split(/\r?\n/);
-        rowCount = lines.filter(line => line.trim() !== '').length;
+        // For other files, count non-empty lines
+        const nonEmptyLines = lines.filter(line => line.trim() !== '');
+        rowCount = nonEmptyLines.length;
+        console.log('Non-empty lines:', rowCount);
       }
+
+      console.log('Final row count:', rowCount);
 
       setNewProcess({
         ...newProcess,
