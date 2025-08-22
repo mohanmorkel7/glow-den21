@@ -36,16 +36,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Check for existing session on app load
     const token = localStorage.getItem('token');
-    if (token) {
-      // In a real app, validate token with backend
-      // For now, set a mock super admin user
-      setUser({
-        id: '1',
-        email: 'admin@websyntactic.com',
-        name: 'Super Admin',
-        role: 'super_admin',
-        permissions: ['all']
-      });
+    const savedUser = localStorage.getItem('user');
+
+    if (token && savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setUser(user);
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     setIsLoading(false);
   }, []);
