@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import ProjectManagement from "./pages/ProjectManagement";
+import FileProcess from "./pages/FileProcess";
 import DailyCounts from "./pages/DailyCounts";
 import Billing from "./pages/Billing";
 import Reports from "./pages/Reports";
@@ -90,6 +91,12 @@ function AppRoutes() {
         <Route path="/projects" element={
           <ProtectedRoute>
             <ProjectManagement />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/file-process" element={
+          <ProtectedRoute>
+            <FileProcess />
           </ProtectedRoute>
         } />
 
