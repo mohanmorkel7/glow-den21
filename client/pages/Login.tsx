@@ -60,7 +60,7 @@ export default function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@websyntactic.com"
+                    placeholder="Enter email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
