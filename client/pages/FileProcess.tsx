@@ -223,6 +223,110 @@ const mockUserAssignments: UserJobAssignment[] = [
   }
 ];
 
+const mockFileAllocations: FileAllocation[] = [
+  {
+    id: '1',
+    fileName: 'customer_data_2024_01_20.xlsx',
+    uploadDate: '2024-01-20T09:00:00Z',
+    totalRecords: 300000,
+    recordsPerUser: 800,
+    availableRecords: 276000,
+    allocatedRecords: 24000,
+    status: 'allocating',
+    uploadedBy: {
+      id: '2',
+      name: 'John Smith'
+    }
+  },
+  {
+    id: '2',
+    fileName: 'invoice_processing_2024_01_19.csv',
+    uploadDate: '2024-01-19T08:30:00Z',
+    totalRecords: 300000,
+    recordsPerUser: 600,
+    availableRecords: 0,
+    allocatedRecords: 300000,
+    status: 'allocated',
+    uploadedBy: {
+      id: '5',
+      name: 'Emily Wilson'
+    }
+  }
+];
+
+const mockUserRequests: UserFileRequest[] = [
+  {
+    id: '1',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    allocationId: '1',
+    requestedCount: 800,
+    requestedDate: '2024-01-20T10:30:00Z',
+    status: 'approved',
+    approvedBy: {
+      id: '2',
+      name: 'John Smith'
+    },
+    approvedDate: '2024-01-20T11:00:00Z',
+    downloadLink: '/downloads/sarah_johnson_20-01-2024_set1.xlsx',
+    taskId: 'task_1'
+  },
+  {
+    id: '2',
+    userId: '4',
+    userName: 'Mike Davis',
+    allocationId: '1',
+    requestedCount: 600,
+    requestedDate: '2024-01-20T11:15:00Z',
+    status: 'pending'
+  },
+  {
+    id: '3',
+    userId: '6',
+    userName: 'David Chen',
+    allocationId: '2',
+    requestedCount: 600,
+    requestedDate: '2024-01-19T14:20:00Z',
+    status: 'completed',
+    approvedBy: {
+      id: '5',
+      name: 'Emily Wilson'
+    },
+    approvedDate: '2024-01-19T15:00:00Z',
+    downloadLink: '/downloads/david_chen_19-01-2024_set1.xlsx',
+    taskId: 'task_2',
+    completedDate: '2024-01-19T18:30:00Z'
+  }
+];
+
+const mockFileTasks: FileTask[] = [
+  {
+    id: 'task_1',
+    requestId: '1',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    fileName: 'sarah_johnson_20-01-2024_set1.xlsx',
+    recordCount: 800,
+    assignedDate: '2024-01-20T11:00:00Z',
+    dueDate: '2024-01-21T18:00:00Z',
+    status: 'in_progress',
+    completedCount: 450
+  },
+  {
+    id: 'task_2',
+    requestId: '3',
+    userId: '6',
+    userName: 'David Chen',
+    fileName: 'david_chen_19-01-2024_set1.xlsx',
+    recordCount: 600,
+    assignedDate: '2024-01-19T15:00:00Z',
+    dueDate: '2024-01-20T18:00:00Z',
+    status: 'completed',
+    completedDate: '2024-01-19T18:30:00Z',
+    completedCount: 600
+  }
+];
+
 const mockJobs: FileProcessingJob[] = [
   {
     id: '1',
