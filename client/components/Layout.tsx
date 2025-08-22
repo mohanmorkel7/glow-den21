@@ -182,7 +182,7 @@ export default function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t">
+      <div className="p-4 border-t bg-background">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start gap-3 h-12 hover:bg-accent text-foreground">
