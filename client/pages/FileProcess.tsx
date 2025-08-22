@@ -82,6 +82,22 @@ interface User {
   role: string;
 }
 
+interface UserJobAssignment {
+  userId: string;
+  userName: string;
+  jobId: string;
+  jobName: string;
+  assignedFileCount: number;
+  completedFileCount: number;
+  lastUpdated: string;
+}
+
+interface FileCountUpdate {
+  jobId: string;
+  completedCount: number;
+  notes?: string;
+}
+
 const mockUsers: User[] = [
   { id: '2', name: 'John Smith', email: 'john.smith@websyntactic.com', role: 'project_manager' },
   { id: '3', name: 'Sarah Johnson', email: 'sarah.johnson@websyntactic.com', role: 'user' },
