@@ -532,6 +532,115 @@ function FileAllocationTab() {
 
   return (
     <div className="space-y-6">
+      {/* Analytics Dashboard for Managers */}
+      {canManageAllocations && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Analytics Dashboard
+            </CardTitle>
+            <CardDescription>
+              Track file allocation progress and user performance
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">
+                  {fileAllocations.reduce((sum, alloc) => sum + alloc.totalRecords, 0).toLocaleString()}
+                </div>
+                <div className="text-sm text-blue-700">Total Records</div>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  {fileTasks.filter(task => task.status === 'completed').reduce((sum, task) => sum + task.recordCount, 0).toLocaleString()}
+                </div>
+                <div className="text-sm text-green-700">Completed Records</div>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">
+                  {fileTasks.filter(task => task.status === 'in_progress').length}
+                </div>
+                <div className="text-sm text-orange-700">Active Tasks</div>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">
+                  {new Set(fileTasks.map(task => task.userId)).size}
+                </div>
+                <div className="text-sm text-purple-700">Active Users</div>
+              </div>
+            </div>
+
+            {/* User Performance Table */}
+            <div className="mt-6">
+              <h4 className="font-medium mb-4">User Performance Summary</h4>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Total Assigned</TableHead>
+                    <TableHead>Completed</TableHead>
+                    <TableHead>In Progress</TableHead>
+                    <TableHead>Completion Rate</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockUsers.filter(user => user.role === 'user').map(user => {
+                    const userTasks = fileTasks.filter(task => task.userId === user.id);
+                    const completedTasks = userTasks.filter(task => task.status === 'completed');
+                    const inProgressTasks = userTasks.filter(task => task.status === 'in_progress');
+                    const totalAssigned = userTasks.reduce((sum, task) => sum + task.recordCount, 0);
+                    const totalCompleted = completedTasks.reduce((sum, task) => sum + task.recordCount, 0);
+                    const completionRate = totalAssigned > 0 ? (totalCompleted / totalAssigned) * 100 : 0;
+
+                    return (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{user.name}</div>
+                            <div className="text-xs text-muted-foreground">{user.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{totalAssigned.toLocaleString()}</TableCell>
+                        <TableCell className="text-green-600 font-medium">
+                          {totalCompleted.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-orange-600">
+                          {inProgressTasks.reduce((sum, task) => sum + task.recordCount, 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className={`font-medium ${
+                              completionRate >= 80 ? 'text-green-600' :
+                              completionRate >= 60 ? 'text-orange-600' : 'text-red-600'
+                            }`}>
+                              {completionRate.toFixed(1)}%
+                            </span>
+                            <Progress value={completionRate} className="h-2 w-16" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            inProgressTasks.length > 0 ? 'bg-blue-100 text-blue-800' :
+                            completedTasks.length > 0 ? 'bg-green-100 text-green-800' :
+                            'bg-gray-100 text-gray-800'
+                          }>
+                            {inProgressTasks.length > 0 ? 'Active' :
+                             completedTasks.length > 0 ? 'Available' : 'Idle'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Upload Section for Managers */}
       {canManageAllocations && (
         <Card>
