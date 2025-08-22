@@ -369,9 +369,19 @@ export default function DailyCounts() {
   // Get user's assigned projects
   const userProjects = mockProjects.filter(p => p.isAssigned && p.status === 'active');
 
+  // Get user's assigned jobs
+  const userJobs = mockFileProcessingJobs.filter(job => {
+    if (job.assignmentType === 'automation') return true;
+    return job.status === 'active' && (job.assignedUsers.includes(currentUser?.id || '') || currentUser?.role !== 'user');
+  });
+
   // Get today's submissions for current user
-  const todaySubmissions = dailyCounts.filter(count => 
+  const todaySubmissions = dailyCounts.filter(count =>
     count.date === today && count.userId === currentUser?.id
+  );
+
+  const todayJobSubmissions = jobDailyUpdates.filter(update =>
+    update.date === today && (update.userId === currentUser?.id || update.assignmentType === 'automation')
   );
 
   const handleSubmitCount = () => {
@@ -393,10 +403,33 @@ export default function DailyCounts() {
       notes: newSubmission.notes,
       submittedAt: new Date().toISOString()
     };
-    
+
     setDailyCounts([...dailyCounts, submission]);
     setNewSubmission({ projectId: '', submittedFileCount: 0, completedFileCount: 0, notes: '' });
     setIsSubmitDialogOpen(false);
+  };
+
+  const handleSubmitJobUpdate = () => {
+    const job = mockFileProcessingJobs.find(j => j.id === newJobSubmission.jobId);
+    const submission: JobDailyUpdate = {
+      id: (jobDailyUpdates.length + 1).toString(),
+      jobId: newJobSubmission.jobId,
+      jobName: job?.name || '',
+      userId: job?.assignmentType === 'manual' ? currentUser?.id : undefined,
+      userName: job?.assignmentType === 'manual' ? currentUser?.name : undefined,
+      date: format(selectedDate, 'yyyy-MM-dd'),
+      targetFiles: job?.dailyTarget || 0,
+      completedFiles: newJobSubmission.completedFiles,
+      balanceFiles: (job?.dailyTarget || 0) - newJobSubmission.completedFiles,
+      notes: newJobSubmission.notes,
+      submittedAt: new Date().toISOString(),
+      status: 'submitted',
+      assignmentType: job?.assignmentType || 'manual'
+    };
+
+    setJobDailyUpdates([...jobDailyUpdates, submission]);
+    setNewJobSubmission({ jobId: '', completedFiles: 0, notes: '' });
+    setIsJobSubmitDialogOpen(false);
   };
 
   const handleApproveCount = (countId: string) => {
@@ -435,20 +468,35 @@ export default function DailyCounts() {
 
   const calculateStats = () => {
     const todayCounts = dailyCounts.filter(count => count.date === today);
-    const totalTargetFiles = todayCounts.reduce((sum, count) => sum + count.targetFileCount, 0);
-    const totalSubmittedFiles = todayCounts.reduce((sum, count) => sum + count.submittedFileCount, 0);
-    const totalCompletedFiles = todayCounts.reduce((sum, count) => sum + count.completedFileCount, 0);
-    const totalBalanceFiles = todayCounts.reduce((sum, count) => sum + count.balanceFileCount, 0);
-    const pendingSubmissions = todayCounts.filter(count => count.status === 'pending').length;
-    const approvedToday = todayCounts.filter(count => count.status === 'approved').length;
+    const todayJobUpdates = jobDailyUpdates.filter(update => update.date === today);
 
-    return { 
-      totalTargetFiles, 
-      totalSubmittedFiles, 
+    // Project-based stats
+    const projectTargetFiles = todayCounts.reduce((sum, count) => sum + count.targetFileCount, 0);
+    const projectCompletedFiles = todayCounts.reduce((sum, count) => sum + count.completedFileCount, 0);
+
+    // Job-based stats
+    const jobTargetFiles = todayJobUpdates.reduce((sum, update) => sum + update.targetFiles, 0);
+    const jobCompletedFiles = todayJobUpdates.reduce((sum, update) => sum + update.completedFiles, 0);
+
+    // Combined stats
+    const totalTargetFiles = projectTargetFiles + jobTargetFiles;
+    const totalSubmittedFiles = todayCounts.reduce((sum, count) => sum + count.submittedFileCount, 0);
+    const totalCompletedFiles = projectCompletedFiles + jobCompletedFiles;
+    const totalBalanceFiles = totalTargetFiles - totalCompletedFiles;
+    const pendingSubmissions = todayCounts.filter(count => count.status === 'pending').length +
+                              todayJobUpdates.filter(update => update.status === 'pending').length;
+    const approvedToday = todayCounts.filter(count => count.status === 'approved').length +
+                         todayJobUpdates.filter(update => update.status === 'approved').length;
+
+    return {
+      totalTargetFiles,
+      totalSubmittedFiles,
       totalCompletedFiles,
       totalBalanceFiles,
-      pendingSubmissions, 
-      approvedToday 
+      pendingSubmissions,
+      approvedToday,
+      jobTargetFiles,
+      jobCompletedFiles
     };
   };
 
