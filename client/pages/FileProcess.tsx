@@ -202,7 +202,7 @@ export default function FileProcess() {
     };
     
     setFileProcesses([process, ...fileProcesses]);
-    setNewProcess({ name: '', projectId: '', fileName: '', totalRows: 0, headerRows: 1 });
+    setNewProcess({ name: '', projectId: '', fileName: '', totalRows: 0, uploadedFile: null });
     setIsCreateDialogOpen(false);
   };
 
