@@ -188,8 +188,8 @@ export default function Layout({ children }: LayoutProps) {
               className="w-full justify-start gap-3 h-12 hover:bg-accent text-foreground border border-border rounded-md"
               onClick={() => console.log('Avatar clicked!')}
             >
-              <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
+              <Avatar className="h-10 w-10 bg-primary text-primary-foreground ring-2 ring-primary/20">
+                <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">
                   {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
                 </AvatarFallback>
               </Avatar>
