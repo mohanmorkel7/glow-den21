@@ -883,98 +883,202 @@ export default function DailyCounts() {
         </Alert>
       )}
 
-      {/* Today's Progress for Users */}
+      {/* Today's Progress - Tabbed View */}
       {isUser && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5" />
-              Today's File Processing Progress
+              Today's Work Progress
             </CardTitle>
-            <CardDescription>Your assigned projects and daily file targets</CardDescription>
+            <CardDescription>Your assigned projects and file processing jobs</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {userProjects.map((project) => {
-                const todayCount = todaySubmissions.find(ts => ts.projectId === project.id);
-                const completedFiles = todayCount?.completedFileCount || 0;
-                const targetFiles = project.fileTargets.dailyCapacity;
-                const balanceFiles = targetFiles - completedFiles;
-                const progress = (completedFiles / targetFiles) * 100;
-                const earnings = calculateEarnings(completedFiles, project.rates.ratePerFile);
-                
-                return (
-                  <div key={project.id} className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">{project.name}</h4>
-                        <div className="text-sm text-muted-foreground">
-                          {project.type === 'both' ? 'Monthly + Weekly' : 
-                           project.type === 'monthly' ? 'Monthly Project' : 'Weekly Project'}
+            <Tabs defaultValue="projects" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="projects">General Projects</TabsTrigger>
+                <TabsTrigger value="jobs">File Processing Jobs</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="projects" className="space-y-4">
+                {userProjects.map((project) => {
+                  const todayCount = todaySubmissions.find(ts => ts.projectId === project.id);
+                  const completedFiles = todayCount?.completedFileCount || 0;
+                  const targetFiles = project.fileTargets.dailyCapacity;
+                  const balanceFiles = targetFiles - completedFiles;
+                  const progress = (completedFiles / targetFiles) * 100;
+                  const earnings = calculateEarnings(completedFiles, project.rates.ratePerFile);
+
+                  return (
+                    <div key={project.id} className="p-4 border rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">{project.name}</h4>
+                          <div className="text-sm text-muted-foreground">
+                            {project.type === 'both' ? 'Monthly + Weekly' :
+                             project.type === 'monthly' ? 'Monthly Project' : 'Weekly Project'}
+                          </div>
+                        </div>
+                        {todayCount && (
+                          <Badge className={getStatusBadgeColor(todayCount.status)}>
+                            {todayCount.status.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground">Daily Target</div>
+                          <div className="font-medium">{targetFiles.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Completed</div>
+                          <div className={`font-medium ${getProgressColor(completedFiles, targetFiles)}`}>
+                            {completedFiles.toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Balance</div>
+                          <div className={`font-medium ${balanceFiles > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                            {balanceFiles.toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Earnings</div>
+                          <div className="font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
                         </div>
                       </div>
-                      {todayCount && (
-                        <Badge className={getStatusBadgeColor(todayCount.status)}>
-                          {todayCount.status.toUpperCase()}
-                        </Badge>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Progress</span>
+                          <span className={getProgressColor(completedFiles, targetFiles)}>
+                            {progress.toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress value={progress} className="h-3" />
+                      </div>
+
+                      {!todayCount && (
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setNewSubmission({
+                                ...newSubmission,
+                                projectId: project.id,
+                                completedFileCount: 0,
+                                submittedFileCount: 0
+                              });
+                              setIsSubmitDialogOpen(true);
+                            }}
+                          >
+                            Submit Count
+                          </Button>
+                        </div>
                       )}
                     </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground">Daily Target</div>
-                        <div className="font-medium">{targetFiles.toLocaleString()}</div>
+                  );
+                })}
+              </TabsContent>
+
+              <TabsContent value="jobs" className="space-y-4">
+                {userJobs.map((job) => {
+                  const todayJobUpdate = todayJobSubmissions.find(ts => ts.jobId === job.id);
+                  const completedFiles = todayJobUpdate?.completedFiles || 0;
+                  const targetFiles = job.dailyTarget || 0;
+                  const balanceFiles = targetFiles - completedFiles;
+                  const progress = targetFiles > 0 ? (completedFiles / targetFiles) * 100 : 0;
+                  const earnings = calculateEarnings(completedFiles, job.ratePerFile);
+
+                  return (
+                    <div key={job.id} className="p-4 border rounded-lg space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">{job.name}</h4>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            <span>{job.type === 'mo_monthly' ? 'MO Monthly' : 'MO Weekly'} • ${job.ratePerFile}/file</span>
+                            {job.assignmentType === 'automation' ? (
+                              <Badge variant="outline" className="text-xs">
+                                <Bot className="h-3 w-3 mr-1" />
+                                Auto
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                <Users className="h-3 w-3 mr-1" />
+                                Manual
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        {todayJobUpdate && (
+                          <Badge className={getStatusBadgeColor(todayJobUpdate.status)}>
+                            {todayJobUpdate.status.toUpperCase()}
+                          </Badge>
+                        )}
                       </div>
-                      <div>
-                        <div className="text-muted-foreground">Completed</div>
-                        <div className={`font-medium ${getProgressColor(completedFiles, targetFiles)}`}>
-                          {completedFiles.toLocaleString()}
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground">Daily Target</div>
+                          <div className="font-medium">{targetFiles.toLocaleString()}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Completed</div>
+                          <div className={`font-medium ${getProgressColor(completedFiles, targetFiles)}`}>
+                            {completedFiles.toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Balance</div>
+                          <div className={`font-medium ${balanceFiles > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                            {balanceFiles.toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground">Earnings</div>
+                          <div className="font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
                         </div>
                       </div>
-                      <div>
-                        <div className="text-muted-foreground">Balance</div>
-                        <div className={`font-medium ${balanceFiles > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                          {balanceFiles.toLocaleString()}
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Progress</span>
+                          <span className={getProgressColor(completedFiles, targetFiles)}>
+                            {progress.toFixed(1)}%
+                          </span>
                         </div>
+                        <Progress value={progress} className="h-3" />
                       </div>
-                      <div>
-                        <div className="text-muted-foreground">Earnings</div>
-                        <div className="font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
-                      </div>
+
+                      {!todayJobUpdate && job.assignmentType === 'manual' && (
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setNewJobSubmission({
+                                ...newJobSubmission,
+                                jobId: job.id,
+                                completedFiles: 0
+                              });
+                              setIsJobSubmitDialogOpen(true);
+                            }}
+                          >
+                            Submit Update
+                          </Button>
+                        </div>
+                      )}
+                      {job.assignmentType === 'automation' && (
+                        <div className="text-xs text-blue-600 flex items-center gap-1">
+                          <Zap className="h-3 w-3" />
+                          Automated processing - no manual submission required
+                        </div>
+                      )}
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Progress</span>
-                        <span className={getProgressColor(completedFiles, targetFiles)}>
-                          {progress.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={progress} className="h-3" />
-                    </div>
-                    
-                    {!todayCount && (
-                      <div className="flex justify-end">
-                        <Button 
-                          size="sm" 
-                          onClick={() => {
-                            setNewSubmission({ 
-                              ...newSubmission, 
-                              projectId: project.id,
-                              completedFileCount: 0,
-                              submittedFileCount: 0
-                            });
-                            setIsSubmitDialogOpen(true);
-                          }}
-                        >
-                          Submit Count
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       )}
