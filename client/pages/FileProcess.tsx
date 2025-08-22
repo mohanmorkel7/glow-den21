@@ -1024,13 +1024,14 @@ export default function FileProcess() {
       )}
 
       {/* Jobs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>File Processing Jobs ({filteredJobs.length})</CardTitle>
-          <CardDescription>
-            Manage MO project file processing jobs with progress tracking and assignments.
-          </CardDescription>
-        </CardHeader>
+      {canManageJobs && (
+        <Card>
+          <CardHeader>
+            <CardTitle>File Processing Jobs ({filteredJobs.length})</CardTitle>
+            <CardDescription>
+              Manage MO project file processing jobs with progress tracking and assignments.
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -1186,6 +1187,70 @@ export default function FileProcess() {
           </Table>
         </CardContent>
       </Card>
+      )}
+
+      {/* File Count Update Dialog */}
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update File Count</DialogTitle>
+            <DialogDescription>
+              Update your completed file count for {selectedAssignment?.jobName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Assigned Files</Label>
+                <div className="text-2xl font-bold text-muted-foreground">
+                  {selectedAssignment?.assignedFileCount.toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <Label>Current Completed</Label>
+                <div className="text-2xl font-bold text-green-600">
+                  {selectedAssignment?.completedFileCount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="completedCount">New Completed Count</Label>
+              <Input
+                id="completedCount"
+                type="number"
+                value={fileCountUpdate.completedCount}
+                onChange={(e) => setFileCountUpdate({
+                  ...fileCountUpdate,
+                  completedCount: parseInt(e.target.value) || 0
+                })}
+                min="0"
+                max={selectedAssignment?.assignedFileCount || 0}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                value={fileCountUpdate.notes}
+                onChange={(e) => setFileCountUpdate({
+                  ...fileCountUpdate,
+                  notes: e.target.value
+                })}
+                placeholder="Add any notes about this update..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateFileCount}>
+              Update Count
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
