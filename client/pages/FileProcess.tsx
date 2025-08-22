@@ -142,7 +142,7 @@ export default function FileProcess() {
     projectId: '',
     fileName: '',
     totalRows: 0,
-    headerRows: 1
+    uploadedFile: null as File | null
   });
 
   // Only allow admin/project_manager to access this page
