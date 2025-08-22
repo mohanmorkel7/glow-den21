@@ -327,40 +327,29 @@ export default function FileProcess() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fileName">File Name</Label>
-                <Input
-                  id="fileName"
-                  value={newProcess.fileName}
-                  onChange={(e) => setNewProcess({ ...newProcess, fileName: e.target.value })}
-                  placeholder="customer_data_aug_2025.xlsx"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+                <Label htmlFor="fileUpload">Upload File (Excel/CSV)</Label>
                 <div className="space-y-2">
-                  <Label htmlFor="totalRows">Total Rows</Label>
                   <Input
-                    id="totalRows"
-                    type="number"
-                    value={newProcess.totalRows}
-                    onChange={(e) => setNewProcess({ ...newProcess, totalRows: parseInt(e.target.value) || 0 })}
-                    placeholder="300000"
+                    id="fileUpload"
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileUpload}
+                    className="cursor-pointer"
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="headerRows">Header Rows</Label>
-                  <Input
-                    id="headerRows"
-                    type="number"
-                    value={newProcess.headerRows}
-                    onChange={(e) => setNewProcess({ ...newProcess, headerRows: parseInt(e.target.value) || 1 })}
-                    placeholder="1"
-                  />
+                  {newProcess.uploadedFile && (
+                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                      <Upload className="h-4 w-4 text-green-600" />
+                      <span className="text-sm text-green-700">
+                        {newProcess.fileName} ({newProcess.totalRows.toLocaleString()} rows detected)
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               {newProcess.totalRows > 0 && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    <strong>Available for processing:</strong> {(newProcess.totalRows - newProcess.headerRows).toLocaleString()} rows
+                    <strong>Available for processing:</strong> {newProcess.totalRows.toLocaleString()} rows
                   </p>
                 </div>
               )}
