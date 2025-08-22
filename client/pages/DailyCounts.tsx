@@ -527,13 +527,14 @@ export default function DailyCounts() {
             </Badge>
           )}
           {isUser && (
-            <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Submit Count
-                </Button>
-              </DialogTrigger>
+            <>
+              <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Submit Project Count
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Submit Daily File Count</DialogTitle>
@@ -699,7 +700,119 @@ export default function DailyCounts() {
                   </Button>
                 </DialogFooter>
               </DialogContent>
-            </Dialog>
+              </Dialog>
+
+              <Dialog open={isJobSubmitDialogOpen} onOpenChange={setIsJobSubmitDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Submit Job Update
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Submit File Processing Job Update</DialogTitle>
+                    <DialogDescription>
+                      Submit your daily progress for a file processing job.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label>Date</Label>
+                      <div className="text-sm p-2 bg-muted rounded">
+                        {format(selectedDate, 'PPP')}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="jobSelect">File Processing Job</Label>
+                      <Select value={newJobSubmission.jobId} onValueChange={(value) => setNewJobSubmission({ ...newJobSubmission, jobId: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select job" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {userJobs.filter(job => job.assignmentType === 'manual').map((job) => (
+                            <SelectItem key={job.id} value={job.id}>
+                              <div className="flex flex-col">
+                                <span>{job.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Target: {job.dailyTarget?.toLocaleString()} files • ${job.ratePerFile}/file
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="jobCompletedFiles">Files Completed</Label>
+                      <Input
+                        id="jobCompletedFiles"
+                        type="number"
+                        value={newJobSubmission.completedFiles}
+                        onChange={(e) => setNewJobSubmission({
+                          ...newJobSubmission,
+                          completedFiles: parseInt(e.target.value) || 0
+                        })}
+                        placeholder="e.g., 18500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="jobNotes">Notes (Optional)</Label>
+                      <Textarea
+                        id="jobNotes"
+                        value={newJobSubmission.notes}
+                        onChange={(e) => setNewJobSubmission({ ...newJobSubmission, notes: e.target.value })}
+                        placeholder="Add any notes about today's work..."
+                        rows={3}
+                      />
+                    </div>
+                    {newJobSubmission.jobId && newJobSubmission.completedFiles > 0 && (() => {
+                      const job = userJobs.find(j => j.id === newJobSubmission.jobId);
+                      const earnings = calculateEarnings(newJobSubmission.completedFiles, job?.ratePerFile || 0);
+                      const balanceFiles = (job?.dailyTarget || 0) - newJobSubmission.completedFiles;
+
+                      return (
+                        <div className="p-4 border rounded-lg space-y-3">
+                          <h4 className="font-medium">Update Summary</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <div className="text-muted-foreground">Files Completed</div>
+                              <div className="font-medium">{newJobSubmission.completedFiles.toLocaleString()}</div>
+                            </div>
+                            <div>
+                              <div className="text-muted-foreground">Balance Files</div>
+                              <div className={`font-medium ${balanceFiles > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                {balanceFiles.toLocaleString()}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-muted-foreground">Earnings (USD)</div>
+                              <div className="font-medium text-green-600">${earnings.usd.toFixed(2)}</div>
+                            </div>
+                            <div>
+                              <div className="text-muted-foreground">Earnings (INR)</div>
+                              <div className="font-medium text-blue-600">₹{earnings.inr.toFixed(0)}</div>
+                            </div>
+                          </div>
+                          <Progress
+                            value={(newJobSubmission.completedFiles / (job?.dailyTarget || 1)) * 100}
+                            className="h-2"
+                          />
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsJobSubmitDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSubmitJobUpdate} disabled={!newJobSubmission.jobId}>
+                      Submit Update
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </div>
       </div>
