@@ -15,10 +15,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Target, 
-  Plus, 
-  Search, 
+import {
+  Target,
+  Plus,
+  Search,
   Calendar as CalendarIcon,
   TrendingUp,
   TrendingDown,
@@ -35,7 +35,9 @@ import {
   Bell,
   Settings,
   Activity,
-  Minus
+  Minus,
+  Bot,
+  Users
 } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 
