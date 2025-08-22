@@ -359,12 +359,28 @@ export default function FileProcess() {
                     <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
                       <Upload className="h-4 w-4 text-green-600" />
                       <span className="text-sm text-green-700">
-                        {newProcess.fileName} ({newProcess.totalRows.toLocaleString()} rows detected)
+                        File uploaded: {newProcess.fileName}
                       </span>
                     </div>
                   )}
                 </div>
               </div>
+              {newProcess.uploadedFile && (
+                <div className="space-y-2">
+                  <Label htmlFor="totalRows">Total Rows (editable)</Label>
+                  <Input
+                    id="totalRows"
+                    type="number"
+                    value={newProcess.totalRows}
+                    onChange={(e) => setNewProcess({ ...newProcess, totalRows: parseInt(e.target.value) || 0 })}
+                    placeholder="Enter row count"
+                    min="1"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Auto-detected: {newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.
+                  </p>
+                </div>
+              )}
               {newProcess.totalRows > 0 && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-700">
