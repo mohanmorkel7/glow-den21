@@ -186,11 +186,8 @@ const mockBillingData: MonthlyBillingSummary[] = [
         type: 'project'
       }
     ],
-    jobs: mockJobBillingData.filter(job => job.month === '2024-01'),
-    allItems: [
-      ...mockBillingData[0]?.projects || [],
-      ...mockJobBillingData.filter(job => job.month === '2024-01')
-    ]
+    jobs: [],
+    allItems: []
   },
   {
     month: '2024-02',
@@ -229,11 +226,8 @@ const mockBillingData: MonthlyBillingSummary[] = [
         type: 'project'
       }
     ],
-    jobs: mockJobBillingData.filter(job => job.month === '2024-02'),
-    allItems: [
-      ...mockBillingData[1]?.projects || [],
-      ...mockJobBillingData.filter(job => job.month === '2024-02')
-    ]
+    jobs: [],
+    allItems: []
   },
   {
     month: '2024-03',
@@ -258,18 +252,42 @@ const mockBillingData: MonthlyBillingSummary[] = [
       }
     ],
     jobs: [],
-    allItems: [
-      ...mockBillingData[2]?.projects || []
-    ]
+    allItems: []
   }
 ];
+
+// Compute combined billing data
+const computeBillingData = (): MonthlyBillingSummary[] => {
+  return mockBillingData.map(billing => {
+    const jobs = mockJobBillingData.filter(job => job.month === billing.month);
+    const allItems: BillingItem[] = [...billing.projects, ...jobs];
+
+    // Recalculate totals including jobs
+    const jobFilesTotal = jobs.reduce((sum, job) => sum + job.filesCompleted, 0);
+    const jobAmountUSD = jobs.reduce((sum, job) => sum + job.amountUSD, 0);
+    const jobAmountINR = jobs.reduce((sum, job) => sum + job.amountINR, 0);
+
+    const projectFilesTotal = billing.projects.reduce((sum, project) => sum + project.filesCompleted, 0);
+    const projectAmountUSD = billing.projects.reduce((sum, project) => sum + project.amountUSD, 0);
+
+    return {
+      ...billing,
+      totalFilesCompleted: projectFilesTotal + jobFilesTotal,
+      totalAmountUSD: projectAmountUSD + jobAmountUSD,
+      totalAmountINR: (projectAmountUSD + jobAmountUSD) * billing.conversionRate,
+      itemsCount: billing.projects.length + jobs.length,
+      jobs,
+      allItems
+    };
+  });
+};
 
 export default function Billing() {
   const { user: currentUser } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [billingData] = useState<MonthlyBillingSummary[]>(mockBillingData);
+  const [billingData] = useState<MonthlyBillingSummary[]>(computeBillingData());
   const [selectedBilling, setSelectedBilling] = useState<MonthlyBillingSummary | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
