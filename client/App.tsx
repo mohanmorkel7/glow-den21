@@ -145,11 +145,7 @@ function AppRoutes() {
 
         <Route path="/profile" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Profile Settings"
-              description="Update your profile information and account settings."
-              icon={Users}
-            />
+            <Profile />
           </ProtectedRoute>
         } />
 
