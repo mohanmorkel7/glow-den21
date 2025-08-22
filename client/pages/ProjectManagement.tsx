@@ -116,8 +116,8 @@ const mockProjects: Project[] = [
     status: 'active',
     priority: 'medium',
     type: 'weekly',
-    startDate: '2024-01-05',
-    endDate: '2024-02-15',
+    client: 'TechCorp Solutions',
+    customClient: 'TechCorp Solutions',
     fileTargets: {
       weekly: 25000,
       dailyCapacity: 5000
