@@ -326,11 +326,11 @@ export default function ProjectManagement() {
         ? project.fileTargets?.weekly
         : Math.max(project.fileTargets?.monthly || 0, project.fileTargets?.weekly || 0);
     
-    const completed = project.type === 'monthly' 
-      ? project.fileCounts.monthlyCompleted 
-      : project.type === 'weekly' 
-        ? project.fileCounts.weeklyCompleted 
-        : project.fileCounts.totalCompleted;
+    const completed = project.type === 'monthly'
+      ? project.fileCounts?.monthlyCompleted || 0
+      : project.type === 'weekly'
+        ? project.fileCounts?.weeklyCompleted || 0
+        : project.fileCounts?.totalCompleted || 0;
     
     return target > 0 ? Math.min((completed / target) * 100, 100) : 0;
   };
