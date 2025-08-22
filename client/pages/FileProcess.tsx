@@ -398,7 +398,7 @@ export default function FileProcess() {
               </Button>
               <Button
                 onClick={handleCreateProcess}
-                disabled={!newProcess.name || !newProcess.projectId || !newProcess.uploadedFile || newProcess.totalRows <= 0}
+                disabled={!newProcess.name || !newProcess.projectId || !newProcess.uploadedFile || !newProcess.totalRows || newProcess.totalRows <= 0}
               >
                 Create Process
               </Button>
