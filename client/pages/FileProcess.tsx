@@ -761,7 +761,7 @@ export default function FileProcess() {
                       <div>
                         <div className="font-medium">{job.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {getTypeDisplayName(job.type)} • ${job.ratePerFile}/file
+                          {getTypeDisplayName(job.type)}
                         </div>
                         {job.description && (
                           <div className="text-xs text-muted-foreground mt-1">
