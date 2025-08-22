@@ -158,8 +158,32 @@ export default function FileProcess() {
     );
   }
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
+
+      // Count rows by splitting on newlines and filtering out empty lines
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      const rowCount = lines.length;
+
+      setNewProcess({
+        ...newProcess,
+        fileName: file.name,
+        totalRows: rowCount,
+        uploadedFile: file
+      });
+    };
+
+    reader.readAsText(file);
+  };
+
   const handleCreateProcess = () => {
-    const availableRows = newProcess.totalRows - newProcess.headerRows;
+    const availableRows = newProcess.totalRows;
     
     const process: FileProcess = {
       id: `fp_${fileProcesses.length + 1}`,
