@@ -131,10 +131,49 @@ export default function RequestFiles() {
   };
 
   const handleDownload = (requestId: string) => {
-    setFileRequests(fileRequests.map(request => 
-      request.id === requestId && request.status === 'assigned'
-        ? { ...request, status: 'received' }
-        : request
+    const request = fileRequests.find(r => r.id === requestId);
+    if (!request || !request.downloadLink) return;
+
+    // Generate and download the CSV file
+    const fileName = request.downloadLink.split('/').pop() || 'assigned_file.csv';
+
+    // Generate sample CSV content based on the assigned row range
+    const headers = ['ID', 'Name', 'Email', 'Phone', 'Address', 'City', 'Country', 'Status'];
+    let csvContent = headers.join(',') + '\n';
+
+    // Generate rows with realistic data for the assigned range
+    if (request.startRow && request.endRow) {
+      for (let i = request.startRow; i <= request.endRow; i++) {
+        const row = [
+          i,
+          `User ${i}`,
+          `user${i}@example.com`,
+          `+1234567${String(i).padStart(4, '0')}`,
+          `${i} Main Street`,
+          `City ${Math.floor(i / 100) + 1}`,
+          'USA',
+          i % 2 === 0 ? 'Active' : 'Pending'
+        ];
+        csvContent += row.join(',') + '\n';
+      }
+    }
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Update status to 'received'
+    setFileRequests(fileRequests.map(req =>
+      req.id === requestId && req.status === 'assigned'
+        ? { ...req, status: 'received' }
+        : req
     ));
   };
 
