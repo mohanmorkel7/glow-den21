@@ -631,7 +631,7 @@ export default function Billing() {
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="projects">Project Details</TabsTrigger>
+                <TabsTrigger value="details">Item Details</TabsTrigger>
               </TabsList>
               
               <TabsContent value="overview" className="space-y-4">
@@ -646,10 +646,13 @@ export default function Billing() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Projects</CardTitle>
+                      <CardTitle className="text-sm">Total Items</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{selectedBilling.projectsCount}</div>
+                      <div className="text-2xl font-bold">{selectedBilling.itemsCount}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {selectedBilling.projects.length} projects, {selectedBilling.jobs.length} jobs
+                      </div>
                     </CardContent>
                   </Card>
                   <Card>
@@ -678,50 +681,150 @@ export default function Billing() {
                 </div>
               </TabsContent>
               
-              <TabsContent value="projects" className="space-y-4">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Project</TableHead>
-                      <TableHead>Files</TableHead>
-                      <TableHead>Rate</TableHead>
-                      <TableHead>USD</TableHead>
-                      <TableHead>INR</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedBilling.projects.map((project) => (
-                      <TableRow key={project.projectId}>
-                        <TableCell>
-                          <div className="font-medium">{project.projectName}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{project.filesCompleted.toLocaleString()}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">${project.ratePerFile}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium text-green-600">
-                            {formatCurrency(project.amountUSD, 'USD')}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium text-blue-600">
-                            {formatCurrency(project.amountINR, 'INR')}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadgeColor(project.status)}>
-                            {getStatusIcon(project.status)}
-                            <span className="ml-1">{project.status.toUpperCase()}</span>
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <TabsContent value="details" className="space-y-4">
+                <div className="space-y-6">
+                  {/* General Projects */}
+                  {selectedBilling.projects.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-3">General Projects</h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Project</TableHead>
+                            <TableHead>Files</TableHead>
+                            <TableHead>Rate</TableHead>
+                            <TableHead>USD</TableHead>
+                            <TableHead>INR</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedBilling.projects.map((project) => (
+                            <TableRow key={project.projectId}>
+                              <TableCell>
+                                <div className="font-medium">{project.projectName}</div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">{project.filesCompleted.toLocaleString()}</div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">${project.ratePerFile}</div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm font-medium text-green-600">
+                                  {formatCurrency(project.amountUSD, 'USD')}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm font-medium text-blue-600">
+                                  {formatCurrency(project.amountINR, 'INR')}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge className={getStatusBadgeColor(project.status)}>
+                                  {getStatusIcon(project.status)}
+                                  <span className="ml-1">{project.status.toUpperCase()}</span>
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+
+                  {/* File Processing Jobs */}
+                  {selectedBilling.jobs.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        File Processing Jobs
+                        <Badge variant="outline" className="text-xs">
+                          MO Projects - $0.008/file
+                        </Badge>
+                      </h4>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Job</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Files</TableHead>
+                            <TableHead>Progress</TableHead>
+                            <TableHead>USD</TableHead>
+                            <TableHead>INR</TableHead>
+                            <TableHead>Status</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedBilling.jobs.map((job) => {
+                            const progress = job.totalFiles > 0 ? (job.filesCompleted / job.totalFiles) * 100 : 0;
+                            return (
+                              <TableRow key={job.jobId}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{job.jobName}</div>
+                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                      {job.assignmentType === 'automation' ? (
+                                        <>
+                                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                          Automated
+                                        </>
+                                      ) : (
+                                        <>
+                                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                          Manual
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {job.jobType === 'mo_monthly' ? 'MO Monthly' : 'MO Weekly'}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">{job.filesCompleted.toLocaleString()}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    of {job.totalFiles.toLocaleString()}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="space-y-1">
+                                    <div className="text-xs text-muted-foreground">
+                                      {progress.toFixed(1)}%
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                      <div
+                                        className="bg-blue-600 h-1.5 rounded-full"
+                                        style={{ width: `${Math.min(progress, 100)}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm font-medium text-green-600">
+                                    {formatCurrency(job.amountUSD, 'USD')}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm font-medium text-blue-600">
+                                    {formatCurrency(job.amountINR, 'INR')}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge className={getStatusBadgeColor(job.status)}>
+                                    {getStatusIcon(job.status)}
+                                    <span className="ml-1">{job.status.toUpperCase()}</span>
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
               </TabsContent>
             </Tabs>
           )}
