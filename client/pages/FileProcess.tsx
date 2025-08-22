@@ -652,7 +652,8 @@ export default function FileProcess() {
             {fileProcesses.map((process) => {
               const progress = process.totalRows > 0 ? (process.processedRows / (process.totalRows - process.headerRows)) * 100 : 0;
               const processRequests = getProcessRequests(process.id);
-              
+              const statusCounts = getProcessStatusCounts(process.id);
+
               return (
                 <Card key={process.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openProcessOverview(process)}>
                   <CardContent className="p-4">
@@ -665,7 +666,7 @@ export default function FileProcess() {
                         {process.status.toUpperCase()}
                       </Badge>
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <div className="flex justify-between text-sm mb-1">
@@ -674,7 +675,7 @@ export default function FileProcess() {
                         </div>
                         <Progress value={progress} className="h-2" />
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div>
                           <div className="text-xs text-muted-foreground">Processed</div>
@@ -685,7 +686,23 @@ export default function FileProcess() {
                           <div className="font-medium text-blue-600">{process.availableRows.toLocaleString()}</div>
                         </div>
                       </div>
-                      
+
+                      {/* User Status Counts */}
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="text-center p-2 bg-green-50 rounded">
+                          <div className="font-medium text-green-600">{statusCounts.completed}</div>
+                          <div className="text-green-700">Completed</div>
+                        </div>
+                        <div className="text-center p-2 bg-orange-50 rounded">
+                          <div className="font-medium text-orange-600">{statusCounts.inProgress}</div>
+                          <div className="text-orange-700">In Progress</div>
+                        </div>
+                        <div className="text-center p-2 bg-yellow-50 rounded">
+                          <div className="font-medium text-yellow-600">{statusCounts.pending + statusCounts.assigned}</div>
+                          <div className="text-yellow-700">Pending</div>
+                        </div>
+                      </div>
+
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
