@@ -106,6 +106,54 @@ const mockUsers: User[] = [
   { id: '6', name: 'David Chen', email: 'david.chen@websyntactic.com', role: 'user' }
 ];
 
+const mockUserAssignments: UserJobAssignment[] = [
+  {
+    userId: '3',
+    userName: 'Sarah Johnson',
+    jobId: '1',
+    jobName: 'MO Monthly Batch #2024-001',
+    assignedFileCount: 100000,
+    completedFileCount: 62500,
+    lastUpdated: '2024-01-20T14:30:00Z'
+  },
+  {
+    userId: '4',
+    userName: 'Mike Davis',
+    jobId: '1',
+    jobName: 'MO Monthly Batch #2024-001',
+    assignedFileCount: 100000,
+    completedFileCount: 62500,
+    lastUpdated: '2024-01-20T16:45:00Z'
+  },
+  {
+    userId: '6',
+    userName: 'David Chen',
+    jobId: '1',
+    jobName: 'MO Monthly Batch #2024-001',
+    assignedFileCount: 100000,
+    completedFileCount: 62500,
+    lastUpdated: '2024-01-20T15:20:00Z'
+  },
+  {
+    userId: '3',
+    userName: 'Sarah Johnson',
+    jobId: '3',
+    jobName: 'MO Monthly Batch #2023-012',
+    assignedFileCount: 125000,
+    completedFileCount: 125000,
+    lastUpdated: '2023-12-30T18:00:00Z'
+  },
+  {
+    userId: '4',
+    userName: 'Mike Davis',
+    jobId: '3',
+    jobName: 'MO Monthly Batch #2023-012',
+    assignedFileCount: 125000,
+    completedFileCount: 125000,
+    lastUpdated: '2023-12-30T17:30:00Z'
+  }
+];
+
 const mockJobs: FileProcessingJob[] = [
   {
     id: '1',
