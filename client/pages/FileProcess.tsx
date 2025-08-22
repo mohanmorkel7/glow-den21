@@ -855,6 +855,174 @@ export default function FileProcess() {
         </CardContent>
       </Card>
 
+      {/* User View - My Assignments */}
+      {currentUser?.role === 'user' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>My Assigned Tasks</CardTitle>
+            <CardDescription>
+              Update your file processing progress and view assigned work.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {getUserAssignments().length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-muted-foreground">No tasks assigned</h3>
+                <p className="text-sm text-muted-foreground">You don't have any file processing tasks assigned yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {getUserAssignments().map((assignment) => {
+                  const job = jobs.find(j => j.id === assignment.jobId);
+                  const progress = (assignment.completedFileCount / assignment.assignedFileCount) * 100;
+                  const remainingFiles = assignment.assignedFileCount - assignment.completedFileCount;
+
+                  return (
+                    <Card key={`${assignment.userId}-${assignment.jobId}`} className="border-l-4 border-l-blue-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium">{assignment.jobName}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {job?.type === 'mo_monthly' ? 'Monthly' : 'Weekly'} Processing
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => openUpdateDialog(assignment)}
+                            size="sm"
+                            disabled={job?.status !== 'active'}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Update Count
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                          <div>
+                            <div className="text-xs text-muted-foreground">Assigned</div>
+                            <div className="font-medium">{assignment.assignedFileCount.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">Completed</div>
+                            <div className="font-medium text-green-600">{assignment.completedFileCount.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">Remaining</div>
+                            <div className="font-medium text-orange-600">{remainingFiles.toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">Progress</div>
+                            <div className="font-medium">{progress.toFixed(1)}%</div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Progress value={progress} className="h-2" />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Last updated: {new Date(assignment.lastUpdated).toLocaleString()}</span>
+                            <span>Target: {job?.targetEndDate ? new Date(job.targetEndDate).toLocaleDateString() : 'N/A'}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Project Manager View - All User Progress */}
+      {canManageJobs && (
+        <Card>
+          <CardHeader>
+            <CardTitle>User Progress Overview</CardTitle>
+            <CardDescription>
+              Monitor all users' file processing progress across active jobs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Job</TableHead>
+                  <TableHead>Assigned Files</TableHead>
+                  <TableHead>Completed Files</TableHead>
+                  <TableHead>Progress</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {userAssignments.map((assignment) => {
+                  const job = jobs.find(j => j.id === assignment.jobId);
+                  const progress = (assignment.completedFileCount / assignment.assignedFileCount) * 100;
+                  const isCompleted = assignment.completedFileCount >= assignment.assignedFileCount;
+                  const isOverdue = job && new Date() > new Date(job.targetEndDate) && !isCompleted;
+
+                  return (
+                    <TableRow key={`${assignment.userId}-${assignment.jobId}`}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{assignment.userName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {mockUsers.find(u => u.id === assignment.userId)?.email}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{assignment.jobName}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {job?.type === 'mo_monthly' ? 'Monthly' : 'Weekly'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{assignment.assignedFileCount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{assignment.completedFileCount.toLocaleString()}</span>
+                          <Progress value={progress} className="h-2 w-16" />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-medium ${
+                          progress >= 100 ? 'text-green-600' :
+                          progress >= 75 ? 'text-blue-600' :
+                          progress >= 50 ? 'text-orange-600' : 'text-red-600'
+                        }`}>
+                          {progress.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {new Date(assignment.lastUpdated).toLocaleDateString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(assignment.lastUpdated).toLocaleTimeString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={
+                          isCompleted ? 'bg-green-100 text-green-800' :
+                          isOverdue ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }>
+                          {isCompleted ? 'Completed' : isOverdue ? 'Overdue' : 'In Progress'}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Jobs Table */}
       <Card>
         <CardHeader>
