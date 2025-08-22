@@ -52,12 +52,12 @@ const mockFileRequests: FileRequest[] = [
     userName: 'Sarah Johnson',
     requestedCount: 1000,
     requestedDate: '2024-01-20T10:30:00Z',
-    status: 'in_progress',
+    status: 'assigned',
     fileProcessId: 'fp_1',
     fileProcessName: 'Aug-2025-File',
     assignedBy: 'John Smith',
     assignedDate: '2024-01-20T11:00:00Z',
-    downloadLink: '/downloads/sarah_johnson_aug_2025_1001_2000.xlsx',
+    downloadLink: '/downloads/sarah_johnson_aug_2025_1001_2000.csv',
     startRow: 1001,
     endRow: 2000
   },
@@ -72,10 +72,25 @@ const mockFileRequests: FileRequest[] = [
     fileProcessName: 'Aug-2025-File',
     assignedBy: 'Emily Wilson',
     assignedDate: '2024-01-19T15:00:00Z',
-    downloadLink: '/downloads/sarah_johnson_aug_2025_1_800.xlsx',
+    downloadLink: '/downloads/sarah_johnson_aug_2025_1_800.csv',
     completedDate: '2024-01-19T18:30:00Z',
     startRow: 1,
     endRow: 800
+  },
+  {
+    id: '3',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    requestedCount: 1200,
+    requestedDate: '2024-01-18T09:15:00Z',
+    status: 'in_progress',
+    fileProcessId: 'fp_1',
+    fileProcessName: 'Aug-2025-File',
+    assignedBy: 'John Smith',
+    assignedDate: '2024-01-18T10:00:00Z',
+    downloadLink: '/downloads/sarah_johnson_aug_2025_2001_3200.csv',
+    startRow: 2001,
+    endRow: 3200
   }
 ];
 
