@@ -278,7 +278,8 @@ export default function ProjectManagement() {
       client: project.client === 'Mobius Dataservice' ? 'mobius_dataservice' : project.customClient ? 'other' : project.client,
       customClient: project.customClient || '',
       fileTargets: { ...project.fileTargets },
-      rates: { ...project.rates }
+      rates: { ...project.rates },
+      assignedUsers: [...(project.assignedUsers || [])]
     });
   };
 
