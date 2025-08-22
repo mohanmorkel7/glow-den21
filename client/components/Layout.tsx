@@ -24,7 +24,8 @@ import {
   X,
   Target,
   Shield,
-  Mail
+  Mail,
+  Receipt
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -62,6 +63,12 @@ const navigationItems: NavItem[] = [
     path: '/daily-counts',
     icon: Target,
     roles: ['super_admin', 'project_manager', 'user']
+  },
+  {
+    label: 'Billing',
+    path: '/billing',
+    icon: Receipt,
+    roles: ['super_admin', 'project_manager']
   },
   {
     label: 'Reports',
