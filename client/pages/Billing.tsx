@@ -504,7 +504,7 @@ export default function Billing() {
             <TableHeader>
               <TableRow>
                 <TableHead>Month</TableHead>
-                <TableHead>Projects</TableHead>
+                <TableHead>Items</TableHead>
                 <TableHead>Files Completed</TableHead>
                 <TableHead>Amount (USD)</TableHead>
                 <TableHead>Amount (INR)</TableHead>
@@ -514,8 +514,8 @@ export default function Billing() {
             </TableHeader>
             <TableBody>
               {filteredBillingData.map((billing) => {
-                const statusCounts = billing.projects.reduce((acc, project) => {
-                  acc[project.status] = (acc[project.status] || 0) + 1;
+                const statusCounts = billing.allItems.reduce((acc, item) => {
+                  acc[item.status] = (acc[item.status] || 0) + 1;
                   return acc;
                 }, {} as Record<string, number>);
 
@@ -539,12 +539,15 @@ export default function Billing() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div className="font-medium">{billing.projectsCount} projects</div>
-                        <div className="text-muted-foreground">
-                          {billing.projects.map(p => p.projectName).join(', ').length > 30
-                            ? billing.projects.map(p => p.projectName).join(', ').substring(0, 30) + '...'
-                            : billing.projects.map(p => p.projectName).join(', ')
-                          }
+                        <div className="font-medium">{billing.itemsCount} items</div>
+                        <div className="text-muted-foreground space-y-1">
+                          <div>{billing.projects.length} projects, {billing.jobs.length} file processing jobs</div>
+                          <div className="text-xs">
+                            {billing.allItems.slice(0, 2).map(item =>
+                              item.type === 'project' ? item.projectName : item.jobName
+                            ).join(', ')}
+                            {billing.allItems.length > 2 && ` +${billing.allItems.length - 2} more`}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
