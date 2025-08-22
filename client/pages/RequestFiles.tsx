@@ -169,10 +169,10 @@ export default function RequestFiles() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    // Update status to 'received'
+    // Update status to 'in_progress' after download
     setFileRequests(fileRequests.map(req =>
       req.id === requestId && req.status === 'assigned'
-        ? { ...req, status: 'received' }
+        ? { ...req, status: 'in_progress' }
         : req
     ));
   };
