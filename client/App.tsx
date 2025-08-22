@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import ProjectManagement from "./pages/ProjectManagement";
 import DailyCounts from "./pages/DailyCounts";
+import Billing from "./pages/Billing";
 import Reports from "./pages/Reports";
 import Permissions from "./pages/Permissions";
 import Notifications from "./pages/Notifications";
@@ -95,6 +96,12 @@ function AppRoutes() {
         <Route path="/daily-counts" element={
           <ProtectedRoute>
             <DailyCounts />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/billing" element={
+          <ProtectedRoute>
+            <Billing />
           </ProtectedRoute>
         } />
 
