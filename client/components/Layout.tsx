@@ -38,7 +38,8 @@ import {
   Mail,
   Receipt,
   FileText,
-  Upload
+  Upload,
+  ChevronUp
 } from 'lucide-react';
 
 interface LayoutProps {
