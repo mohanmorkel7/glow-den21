@@ -47,12 +47,12 @@ interface Project {
   id: string;
   name: string;
   description: string;
-  status: 'planning' | 'active' | 'on_hold' | 'completed';
+  status: 'active' | 'inactive';
   priority: 'low' | 'medium' | 'high';
   type: 'monthly' | 'weekly' | 'both';
-  startDate: string;
-  endDate: string;
-  
+  client: string;
+  customClient?: string;
+
   // File-based tracking
   fileTargets: {
     monthly?: number;
@@ -69,11 +69,11 @@ interface Project {
     ratePerFile: number;
     currency: 'USD';
   };
-  
+
   // Legacy counts for compatibility
   targetCount: number;
   currentCount: number;
-  
+
   assignedUsers: string[];
   createdBy: string;
   createdAt: string;
@@ -187,21 +187,11 @@ export default function ProjectManagement() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    status: 'planning' as 'planning' | 'active' | 'on_hold' | 'completed',
+    status: 'active' as 'active' | 'inactive',
     priority: 'medium' as 'low' | 'medium' | 'high',
     type: 'both' as 'monthly' | 'weekly' | 'both',
-    startDate: '',
-    endDate: '',
-    fileTargets: {
-      monthly: 0,
-      weekly: 0,
-      dailyCapacity: 0
-    },
-    rates: {
-      ratePerFile: 0,
-      currency: 'USD' as 'USD'
-    },
-    assignedUsers: [] as string[]
+    client: 'mobius_dataservice',
+    customClient: ''
   });
 
   const filteredProjects = projects.filter(project => {
@@ -220,14 +210,25 @@ export default function ProjectManagement() {
     const project: Project = {
       id: (projects.length + 1).toString(),
       ...newProject,
+      client: newProject.client === 'other' && newProject.customClient ? newProject.customClient : newProject.client === 'mobius_dataservice' ? 'Mobius Dataservice' : newProject.client,
+      fileTargets: {
+        monthly: 0,
+        weekly: 0,
+        dailyCapacity: 0
+      },
       fileCounts: {
         monthlyCompleted: 0,
         weeklyCompleted: 0,
         dailyCompleted: 0,
         totalCompleted: 0
       },
-      targetCount: newProject.fileTargets.monthly || newProject.fileTargets.weekly || 0,
+      rates: {
+        ratePerFile: 0,
+        currency: 'USD'
+      },
+      targetCount: 0,
       currentCount: 0,
+      assignedUsers: [],
       createdBy: currentUser?.name || 'Unknown',
       createdAt: new Date().toISOString().split('T')[0]
     };
@@ -240,21 +241,11 @@ export default function ProjectManagement() {
     setNewProject({
       name: '',
       description: '',
-      status: 'planning',
+      status: 'active',
       priority: 'medium',
       type: 'both',
-      startDate: '',
-      endDate: '',
-      fileTargets: {
-        monthly: 0,
-        weekly: 0,
-        dailyCapacity: 0
-      },
-      rates: {
-        ratePerFile: 0,
-        currency: 'USD'
-      },
-      assignedUsers: []
+      client: 'mobius_dataservice',
+      customClient: ''
     });
   };
 
@@ -266,11 +257,8 @@ export default function ProjectManagement() {
       status: project.status,
       priority: project.priority,
       type: project.type,
-      startDate: project.startDate,
-      endDate: project.endDate,
-      fileTargets: { ...project.fileTargets },
-      rates: { ...project.rates },
-      assignedUsers: [...project.assignedUsers]
+      client: project.client === 'Mobius Dataservice' ? 'mobius_dataservice' : project.customClient ? 'other' : project.client,
+      customClient: project.customClient || ''
     });
   };
 
@@ -279,10 +267,10 @@ export default function ProjectManagement() {
     
     setProjects(projects.map(p => 
       p.id === editingProject.id 
-        ? { 
-            ...p, 
+        ? {
+            ...p,
             ...newProject,
-            targetCount: newProject.fileTargets.monthly || newProject.fileTargets.weekly || 0
+            client: newProject.client === 'other' && newProject.customClient ? newProject.customClient : newProject.client === 'mobius_dataservice' ? 'Mobius Dataservice' : newProject.client
           }
         : p
     ));
