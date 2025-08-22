@@ -348,6 +348,61 @@ export default function FileProcess() {
     setJobs(jobs.filter(job => job.id !== jobId));
   };
 
+  const handleUpdateFileCount = () => {
+    if (!selectedAssignment) return;
+
+    // Update user assignment
+    setUserAssignments(userAssignments.map(assignment =>
+      assignment.userId === selectedAssignment.userId && assignment.jobId === selectedAssignment.jobId
+        ? {
+            ...assignment,
+            completedFileCount: fileCountUpdate.completedCount,
+            lastUpdated: new Date().toISOString()
+          }
+        : assignment
+    ));
+
+    // Update job total completed count
+    const jobAssignments = userAssignments.filter(a => a.jobId === selectedAssignment.jobId);
+    const totalCompleted = jobAssignments.reduce((sum, a) => {
+      if (a.userId === selectedAssignment.userId) {
+        return sum + fileCountUpdate.completedCount;
+      }
+      return sum + a.completedFileCount;
+    }, 0);
+
+    setJobs(jobs.map(job =>
+      job.id === selectedAssignment.jobId
+        ? {
+            ...job,
+            completedFileCount: totalCompleted,
+            progress: (totalCompleted / job.totalFileCount) * 100
+          }
+        : job
+    ));
+
+    setIsUpdateDialogOpen(false);
+    setSelectedAssignment(null);
+    setFileCountUpdate({ jobId: '', completedCount: 0, notes: '' });
+  };
+
+  const openUpdateDialog = (assignment: UserJobAssignment) => {
+    setSelectedAssignment(assignment);
+    setFileCountUpdate({
+      jobId: assignment.jobId,
+      completedCount: assignment.completedFileCount,
+      notes: ''
+    });
+    setIsUpdateDialogOpen(true);
+  };
+
+  const getUserAssignments = () => {
+    if (currentUser?.role === 'user') {
+      return userAssignments.filter(assignment => assignment.userId === currentUser.id);
+    }
+    return userAssignments;
+  };
+
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-100 text-gray-800';
