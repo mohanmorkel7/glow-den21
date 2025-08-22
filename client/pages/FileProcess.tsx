@@ -172,29 +172,37 @@ export default function FileProcess() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // For Excel files, we can't accurately count rows with JavaScript FileReader
-    // So we'll set a default and let user edit
-    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      setNewProcess({
-        ...newProcess,
-        fileName: file.name,
-        totalRows: 0, // User must manually enter count for Excel files
-        uploadedFile: file
-      });
-      return;
-    }
-
-    // For CSV/TXT files, attempt to count rows
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      if (!text) return;
+      if (!text) {
+        // If file can't be read as text, set to 0 and let user enter manually
+        setNewProcess({
+          ...newProcess,
+          fileName: file.name,
+          totalRows: 0,
+          uploadedFile: file
+        });
+        return;
+      }
 
-      // Improved row counting for CSV/text files
-      const lines = text.split(/\r?\n/);
-      // Filter out completely empty lines
-      const nonEmptyLines = lines.filter(line => line.trim() !== '');
-      const rowCount = nonEmptyLines.length;
+      // Count rows for all file types
+      let rowCount = 0;
+
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        // For CSV files, split by lines and count non-empty rows
+        const lines = text.split(/\r?\n/);
+        rowCount = lines.filter(line => line.trim() !== '' && line.includes(',')).length;
+
+        // If no commas found, treat as simple text file
+        if (rowCount === 0) {
+          rowCount = lines.filter(line => line.trim() !== '').length;
+        }
+      } else {
+        // For other files (Excel read as text, TXT, etc.), count non-empty lines
+        const lines = text.split(/\r?\n/);
+        rowCount = lines.filter(line => line.trim() !== '').length;
+      }
 
       setNewProcess({
         ...newProcess,
@@ -204,6 +212,17 @@ export default function FileProcess() {
       });
     };
 
+    reader.onerror = () => {
+      // If reading fails, set filename but let user enter count manually
+      setNewProcess({
+        ...newProcess,
+        fileName: file.name,
+        totalRows: 0,
+        uploadedFile: file
+      });
+    };
+
+    // Try to read the file as text
     reader.readAsText(file, 'UTF-8');
   };
 
