@@ -377,18 +377,8 @@ export default function FileProcess() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="mo_monthly">
-                          <div className="flex flex-col">
-                            <span>MO Monthly</span>
-                            <span className="text-xs text-muted-foreground">$0.008 per file</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="mo_weekly">
-                          <div className="flex flex-col">
-                            <span>MO Weekly</span>
-                            <span className="text-xs text-muted-foreground">$0.008 per file</span>
-                          </div>
-                        </SelectItem>
+                        <SelectItem value="mo_monthly">MO Monthly</SelectItem>
+                        <SelectItem value="mo_weekly">MO Weekly</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
