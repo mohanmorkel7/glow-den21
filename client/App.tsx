@@ -101,6 +101,12 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        <Route path="/request-files" element={
+          <ProtectedRoute>
+            <RequestFiles />
+          </ProtectedRoute>
+        } />
+
         <Route path="/daily-counts" element={
           <ProtectedRoute>
             <DailyCounts />
