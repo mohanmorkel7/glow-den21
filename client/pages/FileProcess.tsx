@@ -234,11 +234,19 @@ const mockJobs: FileProcessingJob[] = [
 export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [jobs, setJobs] = useState<FileProcessingJob[]>(mockJobs);
+  const [userAssignments, setUserAssignments] = useState<UserJobAssignment[]>(mockUserAssignments);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<FileProcessingJob | null>(null);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<UserJobAssignment | null>(null);
+  const [fileCountUpdate, setFileCountUpdate] = useState<FileCountUpdate>({
+    jobId: '',
+    completedCount: 0,
+    notes: ''
+  });
   const [newJob, setNewJob] = useState({
     name: '',
     type: 'mo_monthly' as 'mo_monthly' | 'mo_weekly',
