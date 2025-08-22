@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import UserManagement from "./pages/UserManagement";
 import ProjectManagement from "./pages/ProjectManagement";
 import DailyCounts from "./pages/DailyCounts";
+import Reports from "./pages/Reports";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import { Users, FolderOpen, Target, BarChart3, Shield, Mail, Settings } from "lucide-react";
@@ -96,11 +97,7 @@ function AppRoutes() {
 
         <Route path="/reports" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Reports & Analytics"
-              description="View detailed reports and analytics for projects and performance."
-              icon={BarChart3}
-            />
+            <Reports />
           </ProtectedRoute>
         } />
 
