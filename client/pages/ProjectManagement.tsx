@@ -142,11 +142,10 @@ const mockProjects: Project[] = [
     id: '3',
     name: 'Invoice Processing',
     description: 'Monthly invoice processing system',
-    status: 'completed',
+    status: 'inactive',
     priority: 'high',
     type: 'monthly',
-    startDate: '2023-12-01',
-    endDate: '2024-01-15',
+    client: 'Mobius Dataservice',
     fileTargets: {
       monthly: 150000,
       dailyCapacity: 10000
