@@ -369,10 +369,20 @@ export default function RequestFiles() {
                             </h4>
                             <p className="text-sm text-muted-foreground">
                               {request.requestedCount.toLocaleString()} files requested
+                              {request.assignedCount && request.assignedCount !== request.requestedCount && (
+                                <span className="text-blue-600 ml-2">
+                                  ({request.assignedCount.toLocaleString()} assigned)
+                                </span>
+                              )}
                             </p>
                             {request.startRow && request.endRow && (
                               <p className="text-xs text-muted-foreground">
-                                Rows: {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
+                                Data Range: {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
+                              </p>
+                            )}
+                            {request.assignedBy && (
+                              <p className="text-xs text-blue-600">
+                                ✓ Assigned by {request.assignedBy} on {new Date(request.assignedDate || '').toLocaleDateString()}
                               </p>
                             )}
                           </div>
