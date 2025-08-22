@@ -420,30 +420,37 @@ export default function RequestFiles() {
                               {request.status.replace('_', ' ').toUpperCase()}
                             </Badge>
                             {request.status === 'assigned' && request.downloadLink && (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={() => handleDownload(request.id)}
                               >
                                 <Download className="h-4 w-4 mr-2" />
-                                Download
+                                Download & Start
                               </Button>
                             )}
-                            {request.status === 'received' && (
-                              <Button 
-                                size="sm" 
-                                onClick={() => handleStatusUpdate(request.id, 'in_progress')}
+                            {(request.status === 'in_progress' || request.status === 'completed') && (
+                              <Select
+                                value={request.status}
+                                onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
                               >
-                                Start Work
-                              </Button>
-                            )}
-                            {request.status === 'in_progress' && (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => handleStatusUpdate(request.id, 'completed')}
-                              >
-                                Mark Complete
-                              </Button>
+                                <SelectTrigger className="w-40">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="in_progress">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                      In Progress
+                                    </div>
+                                  </SelectItem>
+                                  <SelectItem value="completed">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                      Completed
+                                    </div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
                             )}
                           </div>
                         </div>
