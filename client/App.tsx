@@ -18,7 +18,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
-import { Users, FolderOpen, Target, BarChart3, Shield, Mail, Settings as SettingsIcon } from "lucide-react";
+import { Users, FolderOpen, Target, BarChart3, Shield, Mail } from "lucide-react";
 import { createRoot } from "react-dom/client";
 
 const queryClient = new QueryClient();
