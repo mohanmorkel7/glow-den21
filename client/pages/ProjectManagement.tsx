@@ -664,7 +664,7 @@ export default function ProjectManagement() {
                         <div className="text-xs space-y-0.5">
                           <div className="flex justify-between">
                             <span className="text-green-600">USD: ${earnings.usd.toFixed(2)}</span>
-                            <span className="text-blue-600">INR: ���{earnings.inr.toFixed(0)}</span>
+                            <span className="text-blue-600">INR: ₹{earnings.inr.toFixed(0)}</span>
                           </div>
                         </div>
                       </div>
