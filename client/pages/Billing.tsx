@@ -623,7 +623,7 @@ export default function Billing() {
               })}
             </DialogTitle>
             <DialogDescription>
-              Detailed breakdown of projects and earnings for the selected month.
+              Detailed breakdown of projects, file processing jobs, and earnings for the selected month.
             </DialogDescription>
           </DialogHeader>
           
