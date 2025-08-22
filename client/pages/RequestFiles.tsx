@@ -528,7 +528,7 @@ export default function RequestFiles() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {completedRequests.map((request) => (
+                  {allHistoryRequests.map((request) => (
                     <TableRow key={request.id}>
                       <TableCell>
                         <div>
@@ -552,13 +552,32 @@ export default function RequestFiles() {
                         {request.completedDate ? (
                           new Date(request.completedDate).toLocaleDateString()
                         ) : (
-                          'N/A'
+                          request.status === 'in_progress' ? 'In Progress' : 'N/A'
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusBadgeColor(request.status)}>
-                          {request.status.toUpperCase()}
-                        </Badge>
+                        <Select
+                          value={request.status}
+                          onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
+                        >
+                          <SelectTrigger className="w-36">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="in_progress">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                In Progress
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="completed">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                Completed
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                     </TableRow>
                   ))}
