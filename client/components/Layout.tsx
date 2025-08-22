@@ -194,12 +194,13 @@ export default function Layout({ children }: LayoutProps) {
                   {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col items-start flex-1">
                 <p className="text-sm font-medium text-foreground">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground capitalize">
                   {user?.role ? user.role.replace('_', ' ') : 'User'}
                 </p>
               </div>
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
