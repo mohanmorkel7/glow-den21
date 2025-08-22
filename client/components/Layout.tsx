@@ -26,7 +26,8 @@ import {
   Shield,
   Mail,
   Receipt,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react';
 
 interface LayoutProps {
