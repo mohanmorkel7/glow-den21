@@ -93,7 +93,7 @@ const navigationItems: NavItem[] = [
     label: 'Billing',
     path: '/billing',
     icon: Receipt,
-    roles: ['super_admin', 'project_manager']
+    roles: ['super_admin']
   },
   {
     label: 'Reports',
