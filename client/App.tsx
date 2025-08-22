@@ -9,6 +9,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import UserManagement from "./pages/UserManagement";
+import ProjectManagement from "./pages/ProjectManagement";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 import { Users, FolderOpen, Target, BarChart3, Shield, Mail, Settings } from "lucide-react";
@@ -75,21 +77,13 @@ function AppRoutes() {
 
         <Route path="/users" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="User Management"
-              description="Manage users, roles, and permissions for your organization."
-              icon={Users}
-            />
+            <UserManagement />
           </ProtectedRoute>
         } />
 
         <Route path="/projects" element={
           <ProtectedRoute>
-            <PlaceholderPage
-              title="Project Management"
-              description="Create, manage, and track project progress and assignments."
-              icon={FolderOpen}
-            />
+            <ProjectManagement />
           </ProtectedRoute>
         } />
 
