@@ -87,8 +87,7 @@ const mockProjects: Project[] = [
     status: 'active',
     priority: 'high',
     type: 'both',
-    startDate: '2024-01-01',
-    endDate: '2024-01-31',
+    client: 'Mobius Dataservice',
     fileTargets: {
       monthly: 300000,
       weekly: 50000,
