@@ -189,7 +189,12 @@ export default function ProjectManagement() {
     priority: 'medium' as 'low' | 'medium' | 'high',
     type: 'both' as 'monthly' | 'weekly' | 'both',
     client: 'mobius_dataservice',
-    customClient: ''
+    customClient: '',
+    fileTargets: {
+      monthly: 0,
+      weekly: 0,
+      dailyCapacity: 0
+    }
   });
 
   const filteredProjects = projects.filter(project => {
@@ -243,7 +248,12 @@ export default function ProjectManagement() {
       priority: 'medium',
       type: 'both',
       client: 'mobius_dataservice',
-      customClient: ''
+      customClient: '',
+      fileTargets: {
+        monthly: 0,
+        weekly: 0,
+        dailyCapacity: 0
+      }
     });
   };
 
@@ -256,7 +266,8 @@ export default function ProjectManagement() {
       priority: project.priority,
       type: project.type,
       client: project.client === 'Mobius Dataservice' ? 'mobius_dataservice' : project.customClient ? 'other' : project.client,
-      customClient: project.customClient || ''
+      customClient: project.customClient || '',
+      fileTargets: { ...project.fileTargets }
     });
   };
 
@@ -494,7 +505,7 @@ export default function ProjectManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {projects.filter(p => p.status === 'active').reduce((sum, p) => sum + p.fileTargets.dailyCapacity, 0).toLocaleString()}
+              {projects.filter(p => p.status === 'active').reduce((sum, p) => sum + (p.fileTargets?.dailyCapacity || 0), 0).toLocaleString()}
             </div>
           </CardContent>
         </Card>
@@ -604,7 +615,7 @@ export default function ProjectManagement() {
                         )}
                         <div className="flex items-center gap-1 text-muted-foreground">
                           <Timer className="h-3 w-3" />
-                          Daily: {project.fileTargets.dailyCapacity.toLocaleString()}
+                          Daily: {(project.fileTargets?.dailyCapacity || 0).toLocaleString()}
                         </div>
                       </div>
                     </TableCell>
