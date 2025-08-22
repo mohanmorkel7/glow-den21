@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   FolderOpen, 
   Plus, 
@@ -27,23 +28,13 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  UserPlus
+  UserPlus,
+  FileText,
+  DollarSign,
+  Timer,
+  BarChart3,
+  Activity
 } from 'lucide-react';
-
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  status: 'planning' | 'active' | 'on_hold' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  startDate: string;
-  endDate: string;
-  targetCount: number;
-  currentCount: number;
-  assignedUsers: string[];
-  createdBy: string;
-  createdAt: string;
-}
 
 interface User {
   id: string;
@@ -52,62 +43,130 @@ interface User {
   role: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: 'planning' | 'active' | 'on_hold' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  type: 'monthly' | 'weekly' | 'both';
+  startDate: string;
+  endDate: string;
+  
+  // File-based tracking
+  fileTargets: {
+    monthly?: number;
+    weekly?: number;
+    dailyCapacity: number;
+  };
+  fileCounts: {
+    monthlyCompleted: number;
+    weeklyCompleted: number;
+    dailyCompleted: number;
+    totalCompleted: number;
+  };
+  rates: {
+    ratePerFile: number;
+    currency: 'USD';
+  };
+  
+  // Legacy counts for compatibility
+  targetCount: number;
+  currentCount: number;
+  
+  assignedUsers: string[];
+  createdBy: string;
+  createdAt: string;
+}
+
 const mockProjects: Project[] = [
   {
     id: '1',
-    name: 'Data Entry Project Alpha',
-    description: 'Process customer registration forms and enter data into CRM system',
+    name: 'MO Project - Data Processing',
+    description: 'Monthly and weekly file processing with automated daily tracking',
     status: 'active',
     priority: 'high',
+    type: 'both',
     startDate: '2024-01-01',
     endDate: '2024-01-31',
-    targetCount: 5000,
-    currentCount: 4250,
+    fileTargets: {
+      monthly: 300000,
+      weekly: 50000,
+      dailyCapacity: 20000
+    },
+    fileCounts: {
+      monthlyCompleted: 187500,
+      weeklyCompleted: 32000,
+      dailyCompleted: 18500,
+      totalCompleted: 187500
+    },
+    rates: {
+      ratePerFile: 0.05,
+      currency: 'USD'
+    },
+    targetCount: 300000,
+    currentCount: 187500,
     assignedUsers: ['2', '3', '4'],
     createdBy: 'Super Admin',
     createdAt: '2024-01-01'
   },
   {
     id: '2',
-    name: 'Customer Support Portal',
-    description: 'Handle customer inquiries and support tickets through online portal',
+    name: 'Customer Support Processing',
+    description: 'Weekly customer support ticket processing',
     status: 'active',
     priority: 'medium',
+    type: 'weekly',
     startDate: '2024-01-05',
     endDate: '2024-02-15',
-    targetCount: 3000,
-    currentCount: 1860,
+    fileTargets: {
+      weekly: 25000,
+      dailyCapacity: 5000
+    },
+    fileCounts: {
+      monthlyCompleted: 0,
+      weeklyCompleted: 18600,
+      dailyCompleted: 4200,
+      totalCompleted: 48600
+    },
+    rates: {
+      ratePerFile: 0.08,
+      currency: 'USD'
+    },
+    targetCount: 25000,
+    currentCount: 18600,
     assignedUsers: ['2', '5'],
     createdBy: 'John Smith',
     createdAt: '2024-01-05'
   },
   {
     id: '3',
-    name: 'Invoice Processing System',
-    description: 'Review and process vendor invoices for approval',
+    name: 'Invoice Processing',
+    description: 'Monthly invoice processing system',
     status: 'completed',
     priority: 'high',
+    type: 'monthly',
     startDate: '2023-12-01',
     endDate: '2024-01-15',
-    targetCount: 2000,
-    currentCount: 2000,
+    fileTargets: {
+      monthly: 150000,
+      dailyCapacity: 10000
+    },
+    fileCounts: {
+      monthlyCompleted: 150000,
+      weeklyCompleted: 0,
+      dailyCompleted: 10000,
+      totalCompleted: 150000
+    },
+    rates: {
+      ratePerFile: 0.12,
+      currency: 'USD'
+    },
+    targetCount: 150000,
+    currentCount: 150000,
     assignedUsers: ['3', '4'],
     createdBy: 'Emily Wilson',
     createdAt: '2023-12-01'
-  },
-  {
-    id: '4',
-    name: 'Lead Generation Campaign',
-    description: 'Research and compile leads for sales team outreach',
-    status: 'planning',
-    priority: 'medium',
-    startDate: '2024-02-01',
-    endDate: '2024-03-01',
-    targetCount: 1500,
-    currentCount: 0,
-    assignedUsers: [],
-    createdBy: 'Super Admin',
-    createdAt: '2024-01-10'
   }
 ];
 
@@ -130,9 +189,18 @@ export default function ProjectManagement() {
     description: '',
     status: 'planning' as 'planning' | 'active' | 'on_hold' | 'completed',
     priority: 'medium' as 'low' | 'medium' | 'high',
+    type: 'both' as 'monthly' | 'weekly' | 'both',
     startDate: '',
     endDate: '',
-    targetCount: 0,
+    fileTargets: {
+      monthly: 0,
+      weekly: 0,
+      dailyCapacity: 0
+    },
+    rates: {
+      ratePerFile: 0,
+      currency: 'USD' as 'USD'
+    },
     assignedUsers: [] as string[]
   });
 
@@ -141,7 +209,6 @@ export default function ProjectManagement() {
                          project.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || project.status === selectedStatus;
     
-    // Role-based filtering
     if (currentUser?.role === 'user') {
       return matchesSearch && matchesStatus && project.assignedUsers.includes(currentUser.id);
     }
@@ -153,22 +220,42 @@ export default function ProjectManagement() {
     const project: Project = {
       id: (projects.length + 1).toString(),
       ...newProject,
+      fileCounts: {
+        monthlyCompleted: 0,
+        weeklyCompleted: 0,
+        dailyCompleted: 0,
+        totalCompleted: 0
+      },
+      targetCount: newProject.fileTargets.monthly || newProject.fileTargets.weekly || 0,
       currentCount: 0,
       createdBy: currentUser?.name || 'Unknown',
       createdAt: new Date().toISOString().split('T')[0]
     };
     setProjects([...projects, project]);
+    resetNewProject();
+    setIsAddDialogOpen(false);
+  };
+
+  const resetNewProject = () => {
     setNewProject({
       name: '',
       description: '',
       status: 'planning',
       priority: 'medium',
+      type: 'both',
       startDate: '',
       endDate: '',
-      targetCount: 0,
+      fileTargets: {
+        monthly: 0,
+        weekly: 0,
+        dailyCapacity: 0
+      },
+      rates: {
+        ratePerFile: 0,
+        currency: 'USD'
+      },
       assignedUsers: []
     });
-    setIsAddDialogOpen(false);
   };
 
   const handleEditProject = (project: Project) => {
@@ -178,10 +265,12 @@ export default function ProjectManagement() {
       description: project.description,
       status: project.status,
       priority: project.priority,
+      type: project.type,
       startDate: project.startDate,
       endDate: project.endDate,
-      targetCount: project.targetCount,
-      assignedUsers: project.assignedUsers
+      fileTargets: { ...project.fileTargets },
+      rates: { ...project.rates },
+      assignedUsers: [...project.assignedUsers]
     });
   };
 
@@ -190,20 +279,15 @@ export default function ProjectManagement() {
     
     setProjects(projects.map(p => 
       p.id === editingProject.id 
-        ? { ...p, ...newProject }
+        ? { 
+            ...p, 
+            ...newProject,
+            targetCount: newProject.fileTargets.monthly || newProject.fileTargets.weekly || 0
+          }
         : p
     ));
     setEditingProject(null);
-    setNewProject({
-      name: '',
-      description: '',
-      status: 'planning',
-      priority: 'medium',
-      startDate: '',
-      endDate: '',
-      targetCount: 0,
-      assignedUsers: []
-    });
+    resetNewProject();
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -229,8 +313,28 @@ export default function ProjectManagement() {
     }
   };
 
-  const getProgressPercentage = (current: number, target: number) => {
-    return target > 0 ? Math.min((current / target) * 100, 100) : 0;
+  const getProgressPercentage = (project: Project) => {
+    const target = project.type === 'monthly' 
+      ? project.fileTargets.monthly 
+      : project.type === 'weekly' 
+        ? project.fileTargets.weekly 
+        : Math.max(project.fileTargets.monthly || 0, project.fileTargets.weekly || 0);
+    
+    const completed = project.type === 'monthly' 
+      ? project.fileCounts.monthlyCompleted 
+      : project.type === 'weekly' 
+        ? project.fileCounts.weeklyCompleted 
+        : project.fileCounts.totalCompleted;
+    
+    return target > 0 ? Math.min((completed / target) * 100, 100) : 0;
+  };
+
+  const calculateEarnings = (project: Project) => {
+    const totalCompleted = project.fileCounts.totalCompleted;
+    const ratePerFile = project.rates.ratePerFile;
+    const usdAmount = totalCompleted * ratePerFile;
+    const inrAmount = usdAmount * 83; // Assuming 1 USD = 83 INR
+    return { usd: usdAmount, inr: inrAmount };
   };
 
   const canManageProjects = currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager';
@@ -242,7 +346,7 @@ export default function ProjectManagement() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Project Management</h1>
           <p className="text-muted-foreground mt-1">
-            Create, manage, and track project progress and assignments.
+            Create and manage file processing projects with rate tracking and daily targets.
           </p>
         </div>
         {canManageProjects && (
@@ -253,124 +357,212 @@ export default function ProjectManagement() {
                 Add Project
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Add New Project</DialogTitle>
                 <DialogDescription>
-                  Create a new project and assign team members.
+                  Create a new file processing project with targets and rates.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Project Name</Label>
-                  <Input
-                    id="name"
-                    value={newProject.name}
-                    onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                    placeholder="Enter project name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={newProject.description}
-                    onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                    placeholder="Describe the project goals and requirements"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="targets">File Targets</TabsTrigger>
+                  <TabsTrigger value="team">Team & Rates</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="basic" className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="status">Status</Label>
-                    <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="planning">Planning</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="on_hold">On Hold</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Priority</Label>
-                    <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="startDate">Start Date</Label>
+                    <Label htmlFor="name">Project Name</Label>
                     <Input
-                      id="startDate"
-                      type="date"
-                      value={newProject.startDate}
-                      onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                      id="name"
+                      value={newProject.name}
+                      onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                      placeholder="e.g., MO Project - Data Processing"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="endDate">End Date</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={newProject.endDate}
-                      onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={newProject.description}
+                      onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                      placeholder="Describe the project goals and requirements"
+                      rows={3}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="targetCount">Target Count</Label>
-                  <Input
-                    id="targetCount"
-                    type="number"
-                    value={newProject.targetCount}
-                    onChange={(e) => setNewProject({ ...newProject, targetCount: parseInt(e.target.value) || 0 })}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Assign Users</Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {mockUsers.map((user) => (
-                      <div key={user.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={user.id}
-                          checked={newProject.assignedUsers.includes(user.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setNewProject({
-                                ...newProject,
-                                assignedUsers: [...newProject.assignedUsers, user.id]
-                              });
-                            } else {
-                              setNewProject({
-                                ...newProject,
-                                assignedUsers: newProject.assignedUsers.filter(id => id !== user.id)
-                              });
-                            }
-                          }}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Project Type</Label>
+                      <Select value={newProject.type} onValueChange={(value: any) => setNewProject({ ...newProject, type: value })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="planning">Planning</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="on_hold">On Hold</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={newProject.startDate}
+                        onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={newProject.endDate}
+                        onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="targets" className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dailyCapacity">Daily Capacity (Files per Day)</Label>
+                      <Input
+                        id="dailyCapacity"
+                        type="number"
+                        value={newProject.fileTargets.dailyCapacity}
+                        onChange={(e) => setNewProject({ 
+                          ...newProject, 
+                          fileTargets: { 
+                            ...newProject.fileTargets, 
+                            dailyCapacity: parseInt(e.target.value) || 0 
+                          } 
+                        })}
+                        placeholder="e.g., 20000"
+                      />
+                    </div>
+                    {(newProject.type === 'monthly' || newProject.type === 'both') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="monthlyTarget">Monthly Target (Files)</Label>
+                        <Input
+                          id="monthlyTarget"
+                          type="number"
+                          value={newProject.fileTargets.monthly}
+                          onChange={(e) => setNewProject({ 
+                            ...newProject, 
+                            fileTargets: { 
+                              ...newProject.fileTargets, 
+                              monthly: parseInt(e.target.value) || 0 
+                            } 
+                          })}
+                          placeholder="e.g., 300000"
                         />
-                        <Label htmlFor={user.id} className="text-sm font-normal">
-                          {user.name} ({user.role})
-                        </Label>
                       </div>
-                    ))}
+                    )}
+                    {(newProject.type === 'weekly' || newProject.type === 'both') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="weeklyTarget">Weekly Target (Files)</Label>
+                        <Input
+                          id="weeklyTarget"
+                          type="number"
+                          value={newProject.fileTargets.weekly}
+                          onChange={(e) => setNewProject({ 
+                            ...newProject, 
+                            fileTargets: { 
+                              ...newProject.fileTargets, 
+                              weekly: parseInt(e.target.value) || 0 
+                            } 
+                          })}
+                          placeholder="e.g., 50000"
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
+                </TabsContent>
+                
+                <TabsContent value="team" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ratePerFile">Rate per File (USD)</Label>
+                    <Input
+                      id="ratePerFile"
+                      type="number"
+                      step="0.01"
+                      value={newProject.rates.ratePerFile}
+                      onChange={(e) => setNewProject({ 
+                        ...newProject, 
+                        rates: { 
+                          ...newProject.rates, 
+                          ratePerFile: parseFloat(e.target.value) || 0 
+                        } 
+                      })}
+                      placeholder="e.g., 0.05"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Assign Users</Label>
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {mockUsers.map((user) => (
+                        <div key={user.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={user.id}
+                            checked={newProject.assignedUsers.includes(user.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setNewProject({
+                                  ...newProject,
+                                  assignedUsers: [...newProject.assignedUsers, user.id]
+                                });
+                              } else {
+                                setNewProject({
+                                  ...newProject,
+                                  assignedUsers: newProject.assignedUsers.filter(id => id !== user.id)
+                                });
+                              }
+                            }}
+                          />
+                          <Label htmlFor={user.id} className="text-sm font-normal">
+                            {user.name} ({user.role})
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); resetNewProject(); }}>
                   Cancel
                 </Button>
                 <Button onClick={handleAddProject}>Add Project</Button>
@@ -381,7 +573,7 @@ export default function ProjectManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Projects</CardTitle>
@@ -394,7 +586,7 @@ export default function ProjectManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Projects</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{projects.filter(p => p.status === 'active').length}</div>
@@ -402,20 +594,35 @@ export default function ProjectManagement() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Files Processed</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projects.filter(p => p.status === 'completed').length}</div>
+            <div className="text-2xl font-bold">
+              {projects.reduce((sum, p) => sum + p.fileCounts.totalCompleted, 0).toLocaleString()}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">On Hold</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{projects.filter(p => p.status === 'on_hold').length}</div>
+            <div className="text-2xl font-bold">
+              ${projects.reduce((sum, p) => sum + calculateEarnings(p).usd, 0).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Daily Capacity</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {projects.filter(p => p.status === 'active').reduce((sum, p) => sum + p.fileTargets.dailyCapacity, 0).toLocaleString()}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -454,118 +661,159 @@ export default function ProjectManagement() {
         <CardHeader>
           <CardTitle>Projects ({filteredProjects.length})</CardTitle>
           <CardDescription>
-            Manage project assignments and track progress.
+            Manage file processing projects with real-time tracking and billing.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Progress</TableHead>
+                <TableHead>Project Details</TableHead>
+                <TableHead>Status & Type</TableHead>
+                <TableHead>File Targets</TableHead>
+                <TableHead>Progress & Earnings</TableHead>
                 <TableHead>Team</TableHead>
                 <TableHead>Deadline</TableHead>
                 {canManageProjects && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProjects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{project.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {project.description.length > 60
-                          ? `${project.description.substring(0, 60)}...`
-                          : project.description
-                        }
+              {filteredProjects.map((project) => {
+                const earnings = calculateEarnings(project);
+                const progress = getProgressPercentage(project);
+                
+                return (
+                  <TableRow key={project.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{project.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {project.description.length > 50
+                            ? `${project.description.substring(0, 50)}...`
+                            : project.description
+                          }
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getPriorityBadgeColor(project.priority)}>
+                            {project.priority.toUpperCase()}
+                          </Badge>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            ${project.rates.ratePerFile}/file
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                        <Target className="h-3 w-3" />
-                        Target: {project.targetCount.toLocaleString()}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadgeColor(project.status)}>
-                      {project.status.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getPriorityBadgeColor(project.priority)}>
-                      {project.priority.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span>{project.currentCount.toLocaleString()}</span>
-                        <span className="text-muted-foreground">
-                          {getProgressPercentage(project.currentCount, project.targetCount).toFixed(0)}%
-                        </span>
-                      </div>
-                      <Progress value={getProgressPercentage(project.currentCount, project.targetCount)} />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{project.assignedUsers.length}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Calendar className="h-3 w-3 text-muted-foreground" />
-                      {new Date(project.endDate).toLocaleDateString()}
-                    </div>
-                  </TableCell>
-                  {canManageProjects && (
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditProject(project)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Project
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <UserPlus className="mr-2 h-4 w-4" />
-                            Manage Team
-                          </DropdownMenuItem>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Project
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Project</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{project.name}"? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge className={getStatusBadgeColor(project.status)}>
+                          {project.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground">
+                          {project.type === 'both' ? 'Monthly + Weekly' : 
+                           project.type === 'monthly' ? 'Monthly' : 'Weekly'}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1 text-sm">
+                        {project.fileTargets.monthly && (
+                          <div className="flex items-center gap-1">
+                            <Target className="h-3 w-3" />
+                            Monthly: {project.fileTargets.monthly.toLocaleString()}
+                          </div>
+                        )}
+                        {project.fileTargets.weekly && (
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Weekly: {project.fileTargets.weekly.toLocaleString()}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <Timer className="h-3 w-3" />
+                          Daily: {project.fileTargets.dailyCapacity.toLocaleString()}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>{project.fileCounts.totalCompleted.toLocaleString()} files</span>
+                          <span className="text-muted-foreground">
+                            {progress.toFixed(0)}%
+                          </span>
+                        </div>
+                        <Progress value={progress} className="h-2" />
+                        <div className="text-xs space-y-0.5">
+                          <div className="flex justify-between">
+                            <span className="text-green-600">USD: ${earnings.usd.toFixed(2)}</span>
+                            <span className="text-blue-600">INR: ₹{earnings.inr.toFixed(0)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{project.assignedUsers.length}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        {new Date(project.endDate).toLocaleDateString()}
+                      </div>
+                    </TableCell>
+                    {canManageProjects && (
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditProject(project)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Project
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <BarChart3 className="mr-2 h-4 w-4" />
+                              View Analytics
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Manage Team
+                            </DropdownMenuItem>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Project
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete "{project.name}"? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteProject(project.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -573,92 +821,204 @@ export default function ProjectManagement() {
 
       {/* Edit Project Dialog */}
       <Dialog open={!!editingProject} onOpenChange={() => setEditingProject(null)}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
             <DialogDescription>
-              Update project information and assignments.
+              Update project information, targets, and assignments.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Project Name</Label>
-              <Input
-                id="edit-name"
-                value={newProject.name}
-                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={newProject.description}
-                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="targets">File Targets</TabsTrigger>
+              <TabsTrigger value="team">Team & Rates</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="basic" className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
-                <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="planning">Planning</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="on_hold">On Hold</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-priority">Priority</Label>
-                <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-startDate">Start Date</Label>
+                <Label htmlFor="edit-name">Project Name</Label>
                 <Input
-                  id="edit-startDate"
-                  type="date"
-                  value={newProject.startDate}
-                  onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                  id="edit-name"
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-endDate">End Date</Label>
-                <Input
-                  id="edit-endDate"
-                  type="date"
-                  value={newProject.endDate}
-                  onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                  rows={3}
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-targetCount">Target Count</Label>
-              <Input
-                id="edit-targetCount"
-                type="number"
-                value={newProject.targetCount}
-                onChange={(e) => setNewProject({ ...newProject, targetCount: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-type">Project Type</Label>
+                  <Select value={newProject.type} onValueChange={(value: any) => setNewProject({ ...newProject, type: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="on_hold">On Hold</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-priority">Priority</Label>
+                  <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-startDate">Start Date</Label>
+                  <Input
+                    id="edit-startDate"
+                    type="date"
+                    value={newProject.startDate}
+                    onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-endDate">End Date</Label>
+                  <Input
+                    id="edit-endDate"
+                    type="date"
+                    value={newProject.endDate}
+                    onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="targets" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-dailyCapacity">Daily Capacity (Files per Day)</Label>
+                <Input
+                  id="edit-dailyCapacity"
+                  type="number"
+                  value={newProject.fileTargets.dailyCapacity}
+                  onChange={(e) => setNewProject({ 
+                    ...newProject, 
+                    fileTargets: { 
+                      ...newProject.fileTargets, 
+                      dailyCapacity: parseInt(e.target.value) || 0 
+                    } 
+                  })}
+                />
+              </div>
+              {(newProject.type === 'monthly' || newProject.type === 'both') && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-monthlyTarget">Monthly Target (Files)</Label>
+                  <Input
+                    id="edit-monthlyTarget"
+                    type="number"
+                    value={newProject.fileTargets.monthly}
+                    onChange={(e) => setNewProject({ 
+                      ...newProject, 
+                      fileTargets: { 
+                        ...newProject.fileTargets, 
+                        monthly: parseInt(e.target.value) || 0 
+                      } 
+                    })}
+                  />
+                </div>
+              )}
+              {(newProject.type === 'weekly' || newProject.type === 'both') && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-weeklyTarget">Weekly Target (Files)</Label>
+                  <Input
+                    id="edit-weeklyTarget"
+                    type="number"
+                    value={newProject.fileTargets.weekly}
+                    onChange={(e) => setNewProject({ 
+                      ...newProject, 
+                      fileTargets: { 
+                        ...newProject.fileTargets, 
+                        weekly: parseInt(e.target.value) || 0 
+                      } 
+                    })}
+                  />
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="team" className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-ratePerFile">Rate per File (USD)</Label>
+                <Input
+                  id="edit-ratePerFile"
+                  type="number"
+                  step="0.01"
+                  value={newProject.rates.ratePerFile}
+                  onChange={(e) => setNewProject({ 
+                    ...newProject, 
+                    rates: { 
+                      ...newProject.rates, 
+                      ratePerFile: parseFloat(e.target.value) || 0 
+                    } 
+                  })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Assigned Users</Label>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {mockUsers.map((user) => (
+                    <div key={user.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-${user.id}`}
+                        checked={newProject.assignedUsers.includes(user.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setNewProject({
+                              ...newProject,
+                              assignedUsers: [...newProject.assignedUsers, user.id]
+                            });
+                          } else {
+                            setNewProject({
+                              ...newProject,
+                              assignedUsers: newProject.assignedUsers.filter(id => id !== user.id)
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`edit-${user.id}`} className="text-sm font-normal">
+                        {user.name} ({user.role})
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingProject(null)}>
+            <Button variant="outline" onClick={() => { setEditingProject(null); resetNewProject(); }}>
               Cancel
             </Button>
             <Button onClick={handleUpdateProject}>Update Project</Button>
