@@ -257,40 +257,9 @@ export default function FileProcess() {
     setIsCreateDialogOpen(false);
   };
 
-  const generateCSVFile = (process: FileProcess, startRow: number, endRow: number, userName: string) => {
-    // Generate sample CSV content based on row range
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Address', 'City', 'Country', 'Status'];
-    let csvContent = headers.join(',') + '\n';
-
-    // Generate rows with realistic data
-    for (let i = startRow; i <= endRow; i++) {
-      const row = [
-        i,
-        `User ${i}`,
-        `user${i}@example.com`,
-        `+1234567${String(i).padStart(4, '0')}`,
-        `${i} Main Street`,
-        `City ${Math.floor(i / 100) + 1}`,
-        'USA',
-        i % 2 === 0 ? 'Active' : 'Pending'
-      ];
-      csvContent += row.join(',') + '\n';
-    }
-
-    // Create downloadable file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+  const generateDownloadLink = (process: FileProcess, startRow: number, endRow: number, userName: string) => {
+    // Generate filename without triggering download
     const fileName = `${userName.toLowerCase().replace(/\s+/g, '_')}_${process.name.toLowerCase().replace(/\s+/g, '_')}_${startRow}_${endRow}.csv`;
-
-    // Create download link
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
     return `/downloads/${fileName}`;
   };
 
