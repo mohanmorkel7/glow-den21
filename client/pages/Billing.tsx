@@ -152,7 +152,8 @@ const mockBillingData: MonthlyBillingSummary[] = [
         status: 'paid',
         createdAt: '2024-01-31T18:00:00Z',
         finalizedAt: '2024-02-01T10:00:00Z',
-        paidAt: '2024-02-03T14:30:00Z'
+        paidAt: '2024-02-03T14:30:00Z',
+        type: 'project'
       },
       {
         projectId: '2',
@@ -166,7 +167,8 @@ const mockBillingData: MonthlyBillingSummary[] = [
         status: 'paid',
         createdAt: '2024-01-31T18:00:00Z',
         finalizedAt: '2024-02-01T10:00:00Z',
-        paidAt: '2024-02-03T14:30:00Z'
+        paidAt: '2024-02-03T14:30:00Z',
+        type: 'project'
       },
       {
         projectId: '3',
@@ -180,17 +182,23 @@ const mockBillingData: MonthlyBillingSummary[] = [
         status: 'paid',
         createdAt: '2024-01-31T18:00:00Z',
         finalizedAt: '2024-02-01T10:00:00Z',
-        paidAt: '2024-02-03T14:30:00Z'
+        paidAt: '2024-02-03T14:30:00Z',
+        type: 'project'
       }
+    ],
+    jobs: mockJobBillingData.filter(job => job.month === '2024-01'),
+    allItems: [
+      ...mockBillingData[0]?.projects || [],
+      ...mockJobBillingData.filter(job => job.month === '2024-01')
     ]
   },
   {
     month: '2024-02',
-    totalFilesCompleted: 456200,
-    totalAmountUSD: 32196.00,
-    totalAmountINR: 2672268.00,
+    totalFilesCompleted: 581200, // 456200 (projects) + 125000 (jobs)
+    totalAmountUSD: 33196.00, // 32196.00 (projects) + 1000.00 (jobs)
+    totalAmountINR: 2755268.00,
     conversionRate: 83.00,
-    projectsCount: 2,
+    itemsCount: 3, // 2 projects + 1 job
     projects: [
       {
         projectId: '1',
@@ -203,7 +211,8 @@ const mockBillingData: MonthlyBillingSummary[] = [
         conversionRate: 83.00,
         status: 'finalized',
         createdAt: '2024-02-29T18:00:00Z',
-        finalizedAt: '2024-03-01T10:00:00Z'
+        finalizedAt: '2024-03-01T10:00:00Z',
+        type: 'project'
       },
       {
         projectId: '2',
@@ -216,17 +225,23 @@ const mockBillingData: MonthlyBillingSummary[] = [
         conversionRate: 83.00,
         status: 'finalized',
         createdAt: '2024-02-29T18:00:00Z',
-        finalizedAt: '2024-03-01T10:00:00Z'
+        finalizedAt: '2024-03-01T10:00:00Z',
+        type: 'project'
       }
+    ],
+    jobs: mockJobBillingData.filter(job => job.month === '2024-02'),
+    allItems: [
+      ...mockBillingData[1]?.projects || [],
+      ...mockJobBillingData.filter(job => job.month === '2024-02')
     ]
   },
   {
     month: '2024-03',
     totalFilesCompleted: 187500,
-    totalAmountUSD: 12550.00,
-    totalAmountINR: 1041650.00,
+    totalAmountUSD: 9375.00,
+    totalAmountINR: 778125.00,
     conversionRate: 83.00,
-    projectsCount: 1,
+    itemsCount: 1,
     projects: [
       {
         projectId: '1',
@@ -238,8 +253,13 @@ const mockBillingData: MonthlyBillingSummary[] = [
         amountINR: 778125.00,
         conversionRate: 83.00,
         status: 'draft',
-        createdAt: '2024-03-15T20:00:00Z'
+        createdAt: '2024-03-15T20:00:00Z',
+        type: 'project'
       }
+    ],
+    jobs: [],
+    allItems: [
+      ...mockBillingData[2]?.projects || []
     ]
   }
 ];
