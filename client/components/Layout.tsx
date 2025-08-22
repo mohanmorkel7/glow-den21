@@ -186,8 +186,8 @@ export default function Layout({ children }: LayoutProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start gap-3 h-12 hover:bg-accent text-foreground">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>
+              <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
                   {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
                 </AvatarFallback>
               </Avatar>
