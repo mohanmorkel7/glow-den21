@@ -180,7 +180,7 @@ export default function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t bg-background">
+      <div className="p-4 border-t bg-muted/50 mt-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
