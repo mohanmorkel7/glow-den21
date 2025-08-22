@@ -177,9 +177,17 @@ export default function FileProcess() {
       const text = e.target?.result as string;
       if (!text) return;
 
-      // Count rows by splitting on newlines and filtering out empty lines
-      const lines = text.split('\n').filter(line => line.trim() !== '');
-      const rowCount = lines.length;
+      // Improved row counting logic
+      let rowCount = 0;
+      if (file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
+        // For CSV files, count actual data rows
+        const lines = text.split(/\r?\n/);
+        rowCount = lines.filter(line => line.trim() !== '').length;
+      } else {
+        // For other files, basic line counting
+        const lines = text.split(/\r?\n/);
+        rowCount = lines.filter(line => line.trim() !== '').length;
+      }
 
       setNewProcess({
         ...newProcess,
@@ -189,7 +197,8 @@ export default function FileProcess() {
       });
     };
 
-    reader.readAsText(file);
+    // Use UTF-8 encoding for better compatibility
+    reader.readAsText(file, 'UTF-8');
   };
 
   const handleCreateProcess = () => {
