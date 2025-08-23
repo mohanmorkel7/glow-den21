@@ -1170,7 +1170,7 @@ export default function FileProcess() {
                         )}
                       </div>
                       <Badge className={getStatusBadgeColor(process.status)}>
-                        {process.status.toUpperCase()}
+                        {process.status.toUpperCase().replace('_', ' ')}
                       </Badge>
                     </div>
 
