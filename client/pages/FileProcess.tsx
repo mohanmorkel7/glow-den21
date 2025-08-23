@@ -382,6 +382,66 @@ export default function FileProcess() {
     }
   };
 
+  const handleDailyAutomationUpdate = (processId: string) => {
+    const process = fileProcesses.find(p => p.id === processId);
+    if (!process || process.type !== 'automation') return;
+
+    setSelectedAutomationProcess(process);
+    setDailyUpdate({
+      completed: process.dailyTarget || 0,
+      date: new Date().toISOString().split('T')[0]
+    });
+    setIsUpdateDialogOpen(true);
+  };
+
+  const submitDailyUpdate = () => {
+    if (!selectedAutomationProcess) return;
+
+    const updatedProcesses = fileProcesses.map(p => {
+      if (p.id === selectedAutomationProcess.id && p.type === 'automation' && p.automationConfig) {
+        const newProcessedRows = p.processedRows + dailyUpdate.completed;
+        const newAvailableRows = p.totalRows - newProcessedRows;
+
+        return {
+          ...p,
+          processedRows: newProcessedRows,
+          availableRows: Math.max(0, newAvailableRows),
+          status: newAvailableRows <= 0 ? 'completed' as const : p.status,
+          automationConfig: {
+            ...p.automationConfig,
+            lastUpdate: new Date().toISOString(),
+            dailyCompletions: [
+              ...p.automationConfig.dailyCompletions,
+              { date: dailyUpdate.date, completed: dailyUpdate.completed }
+            ].slice(-30) // Keep last 30 days
+          }
+        };
+      }
+      return p;
+    });
+
+    setFileProcesses(updatedProcesses);
+    setIsUpdateDialogOpen(false);
+    setSelectedAutomationProcess(null);
+  };
+
+  const getAutomationStats = () => {
+    const automationProcesses = fileProcesses.filter(p => p.type === 'automation');
+    const totalAutomationRows = automationProcesses.reduce((sum, p) => sum + p.totalRows, 0);
+    const totalAutomationProcessed = automationProcesses.reduce((sum, p) => sum + p.processedRows, 0);
+    const activeAutomationProcesses = automationProcesses.filter(p => p.status === 'active').length;
+
+    return {
+      totalProcesses: automationProcesses.length,
+      activeProcesses: activeAutomationProcesses,
+      totalRows: totalAutomationRows,
+      processedRows: totalAutomationProcessed,
+      efficiency: totalAutomationRows > 0 ? (totalAutomationProcessed / totalAutomationRows) * 100 : 0
+    };
+  };
+
+  const automationStats = getAutomationStats();
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -690,7 +750,7 @@ export default function FileProcess() {
                           ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
                           : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
                             ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                            : '⚠️ Could not auto-detect row count. Please enter the total number of data rows manually.'
+                            : '⚠��� Could not auto-detect row count. Please enter the total number of data rows manually.'
                         }
                       </p>
                     </div>
