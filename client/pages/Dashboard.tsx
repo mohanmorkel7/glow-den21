@@ -91,14 +91,12 @@ export default function Dashboard() {
     { name: 'David Chen', completed: 19800, target: 20000, efficiency: 99, earnings: 990 }
   ];
 
-  // Attendance data for dashboard
+  // Attendance data for dashboard - simplified login-based system
   const attendanceData = {
     today: {
       totalEmployees: 45,
-      present: 42,
-      absent: 3,
-      late: 5,
-      onTime: 37
+      present: 42,  // Users who logged in today
+      absent: 3     // Users who haven't logged in today
     },
     thisWeek: {
       averageAttendance: 93.3,
@@ -125,57 +123,52 @@ export default function Dashboard() {
     { date: '2024-01-21', present: 42, absent: 3, total: 45, percentage: 93.3 }
   ];
 
-  // Individual employee attendance (for detailed view)
+  // Individual employee attendance (for detailed view) - simplified login-based
   const employeeAttendance = [
     {
       name: 'Sarah Johnson',
       role: 'user',
       daysPresent: 20,
       daysAbsent: 2,
-      lateCount: 1,
       attendanceRate: 90.9,
       lastLogin: '2024-01-21T09:15:00Z',
-      status: 'Present'
+      status: 'Present'  // Logged in today
     },
     {
       name: 'Mike Davis',
       role: 'user',
       daysPresent: 22,
       daysAbsent: 0,
-      lateCount: 0,
       attendanceRate: 100,
       lastLogin: '2024-01-21T08:45:00Z',
-      status: 'Present'
+      status: 'Present'  // Logged in today
     },
     {
       name: 'Emily Wilson',
       role: 'project_manager',
       daysPresent: 21,
       daysAbsent: 1,
-      lateCount: 2,
       attendanceRate: 95.5,
       lastLogin: '2024-01-21T09:30:00Z',
-      status: 'Late'
+      status: 'Present'  // Logged in today
     },
     {
       name: 'John Smith',
       role: 'project_manager',
       daysPresent: 19,
       daysAbsent: 3,
-      lateCount: 0,
       attendanceRate: 86.4,
       lastLogin: '2024-01-20T17:30:00Z',
-      status: 'Absent'
+      status: 'Absent'   // Haven't logged in today
     },
     {
       name: 'David Chen',
       role: 'user',
       daysPresent: 21,
       daysAbsent: 1,
-      lateCount: 1,
       attendanceRate: 95.5,
       lastLogin: '2024-01-21T08:50:00Z',
-      status: 'Present'
+      status: 'Present'  // Logged in today
     }
   ];
 
