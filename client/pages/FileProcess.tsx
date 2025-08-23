@@ -1714,7 +1714,7 @@ export default function FileProcess() {
       </Dialog>
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-6 mt-6">
+        <TabsContent value="all-history" className="space-y-6 mt-6">
           {/* Historical Process Summary */}
           <Card>
             <CardHeader>
