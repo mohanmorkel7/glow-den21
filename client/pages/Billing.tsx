@@ -725,7 +725,7 @@ export default function Billing() {
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Total Files</CardTitle>
+                      <CardTitle className="text-sm">Total Files Completed</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{selectedBilling.totalFilesCompleted.toLocaleString()}</div>
@@ -733,12 +733,15 @@ export default function Billing() {
                   </Card>
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm">Total Items</CardTitle>
+                      <CardTitle className="text-sm">File Processes</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{selectedBilling.itemsCount}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {selectedBilling.projects.length} projects, {selectedBilling.jobs.length} jobs
+                      <div className="text-2xl font-bold">{selectedBilling.projects.reduce((sum, p) => sum + p.fileProcesses.length, 0)}</div>
+                      <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                        <Bot className="h-3 w-3 text-blue-600" />
+                        <span>{selectedBilling.automationProcesses} automation</span>
+                        <User className="h-3 w-3 text-green-600" />
+                        <span>{selectedBilling.manualProcesses} manual</span>
                       </div>
                     </CardContent>
                   </Card>
