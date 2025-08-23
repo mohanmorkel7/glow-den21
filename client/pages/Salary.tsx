@@ -675,17 +675,17 @@ export default function Salary() {
             <div className="space-y-6">
               {/* Period Selection */}
               <div className="flex items-center gap-4">
-                <Label htmlFor="period-select">View Period:</Label>
-                <select
-                  id="period-select"
-                  value={breakdownPeriod}
-                  onChange={(e) => setBreakdownPeriod(e.target.value as BreakdownPeriod)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="daily">Daily (Today)</option>
-                  <option value="weekly">Weekly (Last 7 Days)</option>
-                  <option value="monthly">Monthly (Last 4 Weeks)</option>
-                </select>
+                <Label>View Period:</Label>
+                <Select value={breakdownPeriod} onValueChange={(value) => setBreakdownPeriod(value as BreakdownPeriod)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily (Today)</SelectItem>
+                    <SelectItem value="weekly">Weekly (Last 7 Days)</SelectItem>
+                    <SelectItem value="monthly">Monthly (Last 4 Weeks)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Current Configuration Display */}
