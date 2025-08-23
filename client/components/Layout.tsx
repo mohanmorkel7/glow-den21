@@ -207,6 +207,7 @@ export default function Layout({ children }: LayoutProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 z-50">
             <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <User className="mr-2 h-4 w-4" />
               Profile Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate('/notifications')}>
