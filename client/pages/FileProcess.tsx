@@ -386,10 +386,13 @@ export default function FileProcess() {
     const process = fileProcesses.find(p => p.id === processId);
     if (!process || process.type !== 'automation') return;
 
+    const today = new Date().toISOString().split('T')[0];
+    const todayCompletion = process.automationConfig?.dailyCompletions.find(d => d.date === today);
+
     setSelectedAutomationProcess(process);
     setDailyUpdate({
-      completed: process.dailyTarget || 0,
-      date: new Date().toISOString().split('T')[0]
+      completed: todayCompletion ? todayCompletion.completed : (process.dailyTarget || 0),
+      date: today
     });
     setIsUpdateDialogOpen(true);
   };
