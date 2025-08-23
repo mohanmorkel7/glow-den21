@@ -773,147 +773,115 @@ export default function Billing() {
               
               <TabsContent value="details" className="space-y-4">
                 <div className="space-y-6">
-                  {/* General Projects */}
-                  {selectedBilling.projects.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-3">General Projects</h4>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Project</TableHead>
-                            <TableHead>Files</TableHead>
-                            <TableHead>Rate</TableHead>
-                            <TableHead>USD</TableHead>
-                            <TableHead>INR</TableHead>
-                            <TableHead>Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {selectedBilling.projects.map((project) => (
-                            <TableRow key={project.projectId}>
-                              <TableCell>
-                                <div className="font-medium">{project.projectName}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm">{project.filesCompleted.toLocaleString()}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm">${project.ratePerFile}</div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm font-medium text-green-600">
-                                  {formatCurrency(project.amountUSD, 'USD')}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm font-medium text-blue-600">
-                                  {formatCurrency(project.amountINR, 'INR')}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={getStatusBadgeColor(project.status)}>
-                                  {getStatusIcon(project.status)}
-                                  <span className="ml-1">{project.status.toUpperCase()}</span>
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
+                  {selectedBilling.projects.map((project) => (
+                    <div key={project.projectId}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium">{project.projectName}</h4>
+                          <p className="text-sm text-muted-foreground">Client: {project.client}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium">{formatCurrency(project.amountUSD, 'USD')}</div>
+                          <div className="text-xs text-muted-foreground">${project.ratePerFile}/file</div>
+                        </div>
+                      </div>
 
-                  {/* File Processing Jobs */}
-                  {selectedBilling.jobs.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-3 flex items-center gap-2">
-                        File Processing Jobs
-                        <Badge variant="outline" className="text-xs">
-                          MO Projects - $0.008/file
-                        </Badge>
-                      </h4>
+                      {/* File Process Breakdown */}
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Job</TableHead>
+                            <TableHead>File Process</TableHead>
                             <TableHead>Type</TableHead>
-                            <TableHead>Files</TableHead>
+                            <TableHead>Total Files</TableHead>
+                            <TableHead>Completed</TableHead>
                             <TableHead>Progress</TableHead>
-                            <TableHead>USD</TableHead>
-                            <TableHead>INR</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead>Amount (USD)</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {selectedBilling.jobs.map((job) => {
-                            const progress = job.totalFiles > 0 ? (job.filesCompleted / job.totalFiles) * 100 : 0;
+                          {project.fileProcesses.map((fp) => {
+                            const processAmount = fp.completedFiles * project.ratePerFile;
                             return (
-                              <TableRow key={job.jobId}>
+                              <TableRow key={fp.processId}>
                                 <TableCell>
                                   <div>
-                                    <div className="font-medium">{job.jobName}</div>
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                      {job.assignmentType === 'automation' ? (
-                                        <>
-                                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                                          Automated
-                                        </>
-                                      ) : (
-                                        <>
-                                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                                          Manual
-                                        </>
-                                      )}
-                                    </div>
+                                    <div className="font-medium">{fp.processName}</div>
+                                    {fp.fileName && (
+                                      <div className="text-xs text-muted-foreground">{fp.fileName}</div>
+                                    )}
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="text-sm">
-                                    {job.jobType === 'mo_monthly' ? 'MO Monthly' : 'MO Weekly'}
+                                  <div className="flex items-center gap-1">
+                                    {fp.type === 'automation' ? (
+                                      <>
+                                        <Bot className="h-3 w-3 text-blue-600" />
+                                        <span className="text-xs text-blue-600">Automation</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <User className="h-3 w-3 text-green-600" />
+                                        <span className="text-xs text-green-600">Manual</span>
+                                      </>
+                                    )}
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="text-sm">{job.filesCompleted.toLocaleString()}</div>
-                                  <div className="text-xs text-muted-foreground">
-                                    of {job.totalFiles.toLocaleString()}
-                                  </div>
+                                  <div className="text-sm">{fp.totalFiles.toLocaleString()}</div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm font-medium">{fp.completedFiles.toLocaleString()}</div>
                                 </TableCell>
                                 <TableCell>
                                   <div className="space-y-1">
                                     <div className="text-xs text-muted-foreground">
-                                      {progress.toFixed(1)}%
+                                      {fp.progressPercentage.toFixed(1)}%
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                      <div
-                                        className="bg-blue-600 h-1.5 rounded-full"
-                                        style={{ width: `${Math.min(progress, 100)}%` }}
-                                      ></div>
-                                    </div>
+                                    <Progress value={fp.progressPercentage} className="h-1.5" />
                                   </div>
                                 </TableCell>
                                 <TableCell>
                                   <div className="text-sm font-medium text-green-600">
-                                    {formatCurrency(job.amountUSD, 'USD')}
+                                    {formatCurrency(processAmount, 'USD')}
                                   </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm font-medium text-blue-600">
-                                    {formatCurrency(job.amountINR, 'INR')}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge className={getStatusBadgeColor(job.status)}>
-                                    {getStatusIcon(job.status)}
-                                    <span className="ml-1">{job.status.toUpperCase()}</span>
-                                  </Badge>
                                 </TableCell>
                               </TableRow>
                             );
                           })}
+
+                          {/* Project Total Row */}
+                          <TableRow className="bg-muted/50 border-t-2">
+                            <TableCell className="font-bold">Project Total</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {project.fileProcesses.filter(fp => fp.type === 'automation').length} auto
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {project.fileProcesses.filter(fp => fp.type === 'manual').length} manual
+                                </Badge>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              {project.fileProcesses.reduce((sum, fp) => sum + fp.totalFiles, 0).toLocaleString()}
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              {project.totalFilesCompleted.toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusBadgeColor(project.status)}>
+                                {getStatusIcon(project.status)}
+                                <span className="ml-1">{project.status.toUpperCase()}</span>
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-bold text-green-600">
+                              {formatCurrency(project.amountUSD, 'USD')}
+                            </TableCell>
+                          </TableRow>
                         </TableBody>
                       </Table>
                     </div>
-                  )}
+                  ))}
                 </div>
               </TabsContent>
             </Tabs>
