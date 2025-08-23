@@ -32,6 +32,8 @@ interface User {
   email: string;
   phone: string;
   role: 'super_admin' | 'project_manager' | 'user';
+  department: string;
+  jobTitle: string;
   status: 'active' | 'inactive';
   joinDate: string;
   lastLogin: string;
