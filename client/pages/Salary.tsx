@@ -577,12 +577,14 @@ export default function Salary() {
               </div>
             </div>
             <div className="space-y-3">
-              <h4 className="font-medium">Project Manager Salary</h4>
+              <h4 className="font-medium">Project Manager Individual Salaries</h4>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Fixed Monthly Salary:</span>
-                  <span className="font-medium text-purple-600">{formatCurrency(salaryConfig.projectManagers.fixedSalary)}</span>
-                </div>
+                {projectManagerSalaryData.map((pm) => (
+                  <div key={pm.id} className="flex justify-between">
+                    <span>{pm.name}:</span>
+                    <span className="font-medium text-purple-600">{formatCurrency(pm.monthlySalary)}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
