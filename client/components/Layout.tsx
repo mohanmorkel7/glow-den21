@@ -38,7 +38,8 @@ import {
   FileText,
   Upload,
   DollarSign,
-  ChevronDown
+  ChevronDown,
+  User
 } from 'lucide-react';
 
 interface LayoutProps {
