@@ -68,6 +68,8 @@ export function createServer() {
   app.post("/api/auth/reset-password", resetPassword);
 
   // ===== USER MANAGEMENT ROUTES =====
+  // Temporarily commented out to debug routing issue
+  /*
   // All user routes require authentication
   app.use("/api/users", authenticateToken);
 
@@ -90,6 +92,7 @@ export function createServer() {
   app.get("/api/dashboard/recent-alerts", getRecentAlerts);
   app.get("/api/dashboard/productivity-trend", getProductivityTrend);
   app.get("/api/dashboard/user", getUserDashboard);
+  */
 
   // ===== PROJECT ROUTES =====
   // Placeholder for project routes - would include:
