@@ -153,6 +153,8 @@ export default function UserManagement() {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      department: user.department,
+      jobTitle: user.jobTitle,
       password: ''
     });
   };
