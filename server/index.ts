@@ -72,13 +72,13 @@ export function createServer() {
   app.use("/api/users", authenticateToken);
 
   app.get("/api/users", requirePermission("user_read"), listUsers);
-  app.get("/api/users/:id", getUser); // Self or with permission check inside
+  app.get("/api/users/:userId", getUser); // Self or with permission check inside
   app.post("/api/users", requirePermission("user_create"), createUser);
-  app.put("/api/users/:id", updateUser); // Self or with permission check inside
-  app.patch("/api/users/:id/status", requirePermission("user_update"), updateUserStatus);
-  app.delete("/api/users/:id", requirePermission("user_delete"), deleteUser);
-  app.post("/api/users/:id/change-password", changePassword); // Self or admin
-  app.get("/api/users/:id/projects", getUserProjects); // Self or with permission
+  app.put("/api/users/:userId", updateUser); // Self or with permission check inside
+  app.patch("/api/users/:userId/status", requirePermission("user_update"), updateUserStatus);
+  app.delete("/api/users/:userId", requirePermission("user_delete"), deleteUser);
+  app.post("/api/users/:userId/change-password", changePassword); // Self or admin
+  app.get("/api/users/:userId/projects", getUserProjects); // Self or with permission
 
   // ===== DASHBOARD ROUTES =====
   // All dashboard routes require authentication
