@@ -904,7 +904,7 @@ export default function FileProcess() {
                           ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
                           : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
                             ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                            : '⚠����� Could not auto-detect row count. Please enter the total number of data rows manually.'
+                            : '⚠��� Could not auto-detect row count. Please enter the total number of data rows manually.'
                         }
                       </p>
                     </div>
@@ -1825,7 +1825,11 @@ export default function FileProcess() {
                   processesByMonth
                     .find(monthData => monthData.month === selectedMonth)?.processes
                     ?.map((process) => (
-                      <Card key={process.id} className="border-l-4 border-l-green-500">
+                      <Card
+                        key={process.id}
+                        className="border-l-4 border-l-green-500 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => handleProcessBreakdown(process)}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div>
