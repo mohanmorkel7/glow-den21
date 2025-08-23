@@ -651,6 +651,200 @@ export default function Salary() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Salary Breakdown Dialog */}
+      <Dialog open={isBreakdownDialogOpen} onOpenChange={setIsBreakdownDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Salary Breakdown - {selectedUser?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed file count and earnings calculation breakdown
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-6">
+              {/* Period Selection */}
+              <div className="flex items-center gap-4">
+                <Label htmlFor="period-select">View Period:</Label>
+                <select
+                  id="period-select"
+                  value={breakdownPeriod}
+                  onChange={(e) => setBreakdownPeriod(e.target.value as BreakdownPeriod)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="daily">Daily (Today)</option>
+                  <option value="weekly">Weekly (Last 7 Days)</option>
+                  <option value="monthly">Monthly (Last 4 Weeks)</option>
+                </select>
+              </div>
+
+              {/* Current Configuration Display */}
+              <Card className="bg-blue-50">
+                <CardContent className="p-4">
+                  <h4 className="font-medium mb-2">Current Rate Configuration</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">First {salaryConfig.users.firstTierLimit} files:</span>
+                      <span className="ml-2 font-medium text-green-600">{formatCurrency(salaryConfig.users.firstTierRate)} per file</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">After {salaryConfig.users.firstTierLimit} files:</span>
+                      <span className="ml-2 font-medium text-green-600">{formatCurrency(salaryConfig.users.secondTierRate)} per file</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Breakdown Table */}
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="font-semibold">Period</TableHead>
+                      <TableHead className="font-semibold">Total Files</TableHead>
+                      <TableHead className="font-semibold">Tier 1 Files</TableHead>
+                      <TableHead className="font-semibold">Tier 1 Amount</TableHead>
+                      <TableHead className="font-semibold">Tier 2 Files</TableHead>
+                      <TableHead className="font-semibold">Tier 2 Amount</TableHead>
+                      <TableHead className="font-semibold">Total Earnings</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getBreakdownData().map((item, index) => (
+                      <TableRow key={index} className="hover:bg-gray-50">
+                        <TableCell className="font-medium">{item.period}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            {item.files.toLocaleString()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="font-medium">{item.tier1Files.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">@ {formatCurrency(item.tier1Rate)}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-green-600">{formatCurrency(item.tier1Amount)}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="font-medium">{item.tier2Files.toLocaleString()}</div>
+                            {item.tier2Files > 0 && (
+                              <div className="text-xs text-muted-foreground">@ {formatCurrency(item.tier2Rate)}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-green-600">{formatCurrency(item.tier2Amount)}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-bold text-blue-600">{formatCurrency(item.totalAmount)}</div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {/* Total Row */}
+                    <TableRow className="bg-gray-100 border-t-2 border-gray-300">
+                      <TableCell className="font-bold">TOTAL</TableCell>
+                      <TableCell>
+                        <Badge className="bg-blue-600 text-white">
+                          {getBreakdownData().reduce((sum, item) => sum + item.files, 0).toLocaleString()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold">
+                          {getBreakdownData().reduce((sum, item) => sum + item.tier1Files, 0).toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-green-600">
+                          {formatCurrency(getBreakdownData().reduce((sum, item) => sum + item.tier1Amount, 0))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold">
+                          {getBreakdownData().reduce((sum, item) => sum + item.tier2Files, 0).toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-green-600">
+                          {formatCurrency(getBreakdownData().reduce((sum, item) => sum + item.tier2Amount, 0))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-lg text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          {formatCurrency(getBreakdownTotal())}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-green-600">
+                      {getBreakdownData().reduce((sum, item) => sum + item.tier1Files, 0).toLocaleString()}
+                    </div>
+                    <div className="text-sm text-green-700">Tier 1 Files</div>
+                    <div className="text-xs text-muted-foreground">@ {formatCurrency(salaryConfig.users.firstTierRate)}/file</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-blue-600">
+                      {getBreakdownData().reduce((sum, item) => sum + item.tier2Files, 0).toLocaleString()}
+                    </div>
+                    <div className="text-sm text-blue-700">Tier 2 Files</div>
+                    <div className="text-xs text-muted-foreground">@ {formatCurrency(salaryConfig.users.secondTierRate)}/file</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-purple-200 bg-purple-50">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-lg font-bold text-purple-600">
+                      {formatCurrency(getBreakdownTotal())}
+                    </div>
+                    <div className="text-sm text-purple-700">Total Earnings</div>
+                    <div className="text-xs text-muted-foreground">
+                      {breakdownPeriod === 'daily' ? 'Today' :
+                       breakdownPeriod === 'weekly' ? 'This Week' : 'This Month'}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Performance Note */}
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-yellow-800">Daily Reset Information</p>
+                    <p className="text-yellow-700 mt-1">
+                      Daily file counts and earnings reset at midnight. The daily view shows today's current progress,
+                      while weekly and monthly views show accumulated totals.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBreakdownDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
