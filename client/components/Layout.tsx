@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import {
-  Building2,
   LayoutDashboard,
   Users,
   FolderOpen,
