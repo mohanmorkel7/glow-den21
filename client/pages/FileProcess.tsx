@@ -160,6 +160,109 @@ const mockFileRequests: FileRequest[] = [
   }
 ];
 
+const mockHistoricalProcesses: HistoricalFileProcess[] = [
+  {
+    id: 'hfp_1',
+    name: 'June-2024-DataEntry',
+    projectName: 'MO Project - Data Processing',
+    fileName: 'customer_data_june_2024.xlsx',
+    totalRows: 250000,
+    processedRows: 250000,
+    createdDate: '2024-06-01T09:00:00Z',
+    completedDate: '2024-06-15T17:30:00Z',
+    createdBy: 'John Smith',
+    duration: '14 days',
+    totalUsers: 8,
+    avgProcessingRate: 1190
+  },
+  {
+    id: 'hfp_2',
+    name: 'May-2024-Invoice',
+    projectName: 'Invoice Processing',
+    fileName: 'invoice_data_may_2024.csv',
+    totalRows: 180000,
+    processedRows: 180000,
+    createdDate: '2024-05-01T08:00:00Z',
+    completedDate: '2024-05-12T16:45:00Z',
+    createdBy: 'Emily Wilson',
+    duration: '11 days',
+    totalUsers: 6,
+    avgProcessingRate: 1364
+  },
+  {
+    id: 'hfp_3',
+    name: 'April-2024-Support',
+    projectName: 'Customer Support Processing',
+    fileName: 'support_tickets_april_2024.xlsx',
+    totalRows: 75000,
+    processedRows: 75000,
+    createdDate: '2024-04-01T10:00:00Z',
+    completedDate: '2024-04-08T14:20:00Z',
+    createdBy: 'John Smith',
+    duration: '7 days',
+    totalUsers: 4,
+    avgProcessingRate: 1339
+  }
+];
+
+const mockHistoricalAssignments: HistoricalAssignment[] = [
+  {
+    id: 'ha_1',
+    processName: 'June-2024-DataEntry',
+    userName: 'Sarah Johnson',
+    assignedCount: 15000,
+    completedCount: 15000,
+    assignedDate: '2024-06-02T09:00:00Z',
+    completedDate: '2024-06-07T16:30:00Z',
+    processingTime: '5.5 days',
+    efficiency: 95.2
+  },
+  {
+    id: 'ha_2',
+    processName: 'June-2024-DataEntry',
+    userName: 'Mike Davis',
+    assignedCount: 12000,
+    completedCount: 12000,
+    assignedDate: '2024-06-03T10:15:00Z',
+    completedDate: '2024-06-08T15:45:00Z',
+    processingTime: '5.2 days',
+    efficiency: 98.1
+  },
+  {
+    id: 'ha_3',
+    processName: 'May-2024-Invoice',
+    userName: 'Lisa Chen',
+    assignedCount: 20000,
+    completedCount: 19500,
+    assignedDate: '2024-05-02T08:30:00Z',
+    completedDate: '2024-05-09T17:00:00Z',
+    processingTime: '7.3 days',
+    efficiency: 97.5
+  },
+  {
+    id: 'ha_4',
+    processName: 'May-2024-Invoice',
+    userName: 'John Williams',
+    assignedCount: 18000,
+    completedCount: 18000,
+    assignedDate: '2024-05-01T09:00:00Z',
+    completedDate: '2024-05-07T14:30:00Z',
+    processingTime: '6.2 days',
+    efficiency: 100
+  },
+  {
+    id: 'ha_5',
+    processName: 'April-2024-Support',
+    userName: 'Emma Rodriguez',
+    assignedCount: 8500,
+    completedCount: 8500,
+    assignedDate: '2024-04-02T11:00:00Z',
+    completedDate: '2024-04-05T16:15:00Z',
+    processingTime: '3.2 days',
+    efficiency: 100
+  }
+];
+
 export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [fileProcesses, setFileProcesses] = useState<FileProcess[]>(mockFileProcesses);
