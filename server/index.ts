@@ -67,8 +67,29 @@ export function createServer() {
   app.post("/api/auth/logout", logout);
   app.post("/api/auth/reset-password", resetPassword);
 
-  // Temporarily remove problematic routes to isolate the issue
-  // Will add them back one by one
+  // ===== USER MANAGEMENT ROUTES =====
+  // All user routes require authentication
+  app.use("/api/users", authenticateToken);
+
+  app.get("/api/users", requirePermission("user_read"), listUsers);
+  app.get("/api/users/:id", getUser); // Self or with permission check inside
+  app.post("/api/users", requirePermission("user_create"), createUser);
+  app.put("/api/users/:id", updateUser); // Self or with permission check inside
+  app.patch("/api/users/:id/status", requirePermission("user_update"), updateUserStatus);
+  app.delete("/api/users/:id", requirePermission("user_delete"), deleteUser);
+  app.post("/api/users/:id/change-password", changePassword); // Self or admin
+  app.get("/api/users/:id/projects", getUserProjects); // Self or with permission
+
+  // ===== DASHBOARD ROUTES =====
+  // All dashboard routes require authentication
+  app.use("/api/dashboard", authenticateToken);
+
+  app.get("/api/dashboard/summary", getDashboardSummary);
+  app.get("/api/dashboard/recent-projects", getRecentProjects);
+  app.get("/api/dashboard/team-performance", requireRole(["super_admin", "project_manager"]), getTeamPerformance);
+  app.get("/api/dashboard/recent-alerts", getRecentAlerts);
+  app.get("/api/dashboard/productivity-trend", getProductivityTrend);
+  app.get("/api/dashboard/user", getUserDashboard);
 
   // Error handling middleware
   app.use((err: any, _req: any, res: any, _next: any) => {
