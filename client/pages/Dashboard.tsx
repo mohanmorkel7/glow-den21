@@ -219,7 +219,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {(user.role === 'super_admin' || user.role === 'project_manager') && (
+        {user.role === 'super_admin' && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Earnings (USD)</CardTitle>
@@ -333,8 +333,8 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Monthly Earnings and Team Performance - Admin/PM Only */}
-      {(user.role === 'super_admin' || user.role === 'project_manager') && (
+      {/* Monthly Earnings and Team Performance - Admin Only */}
+      {user.role === 'super_admin' && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Monthly Earnings Chart */}
           <Card>
@@ -412,7 +412,9 @@ export default function Dashboard() {
             Active Projects Overview
           </CardTitle>
           <CardDescription>
-            {user.role === 'user' ? 'Your assigned projects and file processing progress' : 'Detailed view of current project progress and earnings'}
+            {user.role === 'user' ? 'Your assigned projects and file processing progress' :
+             user.role === 'project_manager' ? 'Detailed view of current project progress and performance' :
+             'Detailed view of current project progress and earnings'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -441,7 +443,7 @@ export default function Dashboard() {
                         </Badge>
                       </div>
                     </div>
-                    {(user.role === 'super_admin' || user.role === 'project_manager') && (
+                    {user.role === 'super_admin' && (
                       <div className="text-right">
                         <div className="text-lg font-bold text-green-600">
                           {formatCurrency(project.earningsUSD, 'USD')}
