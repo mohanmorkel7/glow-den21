@@ -389,8 +389,11 @@ export default function FileProcess() {
 
     // Check if process is completed and prevent updates
     if (process.status === 'completed') {
-      alert('Cannot update counts for completed processes.');
-      return;
+      if (window.confirm(`This process "${process.name}" is marked as completed. Do you still want to view/edit historical data? Note: Any changes may affect final counts.`)) {
+        // Allow viewing but show warning in dialog
+      } else {
+        return;
+      }
     }
 
     const targetDate = editDate || new Date().toISOString().split('T')[0];
