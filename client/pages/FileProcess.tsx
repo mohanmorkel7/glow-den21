@@ -1040,7 +1040,7 @@ export default function FileProcess() {
               const statusCounts = getProcessStatusCounts(process.id);
 
               return (
-                <Card key={process.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openProcessOverview(process)}>
+                <Card key={process.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -1138,8 +1138,47 @@ export default function FileProcess() {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          <span>View Details</span>
+                          {process.type === 'automation' && (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDailyAutomationUpdate(process.id);
+                                }}
+                                className="h-6 px-2 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
+                              >
+                                <Settings className="h-3 w-3 mr-1" />
+                                Update
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openProcessOverview(process);
+                                }}
+                                className="h-6 px-2 text-xs"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openProcessOverview(process);
+                              }}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              View Details
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
