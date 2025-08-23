@@ -1496,6 +1496,90 @@ export default function FileProcess() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Daily Automation Update Dialog */}
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-purple-600" />
+              Daily Automation Update
+            </DialogTitle>
+            <DialogDescription>
+              Record daily completion count for {selectedAutomationProcess?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAutomationProcess && (
+            <div className="space-y-4">
+              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <h4 className="font-medium text-purple-700">{selectedAutomationProcess.name}</h4>
+                <p className="text-sm text-purple-600">
+                  Tool: {selectedAutomationProcess.automationConfig?.toolName}
+                </p>
+                <p className="text-xs text-purple-600 mt-1">
+                  Daily Target: {selectedAutomationProcess.dailyTarget?.toLocaleString()} items
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="updateDate">Date</Label>
+                <Input
+                  id="updateDate"
+                  type="date"
+                  value={dailyUpdate.date}
+                  onChange={(e) => setDailyUpdate({ ...dailyUpdate, date: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="completedCount">Completed Items Today</Label>
+                <Input
+                  id="completedCount"
+                  type="number"
+                  value={dailyUpdate.completed}
+                  onChange={(e) => setDailyUpdate({ ...dailyUpdate, completed: parseInt(e.target.value) || 0 })}
+                  placeholder="Enter completed count"
+                  min="0"
+                  max={selectedAutomationProcess.availableRows}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Available: {selectedAutomationProcess.availableRows.toLocaleString()} items
+                </p>
+              </div>
+
+              {dailyUpdate.completed > 0 && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    <strong>Progress Update:</strong> +{dailyUpdate.completed.toLocaleString()} items
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    New total: {(selectedAutomationProcess.processedRows + dailyUpdate.completed).toLocaleString()} / {selectedAutomationProcess.totalRows.toLocaleString()}
+                  </p>
+                  {dailyUpdate.completed >= (selectedAutomationProcess.dailyTarget || 0) && (
+                    <Badge className="mt-1" variant="default">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Daily Target Achieved!
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsUpdateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitDailyUpdate}
+              disabled={!dailyUpdate.completed || dailyUpdate.completed <= 0}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Bot className="h-4 w-4 mr-2" />
+              Update Progress
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
