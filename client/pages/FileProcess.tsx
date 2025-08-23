@@ -2117,6 +2117,255 @@ export default function FileProcess() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Process Breakdown Dialog */}
+      <Dialog open={isBreakdownDialogOpen} onOpenChange={setIsBreakdownDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-blue-500" />
+              Process Breakdown - {selectedHistoricalProcess?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed analysis and metrics for the completed file process
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedHistoricalProcess && (
+            <div className="space-y-6">
+              {/* Process Overview */}
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      Process Overview
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">COMPLETED</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Process Name</Label>
+                        <p className="text-lg font-semibold">{selectedHistoricalProcess.name}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Project</Label>
+                        <p className="text-base">{selectedHistoricalProcess.projectName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">File Name</Label>
+                        <p className="text-base font-mono text-blue-600">{selectedHistoricalProcess.fileName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Created By</Label>
+                        <p className="text-base">{selectedHistoricalProcess.createdBy}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Start Date</Label>
+                        <p className="text-base">{new Date(selectedHistoricalProcess.createdDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Completion Date</Label>
+                        <p className="text-base">{new Date(selectedHistoricalProcess.completedDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Total Duration</Label>
+                        <p className="text-base font-semibold text-purple-600">{selectedHistoricalProcess.duration}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Team Size</Label>
+                        <p className="text-base">{selectedHistoricalProcess.totalUsers} users</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Performance Metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {selectedHistoricalProcess.totalRows.toLocaleString()}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">Total Rows</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-green-600">
+                      {selectedHistoricalProcess.processedRows.toLocaleString()}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">Processed Rows</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {selectedHistoricalProcess.avgProcessingRate}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">Avg Files/Day</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {((selectedHistoricalProcess.processedRows / selectedHistoricalProcess.totalRows) * 100).toFixed(1)}%
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">Completion Rate</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Progress Timeline */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-purple-500" />
+                    Processing Timeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium">Process Started</span>
+                      </div>
+                      <span className="text-sm text-blue-600">
+                        {new Date(selectedHistoricalProcess.createdDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span className="font-medium">Process Completed</span>
+                      </div>
+                      <span className="text-sm text-green-600">
+                        {new Date(selectedHistoricalProcess.completedDate).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-purple-600" />
+                        <span className="font-medium">Average Daily Progress</span>
+                      </div>
+                      <span className="text-sm text-purple-600 font-semibold">
+                        {selectedHistoricalProcess.avgProcessingRate} files/day
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Team Performance */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-green-500" />
+                    Team Performance Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-xl font-bold text-green-600">{selectedHistoricalProcess.totalUsers}</div>
+                      <p className="text-sm text-green-700">Total Team Members</p>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-xl font-bold text-blue-600">
+                        {Math.round(selectedHistoricalProcess.processedRows / selectedHistoricalProcess.totalUsers).toLocaleString()}
+                      </div>
+                      <p className="text-sm text-blue-700">Avg Files per User</p>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-xl font-bold text-purple-600">
+                        {Math.round(selectedHistoricalProcess.avgProcessingRate / selectedHistoricalProcess.totalUsers)}
+                      </div>
+                      <p className="text-sm text-purple-700">Avg Daily per User</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* File Processing Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-orange-500" />
+                    File Processing Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-3 border rounded-lg">
+                        <Label className="text-sm font-medium text-muted-foreground">File Information</Label>
+                        <p className="text-base font-mono text-blue-600 mt-1">{selectedHistoricalProcess.fileName}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Total Records: {selectedHistoricalProcess.totalRows.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <Label className="text-sm font-medium text-muted-foreground">Processing Status</Label>
+                        <div className="mt-2">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Progress</span>
+                            <span>{((selectedHistoricalProcess.processedRows / selectedHistoricalProcess.totalRows) * 100).toFixed(1)}%</span>
+                          </div>
+                          <Progress
+                            value={(selectedHistoricalProcess.processedRows / selectedHistoricalProcess.totalRows) * 100}
+                            className="h-2"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium text-muted-foreground">Processing Summary</Label>
+                      <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Processed:</span>
+                          <span className="ml-2 font-semibold text-green-600">
+                            {selectedHistoricalProcess.processedRows.toLocaleString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Remaining:</span>
+                          <span className="ml-2 font-semibold text-orange-600">
+                            {(selectedHistoricalProcess.totalRows - selectedHistoricalProcess.processedRows).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBreakdownDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
