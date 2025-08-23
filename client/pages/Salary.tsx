@@ -34,7 +34,7 @@ interface SalaryConfig {
     firstTierLimit: number; // Number of files for first tier (500)
   };
   projectManagers: {
-    fixedSalary: number; // Fixed monthly salary in INR
+    [key: string]: number; // Individual monthly salaries by PM ID
   };
 }
 
@@ -70,7 +70,7 @@ interface ProjectManagerSalaryData {
   id: string;
   name: string;
   role: string;
-  fixedSalary: number;
+  monthlySalary: number; // Individual monthly salary
   attendanceRate: number;
   lastActive: string;
 }
