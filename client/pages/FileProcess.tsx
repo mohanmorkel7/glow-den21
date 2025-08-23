@@ -999,7 +999,7 @@ export default function FileProcess() {
       {/* Tabs for Active Processes and File History */}
       <Tabs defaultValue="current" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="current">Current Month Completed</TabsTrigger>
+          <TabsTrigger value="current">Current Month Process</TabsTrigger>
           <TabsTrigger value="all-history">All History (Month-wise)</TabsTrigger>
         </TabsList>
 
