@@ -595,10 +595,10 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
-                  7-Day Attendance Trend
+                  7-Day Login Trend
                 </CardTitle>
                 <CardDescription>
-                  Daily attendance percentage over the last week
+                  Daily login percentage over the last week
                 </CardDescription>
               </CardHeader>
               <CardContent>
