@@ -99,7 +99,8 @@ export default function Salary() {
       firstTierLimit: 500     // First 500 files
     },
     projectManagers: {
-      fixedSalary: 35000      // ₹35,000 fixed monthly salary
+      'pm_1': 30000,          // Emily Wilson - ₹30,000 monthly salary
+      'pm_2': 20000           // John Smith - ₹20,000 monthly salary
     }
   });
 
@@ -168,18 +169,18 @@ export default function Salary() {
   // Mock project manager salary data
   const projectManagerSalaryData: ProjectManagerSalaryData[] = [
     {
-      id: '1',
+      id: 'pm_1',
       name: 'Emily Wilson',
       role: 'project_manager',
-      fixedSalary: salaryConfig.projectManagers.fixedSalary,
+      monthlySalary: salaryConfig.projectManagers['pm_1'] || 30000,
       attendanceRate: 98.5,
       lastActive: '2024-01-21T17:30:00Z'
     },
     {
-      id: '2',
+      id: 'pm_2',
       name: 'John Smith',
       role: 'project_manager',
-      fixedSalary: salaryConfig.projectManagers.fixedSalary,
+      monthlySalary: salaryConfig.projectManagers['pm_2'] || 20000,
       attendanceRate: 94.2,
       lastActive: '2024-01-21T16:45:00Z'
     }
