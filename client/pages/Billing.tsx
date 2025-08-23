@@ -369,20 +369,18 @@ export default function Billing() {
   // Filter billing data
   const filteredBillingData = billingData.filter(billing => {
     const matchesMonth = selectedMonth === 'all' || billing.month === selectedMonth;
-    const matchesSearch = billing.projects.some(project => 
-      project.projectName.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = billing.projects.some(project =>
+      project.projectName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.client.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
+
     if (selectedStatus !== 'all') {
       const hasMatchingStatus = billing.projects.some(project => project.status === selectedStatus);
       return matchesMonth && matchesSearch && hasMatchingStatus;
     }
-    
+
     return matchesMonth && matchesSearch;
   });
-
-  // Get all projects from billing data for filtering
-  const allProjects = billingData.flatMap(billing => billing.projects);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
