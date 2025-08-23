@@ -254,7 +254,7 @@ export default function Dashboard() {
               Daily File Processing
             </CardTitle>
             <CardDescription>
-              Target vs completed files over the last 7 days
+              Target vs completed files over the last 7 days{user.role === 'super_admin' ? ' with earnings' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -285,14 +285,16 @@ export default function Dashboard() {
                   name="Target"
                 />
                 <Bar dataKey="completed" fill="#3b82f6" name="Completed" />
-                <Line 
-                  type="monotone" 
-                  dataKey="earnings" 
-                  stroke="#22c55e" 
-                  strokeWidth={3}
-                  dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
-                  name="Earnings"
-                />
+                {user.role === 'super_admin' && (
+                  <Line
+                    type="monotone"
+                    dataKey="earnings"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    dot={{ fill: '#22c55e', strokeWidth: 2, r: 4 }}
+                    name="Earnings"
+                  />
+                )}
               </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
