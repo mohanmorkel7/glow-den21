@@ -1713,7 +1713,13 @@ export default function FileProcess() {
               Daily Automation Update
             </DialogTitle>
             <DialogDescription>
-              Record daily completion count for {selectedAutomationProcess?.name}
+              {(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const todayCompletion = selectedAutomationProcess?.automationConfig?.dailyCompletions.find(d => d.date === today);
+                return todayCompletion
+                  ? `Update today's completion count for ${selectedAutomationProcess?.name}`
+                  : `Record today's completion count for ${selectedAutomationProcess?.name}`;
+              })()}
             </DialogDescription>
           </DialogHeader>
           {selectedAutomationProcess && (
