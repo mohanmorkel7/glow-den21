@@ -371,6 +371,7 @@ export default function FileProcess() {
   const [selectedAutomationProcess, setSelectedAutomationProcess] = useState<FileProcess | null>(null);
   const [dailyUpdate, setDailyUpdate] = useState({ completed: 0, date: new Date().toISOString().split('T')[0] });
   const [isEditingExisting, setIsEditingExisting] = useState(false);
+  const [selectedProcessStatus, setSelectedProcessStatus] = useState('');
 
   // Only allow admin/project_manager to access this page
   if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'project_manager') {
@@ -396,7 +397,7 @@ export default function FileProcess() {
       dailyTarget: 0,
       automationToolName: ''
     });
-    const [selectedProcessStatus, setSelectedProcessStatus] = useState('');
+    setSelectedProcessStatus('');
 
     // Clear file input
     const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
