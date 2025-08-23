@@ -317,6 +317,13 @@ export default function RequestFiles() {
                   Recommended range: 500-1500 files per request
                 </p>
               </div>
+              {getCurrentUserRequests().some(req => req.status === 'pending' || req.status === 'in_progress') && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-700">
+                    ⚠️ You cannot request new files while you have pending or in-progress requests. Please complete your current work first.
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsRequestDialogOpen(false)}>
