@@ -498,6 +498,56 @@ export default function FileProcess() {
 
   const automationStats = getAutomationStats();
 
+  // Get current month's completed processes
+  const getCurrentMonthCompletedProcesses = () => {
+    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
+    return mockHistoricalProcesses.filter(process => {
+      const processMonth = process.completedDate.substring(0, 7);
+      return processMonth === currentMonth;
+    });
+  };
+
+  // Get processes grouped by month
+  const getProcessesByMonth = () => {
+    const processMap = new Map<string, typeof mockHistoricalProcesses>();
+
+    mockHistoricalProcesses.forEach(process => {
+      const month = process.completedDate.substring(0, 7);
+      if (!processMap.has(month)) {
+        processMap.set(month, []);
+      }
+      processMap.get(month)!.push(process);
+    });
+
+    // Convert to array and sort by month (newest first)
+    return Array.from(processMap.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([month, processes]) => ({
+        month,
+        monthName: new Date(month + '-01').toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long'
+        }),
+        processes
+      }));
+  };
+
+  // Get assignments grouped by month
+  const getAssignmentsByMonth = () => {
+    if (selectedMonth === 'all') {
+      return mockHistoricalAssignments;
+    }
+
+    return mockHistoricalAssignments.filter(assignment => {
+      const assignmentMonth = assignment.completedDate.substring(0, 7);
+      return assignmentMonth === selectedMonth;
+    });
+  };
+
+  const currentMonthProcesses = getCurrentMonthCompletedProcesses();
+  const processesByMonth = getProcessesByMonth();
+  const filteredAssignments = getAssignmentsByMonth();
+
   const handleStatusChange = (processId: string, newStatus: string) => {
     const updatedProcesses = fileProcesses.map(p => {
       if (p.id === processId) {
