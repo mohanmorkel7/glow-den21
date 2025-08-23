@@ -139,7 +139,7 @@ export default function Layout({ children }: LayoutProps) {
         <img
           src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F195ccef20b1d4ea9abad63edcc7a7f8b?format=webp&width=800"
           alt="Company Logo"
-          className="h-8 w-8 object-contain"
+          className="h-12 w-12 object-contain"
         />
         <div className="flex flex-col">
           <h1 className="font-bold text-lg">Web Syntactic</h1>
@@ -229,7 +229,7 @@ export default function Layout({ children }: LayoutProps) {
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F195ccef20b1d4ea9abad63edcc7a7f8b?format=webp&width=800"
                   alt="Company Logo"
-                  className="h-6 w-6 object-contain"
+                  className="h-10 w-10 object-contain"
                 />
                 <span className="font-semibold">Web Syntactic</span>
               </div>
