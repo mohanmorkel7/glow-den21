@@ -409,9 +409,15 @@ export default function FileProcess() {
     const process = fileProcesses.find(p => p.id === processId);
     if (!process || process.type !== 'automation') return;
 
-    // Check if process is completed and prevent updates
-    if (process.status === 'completed') {
-      alert(`Process "${process.name}" is completed. Updates are no longer allowed to maintain data integrity.`);
+    // Check if process allows updates
+    if (!canUpdateAutomation(process)) {
+      if (process.status === 'completed') {
+        alert(`Process "${process.name}" is completed. Updates are no longer allowed to maintain data integrity.`);
+      } else if (process.status === 'pending') {
+        alert(`Process "${process.name}" is pending. Please change status to 'In Progress' before updating counts.`);
+      } else {
+        alert(`Process "${process.name}" cannot be updated in its current state.`);
+      }
       return;
     }
 
@@ -489,6 +495,26 @@ export default function FileProcess() {
   };
 
   const automationStats = getAutomationStats();
+
+  const handleStatusChange = (processId: string, newStatus: string) => {
+    const updatedProcesses = fileProcesses.map(p => {
+      if (p.id === processId) {
+        return {
+          ...p,
+          status: newStatus as FileProcess['status']
+        };
+      }
+      return p;
+    });
+
+    setFileProcesses(updatedProcesses);
+
+    // Update the selected process if it's currently being viewed
+    if (selectedProcess?.id === processId) {
+      const updatedProcess = updatedProcesses.find(p => p.id === processId);
+      setSelectedProcess(updatedProcess || null);
+    }
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -663,11 +689,41 @@ export default function FileProcess() {
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'paused': return 'bg-yellow-100 text-yellow-800';
+      case 'in_progress': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'paused': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  const canUpdateAutomation = (process: FileProcess) => {
+    return process.type === 'automation' &&
+           (process.status === 'in_progress' || process.status === 'active') &&
+           (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager');
+  };
+
+  const getStatusOptions = (currentStatus: string) => {
+    const allStatuses = [
+      { value: 'pending', label: 'Pending', description: 'Waiting to start' },
+      { value: 'in_progress', label: 'In Progress', description: 'Currently processing' },
+      { value: 'completed', label: 'Completed', description: 'All work finished' },
+      { value: 'paused', label: 'Paused', description: 'Temporarily stopped' }
+    ];
+
+    // Define allowed transitions
+    const allowedTransitions: Record<string, string[]> = {
+      'pending': ['in_progress', 'paused'],
+      'in_progress': ['completed', 'paused'],
+      'paused': ['in_progress', 'completed'],
+      'completed': [] // No transitions from completed
+    };
+
+    return allStatuses.filter(status =>
+      status.value === currentStatus ||
+      allowedTransitions[currentStatus]?.includes(status.value)
+    );
   };
 
   const getRequestStatusBadgeColor = (status: string) => {
@@ -798,7 +854,7 @@ export default function FileProcess() {
                           ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
                           : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
                             ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                            : '������ Could not auto-detect row count. Please enter the total number of data rows manually.'
+                            : '⚠��� Could not auto-detect row count. Please enter the total number of data rows manually.'
                         }
                       </p>
                     </div>
@@ -1188,7 +1244,7 @@ export default function FileProcess() {
                         <div className="flex items-center gap-1">
                           {process.type === 'automation' && (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') ? (
                             <>
-                              {process.status !== 'completed' ? (
+                              {canUpdateAutomation(process) ? (
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1202,9 +1258,14 @@ export default function FileProcess() {
                                   Update
                                 </Button>
                               ) : (
-                                <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                                  <CheckCircle className="h-3 w-3 mr-1" />
-                                  Completed
+                                <Badge variant="outline" className={`text-xs ${
+                                  process.status === 'completed' ? 'text-green-600 border-green-300' :
+                                  process.status === 'pending' ? 'text-yellow-600 border-yellow-300' :
+                                  'text-gray-600 border-gray-300'
+                                }`}>
+                                  {process.status === 'completed' && <CheckCircle className="h-3 w-3 mr-1" />}
+                                  {process.status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                                  {process.status.charAt(0).toUpperCase() + process.status.slice(1).replace('_', ' ')}
                                 </Badge>
                               )}
                               <Button
@@ -1256,26 +1317,53 @@ export default function FileProcess() {
           </DialogHeader>
           {selectedProcess && (
             <div className="space-y-6">
-              {/* Process Type Header */}
-              <div className="flex items-center gap-2 mb-4">
-                {selectedProcess.type === 'automation' ? (
-                  <>
-                    <Bot className="h-5 w-5 text-purple-600" />
-                    <span className="font-medium text-purple-600">Automation Process</span>
-                    {selectedProcess.automationConfig && (
-                      <Badge variant="outline" className="text-purple-600">
-                        {selectedProcess.automationConfig.toolName}
+              {/* Process Type Header with Status */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  {selectedProcess.type === 'automation' ? (
+                    <>
+                      <Bot className="h-5 w-5 text-purple-600" />
+                      <span className="font-medium text-purple-600">Automation Process</span>
+                      {selectedProcess.automationConfig && (
+                        <Badge variant="outline" className="text-purple-600">
+                          {selectedProcess.automationConfig.toolName}
+                        </Badge>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <User className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-blue-600">Manual Process</span>
+                      <Badge variant="outline" className="text-blue-600">
+                        {selectedProcess.fileName}
                       </Badge>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <User className="h-5 w-5 text-blue-600" />
-                    <span className="font-medium text-blue-600">Manual Process</span>
-                    <Badge variant="outline" className="text-blue-600">
-                      {selectedProcess.fileName}
-                    </Badge>
-                  </>
+                    </>
+                  )}
+                </div>
+
+                {/* Status Management for Automation Processes */}
+                {selectedProcess.type === 'automation' && (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && (
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="processStatus" className="text-sm font-medium">Status:</Label>
+                    <Select
+                      value={selectedProcess.status}
+                      onValueChange={(value) => handleStatusChange(selectedProcess.id, value)}
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getStatusOptions(selectedProcess.status).map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            <div className="flex flex-col">
+                              <span>{option.label}</span>
+                              <span className="text-xs text-muted-foreground">{option.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
               </div>
 
@@ -1320,6 +1408,8 @@ export default function FileProcess() {
                     <Card className={`border-l-4 ${
                       selectedProcess.status === 'completed'
                         ? 'border-l-green-500 bg-green-50'
+                        : selectedProcess.status === 'pending'
+                        ? 'border-l-yellow-500 bg-yellow-50'
                         : 'border-l-purple-500'
                     }`}>
                       <CardHeader>
@@ -1327,12 +1417,15 @@ export default function FileProcess() {
                           <div className="flex items-center gap-2">
                             {selectedProcess.status === 'completed' ? (
                               <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : selectedProcess.status === 'pending' ? (
+                              <Clock className="h-4 w-4 text-yellow-500" />
                             ) : (
                               <Clock className="h-4 w-4 text-purple-500" />
                             )}
-                            {selectedProcess.status === 'completed' ? 'Process Completed' : "Today's Progress"}
+                            {selectedProcess.status === 'completed' ? 'Process Completed' :
+                             selectedProcess.status === 'pending' ? 'Awaiting Start' : "Today's Progress"}
                           </div>
-                          {selectedProcess.status !== 'completed' && (
+                          {canUpdateAutomation(selectedProcess) && (
                             <Button
                               size="sm"
                               onClick={() => handleDailyAutomationUpdate(selectedProcess.id)}
@@ -1346,6 +1439,8 @@ export default function FileProcess() {
                         <CardDescription>
                           {selectedProcess.status === 'completed'
                             ? `All processing completed for ${selectedProcess.automationConfig.toolName}`
+                            : selectedProcess.status === 'pending'
+                            ? `Process is pending - change status to 'In Progress' to start updating counts`
                             : `Manage today's completion count for ${selectedProcess.automationConfig.toolName}`}
                         </CardDescription>
                       </CardHeader>
@@ -1408,42 +1503,50 @@ export default function FileProcess() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {selectedProcess.automationConfig.dailyCompletions.slice(-7).map((day, index) => {
-                          const isToday = day.date === new Date().toISOString().split('T')[0];
-                          const canEdit = (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && selectedProcess.status !== 'completed';
-                          return (
-                            <div key={index} className={`flex items-center justify-between p-2 rounded ${
-                              isToday ? 'bg-purple-100 border border-purple-300' : 'bg-purple-50'
-                            } ${selectedProcess.status === 'completed' ? 'opacity-75' : ''}`}>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">{new Date(day.date).toLocaleDateString()}</span>
-                                {isToday && <Badge variant="outline" className="text-xs">Today</Badge>}
-                                {selectedProcess.status === 'completed' && (
-                                  <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                                    Final
+                        {selectedProcess.automationConfig.dailyCompletions.length > 0 ? (
+                          selectedProcess.automationConfig.dailyCompletions.slice(-7).map((day, index) => {
+                            const isToday = day.date === new Date().toISOString().split('T')[0];
+                            const canEdit = canUpdateAutomation(selectedProcess);
+                            return (
+                              <div key={index} className={`flex items-center justify-between p-2 rounded ${
+                                isToday ? 'bg-purple-100 border border-purple-300' : 'bg-purple-50'
+                              } ${!canUpdateAutomation(selectedProcess) ? 'opacity-75' : ''}`}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">{new Date(day.date).toLocaleDateString()}</span>
+                                  {isToday && <Badge variant="outline" className="text-xs">Today</Badge>}
+                                  {selectedProcess.status === 'completed' && (
+                                    <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                                      Final
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-purple-600">{day.completed.toLocaleString()} items</span>
+                                  <Badge variant={day.completed >= (selectedProcess.dailyTarget || 0) ? 'default' : 'secondary'}>
+                                    {day.completed >= (selectedProcess.dailyTarget || 0) ? 'Target Met' : 'Below Target'}
                                   </Badge>
-                                )}
+                                  {canEdit && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleDailyAutomationUpdate(selectedProcess.id, day.date)}
+                                      className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-100"
+                                      title={`Edit count for ${new Date(day.date).toLocaleDateString()}`}
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-purple-600">{day.completed.toLocaleString()} items</span>
-                                <Badge variant={day.completed >= (selectedProcess.dailyTarget || 0) ? 'default' : 'secondary'}>
-                                  {day.completed >= (selectedProcess.dailyTarget || 0) ? 'Target Met' : 'Below Target'}
-                                </Badge>
-                                {canEdit && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleDailyAutomationUpdate(selectedProcess.id, day.date)}
-                                    className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-100"
-                                    title={`Edit count for ${new Date(day.date).toLocaleDateString()}`}
-                                  >
-                                    <Edit className="h-3 w-3" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground">
+                            <Clock className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+                            <p>No completion data yet.</p>
+                            <p className="text-xs">Change status to 'In Progress' and start updating daily counts.</p>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
