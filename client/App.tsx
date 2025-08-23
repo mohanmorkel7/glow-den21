@@ -13,7 +13,6 @@ import UserManagement from "./pages/UserManagement";
 import ProjectManagement from "./pages/ProjectManagement";
 import FileProcess from "./pages/FileProcess";
 import RequestFiles from "./pages/RequestFiles";
-import DailyCounts from "./pages/DailyCounts";
 import Billing from "./pages/Billing";
 import Reports from "./pages/Reports";
 import Permissions from "./pages/Permissions";
