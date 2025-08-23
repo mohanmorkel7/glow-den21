@@ -235,7 +235,7 @@ export default function UserManagement() {
                 Create a new user account with role assignments.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -295,7 +295,7 @@ export default function UserManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
