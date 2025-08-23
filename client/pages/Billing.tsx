@@ -106,57 +106,124 @@ interface MonthlyBillingSummary {
   manualProcesses: number;
 }
 
-const mockJobBillingData: FileProcessingJobBilling[] = [
+// Mock file process data from FileProcess.tsx
+const mockProjects: Project[] = [
+  { id: '1', name: 'MO Project - Data Processing', client: 'Mobius Dataservice', status: 'active', ratePerFile: 0.05 },
+  { id: '2', name: 'Customer Support Processing', client: 'TechCorp Solutions', status: 'active', ratePerFile: 0.08 },
+  { id: '3', name: 'Invoice Processing', client: 'Mobius Dataservice', status: 'inactive', ratePerFile: 0.12 }
+];
+
+const mockFileProcesses: FileProcess[] = [
   {
-    jobId: 'job1',
-    jobName: 'MO Monthly Batch #2024-001',
-    jobType: 'mo_monthly',
-    month: '2024-01',
-    filesCompleted: 187500,
-    totalFiles: 300000,
-    ratePerFile: 0.008,
-    amountUSD: 1500.00,
-    amountINR: 124500.00,
-    conversionRate: 83.00,
-    status: 'finalized',
-    assignmentType: 'manual',
-    createdAt: '2024-01-31T18:00:00Z',
-    finalizedAt: '2024-02-01T10:00:00Z',
-    type: 'job'
+    id: 'fp_1',
+    name: 'Aug-2025-File',
+    projectId: '1',
+    projectName: 'MO Project - Data Processing',
+    fileName: 'customer_data_aug_2025.xlsx',
+    totalRows: 300000,
+    headerRows: 1,
+    processedRows: 45000,
+    availableRows: 255000,
+    uploadDate: '2024-01-20T09:00:00Z',
+    status: 'active',
+    createdBy: 'John Smith',
+    activeUsers: 3,
+    type: 'manual'
   },
   {
-    jobId: 'job2',
-    jobName: 'MO Weekly Batch #2024-W03',
-    jobType: 'mo_weekly',
-    month: '2024-01',
-    filesCompleted: 75000,
-    totalFiles: 75000,
-    ratePerFile: 0.008,
-    amountUSD: 600.00,
-    amountINR: 49800.00,
-    conversionRate: 83.00,
-    status: 'paid',
-    assignmentType: 'automation',
-    createdAt: '2024-01-21T18:00:00Z',
-    finalizedAt: '2024-01-22T10:00:00Z',
-    paidAt: '2024-01-25T14:30:00Z',
-    type: 'job'
+    id: 'fp_2',
+    name: 'July-2025-Invoice',
+    projectId: '3',
+    projectName: 'Invoice Processing',
+    fileName: 'invoice_data_july_2025.csv',
+    totalRows: 150000,
+    headerRows: 1,
+    processedRows: 150000,
+    availableRows: 0,
+    uploadDate: '2024-01-15T14:30:00Z',
+    status: 'completed',
+    createdBy: 'Emily Wilson',
+    activeUsers: 0,
+    type: 'manual'
   },
   {
-    jobId: 'job3',
-    jobName: 'MO Monthly Batch #2024-002',
-    jobType: 'mo_monthly',
-    month: '2024-02',
-    filesCompleted: 125000,
-    totalFiles: 250000,
-    ratePerFile: 0.008,
-    amountUSD: 1000.00,
-    amountINR: 83000.00,
-    conversionRate: 83.00,
-    status: 'draft',
-    assignmentType: 'manual',
-    createdAt: '2024-02-15T18:00:00Z',
-    type: 'job'
+    id: 'fp_3',
+    name: 'Automation-DataSync-Jan2025',
+    projectId: '1',
+    projectName: 'MO Project - Data Processing',
+    totalRows: 500000,
+    headerRows: 0,
+    processedRows: 125000,
+    availableRows: 375000,
+    uploadDate: '2024-01-10T08:00:00Z',
+    status: 'in_progress',
+    createdBy: 'John Smith',
+    activeUsers: 0,
+    type: 'automation',
+    dailyTarget: 25000,
+    automationConfig: {
+      toolName: 'DataSync Pro',
+      lastUpdate: '2024-01-20T23:59:00Z',
+      dailyCompletions: [
+        { date: '2024-01-15', completed: 25000 },
+        { date: '2024-01-16', completed: 24800 },
+        { date: '2024-01-17', completed: 25200 },
+        { date: '2024-01-18', completed: 24900 },
+        { date: '2024-01-19', completed: 25100 }
+      ]
+    }
+  },
+  {
+    id: 'fp_4',
+    name: 'Automation-LeadGen-Dec2024',
+    projectId: '2',
+    projectName: 'Customer Support Processing',
+    totalRows: 200000,
+    headerRows: 0,
+    processedRows: 200000,
+    availableRows: 0,
+    uploadDate: '2024-12-01T10:00:00Z',
+    status: 'completed',
+    createdBy: 'Emily Wilson',
+    activeUsers: 0,
+    type: 'automation',
+    dailyTarget: 8000,
+    automationConfig: {
+      toolName: 'Lead Generator AI',
+      lastUpdate: '2024-12-25T23:59:00Z',
+      dailyCompletions: [
+        { date: '2024-12-20', completed: 8000 },
+        { date: '2024-12-21', completed: 8000 },
+        { date: '2024-12-22', completed: 8000 },
+        { date: '2024-12-23', completed: 8000 },
+        { date: '2024-12-24', completed: 8000 }
+      ]
+    }
+  },
+  {
+    id: 'fp_5',
+    name: 'Automation-EmailCampaign-Jan2025',
+    projectId: '2',
+    projectName: 'Customer Support Processing',
+    totalRows: 75000,
+    headerRows: 0,
+    processedRows: 68700,
+    availableRows: 6300,
+    uploadDate: '2024-01-22T09:00:00Z',
+    status: 'in_progress',
+    createdBy: 'Sarah Johnson',
+    activeUsers: 0,
+    type: 'automation',
+    dailyTarget: 5000,
+    automationConfig: {
+      toolName: 'Email Automation Pro',
+      lastUpdate: '2024-01-22T09:00:00Z',
+      dailyCompletions: [
+        { date: '2024-01-20', completed: 5000 },
+        { date: '2024-01-21', completed: 4900 },
+        { date: '2024-01-22', completed: 4800 }
+      ]
+    }
   }
 ];
 
