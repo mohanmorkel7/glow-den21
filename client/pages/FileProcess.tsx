@@ -712,18 +712,8 @@ export default function FileProcess() {
       { value: 'paused', label: 'Paused', description: 'Temporarily stopped' }
     ];
 
-    // Define allowed transitions
-    const allowedTransitions: Record<string, string[]> = {
-      'pending': ['in_progress', 'paused'],
-      'in_progress': ['completed', 'paused'],
-      'paused': ['in_progress', 'completed'],
-      'completed': [] // No transitions from completed
-    };
-
-    return allStatuses.filter(status =>
-      status.value === currentStatus ||
-      allowedTransitions[currentStatus]?.includes(status.value)
-    );
+    // Return all status options - allow admin/PM to change to any status
+    return allStatuses;
   };
 
   const getRequestStatusBadgeColor = (status: string) => {
