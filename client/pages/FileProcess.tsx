@@ -551,6 +551,11 @@ export default function FileProcess() {
   const processesByMonth = getProcessesByMonth();
   const filteredAssignments = getAssignmentsByMonth();
 
+  const handleProcessBreakdown = (process: HistoricalFileProcess) => {
+    setSelectedHistoricalProcess(process);
+    setIsBreakdownDialogOpen(true);
+  };
+
   const handleStatusChange = (processId: string, newStatus: string) => {
     const updatedProcesses = fileProcesses.map(p => {
       if (p.id === processId) {
