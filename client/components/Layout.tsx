@@ -137,7 +137,7 @@ export default function Layout({ children }: LayoutProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 p-6 border-b">
         <img
-          src="https://cdn.builder.io/o/assets%2F9f68bdced9274939b0bcd49e09efd146%2F464b2e2ce46c4663bd986b6ed87019c1?alt=media&token=3eeb20c9-66cb-4f8b-894c-bc2e3c6de56e&apiKey=9f68bdced9274939b0bcd49e09efd146"
+          src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F195ccef20b1d4ea9abad63edcc7a7f8b?format=webp&width=800"
           alt="Company Logo"
           className="h-8 w-8 object-contain"
         />
@@ -227,7 +227,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
                 <img
-                  src="https://cdn.builder.io/o/assets%2F9f68bdced9274939b0bcd49e09efd146%2F464b2e2ce46c4663bd986b6ed87019c1?alt=media&token=3eeb20c9-66cb-4f8b-894c-bc2e3c6de56e&apiKey=9f68bdced9274939b0bcd49e09efd146"
+                  src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F195ccef20b1d4ea9abad63edcc7a7f8b?format=webp&width=800"
                   alt="Company Logo"
                   className="h-6 w-6 object-contain"
                 />
