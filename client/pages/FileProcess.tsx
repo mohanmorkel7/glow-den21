@@ -981,8 +981,26 @@ export default function FileProcess() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h4 className="font-medium">{process.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{process.name}</h4>
+                          {process.type === 'automation' ? (
+                            <Badge variant="outline" className="text-purple-600 border-purple-300">
+                              <Bot className="h-3 w-3 mr-1" />
+                              AUTO
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-blue-600 border-blue-300">
+                              <User className="h-3 w-3 mr-1" />
+                              MANUAL
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">{process.projectName}</p>
+                        {process.type === 'automation' && process.automationConfig && (
+                          <p className="text-xs text-purple-600">
+                            Tool: {process.automationConfig.toolName}
+                          </p>
+                        )}
                       </div>
                       <Badge className={getStatusBadgeColor(process.status)}>
                         {process.status.toUpperCase()}
@@ -1009,6 +1027,23 @@ export default function FileProcess() {
                         </div>
                       </div>
 
+                      {process.type === 'automation' && process.dailyTarget && (
+                        <div className="mt-2 p-2 bg-purple-50 rounded text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-purple-700">Daily Target:</span>
+                            <span className="font-medium text-purple-600">{process.dailyTarget.toLocaleString()}</span>
+                          </div>
+                          {process.automationConfig?.dailyCompletions.length > 0 && (
+                            <div className="flex justify-between mt-1">
+                              <span className="text-purple-700">Last Update:</span>
+                              <span className="text-purple-600">
+                                {new Date(process.automationConfig.lastUpdate).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* User Status Counts */}
                       <div className="grid grid-cols-3 gap-2 text-xs">
                         <div className="text-center p-2 bg-green-50 rounded">
@@ -1027,8 +1062,17 @@ export default function FileProcess() {
 
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          <span>{process.activeUsers} users</span>
+                          {process.type === 'automation' ? (
+                            <>
+                              <Bot className="h-3 w-3" />
+                              <span>Automated</span>
+                            </>
+                          ) : (
+                            <>
+                              <Users className="h-3 w-3" />
+                              <span>{process.activeUsers} users</span>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
@@ -1055,13 +1099,36 @@ export default function FileProcess() {
           </DialogHeader>
           {selectedProcess && (
             <div className="space-y-6">
+              {/* Process Type Header */}
+              <div className="flex items-center gap-2 mb-4">
+                {selectedProcess.type === 'automation' ? (
+                  <>
+                    <Bot className="h-5 w-5 text-purple-600" />
+                    <span className="font-medium text-purple-600">Automation Process</span>
+                    {selectedProcess.automationConfig && (
+                      <Badge variant="outline" className="text-purple-600">
+                        {selectedProcess.automationConfig.toolName}
+                      </Badge>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <User className="h-5 w-5 text-blue-600" />
+                    <span className="font-medium text-blue-600">Manual Process</span>
+                    <Badge variant="outline" className="text-blue-600">
+                      {selectedProcess.fileName}
+                    </Badge>
+                  </>
+                )}
+              </div>
+
               {/* Process Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <div className="text-lg font-bold text-blue-600">
                     {selectedProcess.totalRows.toLocaleString()}
                   </div>
-                  <div className="text-xs text-blue-700">Total Rows</div>
+                  <div className="text-xs text-blue-700">{selectedProcess.type === 'automation' ? 'Total Items' : 'Total Rows'}</div>
                 </div>
                 <div className="bg-green-50 p-3 rounded-lg">
                   <div className="text-lg font-bold text-green-600">
@@ -1077,11 +1144,46 @@ export default function FileProcess() {
                 </div>
                 <div className="bg-purple-50 p-3 rounded-lg">
                   <div className="text-lg font-bold text-purple-600">
-                    {selectedProcess.activeUsers}
+                    {selectedProcess.type === 'automation' ?
+                      (selectedProcess.dailyTarget?.toLocaleString() || 'N/A') :
+                      selectedProcess.activeUsers
+                    }
                   </div>
-                  <div className="text-xs text-purple-700">Active Users</div>
+                  <div className="text-xs text-purple-700">
+                    {selectedProcess.type === 'automation' ? 'Daily Target' : 'Active Users'}
+                  </div>
                 </div>
               </div>
+
+              {/* Automation Daily Progress */}
+              {selectedProcess.type === 'automation' && selectedProcess.automationConfig?.dailyCompletions && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-purple-500" />
+                      Daily Automation Progress
+                    </CardTitle>
+                    <CardDescription>
+                      Recent daily completions by {selectedProcess.automationConfig.toolName}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {selectedProcess.automationConfig.dailyCompletions.slice(-5).map((day, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-purple-50 rounded">
+                          <span className="text-sm font-medium">{new Date(day.date).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-purple-600">{day.completed.toLocaleString()} items</span>
+                            <Badge variant={day.completed >= (selectedProcess.dailyTarget || 0) ? 'default' : 'secondary'}>
+                              {day.completed >= (selectedProcess.dailyTarget || 0) ? 'Target Met' : 'Below Target'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Progress Bar */}
               <div>
@@ -1093,8 +1195,9 @@ export default function FileProcess() {
               </div>
 
               {/* Request History with Full Status Tracking */}
-              <div>
-                <h4 className="font-medium mb-3">File Assignment & Status Tracking</h4>
+              {selectedProcess.type === 'manual' && (
+                <div>
+                  <h4 className="font-medium mb-3">File Assignment & Status Tracking</h4>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1183,12 +1286,13 @@ export default function FileProcess() {
                   </TableBody>
                 </Table>
                 
-                {getProcessRequests(selectedProcess.id).length === 0 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    No requests for this process yet.
-                  </div>
-                )}
-              </div>
+                  {getProcessRequests(selectedProcess.id).length === 0 && (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No requests for this process yet.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
