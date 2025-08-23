@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   FileText,
   Plus,
   Upload,
@@ -24,7 +24,10 @@ import {
   Eye,
   Edit,
   Trash2,
-  MoreHorizontal
+  MoreHorizontal,
+  Bot,
+  User,
+  Settings
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -40,7 +43,7 @@ interface FileProcess {
   name: string;
   projectId: string;
   projectName: string;
-  fileName: string;
+  fileName?: string;
   totalRows: number;
   headerRows: number;
   processedRows: number;
@@ -49,6 +52,13 @@ interface FileProcess {
   status: 'active' | 'completed' | 'paused';
   createdBy: string;
   activeUsers: number;
+  type: 'automation' | 'manual';
+  dailyTarget?: number;
+  automationConfig?: {
+    toolName: string;
+    lastUpdate: string;
+    dailyCompletions: { date: string; completed: number }[];
+  };
 }
 
 interface FileRequest {
@@ -115,7 +125,8 @@ const mockFileProcesses: FileProcess[] = [
     uploadDate: '2024-01-20T09:00:00Z',
     status: 'active',
     createdBy: 'John Smith',
-    activeUsers: 3
+    activeUsers: 3,
+    type: 'manual'
   },
   {
     id: 'fp_2',
@@ -130,7 +141,62 @@ const mockFileProcesses: FileProcess[] = [
     uploadDate: '2024-01-15T14:30:00Z',
     status: 'completed',
     createdBy: 'Emily Wilson',
-    activeUsers: 0
+    activeUsers: 0,
+    type: 'manual'
+  },
+  {
+    id: 'fp_3',
+    name: 'Automation-DataSync-Jan2025',
+    projectId: '1',
+    projectName: 'MO Project - Data Processing',
+    totalRows: 500000,
+    headerRows: 0,
+    processedRows: 125000,
+    availableRows: 375000,
+    uploadDate: '2024-01-10T08:00:00Z',
+    status: 'active',
+    createdBy: 'John Smith',
+    activeUsers: 0,
+    type: 'automation',
+    dailyTarget: 25000,
+    automationConfig: {
+      toolName: 'DataSync Pro',
+      lastUpdate: '2024-01-20T23:59:00Z',
+      dailyCompletions: [
+        { date: '2024-01-15', completed: 25000 },
+        { date: '2024-01-16', completed: 24800 },
+        { date: '2024-01-17', completed: 25200 },
+        { date: '2024-01-18', completed: 24900 },
+        { date: '2024-01-19', completed: 25100 }
+      ]
+    }
+  },
+  {
+    id: 'fp_4',
+    name: 'Automation-LeadGen-Dec2024',
+    projectId: '2',
+    projectName: 'Customer Support Processing',
+    totalRows: 200000,
+    headerRows: 0,
+    processedRows: 200000,
+    availableRows: 0,
+    uploadDate: '2024-12-01T10:00:00Z',
+    status: 'completed',
+    createdBy: 'Emily Wilson',
+    activeUsers: 0,
+    type: 'automation',
+    dailyTarget: 8000,
+    automationConfig: {
+      toolName: 'Lead Generator AI',
+      lastUpdate: '2024-12-25T23:59:00Z',
+      dailyCompletions: [
+        { date: '2024-12-20', completed: 8000 },
+        { date: '2024-12-21', completed: 8000 },
+        { date: '2024-12-22', completed: 8000 },
+        { date: '2024-12-23', completed: 8000 },
+        { date: '2024-12-24', completed: 8000 }
+      ]
+    }
   }
 ];
 
@@ -275,7 +341,10 @@ export default function FileProcess() {
     projectId: '',
     fileName: '',
     totalRows: 0,
-    uploadedFile: null as File | null
+    uploadedFile: null as File | null,
+    type: 'manual' as 'automation' | 'manual',
+    dailyTarget: 0,
+    automationToolName: ''
   });
 
   // Only allow admin/project_manager to access this page
@@ -292,7 +361,16 @@ export default function FileProcess() {
   }
 
   const resetForm = () => {
-    setNewProcess({ name: '', projectId: '', fileName: '', totalRows: 0, uploadedFile: null });
+    setNewProcess({
+      name: '',
+      projectId: '',
+      fileName: '',
+      totalRows: 0,
+      uploadedFile: null,
+      type: 'manual',
+      dailyTarget: 0,
+      automationToolName: ''
+    });
 
     // Clear file input
     const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
@@ -368,13 +446,13 @@ export default function FileProcess() {
 
   const handleCreateProcess = () => {
     const availableRows = newProcess.totalRows;
-    
+
     const process: FileProcess = {
       id: `fp_${fileProcesses.length + 1}`,
       name: newProcess.name,
       projectId: newProcess.projectId,
       projectName: mockProjects.find(p => p.id === newProcess.projectId)?.name || 'Unknown Project',
-      fileName: newProcess.fileName,
+      fileName: newProcess.type === 'manual' ? newProcess.fileName : undefined,
       totalRows: newProcess.totalRows,
       headerRows: 0,
       processedRows: 0,
@@ -382,9 +460,16 @@ export default function FileProcess() {
       uploadDate: new Date().toISOString(),
       status: 'active',
       createdBy: currentUser?.name || 'Unknown',
-      activeUsers: 0
+      activeUsers: newProcess.type === 'automation' ? 0 : 0,
+      type: newProcess.type,
+      dailyTarget: newProcess.type === 'automation' ? newProcess.dailyTarget : undefined,
+      automationConfig: newProcess.type === 'automation' ? {
+        toolName: newProcess.automationToolName,
+        lastUpdate: new Date().toISOString(),
+        dailyCompletions: []
+      } : undefined
     };
-    
+
     setFileProcesses([process, ...fileProcesses]);
     resetForm();
     setIsCreateDialogOpen(false);
@@ -514,7 +599,7 @@ export default function FileProcess() {
                   id="processName"
                   value={newProcess.name}
                   onChange={(e) => setNewProcess({ ...newProcess, name: e.target.value })}
-                  placeholder="e.g., Aug-2025-File"
+                  placeholder="e.g., Aug-2025-File or Automation-DataSync-Jan2025"
                 />
               </div>
               <div className="space-y-2">
@@ -536,53 +621,142 @@ export default function FileProcess() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fileUpload">Upload File (Excel/CSV)</Label>
-                <div className="space-y-2">
-                  <Input
-                    id="fileUpload"
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleFileUpload}
-                    className="cursor-pointer"
-                  />
+                <Label htmlFor="processType">Process Type</Label>
+                <Select value={newProcess.type} onValueChange={(value: 'automation' | 'manual') => setNewProcess({ ...newProcess, type: value, fileName: '', totalRows: 0, uploadedFile: null })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select process type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>Manual Processing</span>
+                          <span className="text-xs text-muted-foreground">Users work with uploaded files</span>
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="automation">
+                      <div className="flex items-center gap-2">
+                        <Bot className="h-4 w-4" />
+                        <div className="flex flex-col">
+                          <span>Automation Tool</span>
+                          <span className="text-xs text-muted-foreground">Automated processing with daily updates</span>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {newProcess.type === 'manual' ? (
+                // Manual File Upload
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fileUpload">Upload File (Excel/CSV)</Label>
+                    <div className="space-y-2">
+                      <Input
+                        id="fileUpload"
+                        type="file"
+                        accept=".csv,.xlsx,.xls"
+                        onChange={handleFileUpload}
+                        className="cursor-pointer"
+                      />
+                      {newProcess.uploadedFile && (
+                        <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
+                          <Upload className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-green-700">
+                            File uploaded: {newProcess.fileName}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {newProcess.uploadedFile && (
-                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
-                      <Upload className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-green-700">
-                        File uploaded: {newProcess.fileName}
-                      </span>
+                    <div className="space-y-2">
+                      <Label htmlFor="totalRows">Total Rows (editable)</Label>
+                      <Input
+                        id="totalRows"
+                        type="number"
+                        value={newProcess.totalRows}
+                        onChange={(e) => setNewProcess({ ...newProcess, totalRows: parseInt(e.target.value) || 0 })}
+                        placeholder="Enter row count"
+                        min="1"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {newProcess.totalRows > 0
+                          ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
+                          : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
+                            ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
+                            : '⚠️ Could not auto-detect row count. Please enter the total number of data rows manually.'
+                        }
+                      </p>
                     </div>
                   )}
-                </div>
-              </div>
-              {newProcess.uploadedFile && (
-                <div className="space-y-2">
-                  <Label htmlFor="totalRows">Total Rows (editable)</Label>
-                  <Input
-                    id="totalRows"
-                    type="number"
-                    value={newProcess.totalRows}
-                    onChange={(e) => setNewProcess({ ...newProcess, totalRows: parseInt(e.target.value) || 0 })}
-                    placeholder="Enter row count"
-                    min="1"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {newProcess.totalRows > 0
-                      ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
-                      : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
-                        ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                        : '⚠️ Could not auto-detect row count. Please enter the total number of data rows manually.'
-                    }
-                  </p>
-                </div>
+                </>
+              ) : (
+                // Automation Configuration
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="automationTool">Automation Tool Name</Label>
+                    <Input
+                      id="automationTool"
+                      value={newProcess.automationToolName}
+                      onChange={(e) => setNewProcess({ ...newProcess, automationToolName: e.target.value })}
+                      placeholder="e.g., DataSync Pro, Lead Generator AI"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="totalCount">Total Count to Process</Label>
+                    <Input
+                      id="totalCount"
+                      type="number"
+                      value={newProcess.totalRows}
+                      onChange={(e) => setNewProcess({ ...newProcess, totalRows: parseInt(e.target.value) || 0 })}
+                      placeholder="Enter total count"
+                      min="1"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Total number of items to be processed by the automation tool.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dailyTarget">Daily Target</Label>
+                    <Input
+                      id="dailyTarget"
+                      type="number"
+                      value={newProcess.dailyTarget}
+                      onChange={(e) => setNewProcess({ ...newProcess, dailyTarget: parseInt(e.target.value) || 0 })}
+                      placeholder="Enter daily processing target"
+                      min="1"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Expected number of items to be processed daily by the automation tool.
+                    </p>
+                  </div>
+                </>
               )}
               {newProcess.totalRows > 0 && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <strong>Available for processing:</strong> {newProcess.totalRows.toLocaleString()} rows
+                <div className={`p-3 border rounded-lg ${
+                  newProcess.type === 'automation'
+                    ? 'bg-purple-50 border-purple-200'
+                    : 'bg-blue-50 border-blue-200'
+                }`}>
+                  <p className={`text-sm ${
+                    newProcess.type === 'automation' ? 'text-purple-700' : 'text-blue-700'
+                  }`}>
+                    <strong>Available for processing:</strong> {newProcess.totalRows.toLocaleString()} {newProcess.type === 'automation' ? 'items' : 'rows'}
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    This will be the total number of data rows available for user allocation.
+                  {newProcess.type === 'automation' && newProcess.dailyTarget > 0 && (
+                    <p className="text-xs text-purple-600 mt-1">
+                      Estimated completion: {Math.ceil(newProcess.totalRows / newProcess.dailyTarget)} days
+                    </p>
+                  )}
+                  <p className={`text-xs mt-1 ${
+                    newProcess.type === 'automation' ? 'text-purple-600' : 'text-blue-600'
+                  }`}>
+                    {newProcess.type === 'automation'
+                      ? 'This will be processed automatically with daily updates.'
+                      : 'This will be the total number of data rows available for user allocation.'}
                   </p>
                 </div>
               )}
@@ -596,7 +770,14 @@ export default function FileProcess() {
               </Button>
               <Button
                 onClick={handleCreateProcess}
-                disabled={!newProcess.name || !newProcess.projectId || !newProcess.uploadedFile || !newProcess.totalRows || newProcess.totalRows <= 0}
+                disabled={
+                  !newProcess.name ||
+                  !newProcess.projectId ||
+                  !newProcess.totalRows ||
+                  newProcess.totalRows <= 0 ||
+                  (newProcess.type === 'manual' && !newProcess.uploadedFile) ||
+                  (newProcess.type === 'automation' && (!newProcess.automationToolName || !newProcess.dailyTarget || newProcess.dailyTarget <= 0))
+                }
               >
                 Create Process
               </Button>
