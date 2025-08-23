@@ -108,15 +108,17 @@ export default function Salary() {
   const [selectedUser, setSelectedUser] = useState<UserSalaryData | null>(null);
   const [breakdownPeriod, setBreakdownPeriod] = useState<BreakdownPeriod>('daily');
 
-  // Mock user salary data
+  // Mock user salary data - daily resets each day
   const userSalaryData: UserSalaryData[] = [
     {
       id: '1',
       name: 'Sarah Johnson',
       role: 'user',
-      todayFiles: 750,        // Over 500, so gets mixed rate
-      monthlyFiles: 15200,    
+      todayFiles: 750,        // Today's current count (resets daily)
+      weeklyFiles: 4200,      // This week's total
+      monthlyFiles: 15200,    // This month's total
       todayEarnings: calculateUserDailyEarnings(750, salaryConfig),
+      weeklyEarnings: calculateUserDailyEarnings(4200, salaryConfig),
       monthlyEarnings: calculateUserMonthlyEarnings(15200, salaryConfig),
       attendanceRate: 95.2,
       lastActive: '2024-01-21T14:30:00Z'
@@ -125,9 +127,11 @@ export default function Salary() {
       id: '2',
       name: 'Mike Davis',
       role: 'user',
-      todayFiles: 420,        // Under 500, gets first tier rate only
-      monthlyFiles: 9800,
+      todayFiles: 420,        // Today's current count (under 500)
+      weeklyFiles: 2800,      // This week's total
+      monthlyFiles: 9800,     // This month's total
       todayEarnings: calculateUserDailyEarnings(420, salaryConfig),
+      weeklyEarnings: calculateUserDailyEarnings(2800, salaryConfig),
       monthlyEarnings: calculateUserMonthlyEarnings(9800, salaryConfig),
       attendanceRate: 98.1,
       lastActive: '2024-01-21T15:15:00Z'
@@ -136,9 +140,11 @@ export default function Salary() {
       id: '3',
       name: 'David Chen',
       role: 'user',
-      todayFiles: 680,
-      monthlyFiles: 14500,
+      todayFiles: 680,        // Today's current count
+      weeklyFiles: 3900,      // This week's total
+      monthlyFiles: 14500,    // This month's total
       todayEarnings: calculateUserDailyEarnings(680, salaryConfig),
+      weeklyEarnings: calculateUserDailyEarnings(3900, salaryConfig),
       monthlyEarnings: calculateUserMonthlyEarnings(14500, salaryConfig),
       attendanceRate: 92.8,
       lastActive: '2024-01-21T13:45:00Z'
@@ -147,9 +153,11 @@ export default function Salary() {
       id: '4',
       name: 'Lisa Chen',
       role: 'user',
-      todayFiles: 850,
-      monthlyFiles: 18600,
+      todayFiles: 850,        // Today's current count
+      weeklyFiles: 5100,      // This week's total
+      monthlyFiles: 18600,    // This month's total
       todayEarnings: calculateUserDailyEarnings(850, salaryConfig),
+      weeklyEarnings: calculateUserDailyEarnings(5100, salaryConfig),
       monthlyEarnings: calculateUserMonthlyEarnings(18600, salaryConfig),
       attendanceRate: 96.7,
       lastActive: '2024-01-21T16:00:00Z'
