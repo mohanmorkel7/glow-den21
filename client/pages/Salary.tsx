@@ -535,7 +535,7 @@ export default function Salary() {
                 User File-Based Salaries
               </CardTitle>
               <CardDescription>
-                Real-time and monthly earnings based on file processing
+                Real-time and monthly earnings based on file processing. Click on any user name to view detailed breakdown.
               </CardDescription>
             </CardHeader>
             <CardContent>
