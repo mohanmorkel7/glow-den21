@@ -32,11 +32,45 @@ import {
   Activity
 } from 'lucide-react';
 
+// File Process interfaces from FileProcess.tsx
+interface Project {
+  id: string;
+  name: string;
+  client: string;
+  status: 'active' | 'inactive';
+  ratePerFile?: number; // USD per file
+}
+
+interface FileProcess {
+  id: string;
+  name: string;
+  projectId: string;
+  projectName: string;
+  fileName?: string;
+  totalRows: number;
+  headerRows: number;
+  processedRows: number;
+  availableRows: number;
+  uploadDate: string;
+  status: 'pending' | 'active' | 'in_progress' | 'completed' | 'paused';
+  createdBy: string;
+  activeUsers: number;
+  type: 'automation' | 'manual';
+  dailyTarget?: number;
+  automationConfig?: {
+    toolName: string;
+    lastUpdate: string;
+    dailyCompletions: { date: string; completed: number }[];
+  };
+}
+
 interface ProjectBilling {
   projectId: string;
   projectName: string;
+  client: string;
   month: string;
-  filesCompleted: number;
+  fileProcesses: FileProcessBilling[];
+  totalFilesCompleted: number;
   ratePerFile: number;
   amountUSD: number;
   amountINR: number;
@@ -48,26 +82,17 @@ interface ProjectBilling {
   type: 'project';
 }
 
-interface FileProcessingJobBilling {
-  jobId: string;
-  jobName: string;
-  jobType: 'mo_monthly' | 'mo_weekly';
-  month: string;
-  filesCompleted: number;
+interface FileProcessBilling {
+  processId: string;
+  processName: string;
+  fileName?: string;
+  type: 'automation' | 'manual';
   totalFiles: number;
-  ratePerFile: number;
-  amountUSD: number;
-  amountINR: number;
-  conversionRate: number;
-  status: 'draft' | 'finalized' | 'paid';
-  assignmentType: 'automation' | 'manual';
-  createdAt: string;
-  finalizedAt?: string;
-  paidAt?: string;
-  type: 'job';
+  completedFiles: number;
+  progressPercentage: number;
+  completedDate?: string;
+  dailyCompletions?: { date: string; completed: number }[];
 }
-
-type BillingItem = ProjectBilling | FileProcessingJobBilling;
 
 interface MonthlyBillingSummary {
   month: string;
@@ -77,8 +102,8 @@ interface MonthlyBillingSummary {
   conversionRate: number;
   itemsCount: number;
   projects: ProjectBilling[];
-  jobs: FileProcessingJobBilling[];
-  allItems: BillingItem[];
+  automationProcesses: number;
+  manualProcesses: number;
 }
 
 const mockJobBillingData: FileProcessingJobBilling[] = [
