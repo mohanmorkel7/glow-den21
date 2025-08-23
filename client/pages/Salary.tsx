@@ -364,7 +364,7 @@ export default function Salary() {
 
   // Calculate total salary statistics
   const totalUserSalaries = userSalaryData.reduce((sum, user) => sum + user.monthlyEarnings, 0);
-  const totalPMSalaries = projectManagerSalaryData.reduce((sum, pm) => sum + pm.fixedSalary, 0);
+  const totalPMSalaries = projectManagerSalaryData.reduce((sum, pm) => sum + pm.monthlySalary, 0);
   const totalMonthlySalaries = totalUserSalaries + totalPMSalaries;
   const avgUserEarnings = totalUserSalaries / userSalaryData.length;
 
