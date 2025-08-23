@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   DollarSign,
   Users,
   Settings,
@@ -21,7 +21,9 @@ import {
   Calendar,
   FileText,
   Target,
-  IndianRupee
+  IndianRupee,
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 
 interface SalaryConfig {
@@ -40,12 +42,28 @@ interface UserSalaryData {
   name: string;
   role: string;
   todayFiles: number;
+  weeklyFiles: number;
   monthlyFiles: number;
   todayEarnings: number;
+  weeklyEarnings: number;
   monthlyEarnings: number;
   attendanceRate: number;
   lastActive: string;
 }
+
+interface SalaryBreakdown {
+  period: string;
+  files: number;
+  tier1Files: number;
+  tier1Rate: number;
+  tier1Amount: number;
+  tier2Files: number;
+  tier2Rate: number;
+  tier2Amount: number;
+  totalAmount: number;
+}
+
+type BreakdownPeriod = 'daily' | 'weekly' | 'monthly';
 
 interface ProjectManagerSalaryData {
   id: string;
@@ -86,6 +104,9 @@ export default function Salary() {
 
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
   const [tempConfig, setTempConfig] = useState<SalaryConfig>(salaryConfig);
+  const [isBreakdownDialogOpen, setIsBreakdownDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserSalaryData | null>(null);
+  const [breakdownPeriod, setBreakdownPeriod] = useState<BreakdownPeriod>('daily');
 
   // Mock user salary data
   const userSalaryData: UserSalaryData[] = [
