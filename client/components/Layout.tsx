@@ -38,8 +38,7 @@ import {
   Mail,
   Receipt,
   FileText,
-  Upload,
-  ChevronUp
+  Upload
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -153,7 +152,7 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav className="flex-1 p-4">
         <div className="space-y-2">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
@@ -181,34 +180,24 @@ export default function Layout({ children }: LayoutProps) {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t bg-muted/50 mt-auto">
+      <div className="p-4 border-t bg-background">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 h-12 hover:bg-accent text-foreground border border-border rounded-md"
-              onClick={() => console.log('Avatar clicked!')}
-            >
-              <Avatar className="h-10 w-10 bg-primary text-primary-foreground ring-2 ring-primary/20">
-                <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">
+            <Button variant="ghost" className="w-full justify-start gap-3 h-12 hover:bg-accent text-foreground">
+              <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-primary text-primary-foreground font-medium">
                   {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col items-start flex-1">
+              <div className="flex flex-col items-start">
                 <p className="text-sm font-medium text-foreground">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground capitalize">
                   {user?.role ? user.role.replace('_', ' ') : 'User'}
                 </p>
               </div>
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            side="right"
-            className="w-56 z-[100] bg-popover border shadow-lg"
-            sideOffset={10}
-          >
+          <DropdownMenuContent align="start" className="w-56 z-50">
             <DropdownMenuItem onClick={() => navigate('/profile')}>
               Profile Settings
             </DropdownMenuItem>
