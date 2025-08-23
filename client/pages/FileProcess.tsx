@@ -1750,54 +1750,123 @@ export default function FileProcess() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockHistoricalProcesses.map((process) => (
-                  <Card key={process.id} className="border-l-4 border-l-green-500">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <h4 className="font-medium">{process.name}</h4>
-                          <p className="text-sm text-muted-foreground">{process.projectName}</p>
-                          <p className="text-xs text-muted-foreground">Created by: {process.createdBy}</p>
-                        </div>
-                        <Badge className="bg-green-100 text-green-800">
-                          COMPLETED
-                        </Badge>
+                {selectedMonth === 'all' ? (
+                  // Show all processes grouped by month
+                  processesByMonth.map((monthData) => (
+                    <div key={monthData.month} className="space-y-4">
+                      <div className="flex items-center gap-2 pt-4 border-t first:border-t-0 first:pt-0">
+                        <h3 className="text-lg font-semibold text-blue-600">{monthData.monthName}</h3>
+                        <Badge variant="outline">{monthData.processes.length} processes</Badge>
                       </div>
+                      {monthData.processes.map((process) => (
+                        <Card key={process.id} className="border-l-4 border-l-green-500 ml-4">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <h4 className="font-medium">{process.name}</h4>
+                                <p className="text-sm text-muted-foreground">{process.projectName}</p>
+                                <p className="text-xs text-muted-foreground">Created by: {process.createdBy}</p>
+                              </div>
+                              <Badge className="bg-green-100 text-green-800">
+                                COMPLETED
+                              </Badge>
+                            </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                        <div className="text-center p-2 bg-blue-50 rounded">
-                          <div className="text-lg font-bold text-blue-600">
-                            {process.totalRows.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-blue-700">Total Rows</div>
-                        </div>
-                        <div className="text-center p-2 bg-green-50 rounded">
-                          <div className="text-lg font-bold text-green-600">
-                            {process.totalUsers}
-                          </div>
-                          <div className="text-xs text-green-700">Users</div>
-                        </div>
-                        <div className="text-center p-2 bg-purple-50 rounded">
-                          <div className="text-lg font-bold text-purple-600">
-                            {process.duration}
-                          </div>
-                          <div className="text-xs text-purple-700">Duration</div>
-                        </div>
-                        <div className="text-center p-2 bg-orange-50 rounded">
-                          <div className="text-lg font-bold text-orange-600">
-                            {process.avgProcessingRate}
-                          </div>
-                          <div className="text-xs text-orange-700">Avg/Day</div>
-                        </div>
-                      </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                              <div className="text-center p-2 bg-blue-50 rounded">
+                                <div className="text-lg font-bold text-blue-600">
+                                  {process.totalRows.toLocaleString()}
+                                </div>
+                                <div className="text-xs text-blue-700">Total Rows</div>
+                              </div>
+                              <div className="text-center p-2 bg-green-50 rounded">
+                                <div className="text-lg font-bold text-green-600">
+                                  {process.totalUsers}
+                                </div>
+                                <div className="text-xs text-green-700">Users</div>
+                              </div>
+                              <div className="text-center p-2 bg-purple-50 rounded">
+                                <div className="text-lg font-bold text-purple-600">
+                                  {process.duration}
+                                </div>
+                                <div className="text-xs text-purple-700">Duration</div>
+                              </div>
+                              <div className="text-center p-2 bg-orange-50 rounded">
+                                <div className="text-lg font-bold text-orange-600">
+                                  {process.avgProcessingRate}
+                                </div>
+                                <div className="text-xs text-orange-700">Avg/Day</div>
+                              </div>
+                            </div>
 
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>Started: {new Date(process.createdDate).toLocaleDateString()}</span>
-                        <span>Completed: {new Date(process.completedDate).toLocaleDateString()}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                            <div className="flex items-center justify-between text-sm text-muted-foreground">
+                              <span>Started: {new Date(process.createdDate).toLocaleDateString()}</span>
+                              <span>Completed: {new Date(process.completedDate).toLocaleDateString()}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ))
+                ) : (
+                  // Show processes for selected month only
+                  processesByMonth
+                    .find(monthData => monthData.month === selectedMonth)?.processes
+                    ?.map((process) => (
+                      <Card key={process.id} className="border-l-4 border-l-green-500">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h4 className="font-medium">{process.name}</h4>
+                              <p className="text-sm text-muted-foreground">{process.projectName}</p>
+                              <p className="text-xs text-muted-foreground">Created by: {process.createdBy}</p>
+                            </div>
+                            <Badge className="bg-green-100 text-green-800">
+                              COMPLETED
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                            <div className="text-center p-2 bg-blue-50 rounded">
+                              <div className="text-lg font-bold text-blue-600">
+                                {process.totalRows.toLocaleString()}
+                              </div>
+                              <div className="text-xs text-blue-700">Total Rows</div>
+                            </div>
+                            <div className="text-center p-2 bg-green-50 rounded">
+                              <div className="text-lg font-bold text-green-600">
+                                {process.totalUsers}
+                              </div>
+                              <div className="text-xs text-green-700">Users</div>
+                            </div>
+                            <div className="text-center p-2 bg-purple-50 rounded">
+                              <div className="text-lg font-bold text-purple-600">
+                                {process.duration}
+                              </div>
+                              <div className="text-xs text-purple-700">Duration</div>
+                            </div>
+                            <div className="text-center p-2 bg-orange-50 rounded">
+                              <div className="text-lg font-bold text-orange-600">
+                                {process.avgProcessingRate}
+                              </div>
+                              <div className="text-xs text-orange-700">Avg/Day</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <span>Started: {new Date(process.createdDate).toLocaleDateString()}</span>
+                            <span>Completed: {new Date(process.completedDate).toLocaleDateString()}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )) || (
+                    <div className="text-center py-8">
+                      <Clock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium text-muted-foreground mb-2">No Processes Found</h3>
+                      <p className="text-sm text-muted-foreground">No completed processes found for the selected month.</p>
+                    </div>
+                  )
+                )}
               </div>
             </CardContent>
           </Card>
