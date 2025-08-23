@@ -14,6 +14,7 @@ import ProjectManagement from "./pages/ProjectManagement";
 import FileProcess from "./pages/FileProcess";
 import RequestFiles from "./pages/RequestFiles";
 import Billing from "./pages/Billing";
+import Salary from "./pages/Salary";
 import Reports from "./pages/Reports";
 import Permissions from "./pages/Permissions";
 import Notifications from "./pages/Notifications";
