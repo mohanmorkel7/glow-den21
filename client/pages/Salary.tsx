@@ -579,6 +579,10 @@ export default function Salary() {
                         <div className="font-bold text-green-600">{formatCurrency(user.todayEarnings)}</div>
                       </TableCell>
                       <TableCell>
+                        <div className="font-medium text-blue-600">{user.weeklyFiles.toLocaleString()}</div>
+                        <div className="text-xs text-muted-foreground">This week</div>
+                      </TableCell>
+                      <TableCell>
                         <div className="font-medium">{user.monthlyFiles.toLocaleString()}</div>
                       </TableCell>
                       <TableCell>
