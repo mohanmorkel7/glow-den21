@@ -554,9 +554,16 @@ export default function Salary() {
                   {userSalaryData.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
+                        <div
+                          className="cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors"
+                          onClick={() => handleUserClick(user)}
+                        >
+                          <div className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            {user.name}
+                            <Eye className="h-3 w-3" />
+                          </div>
                           <div className="text-sm text-muted-foreground capitalize">{user.role}</div>
+                          <div className="text-xs text-blue-500">Click for breakdown</div>
                         </div>
                       </TableCell>
                       <TableCell>
