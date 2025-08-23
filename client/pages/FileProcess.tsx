@@ -49,7 +49,7 @@ interface FileProcess {
   processedRows: number;
   availableRows: number;
   uploadDate: string;
-  status: 'active' | 'completed' | 'paused';
+  status: 'pending' | 'active' | 'in_progress' | 'completed' | 'paused';
   createdBy: string;
   activeUsers: number;
   type: 'automation' | 'manual';
@@ -154,7 +154,7 @@ const mockFileProcesses: FileProcess[] = [
     processedRows: 125000,
     availableRows: 375000,
     uploadDate: '2024-01-10T08:00:00Z',
-    status: 'active',
+    status: 'in_progress',
     createdBy: 'John Smith',
     activeUsers: 0,
     type: 'automation',
@@ -169,6 +169,27 @@ const mockFileProcesses: FileProcess[] = [
         { date: '2024-01-18', completed: 24900 },
         { date: '2024-01-19', completed: 25100 }
       ]
+    }
+  },
+  {
+    id: 'fp_5',
+    name: 'Automation-EmailCampaign-Jan2025',
+    projectId: '2',
+    projectName: 'Customer Support Processing',
+    totalRows: 75000,
+    headerRows: 0,
+    processedRows: 0,
+    availableRows: 75000,
+    uploadDate: '2024-01-22T09:00:00Z',
+    status: 'pending',
+    createdBy: 'Sarah Johnson',
+    activeUsers: 0,
+    type: 'automation',
+    dailyTarget: 5000,
+    automationConfig: {
+      toolName: 'Email Automation Pro',
+      lastUpdate: '2024-01-22T09:00:00Z',
+      dailyCompletions: []
     }
   },
   {
@@ -375,6 +396,7 @@ export default function FileProcess() {
       dailyTarget: 0,
       automationToolName: ''
     });
+    const [selectedProcessStatus, setSelectedProcessStatus] = useState('');
 
     // Clear file input
     const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
@@ -547,7 +569,7 @@ export default function FileProcess() {
       processedRows: 0,
       availableRows: availableRows,
       uploadDate: new Date().toISOString(),
-      status: 'active',
+      status: newProcess.type === 'automation' ? 'pending' : 'active',
       createdBy: currentUser?.name || 'Unknown',
       activeUsers: newProcess.type === 'automation' ? 0 : 0,
       type: newProcess.type,
@@ -776,7 +798,7 @@ export default function FileProcess() {
                           ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
                           : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
                             ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                            : '⚠��� Could not auto-detect row count. Please enter the total number of data rows manually.'
+                            : '������ Could not auto-detect row count. Please enter the total number of data rows manually.'
                         }
                       </p>
                     </div>
