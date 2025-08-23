@@ -88,6 +88,12 @@ const navigationItems: NavItem[] = [
     roles: ['super_admin']
   },
   {
+    label: 'Salary',
+    path: '/salary',
+    icon: DollarSign,
+    roles: ['super_admin']
+  },
+  {
     label: 'Reports',
     path: '/reports',
     icon: BarChart3,
