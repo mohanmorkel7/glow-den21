@@ -1,10 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-// import { handleDemo } from "./routes/demo";
+import { handleDemo } from "./routes/demo";
 
-// Temporarily comment out route imports to isolate the issue
-/*
 // Import authentication routes
 import {
   login,
@@ -37,7 +35,6 @@ import {
   getProductivityTrend,
   getUserDashboard
 } from "./routes/dashboard";
-*/
 
 export function createServer() {
   const app = express();
