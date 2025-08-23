@@ -613,8 +613,8 @@ export default function Dashboard() {
                     <Tooltip
                       formatter={(value, name) => [
                         name === 'percentage' ? `${value}%` : value,
-                        name === 'percentage' ? 'Attendance Rate' :
-                        name === 'present' ? 'Present' : 'Absent'
+                        name === 'percentage' ? 'Login Rate' :
+                        name === 'present' ? 'Logged In' : 'Not Logged In'
                       ]}
                       labelFormatter={(value) => new Date(value).toLocaleDateString()}
                     />
@@ -625,7 +625,7 @@ export default function Dashboard() {
                       stroke="#3b82f6"
                       fill="#3b82f6"
                       fillOpacity={0.6}
-                      name="Attendance %"
+                      name="Login Rate %"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
