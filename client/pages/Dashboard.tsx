@@ -558,7 +558,7 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">{attendanceData.today.absent}</div>
                 <p className="text-xs text-muted-foreground">
-                  {((attendanceData.today.absent / attendanceData.today.totalEmployees) * 100).toFixed(1)}% absence rate
+                  {((attendanceData.today.absent / attendanceData.today.totalEmployees) * 100).toFixed(1)}% haven't logged in today
                 </p>
                 <div className="mt-2">
                   <Progress
