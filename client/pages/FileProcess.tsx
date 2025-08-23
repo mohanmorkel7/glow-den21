@@ -1715,6 +1715,28 @@ export default function FileProcess() {
         </TabsContent>
 
         <TabsContent value="all-history" className="space-y-6 mt-6">
+          {/* Month Filter */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <Label htmlFor="month-select">Filter by Month:</Label>
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Months</SelectItem>
+                    {processesByMonth.map((monthData) => (
+                      <SelectItem key={monthData.month} value={monthData.month}>
+                        {monthData.monthName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Historical Process Summary */}
           <Card>
             <CardHeader>
