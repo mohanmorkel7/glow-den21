@@ -120,6 +120,8 @@ export default function UserManagement() {
     email: '',
     phone: '',
     role: 'user' as 'super_admin' | 'project_manager' | 'user',
+    department: '',
+    jobTitle: '',
     password: ''
   });
 
