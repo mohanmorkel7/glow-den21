@@ -33,7 +33,6 @@ import {
   LogOut,
   Menu,
   X,
-  Target,
   Shield,
   Mail,
   Receipt,
