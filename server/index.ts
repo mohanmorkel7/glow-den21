@@ -87,7 +87,8 @@ export function createServer() {
     });
   });
 
-  // 404 handler for API routes
+  // 404 handler for API routes - commented out to test if this causes the issue
+  /*
   app.use("/api/*", (_req, res) => {
     res.status(404).json({
       error: {
@@ -96,6 +97,7 @@ export function createServer() {
       }
     });
   });
+  */
 
   return app;
 }
