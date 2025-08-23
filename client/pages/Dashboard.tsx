@@ -406,6 +406,41 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Team Performance for Project Managers - No Earnings */}
+      {user.role === 'project_manager' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Team Performance
+            </CardTitle>
+            <CardDescription>
+              Individual team member efficiency and productivity
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={teamPerformanceData} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis dataKey="name" type="category" width={100} />
+                <Tooltip
+                  formatter={(value, name) => [
+                    name === 'efficiency' ? `${value}%` :
+                    value.toLocaleString(),
+                    name === 'efficiency' ? 'Efficiency' :
+                    name === 'completed' ? 'Completed Files' : name
+                  ]}
+                />
+                <Legend />
+                <Bar dataKey="completed" fill="#3b82f6" name="Completed Files" />
+                <Bar dataKey="efficiency" fill="#22c55e" name="Efficiency %" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Project Details */}
       <Card>
         <CardHeader>
