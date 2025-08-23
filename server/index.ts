@@ -59,16 +59,13 @@ export function createServer() {
     const ping = process.env.PING_MESSAGE ?? "ping";
     res.json({ message: ping });
   });
-  // app.get("/api/demo", handleDemo);
+  app.get("/api/demo", handleDemo);
 
   // ===== AUTHENTICATION ROUTES =====
-  // Temporarily commented out
-  /*
   app.post("/api/auth/login", login);
   app.post("/api/auth/refresh", refresh);
   app.post("/api/auth/logout", logout);
   app.post("/api/auth/reset-password", resetPassword);
-  */
 
   // Temporarily remove problematic routes to isolate the issue
   // Will add them back one by one
