@@ -537,7 +537,7 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{attendanceData.today.present}</div>
                 <p className="text-xs text-muted-foreground">
-                  out of {attendanceData.today.totalEmployees} {user.role === 'super_admin' ? 'total staff' : 'users'}
+                  logged in today out of {attendanceData.today.totalEmployees} {user.role === 'super_admin' ? 'total staff' : 'users'}
                 </p>
                 <div className="mt-2">
                   <Progress
