@@ -67,18 +67,8 @@ export function createServer() {
   app.post("/api/auth/logout", logout);
   app.post("/api/auth/reset-password", resetPassword);
 
-  // ===== USER MANAGEMENT ROUTES =====
-  // Test with individual routes without middleware mounting
-
-  app.get("/api/users", authenticateToken, requirePermission("user_read"), listUsers);
-  app.post("/api/users", authenticateToken, requirePermission("user_create"), createUser);
-
-  // ===== DASHBOARD ROUTES =====
-  app.get("/api/dashboard/summary", authenticateToken, getDashboardSummary);
-  app.get("/api/dashboard/recent-projects", authenticateToken, getRecentProjects);
-  app.get("/api/dashboard/recent-alerts", authenticateToken, getRecentAlerts);
-  app.get("/api/dashboard/productivity-trend", authenticateToken, getProductivityTrend);
-  app.get("/api/dashboard/user", authenticateToken, getUserDashboard);
+  // ===== CUSTOM ROUTES TEMPORARILY DISABLED FOR DEBUGGING =====
+  // Let's test with just the basic routes to isolate the issue
 
   // ===== PROJECT ROUTES =====
   // Placeholder for project routes - would include:
