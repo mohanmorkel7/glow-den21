@@ -1002,7 +1002,7 @@ export default function FileProcess() {
           <TabsTrigger value="all-history">All History (Month-wise)</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="active" className="space-y-6 mt-6">
+        <TabsContent value="current" className="space-y-6 mt-6">
           {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
