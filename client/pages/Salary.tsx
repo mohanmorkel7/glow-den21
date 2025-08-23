@@ -204,6 +204,104 @@ export default function Salary() {
     return calculateUserDailyEarnings(fileCount, config);
   }
 
+  // Generate salary breakdown for selected period
+  const generateSalaryBreakdown = (user: UserSalaryData, period: BreakdownPeriod): SalaryBreakdown[] => {
+    const { firstTierRate, secondTierRate, firstTierLimit } = salaryConfig.users;
+
+    if (period === 'daily') {
+      const files = user.todayFiles;
+      const tier1Files = Math.min(files, firstTierLimit);
+      const tier2Files = Math.max(0, files - firstTierLimit);
+
+      return [{
+        period: 'Today',
+        files,
+        tier1Files,
+        tier1Rate: firstTierRate,
+        tier1Amount: tier1Files * firstTierRate,
+        tier2Files,
+        tier2Rate: secondTierRate,
+        tier2Amount: tier2Files * secondTierRate,
+        totalAmount: (tier1Files * firstTierRate) + (tier2Files * secondTierRate)
+      }];
+    }
+
+    if (period === 'weekly') {
+      // Generate last 7 days of data
+      const weekData = [];
+      const dailyAvg = Math.floor(user.weeklyFiles / 7);
+
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+
+        // Simulate varying daily counts
+        const files = i === 0 ? user.todayFiles : Math.floor(dailyAvg * (0.8 + Math.random() * 0.4));
+        const tier1Files = Math.min(files, firstTierLimit);
+        const tier2Files = Math.max(0, files - firstTierLimit);
+
+        weekData.push({
+          period: dayName,
+          files,
+          tier1Files,
+          tier1Rate: firstTierRate,
+          tier1Amount: tier1Files * firstTierRate,
+          tier2Files,
+          tier2Rate: secondTierRate,
+          tier2Amount: tier2Files * secondTierRate,
+          totalAmount: (tier1Files * firstTierRate) + (tier2Files * secondTierRate)
+        });
+      }
+
+      return weekData;
+    }
+
+    if (period === 'monthly') {
+      // Generate last 30 days summary by weeks
+      const monthData = [];
+      const weeklyAvg = Math.floor(user.monthlyFiles / 4);
+
+      for (let week = 4; week >= 1; week--) {
+        const files = week === 1 ? user.weeklyFiles : Math.floor(weeklyAvg * (0.9 + Math.random() * 0.2));
+        const tier1Files = Math.min(files, firstTierLimit * 7); // 7 days worth
+        const tier2Files = Math.max(0, files - (firstTierLimit * 7));
+
+        monthData.push({
+          period: `Week ${5 - week}`,
+          files,
+          tier1Files,
+          tier1Rate: firstTierRate,
+          tier1Amount: tier1Files * firstTierRate,
+          tier2Files,
+          tier2Rate: secondTierRate,
+          tier2Amount: tier2Files * secondTierRate,
+          totalAmount: (tier1Files * firstTierRate) + (tier2Files * secondTierRate)
+        });
+      }
+
+      return monthData;
+    }
+
+    return [];
+  };
+
+  const handleUserClick = (user: UserSalaryData) => {
+    setSelectedUser(user);
+    setBreakdownPeriod('daily');
+    setIsBreakdownDialogOpen(true);
+  };
+
+  const getBreakdownData = () => {
+    if (!selectedUser) return [];
+    return generateSalaryBreakdown(selectedUser, breakdownPeriod);
+  };
+
+  const getBreakdownTotal = () => {
+    const data = getBreakdownData();
+    return data.reduce((sum, item) => sum + item.totalAmount, 0);
+  };
+
   // Calculate total salary statistics
   const totalUserSalaries = userSalaryData.reduce((sum, user) => sum + user.monthlyEarnings, 0);
   const totalPMSalaries = projectManagerSalaryData.reduce((sum, pm) => sum + pm.fixedSalary, 0);
