@@ -681,7 +681,7 @@ export default function Dashboard() {
                 {user.role === 'super_admin' ? 'All Staff Attendance' : 'User Attendance'} Details
               </CardTitle>
               <CardDescription>
-                Individual attendance records and performance this month
+                Individual login-based attendance records for this month
               </CardDescription>
             </CardHeader>
             <CardContent>
