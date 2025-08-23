@@ -265,6 +265,24 @@ export default function UserManagement() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  id="department"
+                  value={newUser.department}
+                  onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                  placeholder="e.g., Operations, Administration"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="jobTitle">Job Title</Label>
+                <Input
+                  id="jobTitle"
+                  value={newUser.jobTitle}
+                  onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })}
+                  placeholder="e.g., Data Processor, Project Manager"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
                   <SelectTrigger>
