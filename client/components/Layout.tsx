@@ -36,7 +36,8 @@ import {
   Mail,
   Receipt,
   FileText,
-  Upload
+  Upload,
+  DollarSign
 } from 'lucide-react';
 
 interface LayoutProps {
