@@ -346,6 +346,9 @@ export default function FileProcess() {
     dailyTarget: 0,
     automationToolName: ''
   });
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [selectedAutomationProcess, setSelectedAutomationProcess] = useState<FileProcess | null>(null);
+  const [dailyUpdate, setDailyUpdate] = useState({ completed: 0, date: new Date().toISOString().split('T')[0] });
 
   // Only allow admin/project_manager to access this page
   if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'project_manager') {
