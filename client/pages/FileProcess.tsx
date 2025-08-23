@@ -27,7 +27,8 @@ import {
   MoreHorizontal,
   Bot,
   User,
-  Settings
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
