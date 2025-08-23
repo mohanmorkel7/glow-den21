@@ -37,7 +37,8 @@ import {
   Receipt,
   FileText,
   Upload,
-  DollarSign
+  DollarSign,
+  ChevronDown
 } from 'lucide-react';
 
 interface LayoutProps {
