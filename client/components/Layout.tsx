@@ -137,7 +137,11 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 p-6 border-b">
-        <Building2 className="h-8 w-8 text-primary" />
+        <img
+          src="https://cdn.builder.io/o/assets%2F9f68bdced9274939b0bcd49e09efd146%2F464b2e2ce46c4663bd986b6ed87019c1?alt=media&token=3eeb20c9-66cb-4f8b-894c-bc2e3c6de56e&apiKey=9f68bdced9274939b0bcd49e09efd146"
+          alt="Company Logo"
+          className="h-8 w-8 object-contain"
+        />
         <div className="flex flex-col">
           <h1 className="font-bold text-lg">Web Syntactic</h1>
           <p className="text-xs text-muted-foreground">Solutions</p>
