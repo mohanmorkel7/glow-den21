@@ -259,17 +259,75 @@ export default function Salary() {
     }
 
     if (period === 'monthly') {
-      // Generate last 30 days summary by weeks
+      // Generate all dates in current month including absent days
       const monthData = [];
-      const weeklyAvg = Math.floor(user.monthlyFiles / 4);
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
 
-      for (let week = 4; week >= 1; week--) {
-        const files = week === 1 ? user.weeklyFiles : Math.floor(weeklyAvg * (0.9 + Math.random() * 0.2));
-        const tier1Files = Math.min(files, firstTierLimit * 7); // 7 days worth
-        const tier2Files = Math.max(0, files - (firstTierLimit * 7));
+      // Get first day of the month and last day of the month
+      const firstDay = new Date(currentYear, currentMonth, 1);
+      const lastDay = new Date(currentYear, currentMonth + 1, 0);
+
+      // Calculate average daily files for realistic distribution
+      const totalWorkingDays = Math.min(today.getDate(), lastDay.getDate());
+      const dailyAvg = Math.floor(user.monthlyFiles / totalWorkingDays);
+
+      // Create array to track which days are working days vs absent
+      const workingDays = [];
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const currentDate = new Date(currentYear, currentMonth, day);
+        const dayOfWeek = currentDate.getDay();
+
+        // Skip weekends (Saturday = 6, Sunday = 0) and simulate some absent days
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const isAbsent = !isWeekend && Math.random() < 0.1; // 10% chance of absence on weekdays
+        const isFutureDate = currentDate > today;
+
+        workingDays.push({
+          day,
+          date: currentDate,
+          isWorking: !isWeekend && !isAbsent && !isFutureDate,
+          isWeekend,
+          isAbsent,
+          isFuture: isFutureDate
+        });
+      }
+
+      // Generate data for each day
+      workingDays.forEach(({ day, date, isWorking, isWeekend, isAbsent, isFuture }) => {
+        let files = 0;
+        let statusNote = '';
+
+        if (isFuture) {
+          files = 0;
+          statusNote = ' (Future)';
+        } else if (isWeekend) {
+          files = 0;
+          statusNote = ' (Weekend)';
+        } else if (isAbsent) {
+          files = 0;
+          statusNote = ' (Absent)';
+        } else if (isWorking) {
+          if (day === today.getDate()) {
+            // Today's actual count
+            files = user.todayFiles;
+            statusNote = ' (Today)';
+          } else {
+            // Simulate realistic past working day counts
+            files = Math.floor(dailyAvg * (0.7 + Math.random() * 0.6));
+          }
+        }
+
+        const tier1Files = Math.min(files, firstTierLimit);
+        const tier2Files = Math.max(0, files - firstTierLimit);
 
         monthData.push({
-          period: `Week ${5 - week}`,
+          period: `${date.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+          })}${statusNote}`,
           files,
           tier1Files,
           tier1Rate: firstTierRate,
@@ -279,7 +337,7 @@ export default function Salary() {
           tier2Amount: tier2Files * secondTierRate,
           totalAmount: (tier1Files * firstTierRate) + (tier2Files * secondTierRate)
         });
-      }
+      });
 
       return monthData;
     }
