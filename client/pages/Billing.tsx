@@ -227,155 +227,117 @@ const mockFileProcesses: FileProcess[] = [
   }
 ];
 
-const mockBillingData: MonthlyBillingSummary[] = [
-  {
-    month: '2024-01',
-    totalFilesCompleted: 1126000, // 863500 (projects) + 262500 (jobs)
-    totalAmountUSD: 62945.00, // 60845.00 (projects) + 2100.00 (jobs)
-    totalAmountINR: 5224435.00,
-    conversionRate: 83.00,
-    itemsCount: 5, // 3 projects + 2 jobs
-    projects: [
-      {
-        projectId: '1',
-        projectName: 'MO Project - Data Processing',
-        month: '2024-01',
-        filesCompleted: 580000,
-        ratePerFile: 0.05,
-        amountUSD: 29000.00,
-        amountINR: 2407000.00,
-        conversionRate: 83.00,
-        status: 'paid',
-        createdAt: '2024-01-31T18:00:00Z',
-        finalizedAt: '2024-02-01T10:00:00Z',
-        paidAt: '2024-02-03T14:30:00Z',
-        type: 'project'
-      },
-      {
-        projectId: '2',
-        projectName: 'Customer Support Processing',
-        month: '2024-01',
-        filesCompleted: 133500,
-        ratePerFile: 0.08,
-        amountUSD: 10680.00,
-        amountINR: 886440.00,
-        conversionRate: 83.00,
-        status: 'paid',
-        createdAt: '2024-01-31T18:00:00Z',
-        finalizedAt: '2024-02-01T10:00:00Z',
-        paidAt: '2024-02-03T14:30:00Z',
-        type: 'project'
-      },
-      {
-        projectId: '3',
-        projectName: 'Invoice Processing',
-        month: '2024-01',
-        filesCompleted: 150000,
-        ratePerFile: 0.12,
-        amountUSD: 18000.00,
-        amountINR: 1494000.00,
-        conversionRate: 83.00,
-        status: 'paid',
-        createdAt: '2024-01-31T18:00:00Z',
-        finalizedAt: '2024-02-01T10:00:00Z',
-        paidAt: '2024-02-03T14:30:00Z',
-        type: 'project'
-      }
-    ],
-    jobs: [],
-    allItems: []
-  },
-  {
-    month: '2024-02',
-    totalFilesCompleted: 581200, // 456200 (projects) + 125000 (jobs)
-    totalAmountUSD: 33196.00, // 32196.00 (projects) + 1000.00 (jobs)
-    totalAmountINR: 2755268.00,
-    conversionRate: 83.00,
-    itemsCount: 3, // 2 projects + 1 job
-    projects: [
-      {
-        projectId: '1',
-        projectName: 'MO Project - Data Processing',
-        month: '2024-02',
-        filesCompleted: 387500,
-        ratePerFile: 0.05,
-        amountUSD: 19375.00,
-        amountINR: 1608125.00,
-        conversionRate: 83.00,
-        status: 'finalized',
-        createdAt: '2024-02-29T18:00:00Z',
-        finalizedAt: '2024-03-01T10:00:00Z',
-        type: 'project'
-      },
-      {
-        projectId: '2',
-        projectName: 'Customer Support Processing',
-        month: '2024-02',
-        filesCompleted: 68700,
-        ratePerFile: 0.08,
-        amountUSD: 5496.00,
-        amountINR: 456168.00,
-        conversionRate: 83.00,
-        status: 'finalized',
-        createdAt: '2024-02-29T18:00:00Z',
-        finalizedAt: '2024-03-01T10:00:00Z',
-        type: 'project'
-      }
-    ],
-    jobs: [],
-    allItems: []
-  },
-  {
-    month: '2024-03',
-    totalFilesCompleted: 187500,
-    totalAmountUSD: 9375.00,
-    totalAmountINR: 778125.00,
-    conversionRate: 83.00,
-    itemsCount: 1,
-    projects: [
-      {
-        projectId: '1',
-        projectName: 'MO Project - Data Processing',
-        month: '2024-03',
-        filesCompleted: 187500,
-        ratePerFile: 0.05,
-        amountUSD: 9375.00,
-        amountINR: 778125.00,
-        conversionRate: 83.00,
-        status: 'draft',
-        createdAt: '2024-03-15T20:00:00Z',
-        type: 'project'
-      }
-    ],
-    jobs: [],
-    allItems: []
-  }
-];
-
-// Compute combined billing data
+// Calculate billing data from actual file process completion
 const computeBillingData = (): MonthlyBillingSummary[] => {
-  return mockBillingData.map(billing => {
-    const jobs = mockJobBillingData.filter(job => job.month === billing.month);
-    const allItems: BillingItem[] = [...billing.projects, ...jobs];
+  const conversionRate = 83.00; // USD to INR conversion rate
+  const months = ['2024-01', '2024-02', '2024-03']; // Current and historical months
 
-    // Recalculate totals including jobs
-    const jobFilesTotal = jobs.reduce((sum, job) => sum + job.filesCompleted, 0);
-    const jobAmountUSD = jobs.reduce((sum, job) => sum + job.amountUSD, 0);
-    const jobAmountINR = jobs.reduce((sum, job) => sum + job.amountINR, 0);
+  return months.map(month => {
+    // Get file processes that have activity in this month
+    const monthProcesses = mockFileProcesses.filter(fp => {
+      const uploadMonth = fp.uploadDate.substring(0, 7);
+      const completedThisMonth = fp.status === 'completed' && uploadMonth === month;
+      const inProgressThisMonth = (fp.status === 'in_progress' || fp.status === 'active') && uploadMonth <= month;
+      return completedThisMonth || inProgressThisMonth;
+    });
 
-    const projectFilesTotal = billing.projects.reduce((sum, project) => sum + project.filesCompleted, 0);
-    const projectAmountUSD = billing.projects.reduce((sum, project) => sum + project.amountUSD, 0);
+    // Group processes by project
+    const projectGroups = monthProcesses.reduce((groups, fp) => {
+      if (!groups[fp.projectId]) {
+        groups[fp.projectId] = [];
+      }
+      groups[fp.projectId].push(fp);
+      return groups;
+    }, {} as Record<string, FileProcess[]>);
+
+    // Calculate billing for each project
+    const projects: ProjectBilling[] = Object.entries(projectGroups).map(([projectId, processes]) => {
+      const project = mockProjects.find(p => p.id === projectId);
+      if (!project) return null;
+
+      const fileProcesses: FileProcessBilling[] = processes.map(fp => {
+        // Calculate completed files based on month and process status
+        let completedFiles = 0;
+        if (month === '2024-01') {
+          // January completions
+          if (fp.id === 'fp_2') completedFiles = 150000; // Completed in January
+          if (fp.id === 'fp_3') completedFiles = 125000; // In progress in January
+          if (fp.id === 'fp_1') completedFiles = 45000; // Started in January
+        } else if (month === '2024-02') {
+          // February completions (additional progress)
+          if (fp.id === 'fp_3') completedFiles = 50000; // Additional progress
+          if (fp.id === 'fp_1') completedFiles = 25000; // Additional progress
+        } else if (month === '2024-03') {
+          // March completions (current month progress)
+          if (fp.id === 'fp_1') completedFiles = 15000; // Recent progress
+          if (fp.id === 'fp_5') completedFiles = 68700; // Recent automation progress
+        }
+
+        return {
+          processId: fp.id,
+          processName: fp.name,
+          fileName: fp.fileName,
+          type: fp.type,
+          totalFiles: fp.totalRows,
+          completedFiles,
+          progressPercentage: fp.totalRows > 0 ? (fp.processedRows / fp.totalRows) * 100 : 0,
+          completedDate: fp.status === 'completed' ? fp.uploadDate : undefined,
+          dailyCompletions: fp.automationConfig?.dailyCompletions
+        };
+      });
+
+      const totalFilesCompleted = fileProcesses.reduce((sum, fp) => sum + fp.completedFiles, 0);
+      const ratePerFile = project.ratePerFile || 0.05;
+      const amountUSD = totalFilesCompleted * ratePerFile;
+      const amountINR = amountUSD * conversionRate;
+
+      // Determine status based on month
+      let status: 'draft' | 'finalized' | 'paid' = 'draft';
+      if (month === '2024-01') status = 'paid';
+      else if (month === '2024-02') status = 'finalized';
+      else status = 'draft';
+
+      return {
+        projectId: project.id,
+        projectName: project.name,
+        client: project.client,
+        month,
+        fileProcesses,
+        totalFilesCompleted,
+        ratePerFile,
+        amountUSD,
+        amountINR,
+        conversionRate,
+        status,
+        createdAt: new Date(month + '-28T18:00:00Z').toISOString(),
+        finalizedAt: status !== 'draft' ? new Date(month + '-28T18:00:00Z').toISOString() : undefined,
+        paidAt: status === 'paid' ? new Date(month + '-28T18:00:00Z').toISOString() : undefined,
+        type: 'project' as const
+      };
+    }).filter(Boolean) as ProjectBilling[];
+
+    // Calculate summary totals
+    const totalFilesCompleted = projects.reduce((sum, p) => sum + p.totalFilesCompleted, 0);
+    const totalAmountUSD = projects.reduce((sum, p) => sum + p.amountUSD, 0);
+    const totalAmountINR = totalAmountUSD * conversionRate;
+
+    // Count automation vs manual processes
+    const allProcesses = projects.flatMap(p => p.fileProcesses);
+    const automationProcesses = allProcesses.filter(fp => fp.type === 'automation').length;
+    const manualProcesses = allProcesses.filter(fp => fp.type === 'manual').length;
 
     return {
-      ...billing,
-      totalFilesCompleted: projectFilesTotal + jobFilesTotal,
-      totalAmountUSD: projectAmountUSD + jobAmountUSD,
-      totalAmountINR: (projectAmountUSD + jobAmountUSD) * billing.conversionRate,
-      itemsCount: billing.projects.length + jobs.length,
-      jobs,
-      allItems
+      month,
+      totalFilesCompleted,
+      totalAmountUSD,
+      totalAmountINR,
+      conversionRate,
+      itemsCount: projects.length,
+      projects,
+      automationProcesses,
+      manualProcesses
     };
-  });
+  }).filter(summary => summary.projects.length > 0); // Only include months with actual billing data
 };
 
 export default function Billing() {
