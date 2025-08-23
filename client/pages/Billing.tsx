@@ -404,6 +404,9 @@ export default function Billing() {
     const totalFiles = billingData.reduce((sum, billing) => sum + billing.totalFilesCompleted, 0);
     const totalUSD = billingData.reduce((sum, billing) => sum + billing.totalAmountUSD, 0);
     const totalINR = billingData.reduce((sum, billing) => sum + billing.totalAmountINR, 0);
+    const totalAutomationFiles = billingData.reduce((sum, billing) => sum + billing.automationProcesses, 0);
+    const totalManualFiles = billingData.reduce((sum, billing) => sum + billing.manualProcesses, 0);
+
     const pendingUSD = billingData
       .flatMap(billing => billing.projects)
       .filter(project => project.status !== 'paid')
@@ -413,7 +416,7 @@ export default function Billing() {
       .filter(project => project.status === 'paid')
       .reduce((sum, project) => sum + project.amountUSD, 0);
 
-    return { totalFiles, totalUSD, totalINR, pendingUSD, paidUSD };
+    return { totalFiles, totalUSD, totalINR, pendingUSD, paidUSD, totalAutomationFiles, totalManualFiles };
   };
 
   const stats = calculateTotalStats();
