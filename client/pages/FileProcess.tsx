@@ -349,6 +349,7 @@ export default function FileProcess() {
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [selectedAutomationProcess, setSelectedAutomationProcess] = useState<FileProcess | null>(null);
   const [dailyUpdate, setDailyUpdate] = useState({ completed: 0, date: new Date().toISOString().split('T')[0] });
+  const [isEditingExisting, setIsEditingExisting] = useState(false);
 
   // Only allow admin/project_manager to access this page
   if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'project_manager') {
@@ -382,18 +383,25 @@ export default function FileProcess() {
     }
   };
 
-  const handleDailyAutomationUpdate = (processId: string) => {
+  const handleDailyAutomationUpdate = (processId: string, editDate?: string) => {
     const process = fileProcesses.find(p => p.id === processId);
     if (!process || process.type !== 'automation') return;
 
-    const today = new Date().toISOString().split('T')[0];
-    const todayCompletion = process.automationConfig?.dailyCompletions.find(d => d.date === today);
+    // Check if process is completed and prevent updates
+    if (process.status === 'completed') {
+      alert('Cannot update counts for completed processes.');
+      return;
+    }
+
+    const targetDate = editDate || new Date().toISOString().split('T')[0];
+    const existingCompletion = process.automationConfig?.dailyCompletions.find(d => d.date === targetDate);
 
     setSelectedAutomationProcess(process);
     setDailyUpdate({
-      completed: todayCompletion ? todayCompletion.completed : (process.dailyTarget || 0),
-      date: today
+      completed: existingCompletion ? existingCompletion.completed : (process.dailyTarget || 0),
+      date: targetDate
     });
+    setIsEditingExisting(!!existingCompletion);
     setIsUpdateDialogOpen(true);
   };
 
@@ -1280,24 +1288,36 @@ export default function FileProcess() {
                 <>
                   {/* Today's Status and Quick Update */}
                   {(currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && (
-                    <Card className="border-l-4 border-l-purple-500">
+                    <Card className={`border-l-4 ${
+                      selectedProcess.status === 'completed'
+                        ? 'border-l-green-500 bg-green-50'
+                        : 'border-l-purple-500'
+                    }`}>
                       <CardHeader>
                         <CardTitle className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-purple-500" />
-                            Today's Progress
+                            {selectedProcess.status === 'completed' ? (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-purple-500" />
+                            )}
+                            {selectedProcess.status === 'completed' ? 'Process Completed' : "Today's Progress"}
                           </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleDailyAutomationUpdate(selectedProcess.id)}
-                            className="bg-purple-600 hover:bg-purple-700"
-                          >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Update Today
-                          </Button>
+                          {selectedProcess.status !== 'completed' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleDailyAutomationUpdate(selectedProcess.id)}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              <Settings className="h-4 w-4 mr-2" />
+                              Update Today
+                            </Button>
+                          )}
                         </CardTitle>
                         <CardDescription>
-                          Manage today's completion count for {selectedProcess.automationConfig.toolName}
+                          {selectedProcess.status === 'completed'
+                            ? `All processing completed for ${selectedProcess.automationConfig.toolName}`
+                            : `Manage today's completion count for ${selectedProcess.automationConfig.toolName}`}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -1359,25 +1379,34 @@ export default function FileProcess() {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {selectedProcess.automationConfig.dailyCompletions.slice(-5).map((day, index) => {
+                        {selectedProcess.automationConfig.dailyCompletions.slice(-7).map((day, index) => {
                           const isToday = day.date === new Date().toISOString().split('T')[0];
+                          const canEdit = (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && selectedProcess.status !== 'completed';
                           return (
-                            <div key={index} className={`flex items-center justify-between p-2 rounded ${isToday ? 'bg-purple-100 border border-purple-300' : 'bg-purple-50'}`}>
+                            <div key={index} className={`flex items-center justify-between p-2 rounded ${
+                              isToday ? 'bg-purple-100 border border-purple-300' : 'bg-purple-50'
+                            } ${selectedProcess.status === 'completed' ? 'opacity-75' : ''}`}>
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium">{new Date(day.date).toLocaleDateString()}</span>
                                 {isToday && <Badge variant="outline" className="text-xs">Today</Badge>}
+                                {selectedProcess.status === 'completed' && (
+                                  <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                                    Final
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className="text-sm text-purple-600">{day.completed.toLocaleString()} items</span>
                                 <Badge variant={day.completed >= (selectedProcess.dailyTarget || 0) ? 'default' : 'secondary'}>
                                   {day.completed >= (selectedProcess.dailyTarget || 0) ? 'Target Met' : 'Below Target'}
                                 </Badge>
-                                {isToday && (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && (
+                                {canEdit && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handleDailyAutomationUpdate(selectedProcess.id)}
+                                    onClick={() => handleDailyAutomationUpdate(selectedProcess.id, day.date)}
                                     className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-100"
+                                    title={`Edit count for ${new Date(day.date).toLocaleDateString()}`}
                                   >
                                     <Edit className="h-3 w-3" />
                                   </Button>
@@ -1713,13 +1742,9 @@ export default function FileProcess() {
               Daily Automation Update
             </DialogTitle>
             <DialogDescription>
-              {(() => {
-                const today = new Date().toISOString().split('T')[0];
-                const todayCompletion = selectedAutomationProcess?.automationConfig?.dailyCompletions.find(d => d.date === today);
-                return todayCompletion
-                  ? `Update today's completion count for ${selectedAutomationProcess?.name}`
-                  : `Record today's completion count for ${selectedAutomationProcess?.name}`;
-              })()}
+              {isEditingExisting
+                ? `Edit completion count for ${selectedAutomationProcess?.name} on ${new Date(dailyUpdate.date).toLocaleDateString()}`
+                : `Record completion count for ${selectedAutomationProcess?.name} on ${new Date(dailyUpdate.date).toLocaleDateString()}`}
             </DialogDescription>
           </DialogHeader>
           {selectedAutomationProcess && (
@@ -1741,7 +1766,14 @@ export default function FileProcess() {
                   type="date"
                   value={dailyUpdate.date}
                   onChange={(e) => setDailyUpdate({ ...dailyUpdate, date: e.target.value })}
+                  disabled={isEditingExisting}
+                  className={isEditingExisting ? 'bg-gray-100' : ''}
                 />
+                {isEditingExisting && (
+                  <p className="text-xs text-muted-foreground">
+                    Editing existing entry - date cannot be changed
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1761,13 +1793,24 @@ export default function FileProcess() {
               </div>
 
               {dailyUpdate.completed > 0 && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-700">
-                    <strong>Progress Update:</strong> +{dailyUpdate.completed.toLocaleString()} items
+                <div className={`p-3 border rounded-lg ${
+                  isEditingExisting ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'
+                }`}>
+                  <p className={`text-sm ${
+                    isEditingExisting ? 'text-blue-700' : 'text-green-700'
+                  }`}>
+                    <strong>{isEditingExisting ? 'Count Update:' : 'Progress Update:'}</strong> {dailyUpdate.completed.toLocaleString()} items
                   </p>
-                  <p className="text-xs text-green-600 mt-1">
-                    New total: {(selectedAutomationProcess.processedRows + dailyUpdate.completed).toLocaleString()} / {selectedAutomationProcess.totalRows.toLocaleString()}
-                  </p>
+                  {!isEditingExisting && (
+                    <p className="text-xs text-green-600 mt-1">
+                      New total: {(selectedAutomationProcess.processedRows + dailyUpdate.completed).toLocaleString()} / {selectedAutomationProcess.totalRows.toLocaleString()}
+                    </p>
+                  )}
+                  {isEditingExisting && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      This will update the existing entry for {new Date(dailyUpdate.date).toLocaleDateString()}
+                    </p>
+                  )}
                   {dailyUpdate.completed >= (selectedAutomationProcess.dailyTarget || 0) && (
                     <Badge className="mt-1" variant="default">
                       <CheckCircle className="h-3 w-3 mr-1" />
@@ -1788,7 +1831,7 @@ export default function FileProcess() {
               className="bg-purple-600 hover:bg-purple-700"
             >
               <Bot className="h-4 w-4 mr-2" />
-              Update Progress
+              {isEditingExisting ? 'Save Changes' : 'Update Progress'}
             </Button>
           </DialogFooter>
         </DialogContent>
