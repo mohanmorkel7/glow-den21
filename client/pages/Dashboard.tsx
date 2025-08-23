@@ -526,7 +526,7 @@ export default function Dashboard() {
       {(user.role === 'super_admin' || user.role === 'project_manager') && (
         <div className="space-y-6">
           {/* Attendance Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="border-l-4 border-l-green-500">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -563,27 +563,6 @@ export default function Dashboard() {
                 <div className="mt-2">
                   <Progress
                     value={(attendanceData.today.absent / attendanceData.today.totalEmployees) * 100}
-                    className="h-2"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-orange-500">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-orange-500" />
-                  Late Arrivals
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{attendanceData.today.late}</div>
-                <p className="text-xs text-muted-foreground">
-                  {attendanceData.today.onTime} arrived on time
-                </p>
-                <div className="mt-2">
-                  <Progress
-                    value={(attendanceData.today.late / attendanceData.today.present) * 100}
                     className="h-2"
                   />
                 </div>
@@ -661,7 +640,7 @@ export default function Dashboard() {
                   Today's Status Distribution
                 </CardTitle>
                 <CardDescription>
-                  Current attendance status breakdown
+                  Current login status breakdown
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -669,9 +648,8 @@ export default function Dashboard() {
                   <RechartsPieChart>
                     <Pie
                       data={[
-                        { name: 'On Time', value: attendanceData.today.onTime, fill: '#22c55e' },
-                        { name: 'Late', value: attendanceData.today.late, fill: '#f59e0b' },
-                        { name: 'Absent', value: attendanceData.today.absent, fill: '#ef4444' }
+                        { name: 'Present (Logged In)', value: attendanceData.today.present, fill: '#22c55e' },
+                        { name: 'Absent (Not Logged In)', value: attendanceData.today.absent, fill: '#ef4444' }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -682,9 +660,8 @@ export default function Dashboard() {
                       dataKey="value"
                     >
                       {[
-                        { name: 'On Time', value: attendanceData.today.onTime, fill: '#22c55e' },
-                        { name: 'Late', value: attendanceData.today.late, fill: '#f59e0b' },
-                        { name: 'Absent', value: attendanceData.today.absent, fill: '#ef4444' }
+                        { name: 'Present (Logged In)', value: attendanceData.today.present, fill: '#22c55e' },
+                        { name: 'Absent (Not Logged In)', value: attendanceData.today.absent, fill: '#ef4444' }
                       ].map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
