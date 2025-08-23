@@ -142,7 +142,7 @@ export default function UserManagement() {
       projects: 0
     };
     setUsers([...users, user]);
-    setNewUser({ name: '', email: '', phone: '', role: 'user', password: '' });
+    setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
     setIsAddDialogOpen(false);
   };
 
@@ -166,7 +166,7 @@ export default function UserManagement() {
         : u
     ));
     setEditingUser(null);
-    setNewUser({ name: '', email: '', phone: '', role: 'user', password: '' });
+    setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
   };
 
   const handleDeleteUser = (userId: string) => {
