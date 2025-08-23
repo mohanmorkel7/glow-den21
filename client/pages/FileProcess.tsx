@@ -389,11 +389,8 @@ export default function FileProcess() {
 
     // Check if process is completed and prevent updates
     if (process.status === 'completed') {
-      if (window.confirm(`This process "${process.name}" is marked as completed. Do you still want to view/edit historical data? Note: Any changes may affect final counts.`)) {
-        // Allow viewing but show warning in dialog
-      } else {
-        return;
-      }
+      alert(`Process "${process.name}" is completed. Updates are no longer allowed to maintain data integrity.`);
+      return;
     }
 
     const targetDate = editDate || new Date().toISOString().split('T')[0];
