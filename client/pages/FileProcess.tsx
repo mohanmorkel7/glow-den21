@@ -58,12 +58,41 @@ interface FileRequest {
   fileProcessId: string;
   requestedCount: number;
   requestedDate: string;
-  status: 'pending' | 'assigned' | 'completed';
+  status: 'pending' | 'assigned' | 'completed' | 'in_progress' | 'received';
   assignedBy?: string;
   assignedDate?: string;
   assignedCount?: number;
   startRow?: number;
   endRow?: number;
+  downloadLink?: string;
+  completedDate?: string;
+}
+
+interface HistoricalFileProcess {
+  id: string;
+  name: string;
+  projectName: string;
+  fileName: string;
+  totalRows: number;
+  processedRows: number;
+  createdDate: string;
+  completedDate: string;
+  createdBy: string;
+  duration: string;
+  totalUsers: number;
+  avgProcessingRate: number;
+}
+
+interface HistoricalAssignment {
+  id: string;
+  processName: string;
+  userName: string;
+  assignedCount: number;
+  completedCount: number;
+  assignedDate: string;
+  completedDate: string;
+  processingTime: string;
+  efficiency: number;
 }
 
 const mockProjects: Project[] = [
