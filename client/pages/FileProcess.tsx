@@ -854,7 +854,7 @@ export default function FileProcess() {
                           ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
                           : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
                             ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                            : '⚠��� Could not auto-detect row count. Please enter the total number of data rows manually.'
+                            : '⚠����� Could not auto-detect row count. Please enter the total number of data rows manually.'
                         }
                       </p>
                     </div>
@@ -969,7 +969,7 @@ export default function FileProcess() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fileProcesses.filter(p => p.status === 'active').length}</div>
+            <div className="text-2xl font-bold">{fileProcesses.filter(p => p.status === 'active' || p.status === 'in_progress').length}</div>
             <p className="text-xs text-muted-foreground">Currently running</p>
           </CardContent>
         </Card>
