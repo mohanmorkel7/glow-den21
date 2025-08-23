@@ -778,39 +778,66 @@ export default function Salary() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getBreakdownData().map((item, index) => (
-                      <TableRow key={index} className="hover:bg-gray-50">
-                        <TableCell className="font-medium">{item.period}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            {item.files.toLocaleString()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium">{item.tier1Files.toLocaleString()}</div>
-                            <div className="text-xs text-muted-foreground">@ {formatCurrency(item.tier1Rate)}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-green-600">{formatCurrency(item.tier1Amount)}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="font-medium">{item.tier2Files.toLocaleString()}</div>
-                            {item.tier2Files > 0 && (
-                              <div className="text-xs text-muted-foreground">@ {formatCurrency(item.tier2Rate)}</div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-green-600">{formatCurrency(item.tier2Amount)}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-bold text-blue-600">{formatCurrency(item.totalAmount)}</div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {getBreakdownData().map((item, index) => {
+                      const isAbsentDay = item.files === 0 && item.period.includes('(Absent)');
+                      const isWeekend = item.period.includes('(Weekend)');
+                      const isFuture = item.period.includes('(Future)');
+                      const isToday = item.period.includes('(Today)');
+
+                      return (
+                        <TableRow
+                          key={index}
+                          className={`hover:bg-gray-50 ${
+                            isAbsentDay ? 'bg-red-50' :
+                            isWeekend ? 'bg-gray-100' :
+                            isFuture ? 'bg-blue-50' :
+                            isToday ? 'bg-green-50' : ''
+                          }`}
+                        >
+                          <TableCell className={`font-medium ${
+                            isAbsentDay ? 'text-red-600' :
+                            isWeekend ? 'text-gray-500' :
+                            isFuture ? 'text-blue-500' :
+                            isToday ? 'text-green-600' : ''
+                          }`}>
+                            {item.period}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`${
+                                item.files === 0 ? 'bg-gray-100 text-gray-500' : 'bg-blue-50 text-blue-700'
+                              }`}
+                            >
+                              {item.files.toLocaleString()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="font-medium">{item.tier1Files.toLocaleString()}</div>
+                              <div className="text-xs text-muted-foreground">@ {formatCurrency(item.tier1Rate)}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium text-green-600">{formatCurrency(item.tier1Amount)}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="font-medium">{item.tier2Files.toLocaleString()}</div>
+                              {item.tier2Files > 0 && (
+                                <div className="text-xs text-muted-foreground">@ {formatCurrency(item.tier2Rate)}</div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium text-green-600">{formatCurrency(item.tier2Amount)}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-bold text-blue-600">{formatCurrency(item.totalAmount)}</div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
 
                     {/* Total Row */}
                     <TableRow className="bg-gray-100 border-t-2 border-gray-300">
