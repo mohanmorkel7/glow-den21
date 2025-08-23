@@ -87,9 +87,8 @@ export function createServer() {
     });
   });
 
-  // 404 handler for API routes - commented out to test if this causes the issue
-  /*
-  app.use("/api/*", (_req, res) => {
+  // 404 handler for API routes - fixed wildcard pattern
+  app.use("/api*", (_req, res) => {
     res.status(404).json({
       error: {
         code: "NOT_FOUND",
@@ -97,7 +96,6 @@ export function createServer() {
       }
     });
   });
-  */
 
   return app;
 }
