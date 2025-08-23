@@ -913,6 +913,31 @@ export default function Salary() {
                 </Card>
               </div>
 
+              {/* Color Legend for Monthly View */}
+              {breakdownPeriod === 'monthly' && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-blue-800 mb-3">Monthly View Color Legend</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-green-50 border border-green-200 rounded"></div>
+                      <span className="text-green-700">Today</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-red-50 border border-red-200 rounded"></div>
+                      <span className="text-red-700">Absent Days</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded"></div>
+                      <span className="text-gray-700">Weekends</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-blue-50 border border-blue-200 rounded"></div>
+                      <span className="text-blue-700">Future Dates</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Performance Note */}
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <div className="flex items-start gap-2">
@@ -922,6 +947,11 @@ export default function Salary() {
                     <p className="text-yellow-700 mt-1">
                       Daily file counts and earnings reset at midnight. The daily view shows today's current progress,
                       while weekly and monthly views show accumulated totals.
+                      {breakdownPeriod === 'monthly' && (
+                        <span className="block mt-2">
+                          <strong>Monthly View:</strong> Shows all calendar dates including weekends, absent days, and future dates with color coding above.
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
