@@ -374,6 +374,8 @@ export default function FileProcess() {
   const [isEditingExisting, setIsEditingExisting] = useState(false);
   const [selectedProcessStatus, setSelectedProcessStatus] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('all');
+  const [isBreakdownDialogOpen, setIsBreakdownDialogOpen] = useState(false);
+  const [selectedHistoricalProcess, setSelectedHistoricalProcess] = useState<HistoricalFileProcess | null>(null);
 
   // Only allow admin/project_manager to access this page
   if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'project_manager') {
