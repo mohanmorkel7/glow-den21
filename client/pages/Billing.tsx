@@ -345,9 +345,11 @@ export default function Billing() {
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [billingData] = useState<MonthlyBillingSummary[]>(computeBillingData());
   const [selectedBilling, setSelectedBilling] = useState<MonthlyBillingSummary | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+
+  // Calculate billing data from file processes
+  const billingData = useMemo(() => computeBillingData(), []);
 
   // Only allow super admin to access billing
   if (currentUser?.role !== 'super_admin') {
