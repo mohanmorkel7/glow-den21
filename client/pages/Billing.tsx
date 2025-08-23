@@ -598,8 +598,8 @@ export default function Billing() {
             </TableHeader>
             <TableBody>
               {filteredBillingData.map((billing) => {
-                const statusCounts = billing.allItems.reduce((acc, item) => {
-                  acc[item.status] = (acc[item.status] || 0) + 1;
+                const statusCounts = billing.projects.reduce((acc, project) => {
+                  acc[project.status] = (acc[project.status] || 0) + 1;
                   return acc;
                 }, {} as Record<string, number>);
 
@@ -610,9 +610,9 @@ export default function Billing() {
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="font-medium">
-                            {new Date(billing.month + '-01').toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'long' 
+                            {new Date(billing.month + '-01').toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long'
                             })}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -623,14 +623,17 @@ export default function Billing() {
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div className="font-medium">{billing.itemsCount} items</div>
+                        <div className="font-medium">{billing.itemsCount} projects</div>
                         <div className="text-muted-foreground space-y-1">
-                          <div>{billing.projects.length} projects, {billing.jobs.length} file processing jobs</div>
+                          <div className="flex items-center gap-2">
+                            <Bot className="h-3 w-3 text-blue-600" />
+                            <span>{billing.automationProcesses} automation</span>
+                            <User className="h-3 w-3 text-green-600" />
+                            <span>{billing.manualProcesses} manual</span>
+                          </div>
                           <div className="text-xs">
-                            {billing.allItems.slice(0, 2).map(item =>
-                              item.type === 'project' ? item.projectName : item.jobName
-                            ).join(', ')}
-                            {billing.allItems.length > 2 && ` +${billing.allItems.length - 2} more`}
+                            {billing.projects.slice(0, 2).map(p => p.projectName).join(', ')}
+                            {billing.projects.length > 2 && ` +${billing.projects.length - 2} more`}
                           </div>
                         </div>
                       </div>
@@ -638,7 +641,7 @@ export default function Billing() {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium">{billing.totalFilesCompleted.toLocaleString()}</div>
-                        <div className="text-muted-foreground">files processed</div>
+                        <div className="text-muted-foreground">files completed</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -647,7 +650,7 @@ export default function Billing() {
                           {formatCurrency(billing.totalAmountUSD, 'USD')}
                         </div>
                         <div className="text-muted-foreground">
-                          Avg: ${(billing.totalAmountUSD / billing.totalFilesCompleted).toFixed(4)}/file
+                          Avg: ${billing.totalFilesCompleted > 0 ? (billing.totalAmountUSD / billing.totalFilesCompleted).toFixed(4) : '0.0000'}/file
                         </div>
                       </div>
                     </TableCell>
@@ -670,16 +673,16 @@ export default function Billing() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleViewDetails(billing)}
                         >
                           <Eye className="h-3 w-3 mr-1" />
                           Details
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => handleExportBilling('pdf', billing.month)}
                         >
