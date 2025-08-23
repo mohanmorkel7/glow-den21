@@ -219,16 +219,18 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Earnings (USD)</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(dashboardStats.totalEarningsUSD, 'USD')}</div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
+        {(user.role === 'super_admin' || user.role === 'project_manager') && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Earnings (USD)</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(dashboardStats.totalEarningsUSD, 'USD')}</div>
+              <p className="text-xs text-muted-foreground">This month</p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -331,41 +333,41 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Monthly Earnings and Team Performance */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Monthly Earnings Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              Monthly Earnings
-            </CardTitle>
-            <CardDescription>
-              USD and INR earnings comparison by month
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyEarningsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value, name) => [
-                    name === 'usd' ? formatCurrency(Number(value), 'USD') : formatCurrency(Number(value), 'INR'),
-                    name === 'usd' ? 'USD Earnings' : 'INR Earnings'
-                  ]}
-                />
-                <Legend />
-                <Bar dataKey="usd" fill="#22c55e" name="USD" />
-                <Bar dataKey="inr" fill="#3b82f6" name="INR" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {/* Monthly Earnings and Team Performance - Admin/PM Only */}
+      {(user.role === 'super_admin' || user.role === 'project_manager') && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Monthly Earnings Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Monthly Earnings
+              </CardTitle>
+              <CardDescription>
+                USD and INR earnings comparison by month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={monthlyEarningsData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      name === 'usd' ? formatCurrency(Number(value), 'USD') : formatCurrency(Number(value), 'INR'),
+                      name === 'usd' ? 'USD Earnings' : 'INR Earnings'
+                    ]}
+                  />
+                  <Legend />
+                  <Bar dataKey="usd" fill="#22c55e" name="USD" />
+                  <Bar dataKey="inr" fill="#3b82f6" name="INR" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-        {/* Team Performance Chart */}
-        {(user.role === 'super_admin' || user.role === 'project_manager') && (
+          {/* Team Performance Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -382,13 +384,13 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
                   <YAxis dataKey="name" type="category" width={100} />
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value, name) => [
-                      name === 'efficiency' ? `${value}%` : 
-                      name === 'earnings' ? `$${value}` : 
+                      name === 'efficiency' ? `${value}%` :
+                      name === 'earnings' ? `$${value}` :
                       value.toLocaleString(),
-                      name === 'efficiency' ? 'Efficiency' : 
-                      name === 'earnings' ? 'Earnings' : 
+                      name === 'efficiency' ? 'Efficiency' :
+                      name === 'earnings' ? 'Earnings' :
                       name === 'completed' ? 'Completed Files' : name
                     ]}
                   />
@@ -399,8 +401,8 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Project Details */}
       <Card>
@@ -410,7 +412,7 @@ export default function Dashboard() {
             Active Projects Overview
           </CardTitle>
           <CardDescription>
-            Detailed view of current project progress and earnings
+            {user.role === 'user' ? 'Your assigned projects and file processing progress' : 'Detailed view of current project progress and earnings'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -439,14 +441,16 @@ export default function Dashboard() {
                         </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-green-600">
-                        {formatCurrency(project.earningsUSD, 'USD')}
+                    {(user.role === 'super_admin' || user.role === 'project_manager') && (
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">
+                          {formatCurrency(project.earningsUSD, 'USD')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          @${project.ratePerFile}/file
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        @${project.ratePerFile}/file
-                      </div>
-                    </div>
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -486,7 +490,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* User Daily Count for Users */}
+      {/* User Daily Count for Users - Only File Count, No Earnings */}
       {user.role === 'user' && (
         <Card>
           <CardHeader>
@@ -495,12 +499,12 @@ export default function Dashboard() {
               Your Daily File Count
             </CardTitle>
             <CardDescription>
-              Submit your daily file processing count
+              Track your daily file processing progress
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <h4 className="font-medium text-muted-foreground">Target</h4>
                   <p className="text-2xl font-bold text-primary">20,000</p>
@@ -511,15 +515,7 @@ export default function Dashboard() {
                   <p className="text-2xl font-bold text-green-600">18,500</p>
                   <p className="text-xs text-muted-foreground">files</p>
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <h4 className="font-medium text-muted-foreground">Earnings</h4>
-                  <p className="text-2xl font-bold text-blue-600">$925</p>
-                  <p className="text-xs text-muted-foreground">today</p>
-                </div>
               </div>
-              <Button className="w-full">
-                Submit Today's Count
-              </Button>
             </div>
           </CardContent>
         </Card>
