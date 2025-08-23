@@ -107,11 +107,6 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
-        <Route path="/daily-counts" element={
-          <ProtectedRoute>
-            <DailyCounts />
-          </ProtectedRoute>
-        } />
 
         <Route path="/billing" element={
           <ProtectedRoute>
