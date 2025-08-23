@@ -706,8 +706,8 @@ export default function Salary() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-bold text-purple-600">{formatCurrency(pm.fixedSalary)}</div>
-                        <div className="text-xs text-muted-foreground">Fixed amount</div>
+                        <div className="font-bold text-purple-600">{formatCurrency(pm.monthlySalary)}</div>
+                        <div className="text-xs text-muted-foreground">Monthly fixed amount</div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
