@@ -464,20 +464,30 @@ export default function Salary() {
 
               {/* Project Manager Configuration */}
               <div className="space-y-4">
-                <h4 className="font-medium text-lg">Project Manager Fixed Salary</h4>
-                <div className="space-y-2">
-                  <Label htmlFor="fixedSalary">Monthly Fixed Salary (₹)</Label>
-                  <Input
-                    id="fixedSalary"
-                    type="number"
-                    value={tempConfig.projectManagers.fixedSalary}
-                    onChange={(e) => setTempConfig({
-                      ...tempConfig,
-                      projectManagers: { ...tempConfig.projectManagers, fixedSalary: parseInt(e.target.value) || 0 }
-                    })}
-                  />
-                  <p className="text-xs text-muted-foreground">Fixed monthly salary for all project managers</p>
-                </div>
+                <h4 className="font-medium text-lg">Project Manager Individual Salaries</h4>
+                {projectManagerSalaryData.map((pm) => (
+                  <div key={pm.id} className="space-y-2 p-3 border border-gray-200 rounded-lg">
+                    <Label htmlFor={`salary-${pm.id}`}>{pm.name} - Monthly Salary (₹)</Label>
+                    <Input
+                      id={`salary-${pm.id}`}
+                      type="number"
+                      value={tempConfig.projectManagers[pm.id] || 0}
+                      onChange={(e) => setTempConfig({
+                        ...tempConfig,
+                        projectManagers: {
+                          ...tempConfig.projectManagers,
+                          [pm.id]: parseInt(e.target.value) || 0
+                        }
+                      })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Current: {formatCurrency(pm.monthlySalary)} | Role: {pm.role.replace('_', ' ')}
+                    </p>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  Configure individual monthly salaries for each project manager. Changes allow for increments/decrements.
+                </p>
               </div>
             </div>
             <DialogFooter>
