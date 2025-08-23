@@ -406,7 +406,7 @@ export default function Salary() {
               Configure Rates
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[70vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Salary Configuration</DialogTitle>
               <DialogDescription>
