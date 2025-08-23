@@ -227,7 +227,11 @@ export default function Layout({ children }: LayoutProps) {
           <div className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
-                <Building2 className="h-6 w-6 text-primary" />
+                <img
+                  src="https://cdn.builder.io/o/assets%2F9f68bdced9274939b0bcd49e09efd146%2F464b2e2ce46c4663bd986b6ed87019c1?alt=media&token=3eeb20c9-66cb-4f8b-894c-bc2e3c6de56e&apiKey=9f68bdced9274939b0bcd49e09efd146"
+                  alt="Company Logo"
+                  className="h-6 w-6 object-contain"
+                />
                 <span className="font-semibold">Web Syntactic</span>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
