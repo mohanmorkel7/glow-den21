@@ -1827,7 +1827,7 @@ export default function FileProcess() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockHistoricalAssignments.map((assignment) => (
+                  {filteredAssignments.map((assignment) => (
                     <TableRow key={assignment.id}>
                       <TableCell>
                         <div className="font-medium">{assignment.processName}</div>
