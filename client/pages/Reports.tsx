@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  BarChart3, 
-  TrendingUp, 
+import {
+  BarChart3,
+  TrendingUp,
   TrendingDown,
   Users,
   Target,
@@ -20,7 +20,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Award,
-  Activity
+  Activity,
+  Bot
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from 'recharts';
 
@@ -53,29 +54,29 @@ const userMonthlyData = [
 
 // Team performance data for admins
 const dailyProductivityData = [
-  { date: '2024-01-08', target: 1500, actual: 1420, efficiency: 94.7, users: 12 },
-  { date: '2024-01-09', target: 1500, actual: 1380, efficiency: 92.0, users: 11 },
-  { date: '2024-01-10', target: 1500, actual: 1550, efficiency: 103.3, users: 13 },
-  { date: '2024-01-11', target: 1500, actual: 1480, efficiency: 98.7, users: 12 },
-  { date: '2024-01-12', target: 1500, actual: 1620, efficiency: 108.0, users: 14 },
-  { date: '2024-01-13', target: 1500, actual: 1340, efficiency: 89.3, users: 10 },
-  { date: '2024-01-14', target: 1500, actual: 1590, efficiency: 106.0, users: 13 },
-  { date: '2024-01-15', target: 1500, actual: 1450, efficiency: 96.7, users: 12 }
+  { date: '2024-01-08', target: 1500, actual: 1420, efficiency: 94.7, users: 12, automation: 320, manual: 1100 },
+  { date: '2024-01-09', target: 1500, actual: 1380, efficiency: 92.0, users: 11, automation: 280, manual: 1100 },
+  { date: '2024-01-10', target: 1500, actual: 1550, efficiency: 103.3, users: 13, automation: 380, manual: 1170 },
+  { date: '2024-01-11', target: 1500, actual: 1480, efficiency: 98.7, users: 12, automation: 360, manual: 1120 },
+  { date: '2024-01-12', target: 1500, actual: 1620, efficiency: 108.0, users: 14, automation: 420, manual: 1200 },
+  { date: '2024-01-13', target: 1500, actual: 1340, efficiency: 89.3, users: 10, automation: 290, manual: 1050 },
+  { date: '2024-01-14', target: 1500, actual: 1590, efficiency: 106.0, users: 13, automation: 390, manual: 1200 },
+  { date: '2024-01-15', target: 1500, actual: 1450, efficiency: 96.7, users: 12, automation: 340, manual: 1110 }
 ];
 
 const teamWeeklyData = [
-  { week: 'Week 1', completed: 15200, target: 17500, efficiency: 86.9, activeUsers: 45 },
-  { week: 'Week 2', completed: 17100, target: 17500, efficiency: 97.7, activeUsers: 48 },
-  { week: 'Week 3', completed: 18200, target: 17500, efficiency: 104.0, activeUsers: 52 },
-  { week: 'Week 4', completed: 16800, target: 17500, efficiency: 96.0, activeUsers: 46 }
+  { week: 'Week 1', completed: 15200, target: 17500, efficiency: 86.9, activeUsers: 45, automation: 2100, manual: 13100 },
+  { week: 'Week 2', completed: 17100, target: 17500, efficiency: 97.7, activeUsers: 48, automation: 2380, manual: 14720 },
+  { week: 'Week 3', completed: 18200, target: 17500, efficiency: 104.0, activeUsers: 52, automation: 2520, manual: 15680 },
+  { week: 'Week 4', completed: 16800, target: 17500, efficiency: 96.0, activeUsers: 46, automation: 2440, manual: 14360 }
 ];
 
 const teamMonthlyData = [
-  { month: 'Sep', completed: 58200, target: 70000, efficiency: 83.1, activeUsers: 42 },
-  { month: 'Oct', completed: 64100, target: 70000, efficiency: 91.6, activeUsers: 45 },
-  { month: 'Nov', completed: 68500, target: 70000, efficiency: 97.9, activeUsers: 48 },
-  { month: 'Dec', completed: 72300, target: 70000, efficiency: 103.3, activeUsers: 52 },
-  { month: 'Jan', completed: 67300, target: 70000, efficiency: 96.1, activeUsers: 48 }
+  { month: 'Sep', completed: 58200, target: 70000, efficiency: 83.1, activeUsers: 42, automation: 8200, manual: 50000 },
+  { month: 'Oct', completed: 64100, target: 70000, efficiency: 91.6, activeUsers: 45, automation: 9100, manual: 55000 },
+  { month: 'Nov', completed: 68500, target: 70000, efficiency: 97.9, activeUsers: 48, automation: 9650, manual: 58850 },
+  { month: 'Dec', completed: 72300, target: 70000, efficiency: 103.3, activeUsers: 52, automation: 10200, manual: 62100 },
+  { month: 'Jan', completed: 67300, target: 70000, efficiency: 96.1, activeUsers: 48, automation: 9440, manual: 57860 }
 ];
 
 // Individual user detailed performance
@@ -347,29 +348,57 @@ export default function Reports() {
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Team {timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)} Performance</CardTitle>
-                    <CardDescription>Target vs Actual completion over time</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey={timePeriod === 'daily' ? 'date' : timePeriod === 'weekly' ? 'week' : 'month'}
-                          tickFormatter={timePeriod === 'daily' ? 
-                            (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
-                            (value) => value
-                          }
-                        />
-                        <YAxis />
-                        <Tooltip />
-                        <Area type="monotone" dataKey="target" stroke="#6b7280" fill="#6b7280" fillOpacity={0.3} name="Target" />
-                        <Area type="monotone" dataKey={isAdmin ? 'actual' : 'completed'} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Completed" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
+                <CardHeader>
+                  <CardTitle>Team {timePeriod.charAt(0).toUpperCase() + timePeriod.slice(1)} Performance</CardTitle>
+                  <CardDescription>Target vs Actual completion over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={currentData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey={timePeriod === 'daily' ? 'date' : timePeriod === 'weekly' ? 'week' : 'month'}
+                        tickFormatter={timePeriod === 'daily' ?
+                          (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
+                          (value) => value
+                        }
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="target" stroke="#6b7280" fill="#6b7280" fillOpacity={0.3} name="Target" />
+                      <Area type="monotone" dataKey={isAdmin ? 'actual' : 'completed'} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Completed" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-purple-500" />
+                    Automation vs Manual Processing
+                  </CardTitle>
+                  <CardDescription>Breakdown of processing by type over {timePeriod} period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={currentData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey={timePeriod === 'daily' ? 'date' : timePeriod === 'weekly' ? 'week' : 'month'}
+                        tickFormatter={timePeriod === 'daily' ?
+                          (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
+                          (value) => value
+                        }
+                      />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="manual" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.7} name="Manual Processing" />
+                      <Area type="monotone" dataKey="automation" stackId="1" stroke="#9333ea" fill="#9333ea" fillOpacity={0.7} name="Automation Tools" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
                 <Card>
                   <CardHeader>
@@ -419,30 +448,72 @@ export default function Reports() {
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={currentData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis 
+                      <XAxis
                         dataKey={timePeriod === 'daily' ? 'date' : timePeriod === 'weekly' ? 'week' : 'month'}
-                        tickFormatter={timePeriod === 'daily' ? 
+                        tickFormatter={timePeriod === 'daily' ?
                           (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
                           (value) => value
                         }
                       />
                       <YAxis domain={[80, 120]} />
-                      <Tooltip 
-                        labelFormatter={timePeriod === 'daily' ? 
+                      <Tooltip
+                        labelFormatter={timePeriod === 'daily' ?
                           (date) => new Date(date).toLocaleDateString() :
                           (value) => value
                         }
                         formatter={(value) => [`${value}%`, 'Efficiency']}
                       />
-                      <Line 
-                        type="monotone" 
-                        dataKey="efficiency" 
-                        stroke="#10b981" 
+                      <Line
+                        type="monotone"
+                        dataKey="efficiency"
+                        stroke="#10b981"
                         strokeWidth={3}
                         dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Automation Performance Summary */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-purple-500" />
+                    Automation Tools Performance
+                  </CardTitle>
+                  <CardDescription>Summary of automation tools contribution to overall processing</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="text-center p-3 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {currentData.reduce((sum, item) => sum + (item.automation || 0), 0).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-purple-700">Total Automated</div>
+                    </div>
+                    <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {currentData.reduce((sum, item) => sum + (item.manual || 0), 0).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-blue-700">Total Manual</div>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">
+                        {(
+                          (currentData.reduce((sum, item) => sum + (item.automation || 0), 0) /
+                           currentData.reduce((sum, item) => sum + (item.actual || item.completed || 0), 0)) * 100
+                        ).toFixed(1)}%
+                      </div>
+                      <div className="text-xs text-green-700">Automation Share</div>
+                    </div>
+                    <div className="text-center p-3 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {(currentData.reduce((sum, item) => sum + (item.automation || 0), 0) / currentData.length).toFixed(0)}
+                      </div>
+                      <div className="text-xs text-orange-700">Avg {timePeriod.slice(0, -2)}ly Auto</div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
