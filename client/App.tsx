@@ -115,6 +115,12 @@ function AppRoutes() {
           </ProtectedRoute>
         } />
 
+        <Route path="/salary" element={
+          <ProtectedRoute>
+            <Salary />
+          </ProtectedRoute>
+        } />
+
         <Route path="/reports" element={
           <ProtectedRoute>
             <Reports />
