@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import { Progress } from '@/components/ui/progress';
+import {
   DollarSign,
   Download,
   FileText,
@@ -25,7 +26,10 @@ import {
   AlertTriangle,
   Eye,
   Edit,
-  Send
+  Send,
+  Bot,
+  User,
+  Activity
 } from 'lucide-react';
 
 interface ProjectBilling {
