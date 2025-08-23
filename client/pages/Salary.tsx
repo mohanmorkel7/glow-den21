@@ -741,7 +741,7 @@ export default function Salary() {
                   <SelectContent>
                     <SelectItem value="daily">Daily (Today)</SelectItem>
                     <SelectItem value="weekly">Weekly (Last 7 Days)</SelectItem>
-                    <SelectItem value="monthly">Monthly (Last 4 Weeks)</SelectItem>
+                    <SelectItem value="monthly">Monthly (All Dates + Absent Days)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
