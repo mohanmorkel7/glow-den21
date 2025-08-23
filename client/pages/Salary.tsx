@@ -542,10 +542,11 @@ export default function Salary() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employee</TableHead>
-                    <TableHead>Today's Files</TableHead>
-                    <TableHead>Today's Earnings</TableHead>
-                    <TableHead>Monthly Files</TableHead>
-                    <TableHead>Monthly Earnings</TableHead>
+                    <TableHead>Today's Files <span className="text-xs text-muted-foreground">(Resets Daily)</span></TableHead>
+                  <TableHead>Today's Earnings</TableHead>
+                  <TableHead>Weekly Files</TableHead>
+                  <TableHead>Monthly Files</TableHead>
+                  <TableHead>Monthly Earnings</TableHead>
                     <TableHead>Performance</TableHead>
                     <TableHead>Last Active</TableHead>
                   </TableRow>
