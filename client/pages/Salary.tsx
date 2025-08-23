@@ -725,7 +725,7 @@ export default function Salary() {
               Salary Breakdown - {selectedUser?.name}
             </DialogTitle>
             <DialogDescription>
-              Detailed file count and earnings calculation breakdown
+              Detailed file count and earnings calculation breakdown. Monthly view shows all dates including absent days.
             </DialogDescription>
           </DialogHeader>
 
