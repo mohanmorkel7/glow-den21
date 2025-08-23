@@ -1166,18 +1166,25 @@ export default function FileProcess() {
                         <div className="flex items-center gap-1">
                           {process.type === 'automation' && (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') ? (
                             <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDailyAutomationUpdate(process.id);
-                                }}
-                                className="h-6 px-2 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
-                              >
-                                <Settings className="h-3 w-3 mr-1" />
-                                Update
-                              </Button>
+                              {process.status !== 'completed' ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDailyAutomationUpdate(process.id);
+                                  }}
+                                  className="h-6 px-2 text-xs text-purple-600 border-purple-300 hover:bg-purple-50"
+                                >
+                                  <Settings className="h-3 w-3 mr-1" />
+                                  Update
+                                </Button>
+                              ) : (
+                                <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Completed
+                                </Badge>
+                              )}
                               <Button
                                 size="sm"
                                 variant="ghost"
