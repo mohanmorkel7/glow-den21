@@ -228,7 +228,7 @@ export default function UserManagement() {
               Add User
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
               <DialogDescription>
