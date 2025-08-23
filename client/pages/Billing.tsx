@@ -468,15 +468,35 @@ export default function Billing() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Files</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Files Processed</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalFiles.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">All projects</p>
+            <p className="text-xs text-muted-foreground">All file processes</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Automation Processes</CardTitle>
+            <Bot className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{stats.totalAutomationFiles}</div>
+            <p className="text-xs text-muted-foreground">Automated tasks</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Manual Processes</CardTitle>
+            <User className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.totalManualFiles}</div>
+            <p className="text-xs text-muted-foreground">Manual tasks</p>
           </CardContent>
         </Card>
         <Card>
@@ -486,36 +506,26 @@ export default function Billing() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(stats.totalUSD, 'USD')}</div>
-            <p className="text-xs text-muted-foreground">Gross earnings</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings (INR)</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalINR, 'INR')}</div>
-            <p className="text-xs text-muted-foreground">₹83 per USD</p>
+            <p className="text-xs text-muted-foreground">Based on file completion</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Paid Amount</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.paidUSD, 'USD')}</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(stats.paidUSD, 'USD')}</div>
             <p className="text-xs text-muted-foreground">Received payments</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.pendingUSD, 'USD')}</div>
+            <div className="text-2xl font-bold text-orange-600">{formatCurrency(stats.pendingUSD, 'USD')}</div>
             <p className="text-xs text-muted-foreground">Awaiting payment</p>
           </CardContent>
         </Card>
