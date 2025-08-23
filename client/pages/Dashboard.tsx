@@ -529,6 +529,263 @@ export default function Dashboard() {
         </Card>
       )}
 
+      {/* Attendance Dashboard - Admin & Project Managers */}
+      {(user.role === 'super_admin' || user.role === 'project_manager') && (
+        <div className="space-y-6">
+          {/* Attendance Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  Present Today
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{attendanceData.today.present}</div>
+                <p className="text-xs text-muted-foreground">
+                  out of {attendanceData.today.totalEmployees} {user.role === 'super_admin' ? 'total staff' : 'users'}
+                </p>
+                <div className="mt-2">
+                  <Progress
+                    value={(attendanceData.today.present / attendanceData.today.totalEmployees) * 100}
+                    className="h-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-red-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                  Absent Today
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{attendanceData.today.absent}</div>
+                <p className="text-xs text-muted-foreground">
+                  {((attendanceData.today.absent / attendanceData.today.totalEmployees) * 100).toFixed(1)}% absence rate
+                </p>
+                <div className="mt-2">
+                  <Progress
+                    value={(attendanceData.today.absent / attendanceData.today.totalEmployees) * 100}
+                    className="h-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-orange-500" />
+                  Late Arrivals
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{attendanceData.today.late}</div>
+                <p className="text-xs text-muted-foreground">
+                  {attendanceData.today.onTime} arrived on time
+                </p>
+                <div className="mt-2">
+                  <Progress
+                    value={(attendanceData.today.late / attendanceData.today.present) * 100}
+                    className="h-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-blue-500" />
+                  Weekly Average
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{attendanceData.thisWeek.averageAttendance}%</div>
+                <p className="text-xs text-muted-foreground">
+                  {attendanceData.thisWeek.totalPresent} total present this week
+                </p>
+                <div className="mt-2">
+                  <Progress value={attendanceData.thisWeek.averageAttendance} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Attendance Charts */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Daily Attendance Trend */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  7-Day Attendance Trend
+                </CardTitle>
+                <CardDescription>
+                  Daily attendance percentage over the last week
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={dailyAttendanceTrend}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    />
+                    <YAxis domain={[80, 100]} />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        name === 'percentage' ? `${value}%` : value,
+                        name === 'percentage' ? 'Attendance Rate' :
+                        name === 'present' ? 'Present' : 'Absent'
+                      ]}
+                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                    />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="percentage"
+                      stroke="#3b82f6"
+                      fill="#3b82f6"
+                      fillOpacity={0.6}
+                      name="Attendance %"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Employee Status Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Today's Status Distribution
+                </CardTitle>
+                <CardDescription>
+                  Current attendance status breakdown
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RechartsPieChart>
+                    <Pie
+                      data={[
+                        { name: 'On Time', value: attendanceData.today.onTime, fill: '#22c55e' },
+                        { name: 'Late', value: attendanceData.today.late, fill: '#f59e0b' },
+                        { name: 'Absent', value: attendanceData.today.absent, fill: '#ef4444' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {[
+                        { name: 'On Time', value: attendanceData.today.onTime, fill: '#22c55e' },
+                        { name: 'Late', value: attendanceData.today.late, fill: '#f59e0b' },
+                        { name: 'Absent', value: attendanceData.today.absent, fill: '#ef4444' }
+                      ].map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </RechartsPieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Employee Attendance Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {user.role === 'super_admin' ? 'All Staff Attendance' : 'User Attendance'} Details
+              </CardTitle>
+              <CardDescription>
+                Individual attendance records and performance this month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 font-medium">Employee</th>
+                      <th className="text-left p-2 font-medium">Role</th>
+                      <th className="text-left p-2 font-medium">Status</th>
+                      <th className="text-left p-2 font-medium">Attendance Rate</th>
+                      <th className="text-left p-2 font-medium">Days Present</th>
+                      <th className="text-left p-2 font-medium">Days Absent</th>
+                      <th className="text-left p-2 font-medium">Late Count</th>
+                      <th className="text-left p-2 font-medium">Last Login</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employeeAttendance
+                      .filter(emp =>
+                        user.role === 'super_admin' ||
+                        (user.role === 'project_manager' && emp.role === 'user')
+                      )
+                      .map((employee, index) => (
+                      <tr key={index} className="border-b hover:bg-muted/50">
+                        <td className="p-2">
+                          <div className="font-medium">{employee.name}</div>
+                        </td>
+                        <td className="p-2">
+                          <Badge variant="outline" className="capitalize">
+                            {employee.role.replace('_', ' ')}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          <Badge
+                            className={
+                              employee.status === 'Present' ? 'bg-green-100 text-green-800' :
+                              employee.status === 'Late' ? 'bg-orange-100 text-orange-800' :
+                              'bg-red-100 text-red-800'
+                            }
+                          >
+                            {employee.status}
+                          </Badge>
+                        </td>
+                        <td className="p-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-medium ${
+                              employee.attendanceRate >= 95 ? 'text-green-600' :
+                              employee.attendanceRate >= 85 ? 'text-orange-600' :
+                              'text-red-600'
+                            }`}>
+                              {employee.attendanceRate}%
+                            </span>
+                            <div className="w-16">
+                              <Progress value={employee.attendanceRate} className="h-1" />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-2 text-green-600 font-medium">{employee.daysPresent}</td>
+                        <td className="p-2 text-red-600 font-medium">{employee.daysAbsent}</td>
+                        <td className="p-2 text-orange-600 font-medium">{employee.lateCount}</td>
+                        <td className="p-2 text-sm text-muted-foreground">
+                          {new Date(employee.lastLogin).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Project Details */}
       <Card>
         <CardHeader>
