@@ -69,7 +69,7 @@ const navigationItems: NavItem[] = [
     label: 'Projects',
     path: '/projects',
     icon: FolderOpen,
-    roles: ['super_admin', 'project_manager']
+    roles: ['super_admin']
   },
   {
     label: 'File Process',
@@ -82,12 +82,6 @@ const navigationItems: NavItem[] = [
     path: '/request-files',
     icon: Upload,
     roles: ['user']
-  },
-  {
-    label: 'Daily Counts',
-    path: '/daily-counts',
-    icon: Target,
-    roles: ['super_admin', 'project_manager', 'user']
   },
   {
     label: 'Billing',
