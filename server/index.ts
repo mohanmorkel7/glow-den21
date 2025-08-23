@@ -62,10 +62,13 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
 
   // ===== AUTHENTICATION ROUTES =====
+  // Temporarily comment out to test
+  /*
   app.post("/api/auth/login", login);
   app.post("/api/auth/refresh", refresh);
   app.post("/api/auth/logout", logout);
   app.post("/api/auth/reset-password", resetPassword);
+  */
 
   // ===== CUSTOM ROUTES TEMPORARILY DISABLED FOR DEBUGGING =====
   // Let's test with just the basic routes to isolate the issue
