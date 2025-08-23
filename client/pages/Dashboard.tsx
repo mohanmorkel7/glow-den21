@@ -529,35 +529,204 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* User Daily Count for Users - Only File Count, No Earnings */}
+      {/* User Performance Dashboard - Daily, Weekly, Monthly */}
       {user.role === 'user' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Timer className="h-5 w-5" />
-              Your Daily File Count
-            </CardTitle>
-            <CardDescription>
-              Track your daily file processing progress
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 border rounded-lg">
-                  <h4 className="font-medium text-muted-foreground">Target</h4>
-                  <p className="text-2xl font-bold text-primary">20,000</p>
-                  <p className="text-xs text-muted-foreground">files</p>
+        <div className="space-y-6">
+          {/* Performance Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Daily Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-600">
+                  <Timer className="h-5 w-5" />
+                  Daily Performance
+                </CardTitle>
+                <CardDescription>Today's file processing</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Target</span>
+                    <span className="font-medium">20,000 files</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Completed</span>
+                    <span className="font-bold text-green-600">18,500 files</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Remaining</span>
+                    <span className="font-medium text-orange-600">1,500 files</span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Progress</span>
+                      <span className="text-blue-600">92.5%</span>
+                    </div>
+                    <Progress value={92.5} className="h-2" />
+                  </div>
                 </div>
-                <div className="text-center p-4 border rounded-lg">
-                  <h4 className="font-medium text-muted-foreground">Completed</h4>
-                  <p className="text-2xl font-bold text-green-600">18,500</p>
-                  <p className="text-xs text-muted-foreground">files</p>
+              </CardContent>
+            </Card>
+
+            {/* Weekly Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-600">
+                  <Calendar className="h-5 w-5" />
+                  Weekly Performance
+                </CardTitle>
+                <CardDescription>This week's progress</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Target</span>
+                    <span className="font-medium">140,000 files</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Completed</span>
+                    <span className="font-bold text-green-600">128,500 files</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Avg/Day</span>
+                    <span className="font-medium text-blue-600">18,357 files</span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Progress</span>
+                      <span className="text-purple-600">91.8%</span>
+                    </div>
+                    <Progress value={91.8} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Monthly Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-emerald-600">
+                  <BarChart3 className="h-5 w-5" />
+                  Monthly Performance
+                </CardTitle>
+                <CardDescription>January 2024 summary</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Target</span>
+                    <span className="font-medium">600,000 files</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Completed</span>
+                    <span className="font-bold text-green-600">545,250 files</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Avg/Day</span>
+                    <span className="font-medium text-blue-600">17,588 files</span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Progress</span>
+                      <span className="text-emerald-600">90.9%</span>
+                    </div>
+                    <Progress value={90.9} className="h-2" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Weekly Performance Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Your 7-Day Performance Trend
+              </CardTitle>
+              <CardDescription>
+                Daily file processing over the last 7 days
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={[
+                  { day: 'Mon', completed: 19200, target: 20000 },
+                  { day: 'Tue', completed: 18800, target: 20000 },
+                  { day: 'Wed', completed: 19500, target: 20000 },
+                  { day: 'Thu', completed: 17900, target: 20000 },
+                  { day: 'Fri', completed: 19100, target: 20000 },
+                  { day: 'Sat', completed: 18500, target: 20000 },
+                  { day: 'Sun', completed: 18500, target: 20000 }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="day" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value, name) => [
+                      value.toLocaleString() + ' files',
+                      name === 'completed' ? 'Completed' : 'Target'
+                    ]}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="target"
+                    stroke="#94a3b8"
+                    fill="#e2e8f0"
+                    fillOpacity={0.3}
+                    name="Target"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="completed"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.6}
+                    name="Completed"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Monthly Summary Grid */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Monthly Summary & Goals
+              </CardTitle>
+              <CardDescription>
+                Track your performance metrics and achievements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">31</div>
+                  <div className="text-sm text-blue-700">Working Days</div>
+                  <div className="text-xs text-muted-foreground">This month</div>
+                </div>
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">28</div>
+                  <div className="text-sm text-green-700">Days Achieved</div>
+                  <div className="text-xs text-muted-foreground">Target met</div>
+                </div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">95.2%</div>
+                  <div className="text-sm text-purple-700">Efficiency</div>
+                  <div className="text-xs text-muted-foreground">Average</div>
+                </div>
+                <div className="text-center p-4 bg-orange-50 rounded-lg">
+                  <div className="text-2xl font-bold text-orange-600">B+</div>
+                  <div className="text-sm text-orange-700">Grade</div>
+                  <div className="text-xs text-muted-foreground">Performance</div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Alerts Section */}
