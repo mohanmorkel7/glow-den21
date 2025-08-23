@@ -605,7 +605,15 @@ export default function FileProcess() {
         </Dialog>
       </div>
 
-      {/* Stats Cards */}
+      {/* Tabs for Active Processes and File History */}
+      <Tabs defaultValue="active" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="active">Active Processes</TabsTrigger>
+          <TabsTrigger value="history">File History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="active" className="space-y-6 mt-6">
+          {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -1009,6 +1017,200 @@ export default function FileProcess() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6 mt-6">
+          {/* Historical Process Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-500" />
+                Completed File Processes
+              </CardTitle>
+              <CardDescription>
+                Historical overview of completed file processing workflows
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockHistoricalProcesses.map((process) => (
+                  <Card key={process.id} className="border-l-4 border-l-green-500">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium">{process.name}</h4>
+                          <p className="text-sm text-muted-foreground">{process.projectName}</p>
+                          <p className="text-xs text-muted-foreground">Created by: {process.createdBy}</p>
+                        </div>
+                        <Badge className="bg-green-100 text-green-800">
+                          COMPLETED
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                        <div className="text-center p-2 bg-blue-50 rounded">
+                          <div className="text-lg font-bold text-blue-600">
+                            {process.totalRows.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-blue-700">Total Rows</div>
+                        </div>
+                        <div className="text-center p-2 bg-green-50 rounded">
+                          <div className="text-lg font-bold text-green-600">
+                            {process.totalUsers}
+                          </div>
+                          <div className="text-xs text-green-700">Users</div>
+                        </div>
+                        <div className="text-center p-2 bg-purple-50 rounded">
+                          <div className="text-lg font-bold text-purple-600">
+                            {process.duration}
+                          </div>
+                          <div className="text-xs text-purple-700">Duration</div>
+                        </div>
+                        <div className="text-center p-2 bg-orange-50 rounded">
+                          <div className="text-lg font-bold text-orange-600">
+                            {process.avgProcessingRate}
+                          </div>
+                          <div className="text-xs text-orange-700">Avg/Day</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>Started: {new Date(process.createdDate).toLocaleDateString()}</span>
+                        <span>Completed: {new Date(process.completedDate).toLocaleDateString()}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Historical Assignments */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-500" />
+                User Assignment History
+              </CardTitle>
+              <CardDescription>
+                Detailed history of file assignments and user performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Process</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Assigned</TableHead>
+                    <TableHead>Completed</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Efficiency</TableHead>
+                    <TableHead>Completion Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockHistoricalAssignments.map((assignment) => (
+                    <TableRow key={assignment.id}>
+                      <TableCell>
+                        <div className="font-medium">{assignment.processName}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{assignment.userName}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-blue-600 font-medium">
+                          {assignment.assignedCount.toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-green-600 font-medium">
+                          {assignment.completedCount.toLocaleString()}
+                        </div>
+                        {assignment.completedCount < assignment.assignedCount && (
+                          <div className="text-xs text-red-500">
+                            ({assignment.assignedCount - assignment.completedCount} incomplete)
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{assignment.processingTime}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className={`font-medium ${
+                            assignment.efficiency >= 95 ? 'text-green-600' :
+                            assignment.efficiency >= 85 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }`}>
+                            {assignment.efficiency}%
+                          </div>
+                          {assignment.efficiency >= 95 && (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {new Date(assignment.completedDate).toLocaleDateString()}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(assignment.completedDate).toLocaleTimeString()}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Performance Analytics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Total Processes Completed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {mockHistoricalProcesses.length}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  All-time completed workflows
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Total Rows Processed</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {mockHistoricalProcesses.reduce((sum, p) => sum + p.processedRows, 0).toLocaleString()}
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Historical data processing volume
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Average Efficiency</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">
+                  {(mockHistoricalAssignments.reduce((sum, a) => sum + a.efficiency, 0) / mockHistoricalAssignments.length).toFixed(1)}%
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Team performance average
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
