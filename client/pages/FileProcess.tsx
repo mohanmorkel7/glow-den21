@@ -483,7 +483,7 @@ export default function FileProcess() {
     const automationProcesses = fileProcesses.filter(p => p.type === 'automation');
     const totalAutomationRows = automationProcesses.reduce((sum, p) => sum + p.totalRows, 0);
     const totalAutomationProcessed = automationProcesses.reduce((sum, p) => sum + p.processedRows, 0);
-    const activeAutomationProcesses = automationProcesses.filter(p => p.status === 'active').length;
+    const activeAutomationProcesses = automationProcesses.filter(p => p.status === 'active' || p.status === 'in_progress').length;
 
     return {
       totalProcesses: automationProcesses.length,
@@ -854,7 +854,7 @@ export default function FileProcess() {
                           ? `✅ Auto-detected: ${newProcess.totalRows.toLocaleString()} rows. You can modify this count if needed.`
                           : newProcess.fileName?.toLowerCase().endsWith('.xlsx') || newProcess.fileName?.toLowerCase().endsWith('.xls')
                             ? '📊 Excel files require manual row count entry. Please enter the total number of data rows.'
-                            : '⚠����� Could not auto-detect row count. Please enter the total number of data rows manually.'
+                            : '⚠��� Could not auto-detect row count. Please enter the total number of data rows manually.'
                         }
                       </p>
                     </div>
