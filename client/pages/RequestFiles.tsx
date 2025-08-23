@@ -132,6 +132,16 @@ export default function RequestFiles() {
   };
 
   const handleFileRequest = () => {
+    // Check if user has any pending or in-progress requests
+    const hasActiveRequests = getCurrentUserRequests().some(req =>
+      req.status === 'pending' || req.status === 'in_progress'
+    );
+
+    if (hasActiveRequests) {
+      alert('You cannot request new files while you have pending or in-progress requests. Please complete your current work first.');
+      return;
+    }
+
     const newRequest: FileRequest = {
       id: (fileRequests.length + 1).toString(),
       userId: currentUser.id,
@@ -140,7 +150,7 @@ export default function RequestFiles() {
       requestedDate: new Date().toISOString(),
       status: 'pending'
     };
-    
+
     setFileRequests([newRequest, ...fileRequests]);
     setIsRequestDialogOpen(false);
     setRequestCount(500);
@@ -259,7 +269,11 @@ export default function RequestFiles() {
         </div>
         <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button
+              disabled={getCurrentUserRequests().some(req =>
+                req.status === 'pending' || req.status === 'in_progress'
+              )}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Request Files
             </Button>
@@ -308,7 +322,12 @@ export default function RequestFiles() {
               <Button variant="outline" onClick={() => setIsRequestDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleFileRequest}>
+              <Button
+                onClick={handleFileRequest}
+                disabled={getCurrentUserRequests().some(req =>
+                  req.status === 'pending' || req.status === 'in_progress'
+                )}
+              >
                 Submit Request
               </Button>
             </DialogFooter>
@@ -397,7 +416,13 @@ export default function RequestFiles() {
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-muted-foreground">No active requests</h3>
                   <p className="text-sm text-muted-foreground">Request files to get started with your daily processing.</p>
-                  <Button className="mt-4" onClick={() => setIsRequestDialogOpen(true)}>
+                  <Button
+                    className="mt-4"
+                    onClick={() => setIsRequestDialogOpen(true)}
+                    disabled={getCurrentUserRequests().some(req =>
+                      req.status === 'pending' || req.status === 'in_progress'
+                    )}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Request Files
                   </Button>
@@ -442,6 +467,17 @@ export default function RequestFiles() {
                               >
                                 <Download className="h-4 w-4 mr-2" />
                                 Download & Start
+                              </Button>
+                            )}
+                            {request.status === 'in_progress' && request.downloadLink && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownload(request.id)}
+                                className="mr-2"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                {request.downloadLink.split('/').pop() || 'Download File'}
                               </Button>
                             )}
                             {(request.status === 'in_progress' || request.status === 'completed') && (
