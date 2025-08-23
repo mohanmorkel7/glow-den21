@@ -1100,7 +1100,7 @@ export default function FileProcess() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {fileProcesses.filter(p => p.status === 'active' && p.availableRows > 0).map(proc => (
+                              {fileProcesses.filter(p => (p.status === 'active' || p.status === 'in_progress') && p.availableRows > 0).map(proc => (
                                 <SelectItem key={proc.id} value={proc.id}>
                                   {proc.name} ({proc.availableRows.toLocaleString()} available)
                                 </SelectItem>
