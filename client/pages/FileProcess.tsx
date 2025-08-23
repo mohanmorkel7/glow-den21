@@ -402,21 +402,36 @@ export default function FileProcess() {
 
     const updatedProcesses = fileProcesses.map(p => {
       if (p.id === selectedAutomationProcess.id && p.type === 'automation' && p.automationConfig) {
-        const newProcessedRows = p.processedRows + dailyUpdate.completed;
+        // Check if there's already an entry for this date
+        const existingEntryIndex = p.automationConfig.dailyCompletions.findIndex(d => d.date === dailyUpdate.date);
+        let updatedCompletions = [...p.automationConfig.dailyCompletions];
+        let processedRowsDiff = dailyUpdate.completed;
+
+        if (existingEntryIndex >= 0) {
+          // Update existing entry
+          const oldCompleted = updatedCompletions[existingEntryIndex].completed;
+          updatedCompletions[existingEntryIndex] = { date: dailyUpdate.date, completed: dailyUpdate.completed };
+          processedRowsDiff = dailyUpdate.completed - oldCompleted;
+        } else {
+          // Add new entry
+          updatedCompletions = [
+            ...updatedCompletions,
+            { date: dailyUpdate.date, completed: dailyUpdate.completed }
+          ].slice(-30); // Keep last 30 days
+        }
+
+        const newProcessedRows = p.processedRows + processedRowsDiff;
         const newAvailableRows = p.totalRows - newProcessedRows;
 
         return {
           ...p,
-          processedRows: newProcessedRows,
+          processedRows: Math.max(0, newProcessedRows),
           availableRows: Math.max(0, newAvailableRows),
           status: newAvailableRows <= 0 ? 'completed' as const : p.status,
           automationConfig: {
             ...p.automationConfig,
             lastUpdate: new Date().toISOString(),
-            dailyCompletions: [
-              ...p.automationConfig.dailyCompletions,
-              { date: dailyUpdate.date, completed: dailyUpdate.completed }
-            ].slice(-30) // Keep last 30 days
+            dailyCompletions: updatedCompletions
           }
         };
       }
