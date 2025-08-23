@@ -529,12 +529,12 @@ export default function Salary() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">PM Fixed Salaries</CardTitle>
+            <CardTitle className="text-sm font-medium">PM Individual Salaries</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{formatCurrency(totalPMSalaries)}</div>
-            <p className="text-xs text-muted-foreground">Fixed monthly amounts</p>
+            <p className="text-xs text-muted-foreground">Individual monthly amounts</p>
           </CardContent>
         </Card>
 
@@ -682,10 +682,10 @@ export default function Salary() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Project Manager Fixed Salaries
+                Project Manager Individual Salaries
               </CardTitle>
               <CardDescription>
-                Monthly fixed salary amounts for project managers
+                Individual monthly salary amounts for each project manager
               </CardDescription>
             </CardHeader>
             <CardContent>
