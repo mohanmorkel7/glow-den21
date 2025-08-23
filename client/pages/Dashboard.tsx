@@ -691,11 +691,10 @@ export default function Dashboard() {
                     <tr className="border-b">
                       <th className="text-left p-2 font-medium">Employee</th>
                       <th className="text-left p-2 font-medium">Role</th>
-                      <th className="text-left p-2 font-medium">Status</th>
+                      <th className="text-left p-2 font-medium">Login Status</th>
                       <th className="text-left p-2 font-medium">Attendance Rate</th>
                       <th className="text-left p-2 font-medium">Days Present</th>
                       <th className="text-left p-2 font-medium">Days Absent</th>
-                      <th className="text-left p-2 font-medium">Late Count</th>
                       <th className="text-left p-2 font-medium">Last Login</th>
                     </tr>
                   </thead>
@@ -719,11 +718,10 @@ export default function Dashboard() {
                           <Badge
                             className={
                               employee.status === 'Present' ? 'bg-green-100 text-green-800' :
-                              employee.status === 'Late' ? 'bg-orange-100 text-orange-800' :
                               'bg-red-100 text-red-800'
                             }
                           >
-                            {employee.status}
+                            {employee.status === 'Present' ? 'Logged In' : 'Not Logged In'}
                           </Badge>
                         </td>
                         <td className="p-2">
@@ -742,7 +740,6 @@ export default function Dashboard() {
                         </td>
                         <td className="p-2 text-green-600 font-medium">{employee.daysPresent}</td>
                         <td className="p-2 text-red-600 font-medium">{employee.daysAbsent}</td>
-                        <td className="p-2 text-orange-600 font-medium">{employee.lateCount}</td>
                         <td className="p-2 text-sm text-muted-foreground">
                           {new Date(employee.lastLogin).toLocaleString()}
                         </td>
