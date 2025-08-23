@@ -1259,32 +1259,119 @@ export default function FileProcess() {
 
               {/* Automation Daily Progress */}
               {selectedProcess.type === 'automation' && selectedProcess.automationConfig?.dailyCompletions && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-purple-500" />
-                      Daily Automation Progress
-                    </CardTitle>
-                    <CardDescription>
-                      Recent daily completions by {selectedProcess.automationConfig.toolName}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {selectedProcess.automationConfig.dailyCompletions.slice(-5).map((day, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 bg-purple-50 rounded">
-                          <span className="text-sm font-medium">{new Date(day.date).toLocaleDateString()}</span>
+                <>
+                  {/* Today's Status and Quick Update */}
+                  {(currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && (
+                    <Card className="border-l-4 border-l-purple-500">
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-purple-600">{day.completed.toLocaleString()} items</span>
-                            <Badge variant={day.completed >= (selectedProcess.dailyTarget || 0) ? 'default' : 'secondary'}>
-                              {day.completed >= (selectedProcess.dailyTarget || 0) ? 'Target Met' : 'Below Target'}
-                            </Badge>
+                            <Clock className="h-4 w-4 text-purple-500" />
+                            Today's Progress
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handleDailyAutomationUpdate(selectedProcess.id)}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Settings className="h-4 w-4 mr-2" />
+                            Update Today
+                          </Button>
+                        </CardTitle>
+                        <CardDescription>
+                          Manage today's completion count for {selectedProcess.automationConfig.toolName}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-3 bg-green-50 rounded-lg">
+                            <div className="text-lg font-bold text-green-600">
+                              {(() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                const todayCompletion = selectedProcess.automationConfig?.dailyCompletions.find(d => d.date === today);
+                                return todayCompletion ? todayCompletion.completed.toLocaleString() : '0';
+                              })()}
+                            </div>
+                            <div className="text-xs text-green-700">Completed Today</div>
+                          </div>
+                          <div className="p-3 bg-purple-50 rounded-lg">
+                            <div className="text-lg font-bold text-purple-600">
+                              {selectedProcess.dailyTarget?.toLocaleString() || '0'}
+                            </div>
+                            <div className="text-xs text-purple-700">Daily Target</div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        <div className="mt-3">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Today's Progress</span>
+                            <span>
+                              {(() => {
+                                const today = new Date().toISOString().split('T')[0];
+                                const todayCompletion = selectedProcess.automationConfig?.dailyCompletions.find(d => d.date === today);
+                                const completed = todayCompletion ? todayCompletion.completed : 0;
+                                const target = selectedProcess.dailyTarget || 1;
+                                return ((completed / target) * 100).toFixed(1);
+                              })()}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={(() => {
+                              const today = new Date().toISOString().split('T')[0];
+                              const todayCompletion = selectedProcess.automationConfig?.dailyCompletions.find(d => d.date === today);
+                              const completed = todayCompletion ? todayCompletion.completed : 0;
+                              const target = selectedProcess.dailyTarget || 1;
+                              return Math.min((completed / target) * 100, 100);
+                            })()}
+                            className="h-2"
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-purple-500" />
+                        Daily Automation Progress
+                      </CardTitle>
+                      <CardDescription>
+                        Recent daily completions by {selectedProcess.automationConfig.toolName}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {selectedProcess.automationConfig.dailyCompletions.slice(-5).map((day, index) => {
+                          const isToday = day.date === new Date().toISOString().split('T')[0];
+                          return (
+                            <div key={index} className={`flex items-center justify-between p-2 rounded ${isToday ? 'bg-purple-100 border border-purple-300' : 'bg-purple-50'}`}>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{new Date(day.date).toLocaleDateString()}</span>
+                                {isToday && <Badge variant="outline" className="text-xs">Today</Badge>}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-purple-600">{day.completed.toLocaleString()} items</span>
+                                <Badge variant={day.completed >= (selectedProcess.dailyTarget || 0) ? 'default' : 'secondary'}>
+                                  {day.completed >= (selectedProcess.dailyTarget || 0) ? 'Target Met' : 'Below Target'}
+                                </Badge>
+                                {isToday && (currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager') && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDailyAutomationUpdate(selectedProcess.id)}
+                                    className="h-6 w-6 p-0 text-purple-600 hover:bg-purple-100"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
               )}
 
               {/* Progress Bar */}
