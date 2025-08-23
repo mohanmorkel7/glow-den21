@@ -68,23 +68,17 @@ export function createServer() {
   app.post("/api/auth/reset-password", resetPassword);
 
   // ===== USER MANAGEMENT ROUTES =====
-  // Re-enable routes one by one to identify the problematic route
+  // Test with individual routes without middleware mounting
 
-  // All user routes require authentication
-  app.use("/api/users", authenticateToken);
-
-  app.get("/api/users", requirePermission("user_read"), listUsers);
-  app.post("/api/users", requirePermission("user_create"), createUser);
+  app.get("/api/users", authenticateToken, requirePermission("user_read"), listUsers);
+  app.post("/api/users", authenticateToken, requirePermission("user_create"), createUser);
 
   // ===== DASHBOARD ROUTES =====
-  // All dashboard routes require authentication
-  app.use("/api/dashboard", authenticateToken);
-
-  app.get("/api/dashboard/summary", getDashboardSummary);
-  app.get("/api/dashboard/recent-projects", getRecentProjects);
-  app.get("/api/dashboard/recent-alerts", getRecentAlerts);
-  app.get("/api/dashboard/productivity-trend", getProductivityTrend);
-  app.get("/api/dashboard/user", getUserDashboard);
+  app.get("/api/dashboard/summary", authenticateToken, getDashboardSummary);
+  app.get("/api/dashboard/recent-projects", authenticateToken, getRecentProjects);
+  app.get("/api/dashboard/recent-alerts", authenticateToken, getRecentAlerts);
+  app.get("/api/dashboard/productivity-trend", authenticateToken, getProductivityTrend);
+  app.get("/api/dashboard/user", authenticateToken, getUserDashboard);
 
   // ===== PROJECT ROUTES =====
   // Placeholder for project routes - would include:
