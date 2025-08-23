@@ -945,10 +945,10 @@ export default function FileProcess() {
       </div>
 
       {/* Tabs for Active Processes and File History */}
-      <Tabs defaultValue="active" className="w-full">
+      <Tabs defaultValue="current" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="active">Active Processes</TabsTrigger>
-          <TabsTrigger value="history">File History</TabsTrigger>
+          <TabsTrigger value="current">Current Month Completed</TabsTrigger>
+          <TabsTrigger value="all-history">All History (Month-wise)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-6 mt-6">
