@@ -632,12 +632,12 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Employee Status Distribution */}
+            {/* Employee Login Status Distribution */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PieChart className="h-5 w-5" />
-                  Today's Status Distribution
+                  Today's Login Status
                 </CardTitle>
                 <CardDescription>
                   Current login status breakdown
