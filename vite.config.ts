@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist/spa",
   },
-  plugins: [react(), expressPlugin()],
+  plugins: [react()], // Temporarily disable expressPlugin to debug
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./client"),
