@@ -769,15 +769,15 @@ export default function RequestFiles() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Request Details */}
             {selectedRequestForUpload && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Request Details</h4>
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-1 text-sm">Request Details</h4>
                 {(() => {
                   const request = fileRequests.find(r => r.id === selectedRequestForUpload);
                   return request ? (
-                    <div className="text-sm text-blue-700 space-y-1">
+                    <div className="text-xs text-blue-700 space-y-0.5">
                       <p><strong>File Process:</strong> {request.fileProcessName || 'File Request'}</p>
                       <p><strong>File Count:</strong> {request.requestedCount.toLocaleString()}</p>
                       {request.startRow && request.endRow && (
@@ -790,8 +790,8 @@ export default function RequestFiles() {
             )}
 
             {/* File Upload */}
-            <div className="space-y-3">
-              <Label htmlFor="fileUpload" className="text-base font-medium">
+            <div className="space-y-2">
+              <Label htmlFor="fileUpload" className="text-sm font-medium">
                 Upload Completed Files (ZIP format only)
               </Label>
               <div
@@ -904,14 +904,14 @@ export default function RequestFiles() {
 
             {/* Upload Notes */}
             <div className="space-y-3">
-              <Label htmlFor="uploadNotes" className="text-base font-medium">
+              <Label htmlFor="uploadNotes" className="text-sm font-medium">
                 Notes (Optional)
               </Label>
               <textarea
                 id="uploadNotes"
                 className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                rows={3}
-                placeholder="Add notes about your work, issues, or additional info..."
+                rows={2}
+                placeholder="Add notes about your work..."
                 value={uploadNotes}
                 onChange={(e) => setUploadNotes(e.target.value)}
               />
