@@ -257,6 +257,7 @@ export default function RequestFiles() {
               size: uploadedFile.size,
               uploadDate: new Date().toISOString()
             },
+            notes: uploadNotes.trim() || undefined,
             verificationStatus: 'pending'
           }
         : request
@@ -266,6 +267,8 @@ export default function RequestFiles() {
     setIsUploadDialogOpen(false);
     setSelectedRequestForUpload(null);
     setUploadedFile(null);
+    setUploadNotes('');
+    setIsDragOver(false);
 
     // Clear file input
     const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
