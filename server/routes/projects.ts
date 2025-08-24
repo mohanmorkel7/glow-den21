@@ -1,13 +1,13 @@
 import { RequestHandler } from "express";
 import { query, paginatedQuery, transaction } from "../db/connection.js";
-import { 
-  Project, 
-  CreateProjectRequest, 
+import {
+  Project,
+  CreateProjectRequest,
   UpdateProjectRequest,
   ProjectListQuery,
   ApiResponse,
   PaginatedResponse,
-  AuthUser
+  AuthUser,
 } from "@shared/types";
 
 export const listProjects: RequestHandler = async (req, res) => {
@@ -20,7 +20,7 @@ export const listProjects: RequestHandler = async (req, res) => {
       status,
       assignedUser,
       page = 1,
-      limit = 20
+      limit = 20,
     } = queryParams;
 
     let whereConditions = [];
@@ -30,7 +30,9 @@ export const listProjects: RequestHandler = async (req, res) => {
     // Build WHERE conditions
     if (search) {
       paramCount++;
-      whereConditions.push(`(p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`);
+      whereConditions.push(
+        `(p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`,
+      );
       queryValues.push(`%${search}%`);
     }
 
@@ -42,18 +44,25 @@ export const listProjects: RequestHandler = async (req, res) => {
 
     if (assignedUser) {
       paramCount++;
-      whereConditions.push(`EXISTS (SELECT 1 FROM user_projects up WHERE up.project_id = p.id AND up.user_id = $${paramCount})`);
+      whereConditions.push(
+        `EXISTS (SELECT 1 FROM user_projects up WHERE up.project_id = p.id AND up.user_id = $${paramCount})`,
+      );
       queryValues.push(assignedUser);
     }
 
     // Filter by user assignments if not admin/PM
-    if (currentUser.role === 'user') {
+    if (currentUser.role === "user") {
       paramCount++;
-      whereConditions.push(`EXISTS (SELECT 1 FROM user_projects up WHERE up.project_id = p.id AND up.user_id = $${paramCount})`);
+      whereConditions.push(
+        `EXISTS (SELECT 1 FROM user_projects up WHERE up.project_id = p.id AND up.user_id = $${paramCount})`,
+      );
       queryValues.push(currentUser.id);
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")}`
+        : "";
 
     const baseQuery = `
       SELECT p.*, 
@@ -78,9 +87,15 @@ export const listProjects: RequestHandler = async (req, res) => {
       ${whereClause}
     `;
 
-    const result = await paginatedQuery(baseQuery, countQuery, queryValues, page, limit);
+    const result = await paginatedQuery(
+      baseQuery,
+      countQuery,
+      queryValues,
+      page,
+      limit,
+    );
 
-    const projects = result.data.map(project => ({
+    const projects = result.data.map((project) => ({
       id: project.id,
       name: project.name,
       description: project.description,
@@ -94,28 +109,27 @@ export const listProjects: RequestHandler = async (req, res) => {
       assignedUsersCount: parseInt(project.assigned_users_count),
       createdBy: {
         id: project.created_by_user_id,
-        name: project.created_by_name
+        name: project.created_by_name,
       },
       createdAt: project.created_at,
-      updatedAt: project.updated_at
+      updatedAt: project.updated_at,
     }));
 
     const response: PaginatedResponse<Project> = {
       data: projects,
-      pagination: result.pagination
+      pagination: result.pagination,
     };
 
     res.json({
-      data: response
+      data: response,
     } as ApiResponse<PaginatedResponse<Project>>);
-
   } catch (error) {
     console.error("List projects error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching projects"
-      }
+        message: "An error occurred while fetching projects",
+      },
     } as ApiResponse);
   }
 };
@@ -146,27 +160,27 @@ export const getProject: RequestHandler = async (req, res) => {
       return res.status(404).json({
         error: {
           code: "PROJECT_NOT_FOUND",
-          message: "Project not found"
-        }
+          message: "Project not found",
+        },
       } as ApiResponse);
     }
 
     const project = projectResult.rows[0];
 
     // Check if user has access to this project
-    if (currentUser.role === 'user') {
+    if (currentUser.role === "user") {
       const accessQuery = `
         SELECT 1 FROM user_projects 
         WHERE project_id = $1 AND user_id = $2
       `;
       const accessResult = await query(accessQuery, [id, currentUser.id]);
-      
+
       if (accessResult.rows.length === 0) {
         return res.status(403).json({
           error: {
             code: "AUTHORIZATION_FAILED",
-            message: "You don't have access to this project"
-          }
+            message: "You don't have access to this project",
+          },
         } as ApiResponse);
       }
     }
@@ -197,23 +211,22 @@ export const getProject: RequestHandler = async (req, res) => {
       assignedUsers: usersResult.rows,
       createdBy: {
         id: project.created_by_user_id,
-        name: project.created_by_name
+        name: project.created_by_name,
       },
       createdAt: project.created_at,
-      updatedAt: project.updated_at
+      updatedAt: project.updated_at,
     };
 
     res.json({
-      data: projectData
+      data: projectData,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Get project error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching project"
-      }
+        message: "An error occurred while fetching project",
+      },
     } as ApiResponse);
   }
 };
@@ -223,7 +236,16 @@ export const createProject: RequestHandler = async (req, res) => {
     const projectRequest: CreateProjectRequest = req.body;
     const currentUser: AuthUser = (req as any).user;
 
-    const { name, description, status = "planning", priority = "medium", startDate, endDate, targetCount = 0, assignedUsers = [] } = projectRequest;
+    const {
+      name,
+      description,
+      status = "planning",
+      priority = "medium",
+      startDate,
+      endDate,
+      targetCount = 0,
+      assignedUsers = [],
+    } = projectRequest;
 
     // Validate required fields
     if (!name) {
@@ -231,8 +253,8 @@ export const createProject: RequestHandler = async (req, res) => {
         error: {
           code: "VALIDATION_ERROR",
           message: "Project name is required",
-          details: [{ field: "name", message: "Name is required" }]
-        }
+          details: [{ field: "name", message: "Name is required" }],
+        },
       } as ApiResponse);
     }
 
@@ -241,8 +263,8 @@ export const createProject: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Start date cannot be after end date"
-        }
+          message: "Start date cannot be after end date",
+        },
       } as ApiResponse);
     }
 
@@ -255,7 +277,14 @@ export const createProject: RequestHandler = async (req, res) => {
       `;
 
       const projectResult = await client.query(insertQuery, [
-        name, description, status, priority, startDate, endDate, targetCount, currentUser.id
+        name,
+        description,
+        status,
+        priority,
+        startDate,
+        endDate,
+        targetCount,
+        currentUser.id,
       ]);
 
       const project = projectResult.rows[0];
@@ -268,7 +297,11 @@ export const createProject: RequestHandler = async (req, res) => {
         `;
 
         for (const userId of assignedUsers) {
-          await client.query(assignmentQuery, [userId, project.id, currentUser.id]);
+          await client.query(assignmentQuery, [
+            userId,
+            project.id,
+            currentUser.id,
+          ]);
         }
       }
 
@@ -289,23 +322,22 @@ export const createProject: RequestHandler = async (req, res) => {
       assignedUsersCount: assignedUsers.length,
       createdBy: {
         id: currentUser.id,
-        name: currentUser.name
+        name: currentUser.name,
       },
       createdAt: result.created_at,
-      updatedAt: result.updated_at
+      updatedAt: result.updated_at,
     };
 
     res.status(201).json({
-      data: responseProject
+      data: responseProject,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Create project error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while creating project"
-      }
+        message: "An error occurred while creating project",
+      },
     } as ApiResponse);
   }
 };
@@ -317,14 +349,16 @@ export const updateProject: RequestHandler = async (req, res) => {
     const currentUser: AuthUser = (req as any).user;
 
     // Check if project exists
-    const existingResult = await query('SELECT * FROM projects WHERE id = $1', [id]);
-    
+    const existingResult = await query("SELECT * FROM projects WHERE id = $1", [
+      id,
+    ]);
+
     if (existingResult.rows.length === 0) {
       return res.status(404).json({
         error: {
           code: "PROJECT_NOT_FOUND",
-          message: "Project not found"
-        }
+          message: "Project not found",
+        },
       } as ApiResponse);
     }
 
@@ -338,8 +372,8 @@ export const updateProject: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Start date cannot be after end date"
-        }
+          message: "Start date cannot be after end date",
+        },
       } as ApiResponse);
     }
 
@@ -349,11 +383,16 @@ export const updateProject: RequestHandler = async (req, res) => {
     let paramCount = 0;
 
     Object.entries(projectRequest).forEach(([key, value]) => {
-      if (value !== undefined && key !== 'assignedUsers') {
+      if (value !== undefined && key !== "assignedUsers") {
         paramCount++;
-        const dbField = key === 'startDate' ? 'start_date' : 
-                       key === 'endDate' ? 'end_date' :
-                       key === 'targetCount' ? 'target_count' : key;
+        const dbField =
+          key === "startDate"
+            ? "start_date"
+            : key === "endDate"
+              ? "end_date"
+              : key === "targetCount"
+                ? "target_count"
+                : key;
         updateFields.push(`${dbField} = $${paramCount}`);
         updateValues.push(value);
       }
@@ -363,8 +402,8 @@ export const updateProject: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "No valid fields to update"
-        }
+          message: "No valid fields to update",
+        },
       } as ApiResponse);
     }
 
@@ -379,7 +418,7 @@ export const updateProject: RequestHandler = async (req, res) => {
 
     const updateQuery = `
       UPDATE projects 
-      SET ${updateFields.join(', ')}
+      SET ${updateFields.join(", ")}
       WHERE id = $${paramCount}
       RETURNING *
     `;
@@ -391,8 +430,10 @@ export const updateProject: RequestHandler = async (req, res) => {
     if (projectRequest.assignedUsers) {
       await transaction(async (client) => {
         // Remove existing assignments
-        await client.query('DELETE FROM user_projects WHERE project_id = $1', [id]);
-        
+        await client.query("DELETE FROM user_projects WHERE project_id = $1", [
+          id,
+        ]);
+
         // Add new assignments
         if (projectRequest.assignedUsers.length > 0) {
           const assignmentQuery = `
@@ -440,23 +481,22 @@ export const updateProject: RequestHandler = async (req, res) => {
       assignedUsersCount: parseInt(project.assigned_users_count),
       createdBy: {
         id: project.created_by_user_id,
-        name: project.created_by_name
+        name: project.created_by_name,
       },
       createdAt: project.created_at,
-      updatedAt: project.updated_at
+      updatedAt: project.updated_at,
     };
 
     res.json({
-      data: responseProject
+      data: responseProject,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Update project error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while updating project"
-      }
+        message: "An error occurred while updating project",
+      },
     } as ApiResponse);
   }
 };
@@ -466,47 +506,54 @@ export const deleteProject: RequestHandler = async (req, res) => {
     const { id } = req.params;
 
     // Check if project exists
-    const existingResult = await query('SELECT id FROM projects WHERE id = $1', [id]);
-    
+    const existingResult = await query(
+      "SELECT id FROM projects WHERE id = $1",
+      [id],
+    );
+
     if (existingResult.rows.length === 0) {
       return res.status(404).json({
         error: {
           code: "PROJECT_NOT_FOUND",
-          message: "Project not found"
-        }
+          message: "Project not found",
+        },
       } as ApiResponse);
     }
 
     // Check if project has daily counts (prevent deletion)
-    const countsResult = await query('SELECT COUNT(*) as count FROM daily_counts WHERE project_id = $1', [id]);
+    const countsResult = await query(
+      "SELECT COUNT(*) as count FROM daily_counts WHERE project_id = $1",
+      [id],
+    );
     const countsCount = parseInt(countsResult.rows[0].count);
 
     if (countsCount > 0) {
       return res.status(400).json({
         error: {
           code: "PROJECT_HAS_DATA",
-          message: `Cannot delete project with existing daily counts (${countsCount} records)`
-        }
+          message: `Cannot delete project with existing daily counts (${countsCount} records)`,
+        },
       } as ApiResponse);
     }
 
     await transaction(async (client) => {
       // Delete user assignments first
-      await client.query('DELETE FROM user_projects WHERE project_id = $1', [id]);
-      
+      await client.query("DELETE FROM user_projects WHERE project_id = $1", [
+        id,
+      ]);
+
       // Delete project
-      await client.query('DELETE FROM projects WHERE id = $1', [id]);
+      await client.query("DELETE FROM projects WHERE id = $1", [id]);
     });
 
     res.status(204).send();
-
   } catch (error) {
     console.error("Delete project error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while deleting project"
-      }
+        message: "An error occurred while deleting project",
+      },
     } as ApiResponse);
   }
 };
@@ -521,33 +568,35 @@ export const assignUsers: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "User IDs array is required"
-        }
+          message: "User IDs array is required",
+        },
       } as ApiResponse);
     }
 
     // Check if project exists
-    const projectResult = await query('SELECT id FROM projects WHERE id = $1', [id]);
-    
+    const projectResult = await query("SELECT id FROM projects WHERE id = $1", [
+      id,
+    ]);
+
     if (projectResult.rows.length === 0) {
       return res.status(404).json({
         error: {
           code: "PROJECT_NOT_FOUND",
-          message: "Project not found"
-        }
+          message: "Project not found",
+        },
       } as ApiResponse);
     }
 
     // Verify all users exist
     const usersQuery = `SELECT id FROM users WHERE id = ANY($1) AND status = 'active'`;
     const usersResult = await query(usersQuery, [userIds]);
-    
+
     if (usersResult.rows.length !== userIds.length) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Some users not found or inactive"
-        }
+          message: "Some users not found or inactive",
+        },
       } as ApiResponse);
     }
 
@@ -567,16 +616,17 @@ export const assignUsers: RequestHandler = async (req, res) => {
     }
 
     res.json({
-      data: { message: `Successfully assigned ${userIds.length} users to project` }
+      data: {
+        message: `Successfully assigned ${userIds.length} users to project`,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error("Assign users error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while assigning users"
-      }
+        message: "An error occurred while assigning users",
+      },
     } as ApiResponse);
   }
 };
@@ -587,31 +637,33 @@ export const removeUser: RequestHandler = async (req, res) => {
 
     // Check if assignment exists
     const assignmentResult = await query(
-      'SELECT 1 FROM user_projects WHERE project_id = $1 AND user_id = $2',
-      [id, userId]
+      "SELECT 1 FROM user_projects WHERE project_id = $1 AND user_id = $2",
+      [id, userId],
     );
 
     if (assignmentResult.rows.length === 0) {
       return res.status(404).json({
         error: {
           code: "ASSIGNMENT_NOT_FOUND",
-          message: "User assignment not found"
-        }
+          message: "User assignment not found",
+        },
       } as ApiResponse);
     }
 
     // Remove assignment
-    await query('DELETE FROM user_projects WHERE project_id = $1 AND user_id = $2', [id, userId]);
+    await query(
+      "DELETE FROM user_projects WHERE project_id = $1 AND user_id = $2",
+      [id, userId],
+    );
 
     res.status(204).send();
-
   } catch (error) {
     console.error("Remove user error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while removing user"
-      }
+        message: "An error occurred while removing user",
+      },
     } as ApiResponse);
   }
 };
@@ -622,19 +674,19 @@ export const getProjectProgress: RequestHandler = async (req, res) => {
     const currentUser: AuthUser = (req as any).user;
 
     // Check project access
-    if (currentUser.role === 'user') {
+    if (currentUser.role === "user") {
       const accessQuery = `
         SELECT 1 FROM user_projects 
         WHERE project_id = $1 AND user_id = $2
       `;
       const accessResult = await query(accessQuery, [id, currentUser.id]);
-      
+
       if (accessResult.rows.length === 0) {
         return res.status(403).json({
           error: {
             code: "AUTHORIZATION_FAILED",
-            message: "You don't have access to this project"
-          }
+            message: "You don't have access to this project",
+          },
         } as ApiResponse);
       }
     }
@@ -674,13 +726,13 @@ export const getProjectProgress: RequestHandler = async (req, res) => {
     `;
 
     const statsResult = await query(statsQuery, [id]);
-    
+
     if (statsResult.rows.length === 0) {
       return res.status(404).json({
         error: {
           code: "PROJECT_NOT_FOUND",
-          message: "Project not found"
-        }
+          message: "Project not found",
+        },
       } as ApiResponse);
     }
 
@@ -690,31 +742,33 @@ export const getProjectProgress: RequestHandler = async (req, res) => {
       projectName: stats.name,
       targetCount: stats.target_count,
       currentCount: stats.current_count,
-      progressPercentage: stats.target_count > 0 ? (stats.current_count / stats.target_count * 100) : 0,
+      progressPercentage:
+        stats.target_count > 0
+          ? (stats.current_count / stats.target_count) * 100
+          : 0,
       assignedUsers: parseInt(stats.assigned_users),
       activeUsers: parseInt(stats.active_users),
       pendingSubmissions: parseInt(stats.pending_submissions),
       overallEfficiency: parseFloat(stats.overall_efficiency) || 0,
-      dailyProgress: progressResult.rows.map(row => ({
+      dailyProgress: progressResult.rows.map((row) => ({
         date: row.date,
         target: parseInt(row.daily_target),
         completed: parseInt(row.daily_completed),
         usersSubmitted: parseInt(row.users_submitted),
-        efficiency: parseFloat(row.avg_efficiency) || 0
-      }))
+        efficiency: parseFloat(row.avg_efficiency) || 0,
+      })),
     };
 
     res.json({
-      data: progressData
+      data: progressData,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Get project progress error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching project progress"
-      }
+        message: "An error occurred while fetching project progress",
+      },
     } as ApiResponse);
   }
 };

@@ -1,14 +1,14 @@
 import { RequestHandler } from "express";
 import { query, paginatedQuery, transaction } from "../db/connection.js";
-import { 
-  DailyCount, 
-  CreateDailyCountRequest, 
+import {
+  DailyCount,
+  CreateDailyCountRequest,
   UpdateDailyCountRequest,
   DailyCountListQuery,
   DailyCountStatistics,
   ApiResponse,
   PaginatedResponse,
-  AuthUser
+  AuthUser,
 } from "@shared/types";
 
 export const listDailyCounts: RequestHandler = async (req, res) => {
@@ -23,7 +23,7 @@ export const listDailyCounts: RequestHandler = async (req, res) => {
       to,
       status,
       page = 1,
-      limit = 20
+      limit = 20,
     } = queryParams;
 
     let whereConditions = [];
@@ -31,7 +31,7 @@ export const listDailyCounts: RequestHandler = async (req, res) => {
     let paramCount = 0;
 
     // Filter by user assignments for regular users
-    if (currentUser.role === 'user') {
+    if (currentUser.role === "user") {
       paramCount++;
       whereConditions.push(`dc.user_id = $${paramCount}`);
       queryValues.push(currentUser.id);
@@ -65,7 +65,10 @@ export const listDailyCounts: RequestHandler = async (req, res) => {
       queryValues.push(status);
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")}`
+        : "";
 
     const baseQuery = `
       SELECT dc.*, 
@@ -88,7 +91,13 @@ export const listDailyCounts: RequestHandler = async (req, res) => {
       ${whereClause}
     `;
 
-    const result = await paginatedQuery(baseQuery, countQuery, queryValues, page, limit);
+    const result = await paginatedQuery(
+      baseQuery,
+      countQuery,
+      queryValues,
+      page,
+      limit,
+    );
 
     // Get statistics
     const statsQuery = `
@@ -119,10 +128,10 @@ export const listDailyCounts: RequestHandler = async (req, res) => {
       rejectedCount: parseInt(stats.rejected_count),
       // Legacy compatibility
       totalTarget: parseInt(stats.total_target_files),
-      totalSubmitted: parseInt(stats.total_submitted_files)
+      totalSubmitted: parseInt(stats.total_submitted_files),
     };
 
-    const dailyCounts = result.data.map(dc => ({
+    const dailyCounts = result.data.map((dc) => ({
       id: dc.id,
       userId: dc.user_id,
       userName: dc.user_name,
@@ -134,33 +143,34 @@ export const listDailyCounts: RequestHandler = async (req, res) => {
       status: dc.status,
       notes: dc.notes,
       submittedAt: dc.submitted_at,
-      approvedBy: dc.approved_by_user_id ? {
-        id: dc.approved_by_user_id,
-        name: dc.approved_by_name
-      } : undefined,
+      approvedBy: dc.approved_by_user_id
+        ? {
+            id: dc.approved_by_user_id,
+            name: dc.approved_by_name,
+          }
+        : undefined,
       approvedAt: dc.approved_at,
       rejectionReason: dc.rejection_reason,
       createdAt: dc.created_at,
-      updatedAt: dc.updated_at
+      updatedAt: dc.updated_at,
     }));
 
     const response = {
       data: {
         dailyCounts,
         statistics,
-        pagination: result.pagination
-      }
+        pagination: result.pagination,
+      },
     };
 
     res.json(response as ApiResponse);
-
   } catch (error) {
     console.error("List daily counts error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching daily counts"
-      }
+        message: "An error occurred while fetching daily counts",
+      },
     } as ApiResponse);
   }
 };
@@ -188,20 +198,20 @@ export const getDailyCount: RequestHandler = async (req, res) => {
       return res.status(404).json({
         error: {
           code: "DAILY_COUNT_NOT_FOUND",
-          message: "Daily count not found"
-        }
+          message: "Daily count not found",
+        },
       } as ApiResponse);
     }
 
     const dc = countResult.rows[0];
 
     // Check access permissions
-    if (currentUser.role === 'user' && dc.user_id !== currentUser.id) {
+    if (currentUser.role === "user" && dc.user_id !== currentUser.id) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You can only view your own daily counts"
-        }
+          message: "You can only view your own daily counts",
+        },
       } as ApiResponse);
     }
 
@@ -217,27 +227,28 @@ export const getDailyCount: RequestHandler = async (req, res) => {
       status: dc.status,
       notes: dc.notes,
       submittedAt: dc.submitted_at,
-      approvedBy: dc.approved_by_user_id ? {
-        id: dc.approved_by_user_id,
-        name: dc.approved_by_name
-      } : undefined,
+      approvedBy: dc.approved_by_user_id
+        ? {
+            id: dc.approved_by_user_id,
+            name: dc.approved_by_name,
+          }
+        : undefined,
       approvedAt: dc.approved_at,
       rejectionReason: dc.rejection_reason,
       createdAt: dc.created_at,
-      updatedAt: dc.updated_at
+      updatedAt: dc.updated_at,
     };
 
     res.json({
-      data: dailyCount
+      data: dailyCount,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Get daily count error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching daily count"
-      }
+        message: "An error occurred while fetching daily count",
+      },
     } as ApiResponse);
   }
 };
@@ -256,11 +267,17 @@ export const createDailyCount: RequestHandler = async (req, res) => {
           code: "VALIDATION_ERROR",
           message: "Project ID, date, and submitted count are required",
           details: [
-            !projectId && { field: "projectId", message: "Project ID is required" },
+            !projectId && {
+              field: "projectId",
+              message: "Project ID is required",
+            },
             !date && { field: "date", message: "Date is required" },
-            submittedCount === undefined && { field: "submittedCount", message: "Submitted count is required" }
-          ].filter(Boolean)
-        }
+            submittedCount === undefined && {
+              field: "submittedCount",
+              message: "Submitted count is required",
+            },
+          ].filter(Boolean),
+        },
       } as ApiResponse);
     }
 
@@ -269,8 +286,8 @@ export const createDailyCount: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Submitted count cannot be negative"
-        }
+          message: "Submitted count cannot be negative",
+        },
       } as ApiResponse);
     }
 
@@ -279,14 +296,17 @@ export const createDailyCount: RequestHandler = async (req, res) => {
       SELECT 1 FROM user_projects 
       WHERE user_id = $1 AND project_id = $2
     `;
-    const assignmentResult = await query(assignmentQuery, [currentUser.id, projectId]);
+    const assignmentResult = await query(assignmentQuery, [
+      currentUser.id,
+      projectId,
+    ]);
 
     if (assignmentResult.rows.length === 0) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You are not assigned to this project"
-        }
+          message: "You are not assigned to this project",
+        },
       } as ApiResponse);
     }
 
@@ -295,14 +315,18 @@ export const createDailyCount: RequestHandler = async (req, res) => {
       SELECT id FROM daily_counts 
       WHERE user_id = $1 AND project_id = $2 AND date = $3
     `;
-    const existingResult = await query(existingQuery, [currentUser.id, projectId, date]);
+    const existingResult = await query(existingQuery, [
+      currentUser.id,
+      projectId,
+      date,
+    ]);
 
     if (existingResult.rows.length > 0) {
       return res.status(409).json({
         error: {
           code: "DAILY_COUNT_EXISTS",
-          message: "Daily count already exists for this date and project"
-        }
+          message: "Daily count already exists for this date and project",
+        },
       } as ApiResponse);
     }
 
@@ -317,7 +341,13 @@ export const createDailyCount: RequestHandler = async (req, res) => {
     `;
 
     const result = await query(insertQuery, [
-      currentUser.id, projectId, date, targetCount, submittedCount, 'submitted', notes
+      currentUser.id,
+      projectId,
+      date,
+      targetCount,
+      submittedCount,
+      "submitted",
+      notes,
     ]);
 
     const dailyCount = result.rows[0];
@@ -328,7 +358,10 @@ export const createDailyCount: RequestHandler = async (req, res) => {
       FROM users u, projects p
       WHERE u.id = $1 AND p.id = $2
     `;
-    const detailsResult = await query(detailsQuery, [currentUser.id, projectId]);
+    const detailsResult = await query(detailsQuery, [
+      currentUser.id,
+      projectId,
+    ]);
     const details = detailsResult.rows[0];
 
     const responseData = {
@@ -344,20 +377,19 @@ export const createDailyCount: RequestHandler = async (req, res) => {
       notes: dailyCount.notes,
       submittedAt: dailyCount.submitted_at,
       createdAt: dailyCount.created_at,
-      updatedAt: dailyCount.updated_at
+      updatedAt: dailyCount.updated_at,
     };
 
     res.status(201).json({
-      data: responseData
+      data: responseData,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Create daily count error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while creating daily count"
-      }
+        message: "An error occurred while creating daily count",
+      },
     } as ApiResponse);
   }
 };
@@ -379,40 +411,46 @@ export const updateDailyCount: RequestHandler = async (req, res) => {
       return res.status(404).json({
         error: {
           code: "DAILY_COUNT_NOT_FOUND",
-          message: "Daily count not found"
-        }
+          message: "Daily count not found",
+        },
       } as ApiResponse);
     }
 
     const existingCount = existingResult.rows[0];
 
     // Check permissions
-    if (currentUser.role === 'user' && existingCount.user_id !== currentUser.id) {
+    if (
+      currentUser.role === "user" &&
+      existingCount.user_id !== currentUser.id
+    ) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You can only update your own daily counts"
-        }
+          message: "You can only update your own daily counts",
+        },
       } as ApiResponse);
     }
 
     // Check if count is already approved (cannot be updated)
-    if (existingCount.status === 'approved') {
+    if (existingCount.status === "approved") {
       return res.status(400).json({
         error: {
           code: "DAILY_COUNT_APPROVED",
-          message: "Cannot update an approved daily count"
-        }
+          message: "Cannot update an approved daily count",
+        },
       } as ApiResponse);
     }
 
     // Validate submitted count if provided
-    if (countRequest.submittedCount !== undefined && countRequest.submittedCount < 0) {
+    if (
+      countRequest.submittedCount !== undefined &&
+      countRequest.submittedCount < 0
+    ) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Submitted count cannot be negative"
-        }
+          message: "Submitted count cannot be negative",
+        },
       } as ApiResponse);
     }
 
@@ -424,8 +462,12 @@ export const updateDailyCount: RequestHandler = async (req, res) => {
     Object.entries(countRequest).forEach(([key, value]) => {
       if (value !== undefined) {
         paramCount++;
-        const dbField = key === 'submittedCount' ? 'submitted_count' : 
-                       key === 'targetCount' ? 'target_count' : key;
+        const dbField =
+          key === "submittedCount"
+            ? "submitted_count"
+            : key === "targetCount"
+              ? "target_count"
+              : key;
         updateFields.push(`${dbField} = $${paramCount}`);
         updateValues.push(value);
       }
@@ -435,8 +477,8 @@ export const updateDailyCount: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "No valid fields to update"
-        }
+          message: "No valid fields to update",
+        },
       } as ApiResponse);
     }
 
@@ -451,7 +493,7 @@ export const updateDailyCount: RequestHandler = async (req, res) => {
 
     const updateQuery = `
       UPDATE daily_counts 
-      SET ${updateFields.join(', ')}
+      SET ${updateFields.join(", ")}
       WHERE id = $${paramCount}
       RETURNING *
     `;
@@ -465,7 +507,10 @@ export const updateDailyCount: RequestHandler = async (req, res) => {
       FROM users u, projects p
       WHERE u.id = $1 AND p.id = $2
     `;
-    const detailsResult = await query(detailsQuery, [updatedCount.user_id, updatedCount.project_id]);
+    const detailsResult = await query(detailsQuery, [
+      updatedCount.user_id,
+      updatedCount.project_id,
+    ]);
     const details = detailsResult.rows[0];
 
     const responseData = {
@@ -481,20 +526,19 @@ export const updateDailyCount: RequestHandler = async (req, res) => {
       notes: updatedCount.notes,
       submittedAt: updatedCount.submitted_at,
       createdAt: updatedCount.created_at,
-      updatedAt: updatedCount.updated_at
+      updatedAt: updatedCount.updated_at,
     };
 
     res.json({
-      data: responseData
+      data: responseData,
     } as ApiResponse);
-
   } catch (error) {
     console.error("Update daily count error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while updating daily count"
-      }
+        message: "An error occurred while updating daily count",
+      },
     } as ApiResponse);
   }
 };
@@ -519,20 +563,23 @@ export const approveDailyCount: RequestHandler = async (req, res) => {
       return res.status(404).json({
         error: {
           code: "DAILY_COUNT_NOT_FOUND",
-          message: "Daily count not found"
-        }
+          message: "Daily count not found",
+        },
       } as ApiResponse);
     }
 
     const existingCount = existingResult.rows[0];
 
     // Check if already processed
-    if (existingCount.status !== 'submitted' && existingCount.status !== 'pending') {
+    if (
+      existingCount.status !== "submitted" &&
+      existingCount.status !== "pending"
+    ) {
       return res.status(400).json({
         error: {
           code: "DAILY_COUNT_ALREADY_PROCESSED",
-          message: `Daily count is already ${existingCount.status}`
-        }
+          message: `Daily count is already ${existingCount.status}`,
+        },
       } as ApiResponse);
     }
 
@@ -565,25 +612,24 @@ export const approveDailyCount: RequestHandler = async (req, res) => {
       submittedAt: approvedCount.submitted_at,
       approvedBy: {
         id: currentUser.id,
-        name: currentUser.name
+        name: currentUser.name,
       },
       approvedAt: approvedCount.approved_at,
       createdAt: approvedCount.created_at,
-      updatedAt: approvedCount.updated_at
+      updatedAt: approvedCount.updated_at,
     };
 
     res.json({
       data: responseData,
-      message: "Daily count approved successfully"
+      message: "Daily count approved successfully",
     } as ApiResponse);
-
   } catch (error) {
     console.error("Approve daily count error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while approving daily count"
-      }
+        message: "An error occurred while approving daily count",
+      },
     } as ApiResponse);
   }
 };
@@ -598,8 +644,8 @@ export const rejectDailyCount: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Rejection reason is required"
-        }
+          message: "Rejection reason is required",
+        },
       } as ApiResponse);
     }
 
@@ -617,20 +663,23 @@ export const rejectDailyCount: RequestHandler = async (req, res) => {
       return res.status(404).json({
         error: {
           code: "DAILY_COUNT_NOT_FOUND",
-          message: "Daily count not found"
-        }
+          message: "Daily count not found",
+        },
       } as ApiResponse);
     }
 
     const existingCount = existingResult.rows[0];
 
     // Check if already processed
-    if (existingCount.status !== 'submitted' && existingCount.status !== 'pending') {
+    if (
+      existingCount.status !== "submitted" &&
+      existingCount.status !== "pending"
+    ) {
       return res.status(400).json({
         error: {
           code: "DAILY_COUNT_ALREADY_PROCESSED",
-          message: `Daily count is already ${existingCount.status}`
-        }
+          message: `Daily count is already ${existingCount.status}`,
+        },
       } as ApiResponse);
     }
 
@@ -663,26 +712,25 @@ export const rejectDailyCount: RequestHandler = async (req, res) => {
       submittedAt: rejectedCount.submitted_at,
       approvedBy: {
         id: currentUser.id,
-        name: currentUser.name
+        name: currentUser.name,
       },
       approvedAt: rejectedCount.approved_at,
       rejectionReason: rejectedCount.rejection_reason,
       createdAt: rejectedCount.created_at,
-      updatedAt: rejectedCount.updated_at
+      updatedAt: rejectedCount.updated_at,
     };
 
     res.json({
       data: responseData,
-      message: "Daily count rejected successfully"
+      message: "Daily count rejected successfully",
     } as ApiResponse);
-
   } catch (error) {
     console.error("Reject daily count error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while rejecting daily count"
-      }
+        message: "An error occurred while rejecting daily count",
+      },
     } as ApiResponse);
   }
 };
@@ -697,7 +745,7 @@ export const getDailyCountStatistics: RequestHandler = async (req, res) => {
     let paramCount = 0;
 
     // Filter by user assignments for regular users
-    if (currentUser.role === 'user') {
+    if (currentUser.role === "user") {
       paramCount++;
       whereConditions.push(`dc.user_id = $${paramCount}`);
       queryValues.push(currentUser.id);
@@ -725,7 +773,10 @@ export const getDailyCountStatistics: RequestHandler = async (req, res) => {
       queryValues.push(to);
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(" AND ")}`
+        : "";
 
     const statsQuery = `
       SELECT 
@@ -752,7 +803,8 @@ export const getDailyCountStatistics: RequestHandler = async (req, res) => {
       totalSubmittedFiles: parseInt(stats.total_submitted_files),
       totalCompletedFiles: parseInt(stats.total_completed_files),
       totalBalanceFiles: parseInt(stats.total_balance_files),
-      pendingCount: parseInt(stats.pending_count) + parseInt(stats.submitted_count),
+      pendingCount:
+        parseInt(stats.pending_count) + parseInt(stats.submitted_count),
       approvedCount: parseInt(stats.approved_count),
       rejectedCount: parseInt(stats.rejected_count),
       // Legacy compatibility
@@ -761,20 +813,19 @@ export const getDailyCountStatistics: RequestHandler = async (req, res) => {
       // Additional statistics
       uniqueUsers: parseInt(stats.unique_users),
       uniqueProjects: parseInt(stats.unique_projects),
-      averageEfficiency: parseFloat(stats.avg_efficiency) || 0
+      averageEfficiency: parseFloat(stats.avg_efficiency) || 0,
     };
 
     res.json({
-      data: statistics
+      data: statistics,
     } as ApiResponse<DailyCountStatistics>);
-
   } catch (error) {
     console.error("Get daily count statistics error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching statistics"
-      }
+        message: "An error occurred while fetching statistics",
+      },
     } as ApiResponse);
   }
 };

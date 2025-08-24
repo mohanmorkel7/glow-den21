@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   FileText,
   Plus,
@@ -21,9 +48,9 @@ import {
   RefreshCw,
   Upload,
   Eye,
-  X
-} from 'lucide-react';
-import { format } from 'date-fns';
+  X,
+} from "lucide-react";
+import { format } from "date-fns";
 
 interface FileRequest {
   id: string;
@@ -31,7 +58,14 @@ interface FileRequest {
   userName: string;
   requestedCount: number;
   requestedDate: string;
-  status: 'pending' | 'assigned' | 'received' | 'in_progress' | 'completed' | 'pending_verification' | 'verified';
+  status:
+    | "pending"
+    | "assigned"
+    | "received"
+    | "in_progress"
+    | "completed"
+    | "pending_verification"
+    | "verified";
   fileProcessId?: string;
   fileProcessName?: string;
   assignedBy?: string;
@@ -46,7 +80,7 @@ interface FileRequest {
     uploadDate: string;
   };
   notes?: string;
-  verificationStatus?: 'pending' | 'approved' | 'rejected';
+  verificationStatus?: "pending" | "approved" | "rejected";
   verifiedBy?: string;
   verifiedDate?: string;
   verificationNotes?: string;
@@ -60,103 +94,113 @@ interface DailyStats {
 
 const mockFileRequests: FileRequest[] = [
   {
-    id: '1',
-    userId: '3',
-    userName: 'Sarah Johnson',
+    id: "1",
+    userId: "3",
+    userName: "Sarah Johnson",
     requestedCount: 1000,
-    requestedDate: '2024-01-20T10:30:00Z',
-    status: 'assigned',
-    fileProcessId: 'fp_1',
-    fileProcessName: 'Aug-2025-File',
-    assignedBy: 'John Smith',
-    assignedDate: '2024-01-20T11:00:00Z',
-    downloadLink: '/downloads/sarah_johnson_aug_2025_1001_2000.csv',
+    requestedDate: "2024-01-20T10:30:00Z",
+    status: "assigned",
+    fileProcessId: "fp_1",
+    fileProcessName: "Aug-2025-File",
+    assignedBy: "John Smith",
+    assignedDate: "2024-01-20T11:00:00Z",
+    downloadLink: "/downloads/sarah_johnson_aug_2025_1001_2000.csv",
     startRow: 1001,
-    endRow: 2000
+    endRow: 2000,
   },
   {
-    id: '2',
-    userId: '3',
-    userName: 'Sarah Johnson',
+    id: "2",
+    userId: "3",
+    userName: "Sarah Johnson",
     requestedCount: 800,
-    requestedDate: '2024-01-19T14:20:00Z',
-    status: 'completed',
-    fileProcessId: 'fp_1',
-    fileProcessName: 'Aug-2025-File',
-    assignedBy: 'Emily Wilson',
-    assignedDate: '2024-01-19T15:00:00Z',
-    downloadLink: '/downloads/sarah_johnson_aug_2025_1_800.csv',
-    completedDate: '2024-01-19T18:30:00Z',
+    requestedDate: "2024-01-19T14:20:00Z",
+    status: "completed",
+    fileProcessId: "fp_1",
+    fileProcessName: "Aug-2025-File",
+    assignedBy: "Emily Wilson",
+    assignedDate: "2024-01-19T15:00:00Z",
+    downloadLink: "/downloads/sarah_johnson_aug_2025_1_800.csv",
+    completedDate: "2024-01-19T18:30:00Z",
     startRow: 1,
-    endRow: 800
+    endRow: 800,
   },
   {
-    id: '3',
-    userId: '3',
-    userName: 'Sarah Johnson',
+    id: "3",
+    userId: "3",
+    userName: "Sarah Johnson",
     requestedCount: 1200,
-    requestedDate: '2024-01-18T09:15:00Z',
-    status: 'in_progress',
-    fileProcessId: 'fp_1',
-    fileProcessName: 'Aug-2025-File',
-    assignedBy: 'John Smith',
-    assignedDate: '2024-01-18T10:00:00Z',
-    downloadLink: '/downloads/sarah_johnson_aug_2025_2001_3200.csv',
+    requestedDate: "2024-01-18T09:15:00Z",
+    status: "in_progress",
+    fileProcessId: "fp_1",
+    fileProcessName: "Aug-2025-File",
+    assignedBy: "John Smith",
+    assignedDate: "2024-01-18T10:00:00Z",
+    downloadLink: "/downloads/sarah_johnson_aug_2025_2001_3200.csv",
     startRow: 2001,
-    endRow: 3200
-  }
+    endRow: 3200,
+  },
 ];
 
 const mockDailyStats: DailyStats[] = [
-  { date: '2024-01-20', completedCount: 1000, totalAssigned: 1000 },
-  { date: '2024-01-19', completedCount: 800, totalAssigned: 800 },
-  { date: '2024-01-18', completedCount: 1200, totalAssigned: 1200 }
+  { date: "2024-01-20", completedCount: 1000, totalAssigned: 1000 },
+  { date: "2024-01-19", completedCount: 800, totalAssigned: 800 },
+  { date: "2024-01-18", completedCount: 1200, totalAssigned: 1200 },
 ];
 
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
-  const [fileRequests, setFileRequests] = useState<FileRequest[]>(mockFileRequests);
+  const [fileRequests, setFileRequests] =
+    useState<FileRequest[]>(mockFileRequests);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>(mockDailyStats);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [requestCount, setRequestCount] = useState(500);
-  const [activeTab, setActiveTab] = useState('current');
+  const [activeTab, setActiveTab] = useState("current");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [selectedRequestForUpload, setSelectedRequestForUpload] = useState<string | null>(null);
+  const [selectedRequestForUpload, setSelectedRequestForUpload] = useState<
+    string | null
+  >(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [uploadNotes, setUploadNotes] = useState<string>('');
+  const [uploadNotes, setUploadNotes] = useState<string>("");
   const [isDragOver, setIsDragOver] = useState(false);
 
   // Only allow users to access this page
-  if (currentUser?.role !== 'user') {
+  if (currentUser?.role !== "user") {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-red-600">Access Denied</h3>
-          <p className="text-sm text-muted-foreground">This page is only accessible to regular users.</p>
+          <p className="text-sm text-muted-foreground">
+            This page is only accessible to regular users.
+          </p>
         </div>
       </div>
     );
   }
 
   const getCurrentUserRequests = () => {
-    return fileRequests.filter(request => request.userId === currentUser.id);
+    return fileRequests.filter((request) => request.userId === currentUser.id);
   };
 
   const getTodayStats = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const todayStats = dailyStats.find(stat => stat.date === today);
+    const today = new Date().toISOString().split("T")[0];
+    const todayStats = dailyStats.find((stat) => stat.date === today);
     return todayStats || { date: today, completedCount: 0, totalAssigned: 0 };
   };
 
   const handleFileRequest = () => {
     // Check if user has any pending or in-progress requests
-    const hasActiveRequests = getCurrentUserRequests().some(req =>
-      req.status === 'pending' || req.status === 'in_progress' || req.status === 'pending_verification'
+    const hasActiveRequests = getCurrentUserRequests().some(
+      (req) =>
+        req.status === "pending" ||
+        req.status === "in_progress" ||
+        req.status === "pending_verification",
     );
 
     if (hasActiveRequests) {
-      alert('You cannot request new files while you have pending or in-progress requests. Please complete your current work first.');
+      alert(
+        "You cannot request new files while you have pending or in-progress requests. Please complete your current work first.",
+      );
       return;
     }
 
@@ -166,7 +210,7 @@ export default function RequestFiles() {
       userName: currentUser.name,
       requestedCount: requestCount,
       requestedDate: new Date().toISOString(),
-      status: 'pending'
+      status: "pending",
     };
 
     setFileRequests([newRequest, ...fileRequests]);
@@ -175,15 +219,25 @@ export default function RequestFiles() {
   };
 
   const handleDownload = (requestId: string) => {
-    const request = fileRequests.find(r => r.id === requestId);
+    const request = fileRequests.find((r) => r.id === requestId);
     if (!request || !request.downloadLink) return;
 
     // Generate and download the CSV file
-    const fileName = request.downloadLink.split('/').pop() || 'assigned_file.csv';
+    const fileName =
+      request.downloadLink.split("/").pop() || "assigned_file.csv";
 
     // Generate sample CSV content based on the assigned row range
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Address', 'City', 'Country', 'Status'];
-    let csvContent = headers.join(',') + '\n';
+    const headers = [
+      "ID",
+      "Name",
+      "Email",
+      "Phone",
+      "Address",
+      "City",
+      "Country",
+      "Status",
+    ];
+    let csvContent = headers.join(",") + "\n";
 
     // Generate rows with realistic data for the assigned range
     if (request.startRow && request.endRow) {
@@ -192,20 +246,20 @@ export default function RequestFiles() {
           i,
           `User ${i}`,
           `user${i}@example.com`,
-          `+1234567${String(i).padStart(4, '0')}`,
+          `+1234567${String(i).padStart(4, "0")}`,
           `${i} Main Street`,
           `City ${Math.floor(i / 100) + 1}`,
-          'USA',
-          i % 2 === 0 ? 'Active' : 'Pending'
+          "USA",
+          i % 2 === 0 ? "Active" : "Pending",
         ];
-        csvContent += row.join(',') + '\n';
+        csvContent += row.join(",") + "\n";
       }
     }
 
     // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = fileName;
     document.body.appendChild(link);
@@ -214,15 +268,20 @@ export default function RequestFiles() {
     URL.revokeObjectURL(url);
 
     // Update status to 'in_progress' after download
-    setFileRequests(fileRequests.map(req =>
-      req.id === requestId && req.status === 'assigned'
-        ? { ...req, status: 'in_progress' }
-        : req
-    ));
+    setFileRequests(
+      fileRequests.map((req) =>
+        req.id === requestId && req.status === "assigned"
+          ? { ...req, status: "in_progress" }
+          : req,
+      ),
+    );
   };
 
-  const handleStatusUpdate = (requestId: string, newStatus: 'in_progress' | 'completed') => {
-    if (newStatus === 'completed') {
+  const handleStatusUpdate = (
+    requestId: string,
+    newStatus: "in_progress" | "completed",
+  ) => {
+    if (newStatus === "completed") {
       // Open upload dialog instead of directly completing
       setSelectedRequestForUpload(requestId);
       setIsUploadDialogOpen(true);
@@ -230,72 +289,94 @@ export default function RequestFiles() {
     }
 
     // For other status changes, proceed normally
-    setFileRequests(fileRequests.map(request =>
-      request.id === requestId
-        ? { ...request, status: newStatus }
-        : request
-    ));
+    setFileRequests(
+      fileRequests.map((request) =>
+        request.id === requestId ? { ...request, status: newStatus } : request,
+      ),
+    );
   };
 
   const handleFileUpload = () => {
     if (!uploadedFile || !selectedRequestForUpload) return;
 
     // Validate file type
-    if (!uploadedFile.name.toLowerCase().endsWith('.zip')) {
-      alert('Please upload a ZIP file only.');
+    if (!uploadedFile.name.toLowerCase().endsWith(".zip")) {
+      alert("Please upload a ZIP file only.");
       return;
     }
 
     // Update request with uploaded file and set status to pending_verification
-    setFileRequests(fileRequests.map(request =>
-      request.id === selectedRequestForUpload
-        ? {
-            ...request,
-            status: 'pending_verification',
-            completedDate: new Date().toISOString(),
-            outputFile: {
-              name: uploadedFile.name,
-              size: uploadedFile.size,
-              uploadDate: new Date().toISOString()
-            },
-            notes: uploadNotes.trim() || undefined,
-            verificationStatus: 'pending'
-          }
-        : request
-    ));
+    setFileRequests(
+      fileRequests.map((request) =>
+        request.id === selectedRequestForUpload
+          ? {
+              ...request,
+              status: "pending_verification",
+              completedDate: new Date().toISOString(),
+              outputFile: {
+                name: uploadedFile.name,
+                size: uploadedFile.size,
+                uploadDate: new Date().toISOString(),
+              },
+              notes: uploadNotes.trim() || undefined,
+              verificationStatus: "pending",
+            }
+          : request,
+      ),
+    );
 
     // Reset upload state
     setIsUploadDialogOpen(false);
     setSelectedRequestForUpload(null);
     setUploadedFile(null);
-    setUploadNotes('');
+    setUploadNotes("");
     setIsDragOver(false);
 
     // Clear file input
-    const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+    const fileInput = document.getElementById("fileUpload") as HTMLInputElement;
     if (fileInput) {
-      fileInput.value = '';
+      fileInput.value = "";
     }
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'assigned': return 'bg-blue-100 text-blue-800';
-      case 'received': return 'bg-purple-100 text-purple-800';
-      case 'in_progress': return 'bg-orange-100 text-orange-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending_verification': return 'bg-cyan-100 text-cyan-800';
-      case 'verified': return 'bg-emerald-100 text-emerald-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "assigned":
+        return "bg-blue-100 text-blue-800";
+      case "received":
+        return "bg-purple-100 text-purple-800";
+      case "in_progress":
+        return "bg-orange-100 text-orange-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "pending_verification":
+        return "bg-cyan-100 text-cyan-800";
+      case "verified":
+        return "bg-emerald-100 text-emerald-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const currentRequests = getCurrentUserRequests();
-  const pendingRequests = currentRequests.filter(r => ['pending', 'assigned', 'in_progress', 'pending_verification'].includes(r.status));
-  const completedRequests = currentRequests.filter(r => ['completed', 'verified'].includes(r.status));
-  const allHistoryRequests = currentRequests.filter(r => ['completed', 'verified', 'in_progress', 'pending_verification'].includes(r.status));
-  const assignedRequests = currentRequests.filter(r => r.status === 'assigned');
+  const pendingRequests = currentRequests.filter((r) =>
+    ["pending", "assigned", "in_progress", "pending_verification"].includes(
+      r.status,
+    ),
+  );
+  const completedRequests = currentRequests.filter((r) =>
+    ["completed", "verified"].includes(r.status),
+  );
+  const allHistoryRequests = currentRequests.filter((r) =>
+    ["completed", "verified", "in_progress", "pending_verification"].includes(
+      r.status,
+    ),
+  );
+  const assignedRequests = currentRequests.filter(
+    (r) => r.status === "assigned",
+  );
   const todayStats = getTodayStats();
 
   return (
@@ -308,11 +389,17 @@ export default function RequestFiles() {
             Request file allocations and track your processing progress.
           </p>
         </div>
-        <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+        <Dialog
+          open={isRequestDialogOpen}
+          onOpenChange={setIsRequestDialogOpen}
+        >
           <DialogTrigger asChild>
             <Button
-              disabled={getCurrentUserRequests().some(req =>
-                req.status === 'pending' || req.status === 'in_progress' || req.status === 'pending_verification'
+              disabled={getCurrentUserRequests().some(
+                (req) =>
+                  req.status === "pending" ||
+                  req.status === "in_progress" ||
+                  req.status === "pending_verification",
               )}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -333,14 +420,18 @@ export default function RequestFiles() {
                   <div className="text-2xl font-bold text-green-600">
                     {todayStats.completedCount.toLocaleString()}
                   </div>
-                  <p className="text-xs text-muted-foreground">files processed today</p>
+                  <p className="text-xs text-muted-foreground">
+                    files processed today
+                  </p>
                 </div>
                 <div>
                   <Label>Pending Requests</Label>
                   <div className="text-2xl font-bold text-orange-600">
                     {pendingRequests.length}
                   </div>
-                  <p className="text-xs text-muted-foreground">awaiting processing</p>
+                  <p className="text-xs text-muted-foreground">
+                    awaiting processing
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -351,29 +442,40 @@ export default function RequestFiles() {
                   min="100"
                   max="2000"
                   value={requestCount}
-                  onChange={(e) => setRequestCount(parseInt(e.target.value) || 500)}
+                  onChange={(e) =>
+                    setRequestCount(parseInt(e.target.value) || 500)
+                  }
                   placeholder="500"
                 />
                 <p className="text-xs text-muted-foreground">
                   Recommended range: 500-1500 files per request
                 </p>
               </div>
-              {getCurrentUserRequests().some(req => req.status === 'pending' || req.status === 'in_progress') && (
+              {getCurrentUserRequests().some(
+                (req) =>
+                  req.status === "pending" || req.status === "in_progress",
+              ) && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-sm text-amber-700">
-                    ⚠️ You cannot request new files while you have pending or in-progress requests. Please complete your current work first.
+                    ⚠️ You cannot request new files while you have pending or
+                    in-progress requests. Please complete your current work
+                    first.
                   </p>
                 </div>
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsRequestDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsRequestDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 onClick={handleFileRequest}
-                disabled={getCurrentUserRequests().some(req =>
-                  req.status === 'pending' || req.status === 'in_progress'
+                disabled={getCurrentUserRequests().some(
+                  (req) =>
+                    req.status === "pending" || req.status === "in_progress",
                 )}
               >
                 Submit Request
@@ -396,12 +498,20 @@ export default function RequestFiles() {
                   🎉 New files are ready for download!
                 </h3>
                 <p className="text-sm text-green-700">
-                  You have {assignedRequests.length} file{assignedRequests.length > 1 ? 's' : ''} ready for download and processing.
+                  You have {assignedRequests.length} file
+                  {assignedRequests.length > 1 ? "s" : ""} ready for download
+                  and processing.
                 </p>
               </div>
               <div className="text-right">
                 <div className="text-lg font-bold text-green-600">
-                  {assignedRequests.reduce((sum, req) => sum + (req.assignedCount || req.requestedCount), 0).toLocaleString()}
+                  {assignedRequests
+                    .reduce(
+                      (sum, req) =>
+                        sum + (req.assignedCount || req.requestedCount),
+                      0,
+                    )
+                    .toLocaleString()}
                 </div>
                 <div className="text-xs text-green-700">files ready</div>
               </div>
@@ -424,11 +534,15 @@ export default function RequestFiles() {
               <div className="text-2xl font-bold text-green-600">
                 {todayStats.completedCount.toLocaleString()}
               </div>
-              <div className="text-sm text-green-700">Files Completed Today</div>
+              <div className="text-sm text-green-700">
+                Files Completed Today
+              </div>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {pendingRequests.reduce((sum, req) => sum + req.requestedCount, 0).toLocaleString()}
+                {pendingRequests
+                  .reduce((sum, req) => sum + req.requestedCount, 0)
+                  .toLocaleString()}
               </div>
               <div className="text-sm text-blue-700">Files In Queue</div>
             </div>
@@ -448,7 +562,7 @@ export default function RequestFiles() {
           <TabsTrigger value="current">Current Requests</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="current" className="space-y-6">
           {/* Active Requests */}
           <Card>
@@ -462,13 +576,19 @@ export default function RequestFiles() {
               {pendingRequests.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground">No active requests</h3>
-                  <p className="text-sm text-muted-foreground">Request files to get started with your daily processing.</p>
+                  <h3 className="text-lg font-medium text-muted-foreground">
+                    No active requests
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Request files to get started with your daily processing.
+                  </p>
                   <Button
                     className="mt-4"
                     onClick={() => setIsRequestDialogOpen(true)}
-                    disabled={getCurrentUserRequests().some(req =>
-                      req.status === 'pending' || req.status === 'in_progress'
+                    disabled={getCurrentUserRequests().some(
+                      (req) =>
+                        req.status === "pending" ||
+                        req.status === "in_progress",
                     )}
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -478,60 +598,81 @@ export default function RequestFiles() {
               ) : (
                 <div className="space-y-4">
                   {pendingRequests.map((request) => (
-                    <Card key={request.id} className="border-l-4 border-l-blue-500">
+                    <Card
+                      key={request.id}
+                      className="border-l-4 border-l-blue-500"
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <h4 className="font-medium">
-                              {request.fileProcessName || 'File Request'}
+                              {request.fileProcessName || "File Request"}
                             </h4>
                             <p className="text-sm text-muted-foreground">
-                              {request.requestedCount.toLocaleString()} files requested
-                              {request.assignedCount && request.assignedCount !== request.requestedCount && (
-                                <span className="text-blue-600 ml-2">
-                                  ({request.assignedCount.toLocaleString()} assigned)
-                                </span>
-                              )}
+                              {request.requestedCount.toLocaleString()} files
+                              requested
+                              {request.assignedCount &&
+                                request.assignedCount !==
+                                  request.requestedCount && (
+                                  <span className="text-blue-600 ml-2">
+                                    ({request.assignedCount.toLocaleString()}{" "}
+                                    assigned)
+                                  </span>
+                                )}
                             </p>
                             {request.startRow && request.endRow && (
                               <p className="text-xs text-muted-foreground">
-                                Data Range: {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
+                                Data Range: {request.startRow.toLocaleString()}{" "}
+                                - {request.endRow.toLocaleString()}
                               </p>
                             )}
                             {request.assignedBy && (
                               <p className="text-xs text-blue-600">
-                                ✓ Assigned by {request.assignedBy} on {new Date(request.assignedDate || '').toLocaleDateString()}
+                                ✓ Assigned by {request.assignedBy} on{" "}
+                                {new Date(
+                                  request.assignedDate || "",
+                                ).toLocaleDateString()}
                               </p>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge className={getStatusBadgeColor(request.status)}>
-                              {request.status.replace('_', ' ').toUpperCase()}
+                            <Badge
+                              className={getStatusBadgeColor(request.status)}
+                            >
+                              {request.status.replace("_", " ").toUpperCase()}
                             </Badge>
-                            {request.status === 'assigned' && request.downloadLink && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownload(request.id)}
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Download & Start
-                              </Button>
-                            )}
-                            {request.status === 'in_progress' && request.downloadLink && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDownload(request.id)}
-                                className="mr-2"
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                {request.downloadLink.split('/').pop() || 'Download File'}
-                              </Button>
-                            )}
-                            {request.status === 'in_progress' && (
+                            {request.status === "assigned" &&
+                              request.downloadLink && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleDownload(request.id)}
+                                >
+                                  <Download className="h-4 w-4 mr-2" />
+                                  Download & Start
+                                </Button>
+                              )}
+                            {request.status === "in_progress" &&
+                              request.downloadLink && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDownload(request.id)}
+                                  className="mr-2"
+                                >
+                                  <Download className="h-4 w-4 mr-2" />
+                                  {request.downloadLink.split("/").pop() ||
+                                    "Download File"}
+                                </Button>
+                              )}
+                            {request.status === "in_progress" && (
                               <Select
                                 value={request.status}
-                                onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
+                                onValueChange={(value) =>
+                                  handleStatusUpdate(
+                                    request.id,
+                                    value as "in_progress" | "completed",
+                                  )
+                                }
                               >
                                 <SelectTrigger className="w-40">
                                   <SelectValue />
@@ -552,7 +693,7 @@ export default function RequestFiles() {
                                 </SelectContent>
                               </Select>
                             )}
-                            {request.status === 'pending_verification' && (
+                            {request.status === "pending_verification" && (
                               <div className="flex items-center gap-2">
                                 <Badge className="bg-cyan-100 text-cyan-800">
                                   <Clock className="h-3 w-3 mr-1" />
@@ -566,7 +707,7 @@ export default function RequestFiles() {
                                 )}
                               </div>
                             )}
-                            {request.status === 'verified' && (
+                            {request.status === "verified" && (
                               <div className="flex items-center gap-2">
                                 <Badge className="bg-emerald-100 text-emerald-800">
                                   <CheckCircle className="h-3 w-3 mr-1" />
@@ -582,9 +723,10 @@ export default function RequestFiles() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="text-xs text-muted-foreground">
-                          Requested: {new Date(request.requestedDate).toLocaleString()}
+                          Requested:{" "}
+                          {new Date(request.requestedDate).toLocaleString()}
                           {request.assignedBy && (
                             <span className="ml-4">
                               Assigned by: {request.assignedBy}
@@ -606,7 +748,8 @@ export default function RequestFiles() {
                 <RefreshCw className="h-8 w-8 text-blue-500 mx-auto mb-4" />
                 <h3 className="text-lg font-medium mb-2">Need More Files?</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  You've completed your current assignments. Request more files to continue working.
+                  You've completed your current assignments. Request more files
+                  to continue working.
                 </p>
                 <Button onClick={() => setIsRequestDialogOpen(true)}>
                   Request More Files
@@ -615,7 +758,7 @@ export default function RequestFiles() {
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="history" className="space-y-6">
           {/* Completed History */}
           <Card>
@@ -625,7 +768,8 @@ export default function RequestFiles() {
                 Work History
               </CardTitle>
               <CardDescription>
-                View and manage your file processing history. You can change status if needed.
+                View and manage your file processing history. You can change
+                status if needed.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -644,34 +788,44 @@ export default function RequestFiles() {
                     <TableRow key={request.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{request.fileProcessName || 'File Request'}</div>
+                          <div className="font-medium">
+                            {request.fileProcessName || "File Request"}
+                          </div>
                           <div className="text-xs text-muted-foreground">
                             Assigned by: {request.assignedBy}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{request.requestedCount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        {request.requestedCount.toLocaleString()}
+                      </TableCell>
                       <TableCell>
                         {request.startRow && request.endRow ? (
                           <span className="text-sm">
-                            {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}
+                            {request.startRow.toLocaleString()} -{" "}
+                            {request.endRow.toLocaleString()}
                           </span>
                         ) : (
-                          'N/A'
+                          "N/A"
                         )}
                       </TableCell>
                       <TableCell>
-                        {request.completedDate ? (
-                          new Date(request.completedDate).toLocaleDateString()
-                        ) : (
-                          request.status === 'in_progress' ? 'In Progress' : 'N/A'
-                        )}
+                        {request.completedDate
+                          ? new Date(request.completedDate).toLocaleDateString()
+                          : request.status === "in_progress"
+                            ? "In Progress"
+                            : "N/A"}
                       </TableCell>
                       <TableCell>
-                        {request.status === 'in_progress' ? (
+                        {request.status === "in_progress" ? (
                           <Select
                             value={request.status}
-                            onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
+                            onValueChange={(value) =>
+                              handleStatusUpdate(
+                                request.id,
+                                value as "in_progress" | "completed",
+                              )
+                            }
                           >
                             <SelectTrigger className="w-36">
                               <SelectValue />
@@ -692,11 +846,19 @@ export default function RequestFiles() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge className={getStatusBadgeColor(request.status)}>
-                            {request.status === 'pending_verification' && <Clock className="h-3 w-3 mr-1" />}
-                            {request.status === 'verified' && <CheckCircle className="h-3 w-3 mr-1" />}
-                            {request.status === 'completed' && <CheckCircle className="h-3 w-3 mr-1" />}
-                            {request.status.replace('_', ' ').toUpperCase()}
+                          <Badge
+                            className={getStatusBadgeColor(request.status)}
+                          >
+                            {request.status === "pending_verification" && (
+                              <Clock className="h-3 w-3 mr-1" />
+                            )}
+                            {request.status === "verified" && (
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                            )}
+                            {request.status === "completed" && (
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                            )}
+                            {request.status.replace("_", " ").toUpperCase()}
                           </Badge>
                         )}
                         {request.outputFile && (
@@ -712,12 +874,16 @@ export default function RequestFiles() {
                   ))}
                 </TableBody>
               </Table>
-              
+
               {allHistoryRequests.length === 0 && (
                 <div className="text-center py-8">
                   <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-muted-foreground">No history yet</h3>
-                  <p className="text-sm text-muted-foreground">Your work history will appear here.</p>
+                  <h3 className="text-lg font-medium text-muted-foreground">
+                    No history yet
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your work history will appear here.
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -731,22 +897,32 @@ export default function RequestFiles() {
             <CardContent>
               <div className="space-y-3">
                 {dailyStats.map((stat) => (
-                  <div key={stat.date} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={stat.date}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div>
                       <div className="font-medium">
                         {new Date(stat.date).toLocaleDateString()}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {stat.date === new Date().toISOString().split('T')[0] ? 'Today' : 
-                         stat.date === new Date(Date.now() - 24*60*60*1000).toISOString().split('T')[0] ? 'Yesterday' :
-                         format(new Date(stat.date), 'EEEE')}
+                        {stat.date === new Date().toISOString().split("T")[0]
+                          ? "Today"
+                          : stat.date ===
+                              new Date(Date.now() - 24 * 60 * 60 * 1000)
+                                .toISOString()
+                                .split("T")[0]
+                            ? "Yesterday"
+                            : format(new Date(stat.date), "EEEE")}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-medium text-green-600">
                         {stat.completedCount.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">files completed</div>
+                      <div className="text-sm text-muted-foreground">
+                        files completed
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -765,7 +941,8 @@ export default function RequestFiles() {
               Upload Completed Work
             </DialogTitle>
             <DialogDescription>
-              Upload your completed work files in ZIP format for project manager verification.
+              Upload your completed work files in ZIP format for project manager
+              verification.
             </DialogDescription>
           </DialogHeader>
 
@@ -773,15 +950,29 @@ export default function RequestFiles() {
             {/* Request Details */}
             {selectedRequestForUpload && (
               <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-1 text-sm">Request Details</h4>
+                <h4 className="font-medium text-blue-800 mb-1 text-sm">
+                  Request Details
+                </h4>
                 {(() => {
-                  const request = fileRequests.find(r => r.id === selectedRequestForUpload);
+                  const request = fileRequests.find(
+                    (r) => r.id === selectedRequestForUpload,
+                  );
                   return request ? (
                     <div className="text-xs text-blue-700 space-y-0.5">
-                      <p><strong>File Process:</strong> {request.fileProcessName || 'File Request'}</p>
-                      <p><strong>File Count:</strong> {request.requestedCount.toLocaleString()}</p>
+                      <p>
+                        <strong>File Process:</strong>{" "}
+                        {request.fileProcessName || "File Request"}
+                      </p>
+                      <p>
+                        <strong>File Count:</strong>{" "}
+                        {request.requestedCount.toLocaleString()}
+                      </p>
                       {request.startRow && request.endRow && (
-                        <p><strong>Row Range:</strong> {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}</p>
+                        <p>
+                          <strong>Row Range:</strong>{" "}
+                          {request.startRow.toLocaleString()} -{" "}
+                          {request.endRow.toLocaleString()}
+                        </p>
                       )}
                     </div>
                   ) : null;
@@ -797,20 +988,20 @@ export default function RequestFiles() {
               <div
                 className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
                   isDragOver
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-blue-400'
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300 hover:border-blue-400"
                 }`}
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragOver(false);
                   const file = e.dataTransfer.files?.[0];
                   if (file) {
-                    if (!file.name.toLowerCase().endsWith('.zip')) {
-                      alert('Please select a ZIP file only.');
+                    if (!file.name.toLowerCase().endsWith(".zip")) {
+                      alert("Please select a ZIP file only.");
                       return;
                     }
                     if (file.size > 100 * 1024 * 1024) {
-                      alert('File size must be less than 100MB.');
+                      alert("File size must be less than 100MB.");
                       return;
                     }
                     setUploadedFile(file);
@@ -839,14 +1030,14 @@ export default function RequestFiles() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      if (!file.name.toLowerCase().endsWith('.zip')) {
-                        alert('Please select a ZIP file only.');
-                        e.target.value = '';
+                      if (!file.name.toLowerCase().endsWith(".zip")) {
+                        alert("Please select a ZIP file only.");
+                        e.target.value = "";
                         return;
                       }
                       if (file.size > 100 * 1024 * 1024) {
-                        alert('File size must be less than 100MB.');
-                        e.target.value = '';
+                        alert("File size must be less than 100MB.");
+                        e.target.value = "";
                         return;
                       }
                       setUploadedFile(file);
@@ -855,9 +1046,11 @@ export default function RequestFiles() {
                   className="hidden"
                 />
                 <div className="space-y-2">
-                  <Upload className={`h-8 w-8 mx-auto ${
-                    isDragOver ? 'text-blue-500' : 'text-gray-400'
-                  }`} />
+                  <Upload
+                    className={`h-8 w-8 mx-auto ${
+                      isDragOver ? "text-blue-500" : "text-gray-400"
+                    }`}
+                  />
                   <div>
                     <Label
                       htmlFor="fileUpload"
@@ -865,11 +1058,17 @@ export default function RequestFiles() {
                     >
                       Click to browse files
                     </Label>
-                    <p className={`text-sm ${
-                      isDragOver ? 'text-blue-600' : 'text-gray-500'
-                    }`}>or drag and drop your ZIP file here</p>
+                    <p
+                      className={`text-sm ${
+                        isDragOver ? "text-blue-600" : "text-gray-500"
+                      }`}
+                    >
+                      or drag and drop your ZIP file here
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-400">Maximum file size: 100MB</p>
+                  <p className="text-xs text-gray-400">
+                    Maximum file size: 100MB
+                  </p>
                 </div>
               </div>
 
@@ -880,7 +1079,9 @@ export default function RequestFiles() {
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-green-600" />
                       <div>
-                        <p className="text-sm font-medium text-green-800">{uploadedFile.name}</p>
+                        <p className="text-sm font-medium text-green-800">
+                          {uploadedFile.name}
+                        </p>
                         <p className="text-xs text-green-600">
                           {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
                         </p>
@@ -891,8 +1092,10 @@ export default function RequestFiles() {
                       size="sm"
                       onClick={() => {
                         setUploadedFile(null);
-                        const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
-                        if (fileInput) fileInput.value = '';
+                        const fileInput = document.getElementById(
+                          "fileUpload",
+                        ) as HTMLInputElement;
+                        if (fileInput) fileInput.value = "";
                       }}
                     >
                       <X className="h-4 w-4" />
@@ -925,21 +1128,28 @@ export default function RequestFiles() {
               </h4>
               <ul className="text-xs text-yellow-700 space-y-0.5 list-disc list-inside">
                 <li>Upload ZIP format only • Include all processed files</li>
-                <li>Work will be reviewed by PM • Approval required for completion</li>
+                <li>
+                  Work will be reviewed by PM • Approval required for completion
+                </li>
               </ul>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setIsUploadDialogOpen(false);
-              setSelectedRequestForUpload(null);
-              setUploadedFile(null);
-              setUploadNotes('');
-              setIsDragOver(false);
-              const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
-              if (fileInput) fileInput.value = '';
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsUploadDialogOpen(false);
+                setSelectedRequestForUpload(null);
+                setUploadedFile(null);
+                setUploadNotes("");
+                setIsDragOver(false);
+                const fileInput = document.getElementById(
+                  "fileUpload",
+                ) as HTMLInputElement;
+                if (fileInput) fileInput.value = "";
+              }}
+            >
               Cancel
             </Button>
             <Button

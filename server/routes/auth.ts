@@ -2,7 +2,12 @@ import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { query, transaction } from "../db/connection.js";
-import { LoginRequest, LoginResponse, AuthUser, ApiResponse } from "@shared/types";
+import {
+  LoginRequest,
+  LoginResponse,
+  AuthUser,
+  ApiResponse,
+} from "@shared/types";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "24h";
@@ -23,9 +28,9 @@ export const login: RequestHandler = async (req, res) => {
           message: "Email and password are required",
           details: [
             !email && { field: "email", message: "Email is required" },
-            !password && { field: "password", message: "Password is required" }
-          ].filter(Boolean)
-        }
+            !password && { field: "password", message: "Password is required" },
+          ].filter(Boolean),
+        },
       } as ApiResponse);
     }
 
@@ -41,15 +46,15 @@ export const login: RequestHandler = async (req, res) => {
       WHERE LOWER(u.email) = LOWER($1)
       GROUP BY u.id, r.name
     `;
-    
+
     const userResult = await query(userQuery, [email]);
-    
+
     if (userResult.rows.length === 0) {
       return res.status(401).json({
         error: {
           code: "AUTHENTICATION_FAILED",
-          message: "Invalid credentials"
-        }
+          message: "Invalid credentials",
+        },
       } as ApiResponse);
     }
 
@@ -60,19 +65,22 @@ export const login: RequestHandler = async (req, res) => {
       return res.status(401).json({
         error: {
           code: "ACCOUNT_DISABLED",
-          message: "Your account has been disabled"
-        }
+          message: "Your account has been disabled",
+        },
       } as ApiResponse);
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.hashed_password);
+    const isValidPassword = await bcrypt.compare(
+      password,
+      user.hashed_password,
+    );
     if (!isValidPassword) {
       return res.status(401).json({
         error: {
           code: "AUTHENTICATION_FAILED",
-          message: "Invalid credentials"
-        }
+          message: "Invalid credentials",
+        },
       } as ApiResponse);
     }
 
@@ -82,19 +90,21 @@ export const login: RequestHandler = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || []
+      permissions: user.permissions || [],
     };
 
     const token = jwt.sign(authUser, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    const refreshToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });
+    const refreshToken = jwt.sign({ userId: user.id }, JWT_SECRET, {
+      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+    });
 
     // Store refresh token
     refreshTokenStore.add(refreshToken);
 
     // Update last login
     await query(
-      'UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1',
-      [user.id]
+      "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1",
+      [user.id],
     );
 
     const response: LoginResponse = {
@@ -112,21 +122,20 @@ export const login: RequestHandler = async (req, res) => {
         joinDate: user.join_date,
         lastLogin: new Date().toISOString(),
         createdAt: user.created_at,
-        updatedAt: user.updated_at
-      }
+        updatedAt: user.updated_at,
+      },
     };
 
     res.json({
-      data: response
+      data: response,
     } as ApiResponse<LoginResponse>);
-
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred during login"
-      }
+        message: "An error occurred during login",
+      },
     } as ApiResponse);
   }
 };
@@ -139,8 +148,8 @@ export const refresh: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Refresh token is required"
-        }
+          message: "Refresh token is required",
+        },
       } as ApiResponse);
     }
 
@@ -149,14 +158,14 @@ export const refresh: RequestHandler = async (req, res) => {
       return res.status(401).json({
         error: {
           code: "INVALID_REFRESH_TOKEN",
-          message: "Invalid or expired refresh token"
-        }
+          message: "Invalid or expired refresh token",
+        },
       } as ApiResponse);
     }
 
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, JWT_SECRET) as { userId: string };
-    
+
     // Get user with permissions
     const userQuery = `
       SELECT u.*, r.name as role_name,
@@ -169,7 +178,7 @@ export const refresh: RequestHandler = async (req, res) => {
       WHERE u.id = $1 AND u.status = 'active'
       GROUP BY u.id, r.name
     `;
-    
+
     const userResult = await query(userQuery, [decoded.userId]);
 
     if (userResult.rows.length === 0) {
@@ -177,8 +186,8 @@ export const refresh: RequestHandler = async (req, res) => {
       return res.status(401).json({
         error: {
           code: "USER_NOT_FOUND",
-          message: "User not found or inactive"
-        }
+          message: "User not found or inactive",
+        },
       } as ApiResponse);
     }
 
@@ -190,11 +199,15 @@ export const refresh: RequestHandler = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || []
+      permissions: user.permissions || [],
     };
 
-    const newToken = jwt.sign(authUser, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-    const newRefreshToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRES_IN });
+    const newToken = jwt.sign(authUser, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+    const newRefreshToken = jwt.sign({ userId: user.id }, JWT_SECRET, {
+      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+    });
 
     // Remove old refresh token and add new one
     refreshTokenStore.delete(refreshToken);
@@ -203,17 +216,16 @@ export const refresh: RequestHandler = async (req, res) => {
     res.json({
       data: {
         token: newToken,
-        refreshToken: newRefreshToken
-      }
+        refreshToken: newRefreshToken,
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error("Token refresh error:", error);
     res.status(401).json({
       error: {
         code: "INVALID_REFRESH_TOKEN",
-        message: "Invalid or expired refresh token"
-      }
+        message: "Invalid or expired refresh token",
+      },
     } as ApiResponse);
   }
 };
@@ -227,16 +239,15 @@ export const logout: RequestHandler = async (req, res) => {
     }
 
     res.json({
-      data: { message: "Logged out successfully" }
+      data: { message: "Logged out successfully" },
     } as ApiResponse);
-
   } catch (error) {
     console.error("Logout error:", error);
     res.status(500).json({
       error: {
-        code: "INTERNAL_SERVER_ERROR", 
-        message: "An error occurred during logout"
-      }
+        code: "INTERNAL_SERVER_ERROR",
+        message: "An error occurred during logout",
+      },
     } as ApiResponse);
   }
 };
@@ -249,21 +260,23 @@ export const resetPassword: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Email is required"
-        }
+          message: "Email is required",
+        },
       } as ApiResponse);
     }
 
     // Check if user exists
     const userResult = await query(
-      'SELECT id, email FROM users WHERE LOWER(email) = LOWER($1) AND status = $2',
-      [email, 'active']
+      "SELECT id, email FROM users WHERE LOWER(email) = LOWER($1) AND status = $2",
+      [email, "active"],
     );
 
     if (userResult.rows.length === 0) {
       // Don't reveal whether email exists or not
       return res.json({
-        data: { message: "If the email exists, a password reset link has been sent" }
+        data: {
+          message: "If the email exists, a password reset link has been sent",
+        },
       } as ApiResponse);
     }
 
@@ -275,16 +288,17 @@ export const resetPassword: RequestHandler = async (req, res) => {
     console.log(`Password reset requested for user: ${email}`);
 
     res.json({
-      data: { message: "If the email exists, a password reset link has been sent" }
+      data: {
+        message: "If the email exists, a password reset link has been sent",
+      },
     } as ApiResponse);
-
   } catch (error) {
     console.error("Password reset error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred during password reset"
-      }
+        message: "An error occurred during password reset",
+      },
     } as ApiResponse);
   }
 };
@@ -292,14 +306,14 @@ export const resetPassword: RequestHandler = async (req, res) => {
 // Middleware to authenticate JWT tokens
 export const authenticateToken: RequestHandler = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
   if (!token) {
     return res.status(401).json({
       error: {
         code: "AUTHENTICATION_REQUIRED",
-        message: "Access token is required"
-      }
+        message: "Access token is required",
+      },
     } as ApiResponse);
   }
 
@@ -311,8 +325,8 @@ export const authenticateToken: RequestHandler = (req, res, next) => {
     return res.status(403).json({
       error: {
         code: "INVALID_TOKEN",
-        message: "Invalid or expired token"
-      }
+        message: "Invalid or expired token",
+      },
     } as ApiResponse);
   }
 };
@@ -326,8 +340,8 @@ export const requirePermission = (permission: string) => {
       return res.status(401).json({
         error: {
           code: "AUTHENTICATION_REQUIRED",
-          message: "Authentication required"
-        }
+          message: "Authentication required",
+        },
       } as ApiResponse);
     }
 
@@ -341,8 +355,8 @@ export const requirePermission = (permission: string) => {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: `Permission '${permission}' required`
-        }
+          message: `Permission '${permission}' required`,
+        },
       } as ApiResponse);
     }
 
@@ -359,19 +373,19 @@ export const requireRole = (roles: string | string[]) => {
       return res.status(401).json({
         error: {
           code: "AUTHENTICATION_REQUIRED",
-          message: "Authentication required"
-        }
+          message: "Authentication required",
+        },
       } as ApiResponse);
     }
 
     const allowedRoles = Array.isArray(roles) ? roles : [roles];
-    
+
     if (!allowedRoles.includes(user.role)) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: `Role '${allowedRoles.join("' or '")}' required`
-        }
+          message: `Role '${allowedRoles.join("' or '")}' required`,
+        },
       } as ApiResponse);
     }
 

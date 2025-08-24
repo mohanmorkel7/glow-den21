@@ -1,6 +1,6 @@
-import { ApiResponse, PaginatedResponse } from '@shared/types';
+import { ApiResponse, PaginatedResponse } from "@shared/types";
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = "/api";
 
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -8,7 +8,7 @@ interface RequestOptions extends RequestInit {
 
 class ApiClient {
   private getAuthToken(): string | null {
-    return localStorage.getItem('authToken');
+    return localStorage.getItem("authToken");
   }
 
   private getAuthHeaders(): Record<string, string> {
@@ -17,15 +17,15 @@ class ApiClient {
   }
 
   private async request<T>(
-    endpoint: string, 
-    options: RequestOptions = {}
+    endpoint: string,
+    options: RequestOptions = {},
   ): Promise<T> {
     const { requiresAuth = true, headers = {}, ...restOptions } = options;
 
     const requestHeaders = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...headers,
-      ...(requiresAuth ? this.getAuthHeaders() : {})
+      ...(requiresAuth ? this.getAuthHeaders() : {}),
     };
 
     const url = `${API_BASE_URL}${endpoint}`;
@@ -33,16 +33,16 @@ class ApiClient {
     try {
       const response = await fetch(url, {
         ...restOptions,
-        headers: requestHeaders
+        headers: requestHeaders,
       });
 
       // Handle authentication errors
       if (response.status === 401) {
         // Clear auth token and redirect to login
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-        throw new Error('Authentication required');
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/login";
+        throw new Error("Authentication required");
       }
 
       const data: ApiResponse<T> = await response.json();
@@ -60,34 +60,34 @@ class ApiClient {
 
   // Authentication endpoints
   async login(email: string, password: string) {
-    return this.request('/auth/login', {
-      method: 'POST',
+    return this.request("/auth/login", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
-      requiresAuth: false
+      requiresAuth: false,
     });
   }
 
   async refreshToken(refreshToken: string) {
-    return this.request('/auth/refresh', {
-      method: 'POST',
+    return this.request("/auth/refresh", {
+      method: "POST",
       body: JSON.stringify({ refreshToken }),
-      requiresAuth: false
+      requiresAuth: false,
     });
   }
 
   async logout(refreshToken?: string) {
-    return this.request('/auth/logout', {
-      method: 'POST',
+    return this.request("/auth/logout", {
+      method: "POST",
       body: JSON.stringify({ refreshToken }),
-      requiresAuth: false
+      requiresAuth: false,
     });
   }
 
   async resetPassword(email: string) {
-    return this.request('/auth/reset-password', {
-      method: 'POST',
+    return this.request("/auth/reset-password", {
+      method: "POST",
       body: JSON.stringify({ email }),
-      requiresAuth: false
+      requiresAuth: false,
     });
   }
 
@@ -99,7 +99,9 @@ class ApiClient {
     page?: number;
     limit?: number;
   }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request<PaginatedResponse<any>>(`/users${queryString}`);
   }
 
@@ -108,36 +110,40 @@ class ApiClient {
   }
 
   async createUser(userData: any) {
-    return this.request('/users', {
-      method: 'POST',
-      body: JSON.stringify(userData)
+    return this.request("/users", {
+      method: "POST",
+      body: JSON.stringify(userData),
     });
   }
 
   async updateUser(id: string, userData: any) {
     return this.request(`/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData)
+      method: "PUT",
+      body: JSON.stringify(userData),
     });
   }
 
   async updateUserStatus(id: string, status: string) {
     return this.request(`/users/${id}/status`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status })
+      method: "PATCH",
+      body: JSON.stringify({ status }),
     });
   }
 
   async deleteUser(id: string) {
     return this.request(`/users/${id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
   }
 
-  async changePassword(id: string, currentPassword: string, newPassword: string) {
+  async changePassword(
+    id: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
     return this.request(`/users/${id}/change-password`, {
-      method: 'POST',
-      body: JSON.stringify({ currentPassword, newPassword })
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
     });
   }
 
@@ -153,7 +159,9 @@ class ApiClient {
     page?: number;
     limit?: number;
   }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request<PaginatedResponse<any>>(`/projects${queryString}`);
   }
 
@@ -162,35 +170,39 @@ class ApiClient {
   }
 
   async createProject(projectData: any) {
-    return this.request('/projects', {
-      method: 'POST',
-      body: JSON.stringify(projectData)
+    return this.request("/projects", {
+      method: "POST",
+      body: JSON.stringify(projectData),
     });
   }
 
   async updateProject(id: string, projectData: any) {
     return this.request(`/projects/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(projectData)
+      method: "PUT",
+      body: JSON.stringify(projectData),
     });
   }
 
   async deleteProject(id: string) {
     return this.request(`/projects/${id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
   }
 
-  async assignUsersToProject(id: string, userIds: string[], roleInProject?: string) {
+  async assignUsersToProject(
+    id: string,
+    userIds: string[],
+    roleInProject?: string,
+  ) {
     return this.request(`/projects/${id}/assign`, {
-      method: 'POST',
-      body: JSON.stringify({ userIds, roleInProject })
+      method: "POST",
+      body: JSON.stringify({ userIds, roleInProject }),
     });
   }
 
   async removeUserFromProject(projectId: string, userId: string) {
     return this.request(`/projects/${projectId}/assign/${userId}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
   }
 
@@ -208,7 +220,9 @@ class ApiClient {
     page?: number;
     limit?: number;
   }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/daily-counts${queryString}`);
   }
 
@@ -217,30 +231,30 @@ class ApiClient {
   }
 
   async createDailyCount(countData: any) {
-    return this.request('/daily-counts', {
-      method: 'POST',
-      body: JSON.stringify(countData)
+    return this.request("/daily-counts", {
+      method: "POST",
+      body: JSON.stringify(countData),
     });
   }
 
   async updateDailyCount(id: string, countData: any) {
     return this.request(`/daily-counts/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(countData)
+      method: "PUT",
+      body: JSON.stringify(countData),
     });
   }
 
   async approveDailyCount(id: string, notes?: string) {
     return this.request(`/daily-counts/${id}/approve`, {
-      method: 'POST',
-      body: JSON.stringify({ notes })
+      method: "POST",
+      body: JSON.stringify({ notes }),
     });
   }
 
   async rejectDailyCount(id: string, reason: string) {
     return this.request(`/daily-counts/${id}/reject`, {
-      method: 'POST',
-      body: JSON.stringify({ reason })
+      method: "POST",
+      body: JSON.stringify({ reason }),
     });
   }
 
@@ -250,28 +264,30 @@ class ApiClient {
     from?: string;
     to?: string;
   }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/daily-counts/statistics${queryString}`);
   }
 
   // Dashboard endpoints
   async getDashboardSummary(period?: string) {
-    const queryString = period ? `?period=${period}` : '';
+    const queryString = period ? `?period=${period}` : "";
     return this.request(`/dashboard/summary${queryString}`);
   }
 
   async getRecentProjects(limit?: number) {
-    const queryString = limit ? `?limit=${limit}` : '';
+    const queryString = limit ? `?limit=${limit}` : "";
     return this.request(`/dashboard/recent-projects${queryString}`);
   }
 
   async getTeamPerformance(period?: string) {
-    const queryString = period ? `?period=${period}` : '';
+    const queryString = period ? `?period=${period}` : "";
     return this.request(`/dashboard/team-performance${queryString}`);
   }
 
   async getRecentAlerts(limit?: number) {
-    const queryString = limit ? `?limit=${limit}` : '';
+    const queryString = limit ? `?limit=${limit}` : "";
     return this.request(`/dashboard/recent-alerts${queryString}`);
   }
 
@@ -280,17 +296,19 @@ class ApiClient {
     to?: string;
     groupBy?: string;
   }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/dashboard/productivity-trend${queryString}`);
   }
 
   async getUserDashboard() {
-    return this.request('/dashboard/user');
+    return this.request("/dashboard/user");
   }
 
   // Health check
   async healthCheck() {
-    return this.request('/health', { requiresAuth: false });
+    return this.request("/health", { requiresAuth: false });
   }
 }
 

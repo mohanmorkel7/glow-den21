@@ -11,7 +11,7 @@ import {
   resetPassword,
   authenticateToken,
   requirePermission,
-  requireRole
+  requireRole,
 } from "./routes/auth";
 
 // Import user management routes
@@ -23,7 +23,7 @@ import {
   updateUserStatus,
   deleteUser,
   changePassword,
-  getUserProjects
+  getUserProjects,
 } from "./routes/users";
 
 // Import project management routes
@@ -35,7 +35,7 @@ import {
   deleteProject,
   assignUsers,
   removeUser,
-  getProjectProgress
+  getProjectProgress,
 } from "./routes/projects";
 
 // Import daily counts routes
@@ -46,7 +46,7 @@ import {
   updateDailyCount,
   approveDailyCount,
   rejectDailyCount,
-  getDailyCountStatistics
+  getDailyCountStatistics,
 } from "./routes/dailyCounts";
 
 // Import dashboard routes
@@ -56,7 +56,7 @@ import {
   getTeamPerformance,
   getRecentAlerts,
   getProductivityTrend,
-  getUserDashboard
+  getUserDashboard,
 } from "./routes/dashboard";
 
 export function createServer() {
@@ -73,7 +73,7 @@ export function createServer() {
       status: "healthy",
       database: "connected",
       version: "1.0.0",
-      uptime: process.uptime()
+      uptime: process.uptime(),
     });
   });
 
@@ -98,7 +98,11 @@ export function createServer() {
   app.get("/api/users/:id", getUser); // Self or with permission check inside
   app.post("/api/users", requirePermission("user_create"), createUser);
   app.put("/api/users/:id", updateUser); // Self or with permission check inside
-  app.patch("/api/users/:id/status", requirePermission("user_update"), updateUserStatus);
+  app.patch(
+    "/api/users/:id/status",
+    requirePermission("user_update"),
+    updateUserStatus,
+  );
   app.delete("/api/users/:id", requirePermission("user_delete"), deleteUser);
   app.post("/api/users/:id/change-password", changePassword); // Self or admin
   app.get("/api/users/:id/projects", getUserProjects); // Self or with permission
@@ -110,10 +114,26 @@ export function createServer() {
   app.get("/api/projects", requirePermission("project_read"), listProjects);
   app.get("/api/projects/:id", getProject);
   app.post("/api/projects", requirePermission("project_create"), createProject);
-  app.put("/api/projects/:id", requirePermission("project_update"), updateProject);
-  app.delete("/api/projects/:id", requirePermission("project_delete"), deleteProject);
-  app.post("/api/projects/:id/assign", requirePermission("project_update"), assignUsers);
-  app.delete("/api/projects/:id/assign/:userId", requirePermission("project_update"), removeUser);
+  app.put(
+    "/api/projects/:id",
+    requirePermission("project_update"),
+    updateProject,
+  );
+  app.delete(
+    "/api/projects/:id",
+    requirePermission("project_delete"),
+    deleteProject,
+  );
+  app.post(
+    "/api/projects/:id/assign",
+    requirePermission("project_update"),
+    assignUsers,
+  );
+  app.delete(
+    "/api/projects/:id/assign/:userId",
+    requirePermission("project_update"),
+    removeUser,
+  );
   app.get("/api/projects/:id/progress", getProjectProgress);
 
   // ===== DAILY COUNTS ROUTES =====
@@ -123,10 +143,22 @@ export function createServer() {
   app.get("/api/daily-counts", listDailyCounts);
   app.get("/api/daily-counts/statistics", getDailyCountStatistics);
   app.get("/api/daily-counts/:id", getDailyCount);
-  app.post("/api/daily-counts", requirePermission("count_submit"), createDailyCount);
+  app.post(
+    "/api/daily-counts",
+    requirePermission("count_submit"),
+    createDailyCount,
+  );
   app.put("/api/daily-counts/:id", updateDailyCount);
-  app.post("/api/daily-counts/:id/approve", requirePermission("count_approve"), approveDailyCount);
-  app.post("/api/daily-counts/:id/reject", requirePermission("count_approve"), rejectDailyCount);
+  app.post(
+    "/api/daily-counts/:id/approve",
+    requirePermission("count_approve"),
+    approveDailyCount,
+  );
+  app.post(
+    "/api/daily-counts/:id/reject",
+    requirePermission("count_approve"),
+    rejectDailyCount,
+  );
 
   // ===== DASHBOARD ROUTES =====
   // All dashboard routes require authentication
@@ -134,7 +166,11 @@ export function createServer() {
 
   app.get("/api/dashboard/summary", getDashboardSummary);
   app.get("/api/dashboard/recent-projects", getRecentProjects);
-  app.get("/api/dashboard/team-performance", requireRole(["super_admin", "project_manager"]), getTeamPerformance);
+  app.get(
+    "/api/dashboard/team-performance",
+    requireRole(["super_admin", "project_manager"]),
+    getTeamPerformance,
+  );
   app.get("/api/dashboard/recent-alerts", getRecentAlerts);
   app.get("/api/dashboard/productivity-trend", getProductivityTrend);
   app.get("/api/dashboard/user", getUserDashboard);
@@ -145,8 +181,8 @@ export function createServer() {
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An unexpected error occurred"
-      }
+        message: "An unexpected error occurred",
+      },
     });
   });
 
@@ -155,8 +191,8 @@ export function createServer() {
     res.status(404).json({
       error: {
         code: "NOT_FOUND",
-        message: "API endpoint not found"
-      }
+        message: "API endpoint not found",
+      },
     });
   });
 
