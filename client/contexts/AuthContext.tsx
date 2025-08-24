@@ -1,17 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'super_admin' | 'project_manager' | 'user';
-  permissions: string[];
-}
+import { apiClient } from '@/lib/api';
+import { LoginResponse, User } from '@shared/types';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
 }
 
@@ -35,62 +29,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Check for existing session on app load
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      const savedUser = localStorage.getItem('user');
 
-    if (token && savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setUser(user);
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+      if (token && savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          
+          // Try to verify token with a simple API call
+          try {
+            await apiClient.healthCheck();
+            setUser(parsedUser);
+          } catch (error) {
+            // Token might be expired, try to refresh
+            if (refreshToken) {
+              try {
+                const response = await apiClient.refreshToken(refreshToken);
+                localStorage.setItem('authToken', response.token);
+                localStorage.setItem('refreshToken', response.refreshToken);
+                setUser(parsedUser);
+              } catch (refreshError) {
+                console.error('Token refresh failed:', refreshError);
+                await logout();
+              }
+            } else {
+              await logout();
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing saved user:', error);
+          await logout();
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // Mock authentication - in real app, call backend API
-      let mockUser: User | null = null;
-
-      // Demo credentials for different roles
-      if (email === 'admin@websyntactic.com' && password === 'admin123') {
-        mockUser = {
-          id: '1',
-          email: 'admin@websyntactic.com',
-          name: 'John Smith',
-          role: 'super_admin',
-          permissions: ['all']
-        };
-      } else if (email === 'pm@websyntactic.com' && password === 'pm123') {
-        mockUser = {
-          id: '2',
-          email: 'pm@websyntactic.com',
-          name: 'Emily Wilson',
-          role: 'project_manager',
-          permissions: ['project_management', 'file_process', 'user_assignment']
-        };
-      } else if (email === 'user@websyntactic.com' && password === 'user123') {
-        mockUser = {
-          id: '3',
-          email: 'user@websyntactic.com',
-          name: 'Sarah Johnson',
-          role: 'user',
-          permissions: ['file_request', 'daily_counts']
-        };
-      }
-
-      if (mockUser) {
-        setUser(mockUser);
-        localStorage.setItem('token', 'mock-jwt-token');
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        return true;
-      }
-      return false;
+      const response: LoginResponse = await apiClient.login(email, password);
+      
+      // Store tokens and user data
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Update state
+      setUser(response.user);
+      
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       return false;
@@ -99,10 +91,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const logout = async (): Promise<void> => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        await apiClient.logout(refreshToken);
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear local state regardless of API call result
+      setUser(null);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+    }
   };
 
   return (
@@ -111,3 +114,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     </AuthContext.Provider>
   );
 }
+
+// Export User type for convenience
+export type { User };
