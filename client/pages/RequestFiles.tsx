@@ -306,7 +306,7 @@ export default function RequestFiles() {
           <DialogTrigger asChild>
             <Button
               disabled={getCurrentUserRequests().some(req =>
-                req.status === 'pending' || req.status === 'in_progress'
+                req.status === 'pending' || req.status === 'in_progress' || req.status === 'pending_verification'
               )}
             >
               <Plus className="h-4 w-4 mr-2" />
