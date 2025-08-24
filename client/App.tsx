@@ -20,10 +20,7 @@ import Permissions from "./pages/Permissions";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
-import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
-import { Users, FolderOpen, BarChart3, Shield, Mail } from "lucide-react";
-import { createRoot } from "react-dom/client";
 
 const queryClient = new QueryClient();
 
@@ -68,96 +65,93 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        } />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/login" element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      } />
 
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/users" element={
-          <ProtectedRoute>
-            <UserManagement />
-          </ProtectedRoute>
-        } />
+      <Route path="/users" element={
+        <ProtectedRoute>
+          <UserManagement />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/projects" element={
-          <ProtectedRoute>
-            <ProjectManagement />
-          </ProtectedRoute>
-        } />
+      <Route path="/projects" element={
+        <ProtectedRoute>
+          <ProjectManagement />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/file-process" element={
-          <ProtectedRoute>
-            <FileProcess />
-          </ProtectedRoute>
-        } />
+      <Route path="/file-process" element={
+        <ProtectedRoute>
+          <FileProcess />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/request-files" element={
-          <ProtectedRoute>
-            <RequestFiles />
-          </ProtectedRoute>
-        } />
+      <Route path="/request-files" element={
+        <ProtectedRoute>
+          <RequestFiles />
+        </ProtectedRoute>
+      } />
 
+      <Route path="/billing" element={
+        <ProtectedRoute>
+          <Billing />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/billing" element={
-          <ProtectedRoute>
-            <Billing />
-          </ProtectedRoute>
-        } />
+      <Route path="/salary" element={
+        <ProtectedRoute>
+          <Salary />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/salary" element={
-          <ProtectedRoute>
-            <Salary />
-          </ProtectedRoute>
-        } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <Reports />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/reports" element={
-          <ProtectedRoute>
-            <Reports />
-          </ProtectedRoute>
-        } />
+      <Route path="/permissions" element={
+        <ProtectedRoute>
+          <Permissions />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/permissions" element={
-          <ProtectedRoute>
-            <Permissions />
-          </ProtectedRoute>
-        } />
+      <Route path="/notifications" element={
+        <ProtectedRoute>
+          <Notifications />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/notifications" element={
-          <ProtectedRoute>
-            <Notifications />
-          </ProtectedRoute>
-        } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/settings" element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      } />
 
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        } />
+      {/* Redirect root to dashboard */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Redirect root to dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-        {/* 404 Route */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+      {/* 404 Route */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
@@ -166,7 +160,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <AppRoutes />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
         </AuthProvider>
         <Toaster />
         <Sonner />
@@ -175,4 +171,4 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+export default App;
