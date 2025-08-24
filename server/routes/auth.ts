@@ -1,7 +1,7 @@
 import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { query, transaction } from "../db/connection.js";
+import { query, transaction } from "../db/connection";
 import {
   LoginRequest,
   LoginResponse,
