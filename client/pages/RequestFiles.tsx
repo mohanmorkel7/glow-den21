@@ -119,6 +119,9 @@ export default function RequestFiles() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [requestCount, setRequestCount] = useState(500);
   const [activeTab, setActiveTab] = useState('current');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedRequestForUpload, setSelectedRequestForUpload] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   // Only allow users to access this page
   if (currentUser?.role !== 'user') {
