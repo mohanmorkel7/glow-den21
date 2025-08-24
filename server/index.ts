@@ -26,6 +26,29 @@ import {
   getUserProjects
 } from "./routes/users";
 
+// Import project management routes
+import {
+  listProjects,
+  getProject,
+  createProject,
+  updateProject,
+  deleteProject,
+  assignUsers,
+  removeUser,
+  getProjectProgress
+} from "./routes/projects";
+
+// Import daily counts routes
+import {
+  listDailyCounts,
+  getDailyCount,
+  createDailyCount,
+  updateDailyCount,
+  approveDailyCount,
+  rejectDailyCount,
+  getDailyCountStatistics
+} from "./routes/dailyCounts";
+
 // Import dashboard routes
 import {
   getDashboardSummary,
@@ -79,6 +102,31 @@ export function createServer() {
   app.delete("/api/users/:id", requirePermission("user_delete"), deleteUser);
   app.post("/api/users/:id/change-password", changePassword); // Self or admin
   app.get("/api/users/:id/projects", getUserProjects); // Self or with permission
+
+  // ===== PROJECT MANAGEMENT ROUTES =====
+  // All project routes require authentication
+  app.use("/api/projects", authenticateToken);
+
+  app.get("/api/projects", requirePermission("project_read"), listProjects);
+  app.get("/api/projects/:id", getProject);
+  app.post("/api/projects", requirePermission("project_create"), createProject);
+  app.put("/api/projects/:id", requirePermission("project_update"), updateProject);
+  app.delete("/api/projects/:id", requirePermission("project_delete"), deleteProject);
+  app.post("/api/projects/:id/assign", requirePermission("project_update"), assignUsers);
+  app.delete("/api/projects/:id/assign/:userId", requirePermission("project_update"), removeUser);
+  app.get("/api/projects/:id/progress", getProjectProgress);
+
+  // ===== DAILY COUNTS ROUTES =====
+  // All daily counts routes require authentication
+  app.use("/api/daily-counts", authenticateToken);
+
+  app.get("/api/daily-counts", listDailyCounts);
+  app.get("/api/daily-counts/statistics", getDailyCountStatistics);
+  app.get("/api/daily-counts/:id", getDailyCount);
+  app.post("/api/daily-counts", requirePermission("count_submit"), createDailyCount);
+  app.put("/api/daily-counts/:id", updateDailyCount);
+  app.post("/api/daily-counts/:id/approve", requirePermission("count_approve"), approveDailyCount);
+  app.post("/api/daily-counts/:id/reject", requirePermission("count_approve"), rejectDailyCount);
 
   // ===== DASHBOARD ROUTES =====
   // All dashboard routes require authentication
