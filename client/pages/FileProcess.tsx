@@ -376,6 +376,9 @@ export default function FileProcess() {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [isBreakdownDialogOpen, setIsBreakdownDialogOpen] = useState(false);
   const [selectedHistoricalProcess, setSelectedHistoricalProcess] = useState<HistoricalFileProcess | null>(null);
+  const [isVerificationDialogOpen, setIsVerificationDialogOpen] = useState(false);
+  const [selectedVerificationRequest, setSelectedVerificationRequest] = useState<any>(null);
+  const [verificationNotes, setVerificationNotes] = useState('');
 
   // Only allow admin/project_manager to access this page
   if (currentUser?.role !== 'super_admin' && currentUser?.role !== 'project_manager') {
