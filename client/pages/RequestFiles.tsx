@@ -662,28 +662,45 @@ export default function RequestFiles() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={request.status}
-                          onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
-                        >
-                          <SelectTrigger className="w-36">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="in_progress">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                                In Progress
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="completed">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                Completed
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {request.status === 'in_progress' ? (
+                          <Select
+                            value={request.status}
+                            onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
+                          >
+                            <SelectTrigger className="w-36">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="in_progress">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                                  In Progress
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="completed">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                  Completed
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Badge className={getStatusBadgeColor(request.status)}>
+                            {request.status === 'pending_verification' && <Clock className="h-3 w-3 mr-1" />}
+                            {request.status === 'verified' && <CheckCircle className="h-3 w-3 mr-1" />}
+                            {request.status === 'completed' && <CheckCircle className="h-3 w-3 mr-1" />}
+                            {request.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        )}
+                        {request.outputFile && (
+                          <div className="mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              <FileText className="h-3 w-3 mr-1" />
+                              {request.outputFile.name}
+                            </Badge>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
