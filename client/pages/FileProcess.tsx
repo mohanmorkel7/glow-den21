@@ -1829,6 +1829,207 @@ export default function FileProcess() {
       </Dialog>
         </TabsContent>
 
+        <TabsContent value="verification" className="space-y-6 mt-6">
+          {/* Verification Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Verification</CardTitle>
+                <Clock className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{getPendingVerifications().length}</div>
+                <p className="text-xs text-muted-foreground">Files awaiting review</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Verified Today</CardTitle>
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {getVerifiedFiles().filter(v =>
+                    v.verifiedDate && new Date(v.verifiedDate).toDateString() === new Date().toDateString()
+                  ).length}
+                </div>
+                <p className="text-xs text-muted-foreground">Approved today</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Verified</CardTitle>
+                <CheckCircle className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{getVerifiedFiles().length}</div>
+                <p className="text-xs text-muted-foreground">All time verified</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Average File Size</CardTitle>
+                <FileText className="h-4 w-4 text-purple-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {verificationRequests.length > 0
+                    ? (verificationRequests.reduce((sum, req) => sum + req.uploadedFile.size, 0) / verificationRequests.length / 1024 / 1024).toFixed(1)
+                    : '0'
+                  } MB
+                </div>
+                <p className="text-xs text-muted-foreground">Per uploaded file</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Pending Verifications */}
+          {getPendingVerifications().length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-orange-500" />
+                  Pending File Verifications ({getPendingVerifications().length})
+                </CardTitle>
+                <CardDescription>
+                  Review and approve files uploaded by users for task completion
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {getPendingVerifications().map((request) => (
+                    <Card key={request.id} className="border-l-4 border-l-orange-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-medium text-lg">{request.userName}</h4>
+                              <Badge className="bg-orange-100 text-orange-800">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Pending Review
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <p><strong>Email:</strong> {request.userEmail}</p>
+                                <p><strong>File Process:</strong> {request.fileProcessName}</p>
+                                <p><strong>Assigned by:</strong> {request.assignedBy}</p>
+                              </div>
+                              <div>
+                                <p><strong>File Count:</strong> {request.requestedCount.toLocaleString()}</p>
+                                <p><strong>Row Range:</strong> {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}</p>
+                                <p><strong>Submitted:</strong> {new Date(request.submittedDate).toLocaleString()}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Uploaded File Info */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                          <h5 className="font-medium text-blue-800 mb-2">Uploaded File</h5>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <span className="font-medium">{request.uploadedFile.name}</span>
+                            </div>
+                            <div className="text-sm text-blue-600">
+                              {(request.uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                            </div>
+                          </div>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Uploaded: {new Date(request.uploadedFile.uploadDate).toLocaleString()}
+                          </p>
+                        </div>
+
+                        {/* User Notes */}
+                        {request.notes && (
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+                            <h5 className="font-medium text-gray-700 mb-1">User Notes</h5>
+                            <p className="text-sm text-gray-600">{request.notes}</p>
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              // Simulate file download
+                              const link = document.createElement('a');
+                              link.href = '#';
+                              link.download = request.uploadedFile.name;
+                              link.click();
+                            }}
+                            className="mr-2"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download File
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleVerificationReview(request)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Review & Approve
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recently Verified Files */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Recently Verified Files
+              </CardTitle>
+              <CardDescription>
+                Files that have been reviewed and approved/rejected
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {getVerifiedFiles().length === 0 ? (
+                <div className="text-center py-8">
+                  <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-muted-foreground">No Verified Files</h3>
+                  <p className="text-sm text-muted-foreground">Verified files will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {getVerifiedFiles().slice(0, 5).map((request) => (
+                    <div key={request.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${
+                          request.status === 'verified' ? 'bg-green-500' : 'bg-red-500'
+                        }`}></div>
+                        <div>
+                          <p className="font-medium">{request.userName}</p>
+                          <p className="text-sm text-muted-foreground">{request.fileProcessName}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge className={request.status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {request.status === 'verified' ? 'Approved' : 'Rejected'}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {request.verifiedBy} • {new Date(request.verifiedDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="all-history" className="space-y-6 mt-6">
           {/* Month Filter */}
           <Card>
