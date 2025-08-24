@@ -758,7 +758,7 @@ export default function RequestFiles() {
 
       {/* File Upload Dialog */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5 text-blue-500" />
@@ -795,7 +795,7 @@ export default function RequestFiles() {
                 Upload Completed Files (ZIP format only)
               </Label>
               <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
                   isDragOver
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-300 hover:border-blue-400'
@@ -909,26 +909,23 @@ export default function RequestFiles() {
               </Label>
               <textarea
                 id="uploadNotes"
-                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                rows={5}
-                placeholder="Add any notes about your completed work, issues encountered, or additional information for the project manager..."
+                className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={3}
+                placeholder="Add notes about your work, issues, or additional info..."
                 value={uploadNotes}
                 onChange={(e) => setUploadNotes(e.target.value)}
               />
             </div>
 
             {/* Instructions */}
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h4 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-medium text-yellow-800 mb-1 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
-                Important Instructions
+                Instructions
               </h4>
-              <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
-                <li>Upload your completed work files in ZIP format only</li>
-                <li>Ensure all processed files are included in the ZIP</li>
-                <li>Your work will be reviewed by a project manager</li>
-                <li>Task will be marked complete only after approval</li>
-                <li>You will be notified of the verification result</li>
+              <ul className="text-xs text-yellow-700 space-y-0.5 list-disc list-inside">
+                <li>Upload ZIP format only • Include all processed files</li>
+                <li>Work will be reviewed by PM • Approval required for completion</li>
               </ul>
             </div>
           </div>
