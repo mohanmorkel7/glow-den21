@@ -28,7 +28,7 @@ interface FileRequest {
   userName: string;
   requestedCount: number;
   requestedDate: string;
-  status: 'pending' | 'assigned' | 'received' | 'in_progress' | 'completed';
+  status: 'pending' | 'assigned' | 'received' | 'in_progress' | 'completed' | 'pending_verification' | 'verified';
   fileProcessId?: string;
   fileProcessName?: string;
   assignedBy?: string;
@@ -37,6 +37,15 @@ interface FileRequest {
   completedDate?: string;
   startRow?: number;
   endRow?: number;
+  outputFile?: {
+    name: string;
+    size: number;
+    uploadDate: string;
+  };
+  verificationStatus?: 'pending' | 'approved' | 'rejected';
+  verifiedBy?: string;
+  verifiedDate?: string;
+  verificationNotes?: string;
 }
 
 interface DailyStats {
