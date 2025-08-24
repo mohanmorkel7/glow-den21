@@ -2674,6 +2674,182 @@ export default function FileProcess() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* File Verification Dialog */}
+      <Dialog open={isVerificationDialogOpen} onOpenChange={setIsVerificationDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-blue-500" />
+              Review File Submission
+            </DialogTitle>
+            <DialogDescription>
+              Review the uploaded file and approve or reject the user's work submission.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedVerificationRequest && (
+            <div className="space-y-6">
+              {/* User and Task Information */}
+              <Card className="border-l-4 border-l-blue-500">
+                <CardHeader>
+                  <CardTitle className="text-lg">Task Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">User</Label>
+                        <p className="text-base font-semibold">{selectedVerificationRequest.userName}</p>
+                        <p className="text-sm text-muted-foreground">{selectedVerificationRequest.userEmail}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">File Process</Label>
+                        <p className="text-base">{selectedVerificationRequest.fileProcessName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Assigned By</Label>
+                        <p className="text-base">{selectedVerificationRequest.assignedBy}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">File Count</Label>
+                        <p className="text-base font-semibold">{selectedVerificationRequest.requestedCount.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Row Range</Label>
+                        <p className="text-base">{selectedVerificationRequest.startRow.toLocaleString()} - {selectedVerificationRequest.endRow.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Submitted Date</Label>
+                        <p className="text-base">{new Date(selectedVerificationRequest.submittedDate).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Uploaded File Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-green-500" />
+                    Uploaded File
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-green-600" />
+                        <span className="font-medium text-green-800">{selectedVerificationRequest.uploadedFile.name}</span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Simulate file download
+                          const link = document.createElement('a');
+                          link.href = '#';
+                          link.download = selectedVerificationRequest.uploadedFile.name;
+                          link.click();
+                        }}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-green-700">File Size:</span>
+                        <span className="ml-2 font-medium">{(selectedVerificationRequest.uploadedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <div>
+                        <span className="text-green-700">Upload Date:</span>
+                        <span className="ml-2 font-medium">{new Date(selectedVerificationRequest.uploadedFile.uploadDate).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* User Notes */}
+              {selectedVerificationRequest.notes && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">User Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <p className="text-sm">{selectedVerificationRequest.notes}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Verification Notes */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Verification Notes</CardTitle>
+                  <CardDescription>
+                    Add notes about your review (required for rejection, optional for approval)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg resize-none"
+                    rows={4}
+                    placeholder="Enter your verification notes here..."
+                    value={verificationNotes}
+                    onChange={(e) => setVerificationNotes(e.target.value)}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  This action will notify the user of your decision via email.
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!verificationNotes.trim()) {
+                        alert('Please provide verification notes for rejection.');
+                        return;
+                      }
+                      handleVerificationApproval(selectedVerificationRequest.id, 'reject');
+                    }}
+                    className="border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                  <Button
+                    onClick={() => handleVerificationApproval(selectedVerificationRequest.id, 'approve')}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsVerificationDialogOpen(false);
+              setSelectedVerificationRequest(null);
+              setVerificationNotes('');
+            }}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
