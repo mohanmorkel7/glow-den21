@@ -219,38 +219,56 @@ export default function RequestFiles() {
   };
 
   const handleStatusUpdate = (requestId: string, newStatus: 'in_progress' | 'completed') => {
-    setFileRequests(fileRequests.map(request => 
+    if (newStatus === 'completed') {
+      // Open upload dialog instead of directly completing
+      setSelectedRequestForUpload(requestId);
+      setIsUploadDialogOpen(true);
+      return;
+    }
+
+    // For other status changes, proceed normally
+    setFileRequests(fileRequests.map(request =>
       request.id === requestId
-        ? { 
-            ...request, 
-            status: newStatus,
-            completedDate: newStatus === 'completed' ? new Date().toISOString() : undefined
+        ? { ...request, status: newStatus }
+        : request
+    ));
+  };
+
+  const handleFileUpload = () => {
+    if (!uploadedFile || !selectedRequestForUpload) return;
+
+    // Validate file type
+    if (!uploadedFile.name.toLowerCase().endsWith('.zip')) {
+      alert('Please upload a ZIP file only.');
+      return;
+    }
+
+    // Update request with uploaded file and set status to pending_verification
+    setFileRequests(fileRequests.map(request =>
+      request.id === selectedRequestForUpload
+        ? {
+            ...request,
+            status: 'pending_verification',
+            completedDate: new Date().toISOString(),
+            outputFile: {
+              name: uploadedFile.name,
+              size: uploadedFile.size,
+              uploadDate: new Date().toISOString()
+            },
+            verificationStatus: 'pending'
           }
         : request
     ));
 
-    if (newStatus === 'completed') {
-      const request = fileRequests.find(r => r.id === requestId);
-      if (request) {
-        // Update daily stats
-        const today = new Date().toISOString().split('T')[0];
-        setDailyStats(stats => {
-          const existingStats = stats.find(s => s.date === today);
-          if (existingStats) {
-            return stats.map(s => 
-              s.date === today 
-                ? { ...s, completedCount: s.completedCount + request.requestedCount }
-                : s
-            );
-          } else {
-            return [{
-              date: today,
-              completedCount: request.requestedCount,
-              totalAssigned: request.requestedCount
-            }, ...stats];
-          }
-        });
-      }
+    // Reset upload state
+    setIsUploadDialogOpen(false);
+    setSelectedRequestForUpload(null);
+    setUploadedFile(null);
+
+    // Clear file input
+    const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
     }
   };
 
