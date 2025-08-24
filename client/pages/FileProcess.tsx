@@ -425,6 +425,7 @@ export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [fileProcesses, setFileProcesses] = useState<FileProcess[]>(mockFileProcesses);
   const [fileRequests, setFileRequests] = useState<FileRequest[]>(mockFileRequests);
+  const [verificationRequests, setVerificationRequests] = useState(mockVerificationRequests);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<FileProcess | null>(null);
   const [isOverviewDialogOpen, setIsOverviewDialogOpen] = useState(false);
