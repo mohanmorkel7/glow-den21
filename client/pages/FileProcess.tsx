@@ -351,6 +351,76 @@ const mockHistoricalAssignments: HistoricalAssignment[] = [
   }
 ];
 
+// Mock verification requests - files uploaded by users awaiting approval
+const mockVerificationRequests = [
+  {
+    id: 'vr_1',
+    userId: '3',
+    userName: 'Sarah Johnson',
+    userEmail: 'sarah.johnson@websyntactic.com',
+    fileProcessId: 'fp_1',
+    fileProcessName: 'Aug-2025-File',
+    requestedCount: 1000,
+    startRow: 1001,
+    endRow: 2000,
+    uploadedFile: {
+      name: 'sarah_johnson_completed_work.zip',
+      size: 15728640, // 15MB
+      uploadDate: '2024-01-21T16:30:00Z'
+    },
+    status: 'pending_verification',
+    submittedDate: '2024-01-21T16:30:00Z',
+    notes: 'Completed all 1000 records with data validation and quality checks.',
+    assignedBy: 'John Smith',
+    assignedDate: '2024-01-20T11:00:00Z'
+  },
+  {
+    id: 'vr_2',
+    userId: '4',
+    userName: 'Mike Davis',
+    userEmail: 'mike.davis@websyntactic.com',
+    fileProcessId: 'fp_1',
+    fileProcessName: 'Aug-2025-File',
+    requestedCount: 800,
+    startRow: 2001,
+    endRow: 2800,
+    uploadedFile: {
+      name: 'mike_davis_processed_files.zip',
+      size: 12582912, // 12MB
+      uploadDate: '2024-01-21T18:45:00Z'
+    },
+    status: 'pending_verification',
+    submittedDate: '2024-01-21T18:45:00Z',
+    notes: 'All files processed according to specifications. Included summary report.',
+    assignedBy: 'Emily Wilson',
+    assignedDate: '2024-01-20T14:30:00Z'
+  },
+  {
+    id: 'vr_3',
+    userId: '5',
+    userName: 'David Chen',
+    userEmail: 'david.chen@websyntactic.com',
+    fileProcessId: 'fp_2',
+    fileProcessName: 'July-2025-Invoice',
+    requestedCount: 1200,
+    startRow: 1,
+    endRow: 1200,
+    uploadedFile: {
+      name: 'david_chen_invoice_processing.zip',
+      size: 8388608, // 8MB
+      uploadDate: '2024-01-20T20:15:00Z'
+    },
+    status: 'verified',
+    submittedDate: '2024-01-20T20:15:00Z',
+    verifiedDate: '2024-01-21T10:00:00Z',
+    verifiedBy: 'Emily Wilson',
+    verificationNotes: 'Excellent work. All invoices processed correctly with proper formatting.',
+    notes: 'Processed all invoice data with accuracy checks. Ready for review.',
+    assignedBy: 'John Smith',
+    assignedDate: '2024-01-19T09:00:00Z'
+  }
+];
+
 export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [fileProcesses, setFileProcesses] = useState<FileProcess[]>(mockFileProcesses);
