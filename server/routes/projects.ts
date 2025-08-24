@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { query, paginatedQuery, transaction } from "../db/connection.js";
+import { query, paginatedQuery, transaction } from "../db/connection";
 import {
   Project,
   CreateProjectRequest,
