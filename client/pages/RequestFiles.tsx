@@ -758,7 +758,7 @@ export default function RequestFiles() {
 
       {/* File Upload Dialog */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5 text-blue-500" />
@@ -910,7 +910,7 @@ export default function RequestFiles() {
               <textarea
                 id="uploadNotes"
                 className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                rows={3}
+                rows={5}
                 placeholder="Add any notes about your completed work, issues encountered, or additional information for the project manager..."
                 value={uploadNotes}
                 onChange={(e) => setUploadNotes(e.target.value)}
