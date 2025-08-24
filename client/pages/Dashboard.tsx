@@ -241,31 +241,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <FileText className="h-5 w-5" />
-                <span className="text-sm">Request Files</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <BarChart3 className="h-5 w-5" />
-                <span className="text-sm">Daily Counts</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
-                <Activity className="h-5 w-5" />
-                <span className="text-sm">View Reports</span>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
