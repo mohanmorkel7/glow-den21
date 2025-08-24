@@ -45,6 +45,7 @@ interface FileRequest {
     size: number;
     uploadDate: string;
   };
+  notes?: string;
   verificationStatus?: 'pending' | 'approved' | 'rejected';
   verifiedBy?: string;
   verifiedDate?: string;
