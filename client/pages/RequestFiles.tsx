@@ -522,7 +522,7 @@ export default function RequestFiles() {
                                 {request.downloadLink.split('/').pop() || 'Download File'}
                               </Button>
                             )}
-                            {(request.status === 'in_progress' || request.status === 'completed') && (
+                            {request.status === 'in_progress' && (
                               <Select
                                 value={request.status}
                                 onValueChange={(value) => handleStatusUpdate(request.id, value as 'in_progress' | 'completed')}
@@ -545,6 +545,34 @@ export default function RequestFiles() {
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
+                            )}
+                            {request.status === 'pending_verification' && (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-cyan-100 text-cyan-800">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Pending Verification
+                                </Badge>
+                                {request.outputFile && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    {request.outputFile.name}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                            {request.status === 'verified' && (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-emerald-100 text-emerald-800">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                                {request.outputFile && (
+                                  <Badge variant="outline" className="text-xs">
+                                    <FileText className="h-3 w-3 mr-1" />
+                                    {request.outputFile.name}
+                                  </Badge>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
