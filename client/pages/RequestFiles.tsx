@@ -749,6 +749,144 @@ export default function RequestFiles() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* File Upload Dialog */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-blue-500" />
+              Upload Completed Work
+            </DialogTitle>
+            <DialogDescription>
+              Upload your completed work files in ZIP format for project manager verification.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Request Details */}
+            {selectedRequestForUpload && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Request Details</h4>
+                {(() => {
+                  const request = fileRequests.find(r => r.id === selectedRequestForUpload);
+                  return request ? (
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <p><strong>File Process:</strong> {request.fileProcessName || 'File Request'}</p>
+                      <p><strong>File Count:</strong> {request.requestedCount.toLocaleString()}</p>
+                      {request.startRow && request.endRow && (
+                        <p><strong>Row Range:</strong> {request.startRow.toLocaleString()} - {request.endRow.toLocaleString()}</p>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            )}
+
+            {/* File Upload */}
+            <div className="space-y-3">
+              <Label htmlFor="fileUpload" className="text-base font-medium">
+                Upload Completed Files (ZIP format only)
+              </Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                <Input
+                  id="fileUpload"
+                  type="file"
+                  accept=".zip"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (!file.name.toLowerCase().endsWith('.zip')) {
+                        alert('Please select a ZIP file only.');
+                        e.target.value = '';
+                        return;
+                      }
+                      setUploadedFile(file);
+                    }
+                  }}
+                  className="hidden"
+                />
+                <div className="space-y-2">
+                  <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                  <div>
+                    <Label
+                      htmlFor="fileUpload"
+                      className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Click to browse files
+                    </Label>
+                    <p className="text-sm text-gray-500">or drag and drop your ZIP file here</p>
+                  </div>
+                  <p className="text-xs text-gray-400">Maximum file size: 100MB</p>
+                </div>
+              </div>
+
+              {/* Selected File Display */}
+              {uploadedFile && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-green-600" />
+                      <div>
+                        <p className="text-sm font-medium text-green-800">{uploadedFile.name}</p>
+                        <p className="text-xs text-green-600">
+                          {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setUploadedFile(null);
+                        const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+                        if (fileInput) fileInput.value = '';
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Instructions */}
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Important Instructions
+              </h4>
+              <ul className="text-sm text-yellow-700 space-y-1 list-disc list-inside">
+                <li>Upload your completed work files in ZIP format only</li>
+                <li>Ensure all processed files are included in the ZIP</li>
+                <li>Your work will be reviewed by a project manager</li>
+                <li>Task will be marked complete only after approval</li>
+                <li>You will be notified of the verification result</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsUploadDialogOpen(false);
+              setSelectedRequestForUpload(null);
+              setUploadedFile(null);
+              const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+              if (fileInput) fileInput.value = '';
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleFileUpload}
+              disabled={!uploadedFile}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Submit for Verification
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
