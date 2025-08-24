@@ -149,7 +149,7 @@ export default function RequestFiles() {
   const handleFileRequest = () => {
     // Check if user has any pending or in-progress requests
     const hasActiveRequests = getCurrentUserRequests().some(req =>
-      req.status === 'pending' || req.status === 'in_progress'
+      req.status === 'pending' || req.status === 'in_progress' || req.status === 'pending_verification'
     );
 
     if (hasActiveRequests) {
