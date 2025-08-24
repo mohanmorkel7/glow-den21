@@ -630,6 +630,38 @@ export default function FileProcess() {
     setIsBreakdownDialogOpen(true);
   };
 
+  const handleVerificationReview = (request: any) => {
+    setSelectedVerificationRequest(request);
+    setVerificationNotes(request.verificationNotes || '');
+    setIsVerificationDialogOpen(true);
+  };
+
+  const handleVerificationApproval = (requestId: string, action: 'approve' | 'reject') => {
+    setVerificationRequests(prev => prev.map(request =>
+      request.id === requestId
+        ? {
+            ...request,
+            status: action === 'approve' ? 'verified' : 'rejected',
+            verifiedDate: new Date().toISOString(),
+            verifiedBy: currentUser?.name || 'Project Manager',
+            verificationNotes: verificationNotes
+          }
+        : request
+    ));
+
+    setIsVerificationDialogOpen(false);
+    setSelectedVerificationRequest(null);
+    setVerificationNotes('');
+  };
+
+  const getPendingVerifications = () => {
+    return verificationRequests.filter(req => req.status === 'pending_verification');
+  };
+
+  const getVerifiedFiles = () => {
+    return verificationRequests.filter(req => req.status === 'verified' || req.status === 'rejected');
+  };
+
   const handleStatusChange = (processId: string, newStatus: string) => {
     const updatedProcesses = fileProcesses.map(p => {
       if (p.id === processId) {
