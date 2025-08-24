@@ -122,6 +122,8 @@ export default function RequestFiles() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedRequestForUpload, setSelectedRequestForUpload] = useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadNotes, setUploadNotes] = useState<string>('');
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Only allow users to access this page
   if (currentUser?.role !== 'user') {
@@ -788,7 +790,44 @@ export default function RequestFiles() {
               <Label htmlFor="fileUpload" className="text-base font-medium">
                 Upload Completed Files (ZIP format only)
               </Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  isDragOver
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-300 hover:border-blue-400'
+                }`}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    if (!file.name.toLowerCase().endsWith('.zip')) {
+                      alert('Please select a ZIP file only.');
+                      return;
+                    }
+                    if (file.size > 100 * 1024 * 1024) {
+                      alert('File size must be less than 100MB.');
+                      return;
+                    }
+                    setUploadedFile(file);
+                  }
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  // Only set to false if we're leaving the drop zone completely
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setIsDragOver(false);
+                  }
+                }}
+              >
                 <Input
                   id="fileUpload"
                   type="file"
@@ -801,13 +840,20 @@ export default function RequestFiles() {
                         e.target.value = '';
                         return;
                       }
+                      if (file.size > 100 * 1024 * 1024) {
+                        alert('File size must be less than 100MB.');
+                        e.target.value = '';
+                        return;
+                      }
                       setUploadedFile(file);
                     }
                   }}
                   className="hidden"
                 />
                 <div className="space-y-2">
-                  <Upload className="h-8 w-8 text-gray-400 mx-auto" />
+                  <Upload className={`h-8 w-8 mx-auto ${
+                    isDragOver ? 'text-blue-500' : 'text-gray-400'
+                  }`} />
                   <div>
                     <Label
                       htmlFor="fileUpload"
@@ -815,7 +861,9 @@ export default function RequestFiles() {
                     >
                       Click to browse files
                     </Label>
-                    <p className="text-sm text-gray-500">or drag and drop your ZIP file here</p>
+                    <p className={`text-sm ${
+                      isDragOver ? 'text-blue-600' : 'text-gray-500'
+                    }`}>or drag and drop your ZIP file here</p>
                   </div>
                   <p className="text-xs text-gray-400">Maximum file size: 100MB</p>
                 </div>
@@ -850,6 +898,21 @@ export default function RequestFiles() {
               )}
             </div>
 
+            {/* Upload Notes */}
+            <div className="space-y-3">
+              <Label htmlFor="uploadNotes" className="text-base font-medium">
+                Notes (Optional)
+              </Label>
+              <textarea
+                id="uploadNotes"
+                className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                rows={3}
+                placeholder="Add any notes about your completed work, issues encountered, or additional information for the project manager..."
+                value={uploadNotes}
+                onChange={(e) => setUploadNotes(e.target.value)}
+              />
+            </div>
+
             {/* Instructions */}
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <h4 className="font-medium text-yellow-800 mb-2 flex items-center gap-2">
@@ -871,6 +934,8 @@ export default function RequestFiles() {
               setIsUploadDialogOpen(false);
               setSelectedRequestForUpload(null);
               setUploadedFile(null);
+              setUploadNotes('');
+              setIsDragOver(false);
               const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
               if (fileInput) fileInput.value = '';
             }}>
