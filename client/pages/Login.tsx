@@ -33,12 +33,11 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <img
-              src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F195ccef20b1d4ea9abad63edcc7a7f8b?format=webp&width=800"
+              src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F9fe8c5272344441a957370f018a36cf2?format=webp&width=800"
               alt="Web Syntactic Solutions Logo"
-              className="h-12 w-12 object-contain"
+              className="h-16 w-auto object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Web Syntactic Solutions</h1>
           <p className="text-muted-foreground mt-2">BPO Management Platform</p>
         </div>
 
