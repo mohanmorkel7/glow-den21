@@ -268,6 +268,55 @@ export default function Expense() {
     return `₹${amount.toLocaleString('en-IN')}`;
   };
 
+  // Handler functions for expense management
+  const handleViewExpense = (expense: ExpenseEntry) => {
+    setSelectedExpense(expense);
+    setIsViewExpenseOpen(true);
+  };
+
+  const handleEditExpense = (expense: ExpenseEntry) => {
+    setSelectedExpense(expense);
+    setIsEditExpenseOpen(true);
+  };
+
+  const handleDeleteExpense = (expense: ExpenseEntry) => {
+    if (window.confirm(`Are you sure you want to delete the expense "${expense.description}"?`)) {
+      // In a real application, you would call an API to delete the expense
+      console.log('Deleting expense:', expense.id);
+      alert('Expense deleted successfully!');
+    }
+  };
+
+  const handleExportReport = () => {
+    // Generate CSV data for export
+    const csvData = [
+      ['Date', 'Category', 'Type', 'Description', 'Amount', 'Status', 'Approved By'],
+      ...expenseEntries.map(entry => [
+        new Date(entry.date).toLocaleDateString(),
+        entry.category,
+        entry.type,
+        entry.description,
+        entry.amount.toString(),
+        entry.status,
+        entry.approvedBy
+      ])
+    ];
+
+    const csvContent = csvData.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `expense-report-${selectedMonth}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
