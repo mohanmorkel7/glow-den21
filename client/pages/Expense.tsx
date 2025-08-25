@@ -487,30 +487,109 @@ export default function Expense() {
                     Update Salary Config
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[600px] max-h-[70vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Update Salary Configuration</DialogTitle>
-                    <DialogDescription>Update file-based rates and salary settings</DialogDescription>
+                    <DialogDescription>Configure salary rates and limits for users and project managers</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstTierRate">First 500 Files Rate (₹)</Label>
-                        <Input type="number" step="0.01" defaultValue="0.50" />
+                  <div className="space-y-6">
+                    {/* User Configuration */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-lg">User File-Based Salary</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstTierRate">First Tier Rate (₹)</Label>
+                          <Input
+                            id="firstTierRate"
+                            type="number"
+                            step="0.01"
+                            defaultValue="0.50"
+                          />
+                          <p className="text-xs text-muted-foreground">Per file rate for first tier</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="secondTierRate">Second Tier Rate (₹)</Label>
+                          <Input
+                            id="secondTierRate"
+                            type="number"
+                            step="0.01"
+                            defaultValue="0.60"
+                          />
+                          <p className="text-xs text-muted-foreground">Per file rate for second tier</p>
+                        </div>
                       </div>
-                      <div>
-                        <Label htmlFor="secondTierRate">After 500 Files Rate (₹)</Label>
-                        <Input type="number" step="0.01" defaultValue="0.60" />
+                      <div className="space-y-2">
+                        <Label htmlFor="firstTierLimit">First Tier Limit (Files)</Label>
+                        <Input
+                          id="firstTierLimit"
+                          type="number"
+                          defaultValue="500"
+                        />
+                        <p className="text-xs text-muted-foreground">Number of files for first tier pricing</p>
                       </div>
                     </div>
-                    <div>
-                      <Label htmlFor="pmSalary">Project Manager Monthly Salary</Label>
-                      <Input type="number" placeholder="Enter monthly salary" />
+
+                    {/* Project Manager Configuration */}
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-lg">Project Manager Individual Salaries</h4>
+                      <div className="space-y-3">
+                        <div className="space-y-2 p-3 border border-gray-200 rounded-lg">
+                          <Label htmlFor="salary-pm1">Emily Wilson - Monthly Salary (₹)</Label>
+                          <Input
+                            id="salary-pm1"
+                            type="number"
+                            defaultValue="30000"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Current: ₹30,000.00 | Role: Project Manager | ID: PM_001
+                          </p>
+                        </div>
+                        <div className="space-y-2 p-3 border border-gray-200 rounded-lg">
+                          <Label htmlFor="salary-pm2">John Smith - Monthly Salary (₹)</Label>
+                          <Input
+                            id="salary-pm2"
+                            type="number"
+                            defaultValue="20000"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Current: ₹20,000.00 | Role: Project Manager | ID: PM_002
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Configure individual monthly salaries for each project manager. Changes allow for increments/decrements.
+                      </p>
+                    </div>
+
+                    {/* Current Summary */}
+                    <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-blue-800">Current Configuration Summary</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">First 500 files:</span>
+                          <span className="ml-2 font-medium text-green-600">₹0.50 per file</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">After 500 files:</span>
+                          <span className="ml-2 font-medium text-green-600">₹0.60 per file</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Total PM Salaries:</span>
+                          <span className="ml-2 font-medium text-purple-600">₹50,000.00</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Est. User Earnings:</span>
+                          <span className="ml-2 font-medium text-blue-600">₹31,960.00</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsAddSalaryOpen(false)}>Cancel</Button>
-                    <Button onClick={() => setIsAddSalaryOpen(false)}>Save Configuration</Button>
+                    <Button onClick={() => setIsAddSalaryOpen(false)}>
+                      <Calculator className="h-4 w-4 mr-2" />
+                      Save Configuration
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
