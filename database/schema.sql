@@ -591,6 +591,112 @@ CREATE TRIGGER trigger_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXEC
 CREATE TRIGGER trigger_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trigger_roles_updated_at BEFORE UPDATE ON roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER trigger_daily_counts_updated_at BEFORE UPDATE ON daily_counts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trigger_expenses_updated_at BEFORE UPDATE ON expenses FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trigger_pm_salaries_updated_at BEFORE UPDATE ON pm_salaries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trigger_monthly_budgets_updated_at BEFORE UPDATE ON monthly_budgets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trigger_expense_categories_updated_at BEFORE UPDATE ON expense_categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Function to update monthly budget spent amounts
+CREATE OR REPLACE FUNCTION update_monthly_budget_spent()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Update spent amount for the affected month and type
+    UPDATE monthly_budgets
+    SET spent_amount = (
+        SELECT COALESCE(SUM(amount), 0)
+        FROM expenses
+        WHERE month = COALESCE(NEW.month, OLD.month)
+        AND type = COALESCE(NEW.type, OLD.type)
+        AND status = 'approved'
+    ),
+    updated_at = CURRENT_TIMESTAMP
+    WHERE month = COALESCE(NEW.month, OLD.month)
+    AND type = COALESCE(NEW.type, OLD.type);
+
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to auto-update monthly budget spent amounts
+CREATE TRIGGER trigger_update_monthly_budget_spent
+    AFTER INSERT OR UPDATE OR DELETE ON expenses
+    FOR EACH ROW
+    EXECUTE FUNCTION update_monthly_budget_spent();
+
+-- Function to calculate and cache monthly financial summary
+CREATE OR REPLACE FUNCTION update_monthly_financial_summary(target_month VARCHAR(7))
+RETURNS VOID AS $$
+DECLARE
+    summary_data RECORD;
+BEGIN
+    -- Calculate all financial data for the month
+    SELECT
+        -- Revenue (placeholder - would come from project billing)
+        420000.00 as project_revenue,
+        0.00 as other_revenue,
+        420000.00 as total_revenue,
+
+        -- User salaries (from user_salary_tracking)
+        COALESCE((SELECT SUM(total_earnings) FROM user_salary_tracking
+                  WHERE DATE_TRUNC('month', date) = (target_month || '-01')::DATE), 0) as user_salaries,
+
+        -- PM salaries (from pm_salaries)
+        COALESCE((SELECT SUM(ps.monthly_salary) FROM pm_salaries ps
+                  WHERE ps.is_active = true
+                  AND ps.effective_from <= (target_month || '-01')::DATE), 0) as pm_salaries,
+
+        -- Administrative expenses by type
+        COALESCE((SELECT SUM(amount) FROM expenses WHERE month = target_month AND type = 'administrative' AND status = 'approved'), 0) as admin_expenses,
+        COALESCE((SELECT SUM(amount) FROM expenses WHERE month = target_month AND type = 'operational' AND status = 'approved'), 0) as operational_expenses,
+        COALESCE((SELECT SUM(amount) FROM expenses WHERE month = target_month AND type = 'marketing' AND status = 'approved'), 0) as marketing_expenses,
+        COALESCE((SELECT SUM(amount) FROM expenses WHERE month = target_month AND type = 'utilities' AND status = 'approved'), 0) as utilities_expenses,
+        COALESCE((SELECT SUM(amount) FROM expenses WHERE month = target_month AND type = 'miscellaneous' AND status = 'approved'), 0) as misc_expenses
+    INTO summary_data;
+
+    -- Calculate totals
+    summary_data.total_salaries := summary_data.user_salaries + summary_data.pm_salaries;
+    summary_data.total_admin_expenses := summary_data.admin_expenses + summary_data.operational_expenses +
+                                        summary_data.marketing_expenses + summary_data.utilities_expenses + summary_data.misc_expenses;
+    summary_data.total_expenses := summary_data.total_salaries + summary_data.total_admin_expenses;
+    summary_data.net_profit := summary_data.total_revenue - summary_data.total_expenses;
+    summary_data.profit_margin := CASE
+        WHEN summary_data.total_revenue > 0 THEN (summary_data.net_profit / summary_data.total_revenue * 100)
+        ELSE 0
+    END;
+
+    -- Insert or update the summary
+    INSERT INTO monthly_financial_summary (
+        month, project_revenue, other_revenue, total_revenue,
+        user_salaries, pm_salaries, total_salaries,
+        admin_expenses, operational_expenses, marketing_expenses, utilities_expenses, misc_expenses, total_admin_expenses,
+        total_expenses, net_profit, profit_margin
+    ) VALUES (
+        target_month, summary_data.project_revenue, summary_data.other_revenue, summary_data.total_revenue,
+        summary_data.user_salaries, summary_data.pm_salaries, summary_data.total_salaries,
+        summary_data.admin_expenses, summary_data.operational_expenses, summary_data.marketing_expenses,
+        summary_data.utilities_expenses, summary_data.misc_expenses, summary_data.total_admin_expenses,
+        summary_data.total_expenses, summary_data.net_profit, summary_data.profit_margin
+    )
+    ON CONFLICT (month) DO UPDATE SET
+        project_revenue = EXCLUDED.project_revenue,
+        other_revenue = EXCLUDED.other_revenue,
+        total_revenue = EXCLUDED.total_revenue,
+        user_salaries = EXCLUDED.user_salaries,
+        pm_salaries = EXCLUDED.pm_salaries,
+        total_salaries = EXCLUDED.total_salaries,
+        admin_expenses = EXCLUDED.admin_expenses,
+        operational_expenses = EXCLUDED.operational_expenses,
+        marketing_expenses = EXCLUDED.marketing_expenses,
+        utilities_expenses = EXCLUDED.utilities_expenses,
+        misc_expenses = EXCLUDED.misc_expenses,
+        total_admin_expenses = EXCLUDED.total_admin_expenses,
+        total_expenses = EXCLUDED.total_expenses,
+        net_profit = EXCLUDED.net_profit,
+        profit_margin = EXCLUDED.profit_margin,
+        last_calculated = CURRENT_TIMESTAMP,
+        calculation_version = monthly_financial_summary.calculation_version + 1;
+END;
+$$ LANGUAGE plpgsql;
 
 -- ====================
 -- INITIAL DATA SEEDING
