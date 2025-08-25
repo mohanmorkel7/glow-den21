@@ -757,6 +757,22 @@ INSERT INTO security_settings DEFAULT VALUES;
 -- Insert default email integration (unconfigured)
 INSERT INTO email_integration DEFAULT VALUES;
 
+-- Insert default salary configuration
+INSERT INTO salary_config DEFAULT VALUES;
+
+-- Insert default expense categories
+INSERT INTO expense_categories (name, type, description, requires_approval, requires_receipt) VALUES
+('Office Rent', 'administrative', 'Monthly office space rental costs', true, true),
+('Utilities', 'utilities', 'Electricity, water, internet, and phone bills', true, true),
+('Software Licenses', 'operational', 'Annual and monthly software subscription costs', true, false),
+('Marketing Campaigns', 'marketing', 'Digital marketing and advertising expenses', true, true),
+('Office Supplies', 'administrative', 'Stationery, equipment, and miscellaneous supplies', false, false),
+('Travel Expenses', 'administrative', 'Business travel and transportation costs', true, true),
+('Equipment Purchase', 'operational', 'Computer hardware and office equipment', true, true),
+('Professional Services', 'operational', 'Consulting, legal, and accounting services', true, true),
+('Employee Benefits', 'administrative', 'Health insurance, retirement, and other benefits', true, false),
+('Maintenance', 'operational', 'Equipment and facility maintenance costs', false, true);
+
 -- Comments for documentation
 COMMENT ON TABLE users IS 'Core user accounts with authentication and profile information';
 COMMENT ON TABLE projects IS 'Project definitions with progress tracking';
