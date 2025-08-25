@@ -345,7 +345,7 @@ export default function Tutorial() {
     isRequired: false
   });
 
-  // Mock data for tutorials
+  // Mock data for tutorials with sample videos
   const mockTutorials: Tutorial[] = [
     {
       id: '1',
@@ -353,28 +353,36 @@ export default function Tutorial() {
       description: 'Learn the basics of navigating and using the BPO management platform',
       category: 'getting_started',
       status: 'published',
-      videoUrl: undefined, // No video uploaded yet
-      instructions: '<h2>Welcome to the Platform</h2><p>This tutorial will guide you through the basic features...</p>',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', // Sample video
+      videoDuration: 596, // 9:56 duration
+      instructions: '<h2>Welcome to the Platform</h2><p>This tutorial will guide you through the basic features of our BPO management system. You\'ll learn how to navigate the dashboard, access different modules, and understand the overall workflow.</p><h3>What you\'ll learn:</h3><ul><li>Platform navigation</li><li>Dashboard overview</li><li>Basic user interface elements</li><li>Getting help and support</li></ul>',
       steps: [
         {
           id: 'step1',
           stepNumber: 1,
           title: 'Login to your account',
-          description: 'Enter your credentials and click sign in',
+          description: 'Enter your credentials and click sign in. Make sure to use the correct email format.',
           isRequired: true
         },
         {
           id: 'step2',
           stepNumber: 2,
           title: 'Navigate the dashboard',
-          description: 'Explore the main dashboard and its features',
+          description: 'Explore the main dashboard and its features. Notice the sidebar navigation and main content area.',
           isRequired: true
+        },
+        {
+          id: 'step3',
+          stepNumber: 3,
+          title: 'Access your profile',
+          description: 'Click on your profile icon to view and update your personal information.',
+          isRequired: false
         }
       ],
-      targetRoles: ['user', 'project_manager'],
+      targetRoles: ['user', 'project_manager', 'super_admin'],
       isRequired: true,
       order: 1,
-      tags: ['basics', 'navigation', 'dashboard'],
+      tags: ['basics', 'navigation', 'dashboard', 'login'],
       createdBy: {
         id: 'admin',
         name: 'Admin User'
@@ -390,35 +398,36 @@ export default function Tutorial() {
       description: 'Learn how to submit your daily work counts and track progress',
       category: 'daily_tasks',
       status: 'published',
-      videoUrl: '/api/videos/daily-counts-demo.mp4', // Mock video path
-      instructions: '<h2>Submitting Daily Counts</h2><p>Follow these steps to submit your daily work...</p>',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', // Sample video
+      videoDuration: 653, // 10:53 duration
+      instructions: '<h2>Submitting Daily Counts</h2><p>This tutorial covers the complete process of submitting your daily work counts. This is essential for tracking productivity and ensuring accurate payroll calculations.</p><h3>Key Points:</h3><ul><li>Daily submission deadlines</li><li>File count accuracy</li><li>Approval workflow</li><li>Tracking your progress</li></ul>',
       steps: [
         {
           id: 'step1',
           stepNumber: 1,
           title: 'Navigate to Daily Counts',
-          description: 'Click on the Daily Counts menu item',
+          description: 'Click on the Daily Counts menu item from the sidebar navigation.',
           isRequired: true
         },
         {
           id: 'step2',
           stepNumber: 2,
           title: 'Enter your counts',
-          description: 'Fill in the number of files processed',
+          description: 'Fill in the number of files processed for the current day. Be accurate with your counts.',
           isRequired: true
         },
         {
           id: 'step3',
           stepNumber: 3,
           title: 'Submit for approval',
-          description: 'Click submit to send for manager approval',
+          description: 'Click submit to send your counts to your manager for approval. You can add notes if needed.',
           isRequired: true
         }
       ],
-      targetRoles: ['user'],
+      targetRoles: ['user', 'super_admin'],
       isRequired: true,
       order: 2,
-      tags: ['daily', 'counts', 'submission'],
+      tags: ['daily', 'counts', 'submission', 'tracking'],
       createdBy: {
         id: 'admin',
         name: 'Admin User'
@@ -434,28 +443,36 @@ export default function Tutorial() {
       description: 'Understanding how to manage projects and assign tasks to team members',
       category: 'projects',
       status: 'published',
-      videoUrl: undefined,
-      instructions: '<h2>Project Management</h2><p>As a project manager, you can create and manage projects...</p>',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', // Sample video
+      videoDuration: 15, // 0:15 duration - short demo
+      instructions: '<h2>Project Management</h2><p>As a project manager, you can create and manage projects effectively using our platform. This tutorial covers the essential features for successful project coordination.</p><h3>Topics covered:</h3><ul><li>Creating new projects</li><li>Assigning team members</li><li>Setting deadlines and targets</li><li>Monitoring progress</li><li>Managing project resources</li></ul>',
       steps: [
         {
           id: 'step1',
           stepNumber: 1,
           title: 'Create a new project',
-          description: 'Click the add project button and fill in details',
+          description: 'Click the add project button and fill in all required details including name, description, and timeline.',
           isRequired: true
         },
         {
           id: 'step2',
           stepNumber: 2,
           title: 'Assign team members',
-          description: 'Select users to assign to the project',
+          description: 'Select appropriate users to assign to the project based on their skills and availability.',
+          isRequired: true
+        },
+        {
+          id: 'step3',
+          stepNumber: 3,
+          title: 'Set project targets',
+          description: 'Define file processing targets and deadlines for the project.',
           isRequired: true
         }
       ],
-      targetRoles: ['project_manager'],
+      targetRoles: ['project_manager', 'super_admin'],
       isRequired: true,
       order: 1,
-      tags: ['projects', 'management', 'assignment'],
+      tags: ['projects', 'management', 'assignment', 'planning'],
       createdBy: {
         id: 'pm1',
         name: 'Emily Wilson'
@@ -464,6 +481,96 @@ export default function Tutorial() {
       updatedAt: '2024-01-16T00:00:00Z',
       viewCount: 78,
       completionCount: 45
+    },
+    {
+      id: '4',
+      title: 'Reports and Analytics',
+      description: 'Learn how to generate and interpret reports for better decision making',
+      category: 'reports',
+      status: 'published',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', // Sample video
+      videoDuration: 15, // 0:15 duration
+      instructions: '<h2>Reports and Analytics</h2><p>Understanding reports and analytics is crucial for making informed business decisions. This tutorial will guide you through the various reports available and how to interpret the data.</p><h3>Report Types:</h3><ul><li>Productivity reports</li><li>Team performance analytics</li><li>Project progress reports</li><li>Financial summaries</li></ul>',
+      steps: [
+        {
+          id: 'step1',
+          stepNumber: 1,
+          title: 'Access the Reports section',
+          description: 'Navigate to the Reports menu from the sidebar.',
+          isRequired: true
+        },
+        {
+          id: 'step2',
+          stepNumber: 2,
+          title: 'Select report type',
+          description: 'Choose the appropriate report type based on your needs.',
+          isRequired: true
+        },
+        {
+          id: 'step3',
+          stepNumber: 3,
+          title: 'Generate and export',
+          description: 'Generate the report and export it if needed for sharing.',
+          isRequired: false
+        }
+      ],
+      targetRoles: ['project_manager', 'super_admin'],
+      isRequired: false,
+      order: 1,
+      tags: ['reports', 'analytics', 'data', 'insights'],
+      createdBy: {
+        id: 'admin',
+        name: 'Admin User'
+      },
+      createdAt: '2024-01-17T00:00:00Z',
+      updatedAt: '2024-01-17T00:00:00Z',
+      viewCount: 124,
+      completionCount: 89
+    },
+    {
+      id: '5',
+      title: 'Troubleshooting Common Issues',
+      description: 'Solutions for frequently encountered problems and technical issues',
+      category: 'troubleshooting',
+      status: 'published',
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', // Sample video
+      videoDuration: 60, // 1:00 duration
+      instructions: '<h2>Troubleshooting Guide</h2><p>This tutorial addresses the most common issues users encounter and provides step-by-step solutions. Keep this handy for quick problem resolution.</p><h3>Common Issues:</h3><ul><li>Login problems</li><li>File upload errors</li><li>Performance issues</li><li>Data sync problems</li><li>Permission errors</li></ul>',
+      steps: [
+        {
+          id: 'step1',
+          stepNumber: 1,
+          title: 'Identify the problem',
+          description: 'Understand the specific issue you\'re experiencing and note any error messages.',
+          isRequired: true
+        },
+        {
+          id: 'step2',
+          stepNumber: 2,
+          title: 'Try basic solutions',
+          description: 'Start with simple fixes like refreshing the page or logging out and back in.',
+          isRequired: true
+        },
+        {
+          id: 'step3',
+          stepNumber: 3,
+          title: 'Contact support if needed',
+          description: 'If the issue persists, contact technical support with details about the problem.',
+          isRequired: false
+        }
+      ],
+      targetRoles: ['user', 'project_manager', 'super_admin'],
+      isRequired: false,
+      order: 1,
+      tags: ['troubleshooting', 'support', 'problems', 'solutions'],
+      createdBy: {
+        id: 'admin',
+        name: 'Admin User'
+      },
+      createdAt: '2024-01-18T00:00:00Z',
+      updatedAt: '2024-01-18T00:00:00Z',
+      viewCount: 156,
+      completionCount: 98
     }
   ];
 
