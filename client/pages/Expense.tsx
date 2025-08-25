@@ -92,6 +92,9 @@ export default function Expense() {
   const [isAddSalaryOpen, setIsAddSalaryOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isViewExpenseOpen, setIsViewExpenseOpen] = useState(false);
+  const [isEditExpenseOpen, setIsEditExpenseOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(null);
 
   // Mock data for demonstration
   const currentMonth = new Date().toISOString().slice(0, 7);
