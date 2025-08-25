@@ -678,41 +678,71 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start hover:bg-blue-50 hover:border-blue-300 transition-colors"
                 variant="outline"
-                onClick={() => navigate('/users')}
+                onClick={() => {
+                  toast({
+                    title: "Navigating to User Management",
+                    description: "Opening team and user management interface..."
+                  });
+                  navigate('/users');
+                }}
               >
                 <Users className="h-4 w-4 mr-2" />
                 Manage Teams
               </Button>
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start hover:bg-green-50 hover:border-green-300 transition-colors"
                 variant="outline"
-                onClick={() => navigate('/projects')}
+                onClick={() => {
+                  toast({
+                    title: "Opening Project Management",
+                    description: "Accessing project overview and management tools..."
+                  });
+                  navigate('/projects');
+                }}
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
                 View Projects
               </Button>
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start hover:bg-purple-50 hover:border-purple-300 transition-colors"
                 variant="outline"
-                onClick={() => navigate('/reports')}
+                onClick={() => {
+                  toast({
+                    title: "Opening Reports & Analytics",
+                    description: "Loading comprehensive business reports..."
+                  });
+                  navigate('/reports');
+                }}
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Generate Reports
               </Button>
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start hover:bg-orange-50 hover:border-orange-300 transition-colors"
                 variant="outline"
-                onClick={() => navigate('/file-process')}
+                onClick={() => {
+                  toast({
+                    title: "Opening File Process Management",
+                    description: "Accessing target settings and file processing controls..."
+                  });
+                  navigate('/file-process');
+                }}
               >
                 <Target className="h-4 w-4 mr-2" />
                 Set Targets
               </Button>
               <Button
-                className="w-full justify-start"
+                className="w-full justify-start hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
                 variant="outline"
-                onClick={() => navigate('/reports')}
+                onClick={() => {
+                  toast({
+                    title: "Advanced Analytics",
+                    description: "Opening detailed performance analytics dashboard..."
+                  });
+                  navigate('/reports');
+                }}
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 View Analytics
