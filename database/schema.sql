@@ -240,6 +240,145 @@ CREATE TABLE security_settings (
 );
 
 -- ====================
+-- EXPENSE MANAGEMENT
+-- ====================
+
+-- Expense types and statuses
+CREATE TYPE expense_type AS ENUM ('administrative', 'operational', 'marketing', 'utilities', 'miscellaneous');
+CREATE TYPE expense_status AS ENUM ('pending', 'approved', 'rejected');
+
+-- Salary configuration (singleton table)
+CREATE TABLE salary_config (
+    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1), -- singleton
+    first_tier_rate DECIMAL(10,4) NOT NULL DEFAULT 0.50, -- Rate per file for first tier
+    second_tier_rate DECIMAL(10,4) NOT NULL DEFAULT 0.60, -- Rate per file for second tier
+    first_tier_limit INTEGER NOT NULL DEFAULT 500, -- File count limit for first tier
+    currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by_user_id UUID REFERENCES users(id)
+);
+
+-- Project manager individual salaries
+CREATE TABLE pm_salaries (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    monthly_salary DECIMAL(12,2) NOT NULL,
+    effective_from DATE NOT NULL DEFAULT CURRENT_DATE,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by_user_id UUID REFERENCES users(id)
+);
+
+-- User salary tracking (daily file counts and earnings)
+CREATE TABLE user_salary_tracking (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+
+    -- File counts
+    files_processed INTEGER NOT NULL DEFAULT 0,
+
+    -- Calculated earnings based on salary config
+    tier1_files INTEGER NOT NULL DEFAULT 0,
+    tier1_earnings DECIMAL(10,2) NOT NULL DEFAULT 0,
+    tier2_files INTEGER NOT NULL DEFAULT 0,
+    tier2_earnings DECIMAL(10,2) NOT NULL DEFAULT 0,
+    total_earnings DECIMAL(10,2) NOT NULL DEFAULT 0,
+
+    -- Metadata
+    last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE(user_id, date)
+);
+
+-- Administrative expenses
+CREATE TABLE expenses (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    category VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    expense_date DATE NOT NULL,
+    month VARCHAR(7) NOT NULL, -- YYYY-MM format
+    type expense_type NOT NULL,
+    receipt_path TEXT, -- File path for receipt
+    status expense_status NOT NULL DEFAULT 'pending',
+
+    -- Approval workflow
+    approved_by_user_id UUID REFERENCES users(id),
+    approved_at TIMESTAMP,
+    approval_notes TEXT,
+    rejection_reason TEXT,
+
+    -- Metadata
+    created_by_user_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Expense categories configuration
+CREATE TABLE expense_categories (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL UNIQUE,
+    type expense_type NOT NULL,
+    description TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    default_budget DECIMAL(12,2),
+    requires_approval BOOLEAN NOT NULL DEFAULT true,
+    requires_receipt BOOLEAN NOT NULL DEFAULT false,
+    max_amount DECIMAL(12,2), -- Optional spending limit
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Monthly budget planning
+CREATE TABLE monthly_budgets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    month VARCHAR(7) NOT NULL, -- YYYY-MM format
+    type expense_type NOT NULL,
+    budgeted_amount DECIMAL(12,2) NOT NULL,
+    spent_amount DECIMAL(12,2) NOT NULL DEFAULT 0, -- Computed from expenses
+    created_by_user_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE(month, type)
+);
+
+-- Financial summary cache (for performance)
+CREATE TABLE monthly_financial_summary (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    month VARCHAR(7) NOT NULL UNIQUE, -- YYYY-MM format
+
+    -- Revenue data
+    project_revenue DECIMAL(15,2) NOT NULL DEFAULT 0,
+    other_revenue DECIMAL(15,2) NOT NULL DEFAULT 0,
+    total_revenue DECIMAL(15,2) NOT NULL DEFAULT 0,
+
+    -- Salary expenses
+    user_salaries DECIMAL(15,2) NOT NULL DEFAULT 0,
+    pm_salaries DECIMAL(15,2) NOT NULL DEFAULT 0,
+    total_salaries DECIMAL(15,2) NOT NULL DEFAULT 0,
+
+    -- Administrative expenses by type
+    admin_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+    operational_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+    marketing_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+    utilities_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+    misc_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+    total_admin_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+
+    -- Calculated fields
+    total_expenses DECIMAL(15,2) NOT NULL DEFAULT 0,
+    net_profit DECIMAL(15,2) NOT NULL DEFAULT 0,
+    profit_margin DECIMAL(5,2) NOT NULL DEFAULT 0, -- Percentage
+
+    -- Metadata
+    last_calculated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    calculation_version INTEGER NOT NULL DEFAULT 1
+);
+
+-- ====================
 -- INTEGRATIONS & LOGS
 -- ====================
 
