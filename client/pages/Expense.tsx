@@ -195,52 +195,115 @@ export default function Expense() {
     },
   ];
 
-  const expenseEntries: ExpenseEntry[] = [
+  // Base recurring monthly expenses
+  const baseRecurringExpenses: Omit<ExpenseEntry, 'id' | 'date' | 'month'>[] = [
     {
-      id: "1",
       category: "Office Rent",
       description: "Monthly office rent payment",
       amount: 25000,
-      date: "2024-01-01",
-      month: currentMonth,
       type: "administrative",
+      frequency: "monthly",
       approvedBy: "Admin",
       status: "approved",
     },
     {
-      id: "2",
       category: "Utilities",
       description: "Electricity and internet bills",
       amount: 5500,
-      date: "2024-01-05",
-      month: currentMonth,
       type: "utilities",
+      frequency: "monthly",
       approvedBy: "Admin",
       status: "approved",
     },
     {
-      id: "3",
-      category: "Software Licenses",
-      description: "Annual software subscription renewals",
-      amount: 8000,
+      category: "Internet & Phone",
+      description: "Monthly internet and phone services",
+      amount: 3200,
+      type: "utilities",
+      frequency: "monthly",
+      approvedBy: "Admin",
+      status: "approved",
+    },
+    {
+      category: "Insurance",
+      description: "Monthly business insurance premium",
+      amount: 4500,
+      type: "administrative",
+      frequency: "monthly",
+      approvedBy: "Admin",
+      status: "approved",
+    },
+    {
+      category: "Cleaning Services",
+      description: "Monthly office cleaning and maintenance",
+      amount: 2800,
+      type: "operational",
+      frequency: "monthly",
+      approvedBy: "Admin",
+      status: "approved",
+    },
+  ];
+
+  // One-time expenses for current month
+  const oneTimeExpenses: ExpenseEntry[] = [
+    {
+      id: "ot-1",
+      category: "Office Equipment",
+      description: "New computers and peripherals",
+      amount: 85000,
       date: "2024-01-10",
       month: currentMonth,
       type: "operational",
+      frequency: "one-time",
+      createdMonth: currentMonth,
       approvedBy: "Admin",
       status: "approved",
     },
     {
-      id: "4",
-      category: "Marketing",
-      description: "Digital marketing campaigns",
-      amount: 12000,
+      id: "ot-2",
+      category: "Marketing Campaign",
+      description: "Q1 digital marketing campaign launch",
+      amount: 15000,
       date: "2024-01-15",
       month: currentMonth,
       type: "marketing",
+      frequency: "one-time",
+      createdMonth: currentMonth,
       approvedBy: "Admin",
       status: "pending",
     },
+    {
+      id: "ot-3",
+      category: "Training",
+      description: "Employee skill development workshop",
+      amount: 8500,
+      date: "2024-01-20",
+      month: currentMonth,
+      type: "administrative",
+      frequency: "one-time",
+      createdMonth: currentMonth,
+      approvedBy: "Admin",
+      status: "approved",
+    },
   ];
+
+  // Generate expense entries for current month (recurring + one-time)
+  const generateExpensesForMonth = (month: string): ExpenseEntry[] => {
+    const monthlyExpenses = baseRecurringExpenses.map((expense, index) => ({
+      ...expense,
+      id: `recurring-${month}-${index}`,
+      date: `${month}-01`,
+      month: month,
+    }));
+
+    const currentMonthOneTime = oneTimeExpenses.filter(
+      expense => expense.month === month || expense.createdMonth === month
+    );
+
+    return [...monthlyExpenses, ...currentMonthOneTime];
+  };
+
+  const expenseEntries = generateExpensesForMonth(selectedMonth);
 
   const profitLossData: ProfitLossData[] = [
     {
