@@ -490,6 +490,61 @@ export default function Tutorial() {
 
   const canManageTutorials = user?.role === 'super_admin' || user?.role === 'project_manager';
 
+  // Helper function to handle file selection
+  const handleFileSelect = (file: File) => {
+    // Validate file type
+    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please select a supported video format (MP4, AVI, MOV, WMV)');
+      return;
+    }
+
+    // Validate file size (500MB limit)
+    const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+    if (file.size > maxSize) {
+      alert('File size must be less than 500MB');
+      return;
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+
+    setVideoUpload({
+      ...videoUpload,
+      file,
+      previewUrl
+    });
+  };
+
+  // Helper function to simulate video upload
+  const handleVideoUpload = async () => {
+    if (!videoUpload.file || !videoUpload.tutorialId) return;
+
+    setVideoUpload({...videoUpload, isUploading: true});
+
+    // Simulate upload progress
+    for (let progress = 0; progress <= 100; progress += 10) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setVideoUpload(prev => ({...prev, uploadProgress: progress}));
+    }
+
+    // Simulate successful upload
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    alert(`Video uploaded successfully for tutorial: ${mockTutorials.find(t => t.id === videoUpload.tutorialId)?.title}`);
+
+    // Reset upload state and close dialog
+    setVideoUpload({
+      tutorialId: '',
+      file: null,
+      uploadProgress: 0,
+      isUploading: false,
+      previewUrl: '',
+      dragActive: false
+    });
+    setIsUploadVideoOpen(false);
+  };
+
   const getCategoryIcon = (category: TutorialCategory) => {
     const categoryInfo = TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === category);
     switch (categoryInfo?.icon) {
