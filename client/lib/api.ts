@@ -57,7 +57,7 @@ class ApiClient {
           data = await response.json();
         } else {
           console.warn(`Response body already consumed for ${endpoint}`);
-          throw new Error('Response body already consumed');
+          throw new Error("Response body already consumed");
         }
       } catch (error) {
         console.error(`Response reading failed for ${endpoint}:`, error);
@@ -72,20 +72,33 @@ class ApiClient {
       }
 
       if (!response.ok) {
-        throw new Error(data.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          data.error?.message ||
+            `HTTP ${response.status}: ${response.statusText}`,
+        );
       }
 
       return data.data as T;
     } catch (error) {
       // Handle specific network errors
-      if (error instanceof TypeError && error.message.includes('body stream already read')) {
+      if (
+        error instanceof TypeError &&
+        error.message.includes("body stream already read")
+      ) {
         console.error(`Body stream error for ${endpoint}:`, error);
-        throw new Error(`Network error: Request failed due to stream issue. Please try again.`);
+        throw new Error(
+          `Network error: Request failed due to stream issue. Please try again.`,
+        );
       }
 
-      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      if (
+        error instanceof TypeError &&
+        error.message.includes("Failed to fetch")
+      ) {
         console.error(`Network error for ${endpoint}:`, error);
-        throw new Error(`Network error: Unable to connect to server. Please check your connection.`);
+        throw new Error(
+          `Network error: Unable to connect to server. Please check your connection.`,
+        );
       }
 
       console.error(`API request failed for ${endpoint}:`, error);
@@ -103,29 +116,31 @@ class ApiClient {
       });
     } catch (error) {
       // If we get a 500 error (likely database connection issue), provide mock response for development
-      if (error instanceof Error && error.message.includes('HTTP 500')) {
-        console.warn('Database unavailable, using mock authentication for development');
+      if (error instanceof Error && error.message.includes("HTTP 500")) {
+        console.warn(
+          "Database unavailable, using mock authentication for development",
+        );
 
         // Mock authentication for development
         const mockUser = {
-          id: 'mock-admin-id',
-          name: 'Admin User',
+          id: "mock-admin-id",
+          name: "Admin User",
           email: email,
-          phone: '+1-555-0123',
-          role: 'super_admin' as const,
-          status: 'active' as const,
-          department: 'Administration',
-          jobTitle: 'System Administrator',
-          joinDate: '2024-01-01',
+          phone: "+1-555-0123",
+          role: "super_admin" as const,
+          status: "active" as const,
+          department: "Administration",
+          jobTitle: "System Administrator",
+          joinDate: "2024-01-01",
           lastLogin: new Date().toISOString(),
-          createdAt: '2024-01-01T00:00:00Z',
+          createdAt: "2024-01-01T00:00:00Z",
           updatedAt: new Date().toISOString(),
         };
 
         return {
-          token: 'mock-jwt-token-' + Date.now(),
-          refreshToken: 'mock-refresh-token-' + Date.now(),
-          user: mockUser
+          token: "mock-jwt-token-" + Date.now(),
+          refreshToken: "mock-refresh-token-" + Date.now(),
+          user: mockUser,
         };
       }
       throw error;

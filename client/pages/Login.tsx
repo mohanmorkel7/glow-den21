@@ -1,29 +1,35 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Building2, Lock, Mail } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Building2, Lock, Mail } from "lucide-react";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
+    setError("");
+
     const success = await login(email, password);
     if (success) {
-      navigate('/dashboard');
+      navigate("/dashboard");
     } else {
-      setError('Invalid credentials. Please try again.');
+      setError("Invalid credentials. Please try again.");
     }
   };
 
@@ -44,9 +50,7 @@ export default function Login() {
         <Card className="shadow-xl border-0 bg-card/50 backdrop-blur">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>
-              Sign in to access your dashboard
-            </CardDescription>
+            <CardDescription>Sign in to access your dashboard</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -55,7 +59,7 @@ export default function Login() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="relative">
@@ -88,12 +92,12 @@ export default function Login() {
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full h-11" 
+              <Button
+                type="submit"
+                className="w-full h-11"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
 
               <div className="space-y-3 pt-4 border-t">
@@ -103,16 +107,20 @@ export default function Login() {
                 <div className="grid gap-2 text-xs">
                   <div className="flex justify-between items-center p-2 bg-blue-50 rounded border">
                     <div>
-                      <div className="font-medium text-blue-800">Super Admin</div>
-                      <div className="text-blue-600">admin@websyntactic.com / admin123</div>
+                      <div className="font-medium text-blue-800">
+                        Super Admin
+                      </div>
+                      <div className="text-blue-600">
+                        admin@websyntactic.com / admin123
+                      </div>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-6 text-xs"
                       onClick={() => {
-                        setEmail('admin@websyntactic.com');
-                        setPassword('admin123');
+                        setEmail("admin@websyntactic.com");
+                        setPassword("admin123");
                       }}
                     >
                       Use
@@ -120,16 +128,20 @@ export default function Login() {
                   </div>
                   <div className="flex justify-between items-center p-2 bg-green-50 rounded border">
                     <div>
-                      <div className="font-medium text-green-800">Project Manager</div>
-                      <div className="text-green-600">pm@websyntactic.com / pm123</div>
+                      <div className="font-medium text-green-800">
+                        Project Manager
+                      </div>
+                      <div className="text-green-600">
+                        pm@websyntactic.com / pm123
+                      </div>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-6 text-xs"
                       onClick={() => {
-                        setEmail('pm@websyntactic.com');
-                        setPassword('pm123');
+                        setEmail("pm@websyntactic.com");
+                        setPassword("pm123");
                       }}
                     >
                       Use
@@ -138,15 +150,17 @@ export default function Login() {
                   <div className="flex justify-between items-center p-2 bg-purple-50 rounded border">
                     <div>
                       <div className="font-medium text-purple-800">User</div>
-                      <div className="text-purple-600">user@websyntactic.com / user123</div>
+                      <div className="text-purple-600">
+                        user@websyntactic.com / user123
+                      </div>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
                       className="h-6 text-xs"
                       onClick={() => {
-                        setEmail('user@websyntactic.com');
-                        setPassword('user123');
+                        setEmail("user@websyntactic.com");
+                        setPassword("user123");
                       }}
                     >
                       Use

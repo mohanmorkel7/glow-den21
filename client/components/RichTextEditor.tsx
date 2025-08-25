@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import React, { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   Bold,
   Italic,
@@ -22,8 +22,8 @@ import {
   Undo,
   Redo,
   Eye,
-  Edit3
-} from 'lucide-react';
+  Edit3,
+} from "lucide-react";
 
 interface RichTextEditorProps {
   value: string;
@@ -45,12 +45,12 @@ interface ToolbarButtonProps {
   onClick?: () => void;
 }
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ 
-  icon: Icon, 
-  title, 
-  command, 
-  isActive, 
-  onClick 
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({
+  icon: Icon,
+  title,
+  command,
+  isActive,
+  onClick,
 }) => {
   const handleClick = () => {
     if (onClick) {
@@ -66,10 +66,7 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({
       size="sm"
       title={title}
       onClick={handleClick}
-      className={cn(
-        "h-8 w-8 p-0",
-        isActive && "bg-muted"
-      )}
+      className={cn("h-8 w-8 p-0", isActive && "bg-muted")}
     >
       <Icon className="h-4 w-4" />
     </Button>
@@ -85,7 +82,7 @@ export default function RichTextEditor({
   minHeight = 200,
   allowImages = true,
   allowLinks = true,
-  allowTables = false
+  allowTables = false,
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -104,29 +101,34 @@ export default function RichTextEditor({
       updateActiveFormats();
     };
 
-    document.addEventListener('selectionchange', handleSelectionChange);
+    document.addEventListener("selectionchange", handleSelectionChange);
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionChange);
+      document.removeEventListener("selectionchange", handleSelectionChange);
     };
   }, []);
 
   const updateWordCount = () => {
     if (editorRef.current) {
-      const text = editorRef.current.textContent || '';
-      const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+      const text = editorRef.current.textContent || "";
+      const words = text
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
       setWordCount(words.length);
     }
   };
 
   const updateActiveFormats = () => {
     const formats = new Set<string>();
-    
-    if (document.queryCommandState('bold')) formats.add('bold');
-    if (document.queryCommandState('italic')) formats.add('italic');
-    if (document.queryCommandState('underline')) formats.add('underline');
-    if (document.queryCommandState('insertOrderedList')) formats.add('orderedList');
-    if (document.queryCommandState('insertUnorderedList')) formats.add('unorderedList');
-    
+
+    if (document.queryCommandState("bold")) formats.add("bold");
+    if (document.queryCommandState("italic")) formats.add("italic");
+    if (document.queryCommandState("underline")) formats.add("underline");
+    if (document.queryCommandState("insertOrderedList"))
+      formats.add("orderedList");
+    if (document.queryCommandState("insertUnorderedList"))
+      formats.add("unorderedList");
+
     setActiveFormats(formats);
   };
 
@@ -142,25 +144,25 @@ export default function RichTextEditor({
     // Handle common keyboard shortcuts
     if (e.ctrlKey || e.metaKey) {
       switch (e.key) {
-        case 'b':
+        case "b":
           e.preventDefault();
-          document.execCommand('bold');
+          document.execCommand("bold");
           break;
-        case 'i':
+        case "i":
           e.preventDefault();
-          document.execCommand('italic');
+          document.execCommand("italic");
           break;
-        case 'u':
+        case "u":
           e.preventDefault();
-          document.execCommand('underline');
+          document.execCommand("underline");
           break;
-        case 'z':
+        case "z":
           if (e.shiftKey) {
             e.preventDefault();
-            document.execCommand('redo');
+            document.execCommand("redo");
           } else {
             e.preventDefault();
-            document.execCommand('undo');
+            document.execCommand("undo");
           }
           break;
       }
@@ -168,44 +170,46 @@ export default function RichTextEditor({
   };
 
   const insertLink = () => {
-    const url = prompt('Enter URL:');
+    const url = prompt("Enter URL:");
     if (url) {
-      document.execCommand('createLink', false, url);
+      document.execCommand("createLink", false, url);
     }
   };
 
   const insertImage = () => {
-    const url = prompt('Enter image URL:');
+    const url = prompt("Enter image URL:");
     if (url) {
-      document.execCommand('insertImage', false, url);
+      document.execCommand("insertImage", false, url);
     }
   };
 
   const formatBlock = (tag: string) => {
-    document.execCommand('formatBlock', false, tag);
+    document.execCommand("formatBlock", false, tag);
   };
 
   const insertTable = () => {
-    const rows = prompt('Number of rows:');
-    const cols = prompt('Number of columns:');
-    
+    const rows = prompt("Number of rows:");
+    const cols = prompt("Number of columns:");
+
     if (rows && cols) {
       const numRows = parseInt(rows);
       const numCols = parseInt(cols);
-      
+
       if (numRows > 0 && numCols > 0) {
-        let tableHTML = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
-        
+        let tableHTML =
+          '<table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+
         for (let i = 0; i < numRows; i++) {
-          tableHTML += '<tr>';
+          tableHTML += "<tr>";
           for (let j = 0; j < numCols; j++) {
-            tableHTML += '<td style="padding: 8px; border: 1px solid #ccc;">&nbsp;</td>';
+            tableHTML +=
+              '<td style="padding: 8px; border: 1px solid #ccc;">&nbsp;</td>';
           }
-          tableHTML += '</tr>';
+          tableHTML += "</tr>";
         }
-        tableHTML += '</table>';
-        
-        document.execCommand('insertHTML', false, tableHTML);
+        tableHTML += "</table>";
+
+        document.execCommand("insertHTML", false, tableHTML);
       }
     }
   };
@@ -258,45 +262,45 @@ export default function RichTextEditor({
             icon={Bold}
             title="Bold (Ctrl+B)"
             command="bold"
-            isActive={activeFormats.has('bold')}
+            isActive={activeFormats.has("bold")}
           />
           <ToolbarButton
             icon={Italic}
             title="Italic (Ctrl+I)"
             command="italic"
-            isActive={activeFormats.has('italic')}
+            isActive={activeFormats.has("italic")}
           />
           <ToolbarButton
             icon={Underline}
             title="Underline (Ctrl+U)"
             command="underline"
-            isActive={activeFormats.has('underline')}
+            isActive={activeFormats.has("underline")}
           />
-          
+
           <Separator orientation="vertical" className="h-6 mx-1" />
-          
+
           {/* Headings */}
           <ToolbarButton
             icon={Heading1}
             title="Heading 1"
             command=""
-            onClick={() => formatBlock('h1')}
+            onClick={() => formatBlock("h1")}
           />
           <ToolbarButton
             icon={Heading2}
             title="Heading 2"
             command=""
-            onClick={() => formatBlock('h2')}
+            onClick={() => formatBlock("h2")}
           />
           <ToolbarButton
             icon={Heading3}
             title="Heading 3"
             command=""
-            onClick={() => formatBlock('h3')}
+            onClick={() => formatBlock("h3")}
           />
-          
+
           <Separator orientation="vertical" className="h-6 mx-1" />
-          
+
           {/* Alignment */}
           <ToolbarButton
             icon={AlignLeft}
@@ -313,39 +317,39 @@ export default function RichTextEditor({
             title="Align Right"
             command="justifyRight"
           />
-          
+
           <Separator orientation="vertical" className="h-6 mx-1" />
-          
+
           {/* Lists */}
           <ToolbarButton
             icon={List}
             title="Bullet List"
             command="insertUnorderedList"
-            isActive={activeFormats.has('unorderedList')}
+            isActive={activeFormats.has("unorderedList")}
           />
           <ToolbarButton
             icon={ListOrdered}
             title="Numbered List"
             command="insertOrderedList"
-            isActive={activeFormats.has('orderedList')}
+            isActive={activeFormats.has("orderedList")}
           />
-          
+
           <Separator orientation="vertical" className="h-6 mx-1" />
-          
+
           {/* Special Elements */}
           <ToolbarButton
             icon={Quote}
             title="Quote"
             command=""
-            onClick={() => formatBlock('blockquote')}
+            onClick={() => formatBlock("blockquote")}
           />
           <ToolbarButton
             icon={Code}
             title="Code"
             command=""
-            onClick={() => formatBlock('pre')}
+            onClick={() => formatBlock("pre")}
           />
-          
+
           {allowLinks && (
             <ToolbarButton
               icon={Link}
@@ -354,7 +358,7 @@ export default function RichTextEditor({
               onClick={insertLink}
             />
           )}
-          
+
           {allowImages && (
             <ToolbarButton
               icon={Image}
@@ -363,23 +367,19 @@ export default function RichTextEditor({
               onClick={insertImage}
             />
           )}
-          
+
           <Separator orientation="vertical" className="h-6 mx-1" />
-          
+
           {/* History */}
-          <ToolbarButton
-            icon={Undo}
-            title="Undo (Ctrl+Z)"
-            command="undo"
-          />
+          <ToolbarButton icon={Undo} title="Undo (Ctrl+Z)" command="undo" />
           <ToolbarButton
             icon={Redo}
             title="Redo (Ctrl+Shift+Z)"
             command="redo"
           />
-          
+
           <div className="flex-1" />
-          
+
           {/* Preview Toggle */}
           <Button
             variant="outline"
@@ -390,7 +390,7 @@ export default function RichTextEditor({
             Preview
           </Button>
         </div>
-        
+
         {/* Editor Content */}
         <div
           ref={editorRef}
@@ -412,12 +412,12 @@ export default function RichTextEditor({
             "[&_td]:border [&_td]:border-gray-300 [&_td]:p-2",
             "[&_th]:border [&_th]:border-gray-300 [&_th]:p-2 [&_th]:bg-gray-50 [&_th]:font-semibold",
             "[&_img]:max-w-full [&_img]:h-auto [&_img]:my-4",
-            "[&_a]:text-blue-600 [&_a]:underline"
+            "[&_a]:text-blue-600 [&_a]:underline",
           )}
           style={{ minHeight }}
           data-placeholder={placeholder}
         />
-        
+
         {/* Status Bar */}
         <div className="flex justify-between items-center px-4 py-2 bg-muted/20 border-t text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
@@ -447,8 +447,8 @@ const editorStyles = `
 `;
 
 // Inject styles
-if (typeof document !== 'undefined') {
-  const styleElement = document.createElement('style');
+if (typeof document !== "undefined") {
+  const styleElement = document.createElement("style");
   styleElement.textContent = editorStyles;
   document.head.appendChild(styleElement);
 }

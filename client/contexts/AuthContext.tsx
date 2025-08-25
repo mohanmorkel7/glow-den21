@@ -81,50 +81,56 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       // Check if we're in development mode and database is unavailable
       // Use mock authentication to bypass API issues
-      console.warn('Using mock authentication for development (database unavailable)');
+      console.warn(
+        "Using mock authentication for development (database unavailable)",
+      );
 
       // Create mock user based on email domain and common test credentials
-      let role: 'super_admin' | 'project_manager' | 'user' = 'user';
-      let name = 'Test User';
-      let department = 'Operations';
-      let jobTitle = 'Operator';
+      let role: "super_admin" | "project_manager" | "user" = "user";
+      let name = "Test User";
+      let department = "Operations";
+      let jobTitle = "Operator";
 
       // Determine role based on email patterns
-      if (email.includes('admin')) {
-        role = 'super_admin';
-        name = 'Admin User';
-        department = 'Administration';
-        jobTitle = 'System Administrator';
-      } else if (email.includes('manager') || email.includes('pm') || email.includes('project')) {
-        role = 'project_manager';
-        name = 'Project Manager';
-        department = 'Project Management';
-        jobTitle = 'Project Manager';
+      if (email.includes("admin")) {
+        role = "super_admin";
+        name = "Admin User";
+        department = "Administration";
+        jobTitle = "System Administrator";
+      } else if (
+        email.includes("manager") ||
+        email.includes("pm") ||
+        email.includes("project")
+      ) {
+        role = "project_manager";
+        name = "Project Manager";
+        department = "Project Management";
+        jobTitle = "Project Manager";
       }
 
       const mockUser = {
         id: `mock-${role}-id`,
         name: name,
         email: email,
-        phone: '+1-555-0123',
+        phone: "+1-555-0123",
         role: role,
-        status: 'active' as const,
+        status: "active" as const,
         department: department,
         jobTitle: jobTitle,
-        joinDate: '2024-01-01',
+        joinDate: "2024-01-01",
         lastLogin: new Date().toISOString(),
-        createdAt: '2024-01-01T00:00:00Z',
+        createdAt: "2024-01-01T00:00:00Z",
         updatedAt: new Date().toISOString(),
       };
 
       const mockResponse = {
-        token: 'mock-jwt-token-' + Date.now(),
-        refreshToken: 'mock-refresh-token-' + Date.now(),
-        user: mockUser
+        token: "mock-jwt-token-" + Date.now(),
+        refreshToken: "mock-refresh-token-" + Date.now(),
+        user: mockUser,
       };
 
       // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Store tokens and user data
       localStorage.setItem("authToken", mockResponse.token);
