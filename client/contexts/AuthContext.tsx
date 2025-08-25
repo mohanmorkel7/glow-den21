@@ -167,8 +167,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const contextValue = useMemo(
+    () => ({
+      user,
+      login,
+      logout,
+      isLoading,
+    }),
+    [user, isLoading]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
