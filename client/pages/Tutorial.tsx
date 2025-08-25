@@ -314,6 +314,27 @@ export default function Tutorial() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
+  const [newTutorial, setNewTutorial] = useState({
+    title: '',
+    description: '',
+    category: 'getting_started' as TutorialCategory,
+    instructions: '',
+    steps: [] as Array<{
+      stepNumber: number;
+      title: string;
+      description: string;
+      isRequired: boolean;
+    }>,
+    targetRoles: ['user'] as any[],
+    isRequired: false,
+    tags: [] as string[]
+  });
+  const [currentStep, setCurrentStep] = useState({
+    stepNumber: 1,
+    title: '',
+    description: '',
+    isRequired: false
+  });
 
   // Mock data for tutorials
   const mockTutorials: Tutorial[] = [
