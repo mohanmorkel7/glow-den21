@@ -90,6 +90,15 @@ function AppRoutes() {
       />
 
       <Route
+        path="/tutorial"
+        element={
+          <ProtectedRoute>
+            <Tutorial />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/users"
         element={
           <ProtectedRoute>
