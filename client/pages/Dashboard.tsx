@@ -49,6 +49,7 @@ import {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   if (!user) return null;
 
