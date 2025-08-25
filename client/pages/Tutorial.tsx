@@ -314,6 +314,14 @@ export default function Tutorial() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
+  const [videoUpload, setVideoUpload] = useState({
+    tutorialId: '',
+    file: null as File | null,
+    uploadProgress: 0,
+    isUploading: false,
+    previewUrl: '',
+    dragActive: false
+  });
   const [newTutorial, setNewTutorial] = useState({
     title: '',
     description: '',
