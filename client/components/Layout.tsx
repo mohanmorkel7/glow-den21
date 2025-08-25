@@ -39,7 +39,8 @@ import {
   Upload,
   DollarSign,
   ChevronDown,
-  User
+  User,
+  Calculator
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -94,6 +95,12 @@ const navigationItems: NavItem[] = [
     label: 'Salary',
     path: '/salary',
     icon: DollarSign,
+    roles: ['super_admin']
+  },
+  {
+    label: 'Expense',
+    path: '/expense',
+    icon: Calculator,
     roles: ['super_admin']
   },
   {
