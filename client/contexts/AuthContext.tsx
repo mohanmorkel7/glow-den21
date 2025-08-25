@@ -21,7 +21,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    console.error("AuthContext is undefined. Make sure useAuth is called within an AuthProvider.");
+    console.error(
+      "AuthContext is undefined. Make sure useAuth is called within an AuthProvider.",
+    );
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
@@ -175,13 +177,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       isLoading,
     }),
-    [user, isLoading]
+    [user, isLoading],
   );
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 
