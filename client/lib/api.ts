@@ -30,11 +30,14 @@ class ApiClient {
 
     const url = `${API_BASE_URL}${endpoint}`;
 
+    // Create a fresh request configuration for each call
+    const requestConfig = {
+      ...restOptions,
+      headers: requestHeaders,
+    };
+
     try {
-      const response = await fetch(url, {
-        ...restOptions,
-        headers: requestHeaders,
-      });
+      const response = await fetch(url, requestConfig);
 
       // Handle authentication errors
       if (response.status === 401) {
