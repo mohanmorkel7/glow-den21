@@ -1,18 +1,38 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import RichTextEditor from '@/components/RichTextEditor';
-import { cn } from '@/lib/utils';
+import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/RichTextEditor";
+import { cn } from "@/lib/utils";
 import {
   PlayCircle,
   Pause,
@@ -36,70 +56,70 @@ import {
   CheckCircle,
   AlertCircle,
   FileText,
-  Settings
-} from 'lucide-react';
+  Settings,
+} from "lucide-react";
 
 // Import types
-import type { 
-  Tutorial, 
-  TutorialCategory, 
+import type {
+  Tutorial,
+  TutorialCategory,
   UserTutorialProgress,
   TutorialCategoryInfo,
-  TUTORIAL_CATEGORIES 
-} from '@/shared/tutorial-types';
+  TUTORIAL_CATEGORIES,
+} from "@/shared/tutorial-types";
 
 const TUTORIAL_CATEGORIES_DATA: TutorialCategoryInfo[] = [
   {
-    id: 'getting_started',
-    name: 'Getting Started',
-    description: 'Essential tutorials for new users to get up and running',
-    icon: 'PlayCircle',
-    color: '#3b82f6',
+    id: "getting_started",
+    name: "Getting Started",
+    description: "Essential tutorials for new users to get up and running",
+    icon: "PlayCircle",
+    color: "#3b82f6",
     order: 1,
-    requiredForRoles: ['user', 'project_manager']
+    requiredForRoles: ["user", "project_manager"],
   },
   {
-    id: 'daily_tasks',
-    name: 'Daily Tasks',
-    description: 'Learn how to perform common daily work activities',
-    icon: 'CheckCircle',
-    color: '#10b981',
+    id: "daily_tasks",
+    name: "Daily Tasks",
+    description: "Learn how to perform common daily work activities",
+    icon: "CheckCircle",
+    color: "#10b981",
     order: 2,
-    requiredForRoles: ['user']
+    requiredForRoles: ["user"],
   },
   {
-    id: 'projects',
-    name: 'Project Management',
-    description: 'Managing projects, assignments, and team coordination',
-    icon: 'FileText',
-    color: '#f59e0b',
+    id: "projects",
+    name: "Project Management",
+    description: "Managing projects, assignments, and team coordination",
+    icon: "FileText",
+    color: "#f59e0b",
     order: 3,
-    requiredForRoles: ['project_manager']
+    requiredForRoles: ["project_manager"],
   },
   {
-    id: 'reports',
-    name: 'Reports & Analytics',
-    description: 'Understanding reports, analytics, and data insights',
-    icon: 'Settings',
-    color: '#8b5cf6',
-    order: 4
+    id: "reports",
+    name: "Reports & Analytics",
+    description: "Understanding reports, analytics, and data insights",
+    icon: "Settings",
+    color: "#8b5cf6",
+    order: 4,
   },
   {
-    id: 'advanced',
-    name: 'Advanced Features',
-    description: 'Advanced functionality and power user features',
-    icon: 'Settings',
-    color: '#6b7280',
-    order: 5
+    id: "advanced",
+    name: "Advanced Features",
+    description: "Advanced functionality and power user features",
+    icon: "Settings",
+    color: "#6b7280",
+    order: 5,
   },
   {
-    id: 'troubleshooting',
-    name: 'Troubleshooting',
-    description: 'Common issues and how to resolve them',
-    icon: 'AlertCircle',
-    color: '#ef4444',
-    order: 6
-  }
+    id: "troubleshooting",
+    name: "Troubleshooting",
+    description: "Common issues and how to resolve them",
+    icon: "AlertCircle",
+    color: "#ef4444",
+    order: 6,
+  },
 ];
 
 interface VideoPlayerProps {
@@ -110,7 +130,12 @@ interface VideoPlayerProps {
 }
 
 // Custom Video Player Component
-function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps) {
+function VideoPlayer({
+  src,
+  title,
+  onTimeUpdate,
+  onProgress,
+}: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -135,7 +160,7 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
       const current = videoRef.current.currentTime;
       setCurrentTime(current);
       onTimeUpdate?.(current);
-      
+
       const progress = (current / duration) * 100;
       onProgress?.(progress);
     }
@@ -191,7 +216,7 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -210,7 +235,7 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
             <source src={src} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-          
+
           {/* Video Controls */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
             {/* Progress Bar */}
@@ -224,7 +249,7 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
                 className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
               />
             </div>
-            
+
             {/* Control Buttons */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -236,16 +261,20 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
                 >
                   <SkipBack className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={togglePlay}
                   className="text-white hover:text-blue-400"
                 >
-                  {isPlaying ? <Pause className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
+                  {isPlaying ? (
+                    <Pause className="h-5 w-5" />
+                  ) : (
+                    <PlayCircle className="h-5 w-5" />
+                  )}
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -254,12 +283,12 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
                 >
                   <SkipForward className="h-4 w-4" />
                 </Button>
-                
+
                 <span className="text-white text-sm">
                   {formatTime(currentTime)} / {formatTime(duration)}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 {/* Volume Control */}
                 <div className="flex items-center gap-2">
@@ -269,27 +298,37 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
                     onClick={toggleMute}
                     className="text-white hover:text-blue-400"
                   >
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                    {isMuted ? (
+                      <VolumeX className="h-4 w-4" />
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
                   </Button>
-                  
+
                   <input
                     type="range"
                     min={0}
                     max={1}
                     step={0.1}
                     value={isMuted ? 0 : volume}
-                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      handleVolumeChange(parseFloat(e.target.value))
+                    }
                     className="w-16 h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer"
                   />
                 </div>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={toggleFullscreen}
                   className="text-white hover:text-blue-400"
                 >
-                  {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                  {isFullscreen ? (
+                    <Minimize className="h-4 w-4" />
+                  ) : (
+                    <Maximize className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -311,306 +350,347 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
 export default function Tutorial() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('browse');
-  const [selectedCategory, setSelectedCategory] = useState<TutorialCategory | 'all'>('all');
-  const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState("browse");
+  const [selectedCategory, setSelectedCategory] = useState<
+    TutorialCategory | "all"
+  >("all");
+  const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(
+    null,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
   const [videoUpload, setVideoUpload] = useState({
-    tutorialId: '',
+    tutorialId: "",
     file: null as File | null,
     uploadProgress: 0,
     isUploading: false,
-    previewUrl: '',
-    dragActive: false
+    previewUrl: "",
+    dragActive: false,
   });
   const [newTutorial, setNewTutorial] = useState({
-    title: '',
-    description: '',
-    category: 'getting_started' as TutorialCategory,
-    instructions: '',
+    title: "",
+    description: "",
+    category: "getting_started" as TutorialCategory,
+    instructions: "",
     steps: [] as Array<{
       stepNumber: number;
       title: string;
       description: string;
       isRequired: boolean;
     }>,
-    targetRoles: ['user'] as any[],
+    targetRoles: ["user"] as any[],
     isRequired: false,
-    tags: [] as string[]
+    tags: [] as string[],
   });
   const [currentStep, setCurrentStep] = useState({
     stepNumber: 1,
-    title: '',
-    description: '',
-    isRequired: false
+    title: "",
+    description: "",
+    isRequired: false,
   });
 
   // Mock data for tutorials with sample videos
   const mockTutorials: Tutorial[] = [
     {
-      id: '1',
-      title: 'Getting Started with the Platform',
-      description: 'Learn the basics of navigating and using the BPO management platform',
-      category: 'getting_started',
-      status: 'published',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', // Sample video
+      id: "1",
+      title: "Getting Started with the Platform",
+      description:
+        "Learn the basics of navigating and using the BPO management platform",
+      category: "getting_started",
+      status: "published",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", // Sample video
       videoDuration: 596, // 9:56 duration
-      instructions: '<h2>Welcome to the Platform</h2><p>This tutorial will guide you through the basic features of our BPO management system. You\'ll learn how to navigate the dashboard, access different modules, and understand the overall workflow.</p><h3>What you\'ll learn:</h3><ul><li>Platform navigation</li><li>Dashboard overview</li><li>Basic user interface elements</li><li>Getting help and support</li></ul>',
+      instructions:
+        "<h2>Welcome to the Platform</h2><p>This tutorial will guide you through the basic features of our BPO management system. You'll learn how to navigate the dashboard, access different modules, and understand the overall workflow.</p><h3>What you'll learn:</h3><ul><li>Platform navigation</li><li>Dashboard overview</li><li>Basic user interface elements</li><li>Getting help and support</li></ul>",
       steps: [
         {
-          id: 'step1',
+          id: "step1",
           stepNumber: 1,
-          title: 'Login to your account',
-          description: 'Enter your credentials and click sign in. Make sure to use the correct email format.',
-          isRequired: true
+          title: "Login to your account",
+          description:
+            "Enter your credentials and click sign in. Make sure to use the correct email format.",
+          isRequired: true,
         },
         {
-          id: 'step2',
+          id: "step2",
           stepNumber: 2,
-          title: 'Navigate the dashboard',
-          description: 'Explore the main dashboard and its features. Notice the sidebar navigation and main content area.',
-          isRequired: true
+          title: "Navigate the dashboard",
+          description:
+            "Explore the main dashboard and its features. Notice the sidebar navigation and main content area.",
+          isRequired: true,
         },
         {
-          id: 'step3',
+          id: "step3",
           stepNumber: 3,
-          title: 'Access your profile',
-          description: 'Click on your profile icon to view and update your personal information.',
-          isRequired: false
-        }
+          title: "Access your profile",
+          description:
+            "Click on your profile icon to view and update your personal information.",
+          isRequired: false,
+        },
       ],
-      targetRoles: ['user', 'project_manager', 'super_admin'],
+      targetRoles: ["user", "project_manager", "super_admin"],
       isRequired: true,
       order: 1,
-      tags: ['basics', 'navigation', 'dashboard', 'login'],
+      tags: ["basics", "navigation", "dashboard", "login"],
       createdBy: {
-        id: 'admin',
-        name: 'Admin User'
+        id: "admin",
+        name: "Admin User",
       },
-      createdAt: '2024-01-15T00:00:00Z',
-      updatedAt: '2024-01-15T00:00:00Z',
+      createdAt: "2024-01-15T00:00:00Z",
+      updatedAt: "2024-01-15T00:00:00Z",
       viewCount: 245,
-      completionCount: 198
+      completionCount: 198,
     },
     {
-      id: '2',
-      title: 'Daily Count Submission',
-      description: 'Learn how to submit your daily work counts and track progress',
-      category: 'daily_tasks',
-      status: 'published',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', // Sample video
+      id: "2",
+      title: "Daily Count Submission",
+      description:
+        "Learn how to submit your daily work counts and track progress",
+      category: "daily_tasks",
+      status: "published",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", // Sample video
       videoDuration: 653, // 10:53 duration
-      instructions: '<h2>Submitting Daily Counts</h2><p>This tutorial covers the complete process of submitting your daily work counts. This is essential for tracking productivity and ensuring accurate payroll calculations.</p><h3>Key Points:</h3><ul><li>Daily submission deadlines</li><li>File count accuracy</li><li>Approval workflow</li><li>Tracking your progress</li></ul>',
+      instructions:
+        "<h2>Submitting Daily Counts</h2><p>This tutorial covers the complete process of submitting your daily work counts. This is essential for tracking productivity and ensuring accurate payroll calculations.</p><h3>Key Points:</h3><ul><li>Daily submission deadlines</li><li>File count accuracy</li><li>Approval workflow</li><li>Tracking your progress</li></ul>",
       steps: [
         {
-          id: 'step1',
+          id: "step1",
           stepNumber: 1,
-          title: 'Navigate to Daily Counts',
-          description: 'Click on the Daily Counts menu item from the sidebar navigation.',
-          isRequired: true
+          title: "Navigate to Daily Counts",
+          description:
+            "Click on the Daily Counts menu item from the sidebar navigation.",
+          isRequired: true,
         },
         {
-          id: 'step2',
+          id: "step2",
           stepNumber: 2,
-          title: 'Enter your counts',
-          description: 'Fill in the number of files processed for the current day. Be accurate with your counts.',
-          isRequired: true
+          title: "Enter your counts",
+          description:
+            "Fill in the number of files processed for the current day. Be accurate with your counts.",
+          isRequired: true,
         },
         {
-          id: 'step3',
+          id: "step3",
           stepNumber: 3,
-          title: 'Submit for approval',
-          description: 'Click submit to send your counts to your manager for approval. You can add notes if needed.',
-          isRequired: true
-        }
+          title: "Submit for approval",
+          description:
+            "Click submit to send your counts to your manager for approval. You can add notes if needed.",
+          isRequired: true,
+        },
       ],
-      targetRoles: ['user', 'super_admin'],
+      targetRoles: ["user", "super_admin"],
       isRequired: true,
       order: 2,
-      tags: ['daily', 'counts', 'submission', 'tracking'],
+      tags: ["daily", "counts", "submission", "tracking"],
       createdBy: {
-        id: 'admin',
-        name: 'Admin User'
+        id: "admin",
+        name: "Admin User",
       },
-      createdAt: '2024-01-15T00:00:00Z',
-      updatedAt: '2024-01-15T00:00:00Z',
+      createdAt: "2024-01-15T00:00:00Z",
+      updatedAt: "2024-01-15T00:00:00Z",
       viewCount: 189,
-      completionCount: 156
+      completionCount: 156,
     },
     {
-      id: '3',
-      title: 'Project Management Overview',
-      description: 'Understanding how to manage projects and assign tasks to team members',
-      category: 'projects',
-      status: 'published',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', // Sample video
+      id: "3",
+      title: "Project Management Overview",
+      description:
+        "Understanding how to manage projects and assign tasks to team members",
+      category: "projects",
+      status: "published",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", // Sample video
       videoDuration: 15, // 0:15 duration - short demo
-      instructions: '<h2>Project Management</h2><p>As a project manager, you can create and manage projects effectively using our platform. This tutorial covers the essential features for successful project coordination.</p><h3>Topics covered:</h3><ul><li>Creating new projects</li><li>Assigning team members</li><li>Setting deadlines and targets</li><li>Monitoring progress</li><li>Managing project resources</li></ul>',
+      instructions:
+        "<h2>Project Management</h2><p>As a project manager, you can create and manage projects effectively using our platform. This tutorial covers the essential features for successful project coordination.</p><h3>Topics covered:</h3><ul><li>Creating new projects</li><li>Assigning team members</li><li>Setting deadlines and targets</li><li>Monitoring progress</li><li>Managing project resources</li></ul>",
       steps: [
         {
-          id: 'step1',
+          id: "step1",
           stepNumber: 1,
-          title: 'Create a new project',
-          description: 'Click the add project button and fill in all required details including name, description, and timeline.',
-          isRequired: true
+          title: "Create a new project",
+          description:
+            "Click the add project button and fill in all required details including name, description, and timeline.",
+          isRequired: true,
         },
         {
-          id: 'step2',
+          id: "step2",
           stepNumber: 2,
-          title: 'Assign team members',
-          description: 'Select appropriate users to assign to the project based on their skills and availability.',
-          isRequired: true
+          title: "Assign team members",
+          description:
+            "Select appropriate users to assign to the project based on their skills and availability.",
+          isRequired: true,
         },
         {
-          id: 'step3',
+          id: "step3",
           stepNumber: 3,
-          title: 'Set project targets',
-          description: 'Define file processing targets and deadlines for the project.',
-          isRequired: true
-        }
+          title: "Set project targets",
+          description:
+            "Define file processing targets and deadlines for the project.",
+          isRequired: true,
+        },
       ],
-      targetRoles: ['project_manager', 'super_admin'],
+      targetRoles: ["project_manager", "super_admin"],
       isRequired: true,
       order: 1,
-      tags: ['projects', 'management', 'assignment', 'planning'],
+      tags: ["projects", "management", "assignment", "planning"],
       createdBy: {
-        id: 'pm1',
-        name: 'Emily Wilson'
+        id: "pm1",
+        name: "Emily Wilson",
       },
-      createdAt: '2024-01-16T00:00:00Z',
-      updatedAt: '2024-01-16T00:00:00Z',
+      createdAt: "2024-01-16T00:00:00Z",
+      updatedAt: "2024-01-16T00:00:00Z",
       viewCount: 78,
-      completionCount: 45
+      completionCount: 45,
     },
     {
-      id: '4',
-      title: 'Reports and Analytics',
-      description: 'Learn how to generate and interpret reports for better decision making',
-      category: 'reports',
-      status: 'published',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', // Sample video
+      id: "4",
+      title: "Reports and Analytics",
+      description:
+        "Learn how to generate and interpret reports for better decision making",
+      category: "reports",
+      status: "published",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", // Sample video
       videoDuration: 15, // 0:15 duration
-      instructions: '<h2>Reports and Analytics</h2><p>Understanding reports and analytics is crucial for making informed business decisions. This tutorial will guide you through the various reports available and how to interpret the data.</p><h3>Report Types:</h3><ul><li>Productivity reports</li><li>Team performance analytics</li><li>Project progress reports</li><li>Financial summaries</li></ul>',
+      instructions:
+        "<h2>Reports and Analytics</h2><p>Understanding reports and analytics is crucial for making informed business decisions. This tutorial will guide you through the various reports available and how to interpret the data.</p><h3>Report Types:</h3><ul><li>Productivity reports</li><li>Team performance analytics</li><li>Project progress reports</li><li>Financial summaries</li></ul>",
       steps: [
         {
-          id: 'step1',
+          id: "step1",
           stepNumber: 1,
-          title: 'Access the Reports section',
-          description: 'Navigate to the Reports menu from the sidebar.',
-          isRequired: true
+          title: "Access the Reports section",
+          description: "Navigate to the Reports menu from the sidebar.",
+          isRequired: true,
         },
         {
-          id: 'step2',
+          id: "step2",
           stepNumber: 2,
-          title: 'Select report type',
-          description: 'Choose the appropriate report type based on your needs.',
-          isRequired: true
+          title: "Select report type",
+          description:
+            "Choose the appropriate report type based on your needs.",
+          isRequired: true,
         },
         {
-          id: 'step3',
+          id: "step3",
           stepNumber: 3,
-          title: 'Generate and export',
-          description: 'Generate the report and export it if needed for sharing.',
-          isRequired: false
-        }
+          title: "Generate and export",
+          description:
+            "Generate the report and export it if needed for sharing.",
+          isRequired: false,
+        },
       ],
-      targetRoles: ['project_manager', 'super_admin'],
+      targetRoles: ["project_manager", "super_admin"],
       isRequired: false,
       order: 1,
-      tags: ['reports', 'analytics', 'data', 'insights'],
+      tags: ["reports", "analytics", "data", "insights"],
       createdBy: {
-        id: 'admin',
-        name: 'Admin User'
+        id: "admin",
+        name: "Admin User",
       },
-      createdAt: '2024-01-17T00:00:00Z',
-      updatedAt: '2024-01-17T00:00:00Z',
+      createdAt: "2024-01-17T00:00:00Z",
+      updatedAt: "2024-01-17T00:00:00Z",
       viewCount: 124,
-      completionCount: 89
+      completionCount: 89,
     },
     {
-      id: '5',
-      title: 'Troubleshooting Common Issues',
-      description: 'Solutions for frequently encountered problems and technical issues',
-      category: 'troubleshooting',
-      status: 'published',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', // Sample video
+      id: "5",
+      title: "Troubleshooting Common Issues",
+      description:
+        "Solutions for frequently encountered problems and technical issues",
+      category: "troubleshooting",
+      status: "published",
+      videoUrl:
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", // Sample video
       videoDuration: 60, // 1:00 duration
-      instructions: '<h2>Troubleshooting Guide</h2><p>This tutorial addresses the most common issues users encounter and provides step-by-step solutions. Keep this handy for quick problem resolution.</p><h3>Common Issues:</h3><ul><li>Login problems</li><li>File upload errors</li><li>Performance issues</li><li>Data sync problems</li><li>Permission errors</li></ul>',
+      instructions:
+        "<h2>Troubleshooting Guide</h2><p>This tutorial addresses the most common issues users encounter and provides step-by-step solutions. Keep this handy for quick problem resolution.</p><h3>Common Issues:</h3><ul><li>Login problems</li><li>File upload errors</li><li>Performance issues</li><li>Data sync problems</li><li>Permission errors</li></ul>",
       steps: [
         {
-          id: 'step1',
+          id: "step1",
           stepNumber: 1,
-          title: 'Identify the problem',
-          description: 'Understand the specific issue you\'re experiencing and note any error messages.',
-          isRequired: true
+          title: "Identify the problem",
+          description:
+            "Understand the specific issue you're experiencing and note any error messages.",
+          isRequired: true,
         },
         {
-          id: 'step2',
+          id: "step2",
           stepNumber: 2,
-          title: 'Try basic solutions',
-          description: 'Start with simple fixes like refreshing the page or logging out and back in.',
-          isRequired: true
+          title: "Try basic solutions",
+          description:
+            "Start with simple fixes like refreshing the page or logging out and back in.",
+          isRequired: true,
         },
         {
-          id: 'step3',
+          id: "step3",
           stepNumber: 3,
-          title: 'Contact support if needed',
-          description: 'If the issue persists, contact technical support with details about the problem.',
-          isRequired: false
-        }
+          title: "Contact support if needed",
+          description:
+            "If the issue persists, contact technical support with details about the problem.",
+          isRequired: false,
+        },
       ],
-      targetRoles: ['user', 'project_manager', 'super_admin'],
+      targetRoles: ["user", "project_manager", "super_admin"],
       isRequired: false,
       order: 1,
-      tags: ['troubleshooting', 'support', 'problems', 'solutions'],
+      tags: ["troubleshooting", "support", "problems", "solutions"],
       createdBy: {
-        id: 'admin',
-        name: 'Admin User'
+        id: "admin",
+        name: "Admin User",
       },
-      createdAt: '2024-01-18T00:00:00Z',
-      updatedAt: '2024-01-18T00:00:00Z',
+      createdAt: "2024-01-18T00:00:00Z",
+      updatedAt: "2024-01-18T00:00:00Z",
       viewCount: 156,
-      completionCount: 98
-    }
+      completionCount: 98,
+    },
   ];
 
   // Filter tutorials based on role, category, and search
-  const filteredTutorials = mockTutorials.filter(tutorial => {
-    const matchesRole = tutorial.targetRoles.includes(user?.role || 'user');
-    const matchesCategory = selectedCategory === 'all' || tutorial.category === selectedCategory;
-    const matchesSearch = searchQuery === '' || 
+  const filteredTutorials = mockTutorials.filter((tutorial) => {
+    const matchesRole = tutorial.targetRoles.includes(user?.role || "user");
+    const matchesCategory =
+      selectedCategory === "all" || tutorial.category === selectedCategory;
+    const matchesSearch =
+      searchQuery === "" ||
       tutorial.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tutorial.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tutorial.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+      tutorial.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+
     return matchesRole && matchesCategory && matchesSearch;
   });
 
   // Get categories accessible to current user
-  const availableCategories = TUTORIAL_CATEGORIES_DATA.filter(cat => 
-    !cat.requiredForRoles || cat.requiredForRoles.includes(user?.role || 'user')
+  const availableCategories = TUTORIAL_CATEGORIES_DATA.filter(
+    (cat) =>
+      !cat.requiredForRoles ||
+      cat.requiredForRoles.includes(user?.role || "user"),
   );
 
   const handleTutorialSelect = (tutorial: Tutorial) => {
     setSelectedTutorial(tutorial);
-    setActiveTab('watch');
+    setActiveTab("watch");
   };
 
-  const canManageTutorials = user?.role === 'super_admin' || user?.role === 'project_manager';
+  const canManageTutorials =
+    user?.role === "super_admin" || user?.role === "project_manager";
 
   // Helper function to handle file selection
   const handleFileSelect = (file: File) => {
     // Validate file type
-    const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv'];
+    const allowedTypes = ["video/mp4", "video/avi", "video/mov", "video/wmv"];
     if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Invalid file type",
-        description: "Please select a supported video format (MP4, AVI, MOV, WMV)",
-        variant: "destructive"
+        description:
+          "Please select a supported video format (MP4, AVI, MOV, WMV)",
+        variant: "destructive",
       });
       return;
     }
@@ -621,7 +701,7 @@ export default function Tutorial() {
       toast({
         title: "File too large",
         description: "File size must be less than 500MB",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -632,12 +712,12 @@ export default function Tutorial() {
     setVideoUpload({
       ...videoUpload,
       file,
-      previewUrl
+      previewUrl,
     });
 
     toast({
       title: "File selected",
-      description: `${file.name} is ready for upload`
+      description: `${file.name} is ready for upload`,
     });
   };
 
@@ -645,41 +725,44 @@ export default function Tutorial() {
   const handleVideoUpload = async () => {
     if (!videoUpload.file || !videoUpload.tutorialId) return;
 
-    setVideoUpload({...videoUpload, isUploading: true});
+    setVideoUpload({ ...videoUpload, isUploading: true });
 
     try {
       // Simulate upload progress
       for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        setVideoUpload(prev => ({...prev, uploadProgress: progress}));
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        setVideoUpload((prev) => ({ ...prev, uploadProgress: progress }));
       }
 
       // Simulate successful upload
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const tutorialTitle = mockTutorials.find(t => t.id === videoUpload.tutorialId)?.title;
+      const tutorialTitle = mockTutorials.find(
+        (t) => t.id === videoUpload.tutorialId,
+      )?.title;
       toast({
         title: "Upload successful",
-        description: `Video uploaded successfully for tutorial: ${tutorialTitle}`
+        description: `Video uploaded successfully for tutorial: ${tutorialTitle}`,
       });
 
       // Reset upload state and close dialog
       setVideoUpload({
-        tutorialId: '',
+        tutorialId: "",
         file: null,
         uploadProgress: 0,
         isUploading: false,
-        previewUrl: '',
-        dragActive: false
+        previewUrl: "",
+        dragActive: false,
       });
       setIsUploadVideoOpen(false);
     } catch (error) {
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your video. Please try again.",
-        variant: "destructive"
+        description:
+          "There was an error uploading your video. Please try again.",
+        variant: "destructive",
       });
-      setVideoUpload({...videoUpload, isUploading: false});
+      setVideoUpload({ ...videoUpload, isUploading: false });
     }
   };
 
@@ -691,15 +774,15 @@ export default function Tutorial() {
       description: tutorial.description,
       category: tutorial.category,
       instructions: tutorial.instructions,
-      steps: tutorial.steps.map(step => ({
+      steps: tutorial.steps.map((step) => ({
         stepNumber: step.stepNumber,
         title: step.title,
         description: step.description,
-        isRequired: step.isRequired
+        isRequired: step.isRequired,
       })),
       targetRoles: tutorial.targetRoles,
       isRequired: tutorial.isRequired,
-      tags: tutorial.tags
+      tags: tutorial.tags,
     });
     setIsEditDialogOpen(true);
   };
@@ -709,11 +792,11 @@ export default function Tutorial() {
     if (!editingTutorial) return;
 
     // Here you would update the tutorial via API
-    console.log('Updating tutorial:', editingTutorial.id, newTutorial);
+    console.log("Updating tutorial:", editingTutorial.id, newTutorial);
 
     toast({
       title: "Tutorial updated",
-      description: `"${newTutorial.title}" has been updated successfully`
+      description: `"${newTutorial.title}" has been updated successfully`,
     });
 
     setIsEditDialogOpen(false);
@@ -721,69 +804,77 @@ export default function Tutorial() {
 
     // Reset form
     setNewTutorial({
-      title: '',
-      description: '',
-      category: 'getting_started',
-      instructions: '',
+      title: "",
+      description: "",
+      category: "getting_started",
+      instructions: "",
       steps: [],
-      targetRoles: ['user'],
+      targetRoles: ["user"],
       isRequired: false,
-      tags: []
+      tags: [],
     });
   };
 
   // Handle delete tutorial
   const handleDeleteTutorial = (tutorial: Tutorial) => {
     // Here you would delete the tutorial via API
-    console.log('Deleting tutorial:', tutorial.id);
+    console.log("Deleting tutorial:", tutorial.id);
 
     toast({
       title: "Tutorial deleted",
       description: `"${tutorial.title}" has been deleted successfully`,
-      variant: "destructive"
+      variant: "destructive",
     });
   };
 
   // Handle create tutorial
   const handleCreateTutorial = () => {
     // Here you would save the tutorial via API
-    console.log('Creating tutorial:', newTutorial);
+    console.log("Creating tutorial:", newTutorial);
 
     toast({
       title: "Tutorial created",
-      description: `"${newTutorial.title}" has been created successfully`
+      description: `"${newTutorial.title}" has been created successfully`,
     });
 
     setIsCreateDialogOpen(false);
 
     // Reset form
     setNewTutorial({
-      title: '',
-      description: '',
-      category: 'getting_started',
-      instructions: '',
+      title: "",
+      description: "",
+      category: "getting_started",
+      instructions: "",
       steps: [],
-      targetRoles: ['user'],
+      targetRoles: ["user"],
       isRequired: false,
-      tags: []
+      tags: [],
     });
     setCurrentStep({
       stepNumber: 1,
-      title: '',
-      description: '',
-      isRequired: false
+      title: "",
+      description: "",
+      isRequired: false,
     });
   };
 
   const getCategoryIcon = (category: TutorialCategory) => {
-    const categoryInfo = TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === category);
+    const categoryInfo = TUTORIAL_CATEGORIES_DATA.find(
+      (cat) => cat.id === category,
+    );
     switch (categoryInfo?.icon) {
-      case 'PlayCircle': return <PlayCircle className="h-5 w-5" />;
-      case 'CheckCircle': return <CheckCircle className="h-5 w-5" />;
-      case 'FileText': return <FileText className="h-5 w-5" />;
-      case 'Settings': return <Settings className="h-5 w-5" />;
-      case 'AlertCircle': return <AlertCircle className="h-5 w-5" />;
-      default: return <PlayCircle className="h-5 w-5" />;
+      case "PlayCircle":
+        return <PlayCircle className="h-5 w-5" />;
+      case "CheckCircle":
+        return <CheckCircle className="h-5 w-5" />;
+      case "FileText":
+        return <FileText className="h-5 w-5" />;
+      case "Settings":
+        return <Settings className="h-5 w-5" />;
+      case "AlertCircle":
+        return <AlertCircle className="h-5 w-5" />;
+      default:
+        return <PlayCircle className="h-5 w-5" />;
     }
   };
 
@@ -797,7 +888,8 @@ export default function Tutorial() {
             Training Tutorials
           </h1>
           <p className="text-muted-foreground mt-1">
-            Learn how to use the platform with step-by-step video tutorials and guides
+            Learn how to use the platform with step-by-step video tutorials and
+            guides
           </p>
         </div>
         {canManageTutorials && (
@@ -815,11 +907,17 @@ export default function Tutorial() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="browse">Browse Tutorials</TabsTrigger>
           <TabsTrigger value="watch">Watch Tutorial</TabsTrigger>
-          {canManageTutorials && <TabsTrigger value="manage">Manage Tutorials</TabsTrigger>}
+          {canManageTutorials && (
+            <TabsTrigger value="manage">Manage Tutorials</TabsTrigger>
+          )}
         </TabsList>
 
         {/* Browse Tutorials Tab */}
@@ -835,7 +933,12 @@ export default function Tutorial() {
                 className="pl-10"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as TutorialCategory | 'all')}>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) =>
+                setSelectedCategory(value as TutorialCategory | "all")
+              }
+            >
               <SelectTrigger className="w-48">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
@@ -853,15 +956,20 @@ export default function Tutorial() {
           {/* Category Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {availableCategories.map((category) => {
-              const categoryTutorials = filteredTutorials.filter(t => t.category === category.id);
+              const categoryTutorials = filteredTutorials.filter(
+                (t) => t.category === category.id,
+              );
               const completedCount = Math.floor(categoryTutorials.length * 0.7); // Mock completion
 
               return (
-                <Card key={category.id} className="cursor-pointer hover:shadow-md transition-shadow" 
-                      onClick={() => setSelectedCategory(category.id)}>
+                <Card
+                  key={category.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setSelectedCategory(category.id)}
+                >
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <div 
+                      <div
                         className="p-2 rounded-lg text-white"
                         style={{ backgroundColor: category.color }}
                       >
@@ -876,7 +984,10 @@ export default function Tutorial() {
                       <span>{categoryTutorials.length} tutorials</span>
                       <span>{completedCount} completed</span>
                     </div>
-                    <Progress value={(completedCount / categoryTutorials.length) * 100} className="mt-2" />
+                    <Progress
+                      value={(completedCount / categoryTutorials.length) * 100}
+                      className="mt-2"
+                    />
                   </CardContent>
                 </Card>
               );
@@ -886,13 +997,18 @@ export default function Tutorial() {
           {/* Tutorials List */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">
-              {selectedCategory === 'all' ? 'All Tutorials' : 
-               availableCategories.find(cat => cat.id === selectedCategory)?.name}
+              {selectedCategory === "all"
+                ? "All Tutorials"
+                : availableCategories.find((cat) => cat.id === selectedCategory)
+                    ?.name}
             </h3>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {filteredTutorials.map((tutorial) => (
-                <Card key={tutorial.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <Card
+                  key={tutorial.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -906,11 +1022,19 @@ export default function Tutorial() {
                           {tutorial.description}
                         </CardDescription>
                       </div>
-                      <Badge 
+                      <Badge
                         variant="outline"
-                        style={{ borderColor: TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.color }}
+                        style={{
+                          borderColor: TUTORIAL_CATEGORIES_DATA.find(
+                            (cat) => cat.id === tutorial.category,
+                          )?.color,
+                        }}
                       >
-                        {TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.name}
+                        {
+                          TUTORIAL_CATEGORIES_DATA.find(
+                            (cat) => cat.id === tutorial.category,
+                          )?.name
+                        }
                       </Badge>
                     </div>
                   </CardHeader>
@@ -933,11 +1057,16 @@ export default function Tutorial() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                      <Button onClick={() => handleTutorialSelect(tutorial)} className="flex-1">
+                      <Button
+                        onClick={() => handleTutorialSelect(tutorial)}
+                        className="flex-1"
+                      >
                         <PlayCircle className="h-4 w-4 mr-2" />
-                        {tutorial.videoUrl ? 'Watch Tutorial' : 'View Instructions'}
+                        {tutorial.videoUrl
+                          ? "Watch Tutorial"
+                          : "View Instructions"}
                       </Button>
                       <Button variant="outline" size="sm">
                         <BookmarkIcon className="h-4 w-4" />
@@ -959,19 +1088,21 @@ export default function Tutorial() {
                 <Card>
                   <CardHeader>
                     <CardTitle>{selectedTutorial.title}</CardTitle>
-                    <CardDescription>{selectedTutorial.description}</CardDescription>
+                    <CardDescription>
+                      {selectedTutorial.description}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <VideoPlayer 
+                    <VideoPlayer
                       src={selectedTutorial.videoUrl}
                       title={selectedTutorial.title}
                       onTimeUpdate={(time) => {
                         // Track video progress for analytics
-                        console.log('Video time:', time);
+                        console.log("Video time:", time);
                       }}
                       onProgress={(progress) => {
                         // Update user progress
-                        console.log('Video progress:', progress);
+                        console.log("Video progress:", progress);
                       }}
                     />
                   </CardContent>
@@ -983,9 +1114,11 @@ export default function Tutorial() {
                     <CardTitle>Instructions</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div 
+                    <div
                       className="prose max-w-none"
-                      dangerouslySetInnerHTML={{ __html: selectedTutorial.instructions }}
+                      dangerouslySetInnerHTML={{
+                        __html: selectedTutorial.instructions,
+                      }}
                     />
                   </CardContent>
                 </Card>
@@ -1036,7 +1169,7 @@ export default function Tutorial() {
                       </div>
                       <Progress value={60} />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Button className="w-full">
                         <CheckCircle className="h-4 w-4 mr-2" />
@@ -1050,7 +1183,9 @@ export default function Tutorial() {
 
                     {/* Rating */}
                     <div className="pt-4 border-t">
-                      <Label className="text-sm font-medium">Rate this tutorial</Label>
+                      <Label className="text-sm font-medium">
+                        Rate this tutorial
+                      </Label>
                       <div className="flex gap-1 mt-2">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Button
@@ -1072,8 +1207,12 @@ export default function Tutorial() {
             <div className="flex items-center justify-center h-64">
               <div className="text-center">
                 <PlayCircle className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium text-muted-foreground">No tutorial selected</h3>
-                <p className="text-sm text-muted-foreground">Choose a tutorial from the browse tab to start learning</p>
+                <h3 className="text-lg font-medium text-muted-foreground">
+                  No tutorial selected
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose a tutorial from the browse tab to start learning
+                </p>
               </div>
             </div>
           )}
@@ -1086,7 +1225,9 @@ export default function Tutorial() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold">Manage Tutorials</h3>
-                <p className="text-sm text-muted-foreground">Create, edit, and organize training content</p>
+                <p className="text-sm text-muted-foreground">
+                  Create, edit, and organize training content
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm">
@@ -1112,7 +1253,9 @@ export default function Tutorial() {
                     <PlayCircle className="h-4 w-4 text-blue-600" />
                     <span className="text-sm font-medium">Total Tutorials</span>
                   </div>
-                  <p className="text-2xl font-bold mt-1">{mockTutorials.length}</p>
+                  <p className="text-2xl font-bold mt-1">
+                    {mockTutorials.length}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -1122,7 +1265,10 @@ export default function Tutorial() {
                     <span className="text-sm font-medium">Published</span>
                   </div>
                   <p className="text-2xl font-bold mt-1">
-                    {mockTutorials.filter(t => t.status === 'published').length}
+                    {
+                      mockTutorials.filter((t) => t.status === "published")
+                        .length
+                    }
                   </p>
                 </CardContent>
               </Card>
@@ -1145,8 +1291,13 @@ export default function Tutorial() {
                   </div>
                   <p className="text-2xl font-bold mt-1">
                     {Math.round(
-                      mockTutorials.reduce((sum, t) => sum + (t.completionCount / t.viewCount * 100), 0) / mockTutorials.length
-                    )}%
+                      mockTutorials.reduce(
+                        (sum, t) =>
+                          sum + (t.completionCount / t.viewCount) * 100,
+                        0,
+                      ) / mockTutorials.length,
+                    )}
+                    %
                   </p>
                 </CardContent>
               </Card>
@@ -1208,30 +1359,50 @@ export default function Tutorial() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
-                            <h4 className="font-semibold text-lg">{tutorial.title}</h4>
+                            <h4 className="font-semibold text-lg">
+                              {tutorial.title}
+                            </h4>
                             <Badge
-                              variant={tutorial.status === 'published' ? 'default' : 'secondary'}
+                              variant={
+                                tutorial.status === "published"
+                                  ? "default"
+                                  : "secondary"
+                              }
                               className="capitalize"
                             >
                               {tutorial.status}
                             </Badge>
                             {tutorial.isRequired && (
-                              <Badge variant="outline" className="text-orange-600 border-orange-600">
+                              <Badge
+                                variant="outline"
+                                className="text-orange-600 border-orange-600"
+                              >
                                 Required
                               </Badge>
                             )}
                           </div>
-                          <p className="text-muted-foreground mt-1">{tutorial.description}</p>
+                          <p className="text-muted-foreground mt-1">
+                            {tutorial.description}
+                          </p>
                         </div>
                       </div>
 
                       {/* Tutorial Metadata */}
                       <div className="flex items-center gap-6 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Badge variant="outline" style={{
-                            borderColor: TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.color
-                          }}>
-                            {TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.name}
+                          <Badge
+                            variant="outline"
+                            style={{
+                              borderColor: TUTORIAL_CATEGORIES_DATA.find(
+                                (cat) => cat.id === tutorial.category,
+                              )?.color,
+                            }}
+                          >
+                            {
+                              TUTORIAL_CATEGORIES_DATA.find(
+                                (cat) => cat.id === tutorial.category,
+                              )?.name
+                            }
                           </Badge>
                         </span>
                         <span className="flex items-center gap-1">
@@ -1246,9 +1417,7 @@ export default function Tutorial() {
                           <Clock className="h-4 w-4" />
                           {tutorial.steps.length} steps
                         </span>
-                        <span>
-                          Created by {tutorial.createdBy.name}
-                        </span>
+                        <span>Created by {tutorial.createdBy.name}</span>
                         <span>
                           {new Date(tutorial.createdAt).toLocaleDateString()}
                         </span>
@@ -1257,9 +1426,15 @@ export default function Tutorial() {
                       {/* Tutorial Tags */}
                       {tutorial.tags.length > 0 && (
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Tags:</span>
+                          <span className="text-xs text-muted-foreground">
+                            Tags:
+                          </span>
                           {tutorial.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               {tag}
                             </Badge>
                           ))}
@@ -1268,10 +1443,16 @@ export default function Tutorial() {
 
                       {/* Target Roles */}
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Target Roles:</span>
+                        <span className="text-xs text-muted-foreground">
+                          Target Roles:
+                        </span>
                         {tutorial.targetRoles.map((role) => (
-                          <Badge key={role} variant="outline" className="text-xs capitalize">
-                            {role.replace('_', ' ')}
+                          <Badge
+                            key={role}
+                            variant="outline"
+                            className="text-xs capitalize"
+                          >
+                            {role.replace("_", " ")}
                           </Badge>
                         ))}
                       </div>
@@ -1279,12 +1460,24 @@ export default function Tutorial() {
                       {/* Progress Analytics */}
                       <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium">Completion Rate</span>
+                          <span className="text-xs font-medium">
+                            Completion Rate
+                          </span>
                           <span className="text-xs text-muted-foreground">
-                            {Math.round((tutorial.completionCount / tutorial.viewCount) * 100)}%
+                            {Math.round(
+                              (tutorial.completionCount / tutorial.viewCount) *
+                                100,
+                            )}
+                            %
                           </span>
                         </div>
-                        <Progress value={(tutorial.completionCount / tutorial.viewCount) * 100} className="h-2" />
+                        <Progress
+                          value={
+                            (tutorial.completionCount / tutorial.viewCount) *
+                            100
+                          }
+                          className="h-2"
+                        />
                       </div>
                     </div>
 
@@ -1303,7 +1496,10 @@ export default function Tutorial() {
                         size="sm"
                         title="Upload/Replace Video"
                         onClick={() => {
-                          setVideoUpload({...videoUpload, tutorialId: tutorial.id});
+                          setVideoUpload({
+                            ...videoUpload,
+                            tutorialId: tutorial.id,
+                          });
                           setIsUploadVideoOpen(true);
                         }}
                       >
@@ -1316,7 +1512,7 @@ export default function Tutorial() {
                         onClick={() => {
                           toast({
                             title: "Analytics",
-                            description: "Analytics feature coming soon!"
+                            description: "Analytics feature coming soon!",
                           });
                         }}
                       >
@@ -1329,7 +1525,7 @@ export default function Tutorial() {
                         onClick={() => {
                           toast({
                             title: "Tutorial duplicated",
-                            description: `"${tutorial.title}" has been duplicated as a draft`
+                            description: `"${tutorial.title}" has been duplicated as a draft`,
                           });
                         }}
                       >
@@ -1340,7 +1536,11 @@ export default function Tutorial() {
                         size="sm"
                         title="Delete Tutorial"
                         onClick={() => {
-                          if (confirm(`Are you sure you want to delete "${tutorial.title}"?`)) {
+                          if (
+                            confirm(
+                              `Are you sure you want to delete "${tutorial.title}"?`,
+                            )
+                          ) {
                             handleDeleteTutorial(tutorial);
                           }
                         }}
@@ -1384,7 +1584,10 @@ export default function Tutorial() {
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Tutorial</DialogTitle>
-            <DialogDescription>Create a comprehensive training tutorial with step-by-step instructions</DialogDescription>
+            <DialogDescription>
+              Create a comprehensive training tutorial with step-by-step
+              instructions
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="basic" className="w-full">
@@ -1403,14 +1606,21 @@ export default function Tutorial() {
                     id="title"
                     placeholder="Enter tutorial title"
                     value={newTutorial.title}
-                    onChange={(e) => setNewTutorial({...newTutorial, title: e.target.value})}
+                    onChange={(e) =>
+                      setNewTutorial({ ...newTutorial, title: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="category">Category *</Label>
                   <Select
                     value={newTutorial.category}
-                    onValueChange={(value) => setNewTutorial({...newTutorial, category: value as TutorialCategory})}
+                    onValueChange={(value) =>
+                      setNewTutorial({
+                        ...newTutorial,
+                        category: value as TutorialCategory,
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1432,7 +1642,12 @@ export default function Tutorial() {
                   id="description"
                   placeholder="Brief description of what users will learn"
                   value={newTutorial.description}
-                  onChange={(e) => setNewTutorial({...newTutorial, description: e.target.value})}
+                  onChange={(e) =>
+                    setNewTutorial({
+                      ...newTutorial,
+                      description: e.target.value,
+                    })
+                  }
                   rows={3}
                 />
               </div>
@@ -1440,28 +1655,34 @@ export default function Tutorial() {
               <div>
                 <Label>Target Roles *</Label>
                 <div className="flex gap-2 mt-2">
-                  {(['user', 'project_manager', 'super_admin'] as const).map((role) => (
-                    <label key={role} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={newTutorial.targetRoles.includes(role)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setNewTutorial({
-                              ...newTutorial,
-                              targetRoles: [...newTutorial.targetRoles, role]
-                            });
-                          } else {
-                            setNewTutorial({
-                              ...newTutorial,
-                              targetRoles: newTutorial.targetRoles.filter(r => r !== role)
-                            });
-                          }
-                        }}
-                      />
-                      <span className="text-sm capitalize">{role.replace('_', ' ')}</span>
-                    </label>
-                  ))}
+                  {(["user", "project_manager", "super_admin"] as const).map(
+                    (role) => (
+                      <label key={role} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={newTutorial.targetRoles.includes(role)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewTutorial({
+                                ...newTutorial,
+                                targetRoles: [...newTutorial.targetRoles, role],
+                              });
+                            } else {
+                              setNewTutorial({
+                                ...newTutorial,
+                                targetRoles: newTutorial.targetRoles.filter(
+                                  (r) => r !== role,
+                                ),
+                              });
+                            }
+                          }}
+                        />
+                        <span className="text-sm capitalize">
+                          {role.replace("_", " ")}
+                        </span>
+                      </label>
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -1470,9 +1691,16 @@ export default function Tutorial() {
                   type="checkbox"
                   id="isRequired"
                   checked={newTutorial.isRequired}
-                  onChange={(e) => setNewTutorial({...newTutorial, isRequired: e.target.checked})}
+                  onChange={(e) =>
+                    setNewTutorial({
+                      ...newTutorial,
+                      isRequired: e.target.checked,
+                    })
+                  }
                 />
-                <Label htmlFor="isRequired">This tutorial is required for new users</Label>
+                <Label htmlFor="isRequired">
+                  This tutorial is required for new users
+                </Label>
               </div>
 
               <div>
@@ -1481,8 +1709,11 @@ export default function Tutorial() {
                   id="tags"
                   placeholder="e.g. basics, navigation, getting started"
                   onChange={(e) => {
-                    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-                    setNewTutorial({...newTutorial, tags});
+                    const tags = e.target.value
+                      .split(",")
+                      .map((tag) => tag.trim())
+                      .filter((tag) => tag);
+                    setNewTutorial({ ...newTutorial, tags });
                   }}
                 />
               </div>
@@ -1493,11 +1724,15 @@ export default function Tutorial() {
               <div>
                 <Label>Tutorial Instructions</Label>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Write detailed instructions that will help users understand the process. Use headings, lists, and formatting to make it clear.
+                  Write detailed instructions that will help users understand
+                  the process. Use headings, lists, and formatting to make it
+                  clear.
                 </p>
                 <RichTextEditor
                   value={newTutorial.instructions}
-                  onChange={(value) => setNewTutorial({...newTutorial, instructions: value})}
+                  onChange={(value) =>
+                    setNewTutorial({ ...newTutorial, instructions: value })
+                  }
                   placeholder="Write your tutorial instructions here. You can use headings, lists, bold text, and more..."
                   minHeight={300}
                   allowImages={true}
@@ -1517,18 +1752,21 @@ export default function Tutorial() {
                   onClick={() => {
                     setNewTutorial({
                       ...newTutorial,
-                      steps: [...newTutorial.steps, {
-                        stepNumber: newTutorial.steps.length + 1,
-                        title: currentStep.title,
-                        description: currentStep.description,
-                        isRequired: currentStep.isRequired
-                      }]
+                      steps: [
+                        ...newTutorial.steps,
+                        {
+                          stepNumber: newTutorial.steps.length + 1,
+                          title: currentStep.title,
+                          description: currentStep.description,
+                          isRequired: currentStep.isRequired,
+                        },
+                      ],
                     });
                     setCurrentStep({
                       stepNumber: newTutorial.steps.length + 2,
-                      title: '',
-                      description: '',
-                      isRequired: false
+                      title: "",
+                      description: "",
+                      isRequired: false,
                     });
                   }}
                   disabled={!currentStep.title || !currentStep.description}
@@ -1540,7 +1778,9 @@ export default function Tutorial() {
 
               {/* Current Step Form */}
               <Card className="p-4">
-                <h4 className="font-medium mb-3">Step {currentStep.stepNumber}</h4>
+                <h4 className="font-medium mb-3">
+                  Step {currentStep.stepNumber}
+                </h4>
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="stepTitle">Step Title *</Label>
@@ -1548,7 +1788,12 @@ export default function Tutorial() {
                       id="stepTitle"
                       placeholder="e.g., Navigate to the dashboard"
                       value={currentStep.title}
-                      onChange={(e) => setCurrentStep({...currentStep, title: e.target.value})}
+                      onChange={(e) =>
+                        setCurrentStep({
+                          ...currentStep,
+                          title: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div>
@@ -1557,7 +1802,12 @@ export default function Tutorial() {
                       id="stepDescription"
                       placeholder="Detailed description of what the user should do"
                       value={currentStep.description}
-                      onChange={(e) => setCurrentStep({...currentStep, description: e.target.value})}
+                      onChange={(e) =>
+                        setCurrentStep({
+                          ...currentStep,
+                          description: e.target.value,
+                        })
+                      }
                       rows={2}
                     />
                   </div>
@@ -1566,7 +1816,12 @@ export default function Tutorial() {
                       type="checkbox"
                       id="stepRequired"
                       checked={currentStep.isRequired}
-                      onChange={(e) => setCurrentStep({...currentStep, isRequired: e.target.checked})}
+                      onChange={(e) =>
+                        setCurrentStep({
+                          ...currentStep,
+                          isRequired: e.target.checked,
+                        })
+                      }
                     />
                     <Label htmlFor="stepRequired">This step is required</Label>
                   </div>
@@ -1582,25 +1837,40 @@ export default function Tutorial() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">Step {step.stepNumber}: {step.title}</span>
-                            {step.isRequired && <Badge variant="secondary" className="text-xs">Required</Badge>}
+                            <span className="font-medium">
+                              Step {step.stepNumber}: {step.title}
+                            </span>
+                            {step.isRequired && (
+                              <Badge variant="secondary" className="text-xs">
+                                Required
+                              </Badge>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {step.description}
+                          </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            const updatedSteps = newTutorial.steps.filter((_, i) => i !== index);
+                            const updatedSteps = newTutorial.steps.filter(
+                              (_, i) => i !== index,
+                            );
                             // Renumber steps
-                            const renumberedSteps = updatedSteps.map((s, i) => ({
-                              ...s,
-                              stepNumber: i + 1
-                            }));
-                            setNewTutorial({...newTutorial, steps: renumberedSteps});
+                            const renumberedSteps = updatedSteps.map(
+                              (s, i) => ({
+                                ...s,
+                                stepNumber: i + 1,
+                              }),
+                            );
+                            setNewTutorial({
+                              ...newTutorial,
+                              steps: renumberedSteps,
+                            });
                             setCurrentStep({
                               ...currentStep,
-                              stepNumber: renumberedSteps.length + 1
+                              stepNumber: renumberedSteps.length + 1,
                             });
                           }}
                         >
@@ -1615,31 +1885,38 @@ export default function Tutorial() {
           </Tabs>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setIsCreateDialogOpen(false);
-              // Reset form
-              setNewTutorial({
-                title: '',
-                description: '',
-                category: 'getting_started',
-                instructions: '',
-                steps: [],
-                targetRoles: ['user'],
-                isRequired: false,
-                tags: []
-              });
-              setCurrentStep({
-                stepNumber: 1,
-                title: '',
-                description: '',
-                isRequired: false
-              });
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                // Reset form
+                setNewTutorial({
+                  title: "",
+                  description: "",
+                  category: "getting_started",
+                  instructions: "",
+                  steps: [],
+                  targetRoles: ["user"],
+                  isRequired: false,
+                  tags: [],
+                });
+                setCurrentStep({
+                  stepNumber: 1,
+                  title: "",
+                  description: "",
+                  isRequired: false,
+                });
+              }}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleCreateTutorial}
-              disabled={!newTutorial.title || !newTutorial.description || !newTutorial.instructions}
+              disabled={
+                !newTutorial.title ||
+                !newTutorial.description ||
+                !newTutorial.instructions
+              }
             >
               Create Tutorial
             </Button>
@@ -1652,7 +1929,9 @@ export default function Tutorial() {
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Tutorial</DialogTitle>
-            <DialogDescription>Update the tutorial content and settings</DialogDescription>
+            <DialogDescription>
+              Update the tutorial content and settings
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="basic" className="w-full">
@@ -1671,14 +1950,21 @@ export default function Tutorial() {
                     id="edit-title"
                     placeholder="Enter tutorial title"
                     value={newTutorial.title}
-                    onChange={(e) => setNewTutorial({...newTutorial, title: e.target.value})}
+                    onChange={(e) =>
+                      setNewTutorial({ ...newTutorial, title: e.target.value })
+                    }
                   />
                 </div>
                 <div>
                   <Label htmlFor="edit-category">Category *</Label>
                   <Select
                     value={newTutorial.category}
-                    onValueChange={(value) => setNewTutorial({...newTutorial, category: value as TutorialCategory})}
+                    onValueChange={(value) =>
+                      setNewTutorial({
+                        ...newTutorial,
+                        category: value as TutorialCategory,
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1700,7 +1986,12 @@ export default function Tutorial() {
                   id="edit-description"
                   placeholder="Brief description of what users will learn"
                   value={newTutorial.description}
-                  onChange={(e) => setNewTutorial({...newTutorial, description: e.target.value})}
+                  onChange={(e) =>
+                    setNewTutorial({
+                      ...newTutorial,
+                      description: e.target.value,
+                    })
+                  }
                   rows={3}
                 />
               </div>
@@ -1708,28 +1999,34 @@ export default function Tutorial() {
               <div>
                 <Label>Target Roles *</Label>
                 <div className="flex gap-2 mt-2">
-                  {(['user', 'project_manager', 'super_admin'] as const).map((role) => (
-                    <label key={role} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={newTutorial.targetRoles.includes(role)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setNewTutorial({
-                              ...newTutorial,
-                              targetRoles: [...newTutorial.targetRoles, role]
-                            });
-                          } else {
-                            setNewTutorial({
-                              ...newTutorial,
-                              targetRoles: newTutorial.targetRoles.filter(r => r !== role)
-                            });
-                          }
-                        }}
-                      />
-                      <span className="text-sm capitalize">{role.replace('_', ' ')}</span>
-                    </label>
-                  ))}
+                  {(["user", "project_manager", "super_admin"] as const).map(
+                    (role) => (
+                      <label key={role} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={newTutorial.targetRoles.includes(role)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewTutorial({
+                                ...newTutorial,
+                                targetRoles: [...newTutorial.targetRoles, role],
+                              });
+                            } else {
+                              setNewTutorial({
+                                ...newTutorial,
+                                targetRoles: newTutorial.targetRoles.filter(
+                                  (r) => r !== role,
+                                ),
+                              });
+                            }
+                          }}
+                        />
+                        <span className="text-sm capitalize">
+                          {role.replace("_", " ")}
+                        </span>
+                      </label>
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -1738,9 +2035,16 @@ export default function Tutorial() {
                   type="checkbox"
                   id="edit-isRequired"
                   checked={newTutorial.isRequired}
-                  onChange={(e) => setNewTutorial({...newTutorial, isRequired: e.target.checked})}
+                  onChange={(e) =>
+                    setNewTutorial({
+                      ...newTutorial,
+                      isRequired: e.target.checked,
+                    })
+                  }
                 />
-                <Label htmlFor="edit-isRequired">This tutorial is required for new users</Label>
+                <Label htmlFor="edit-isRequired">
+                  This tutorial is required for new users
+                </Label>
               </div>
 
               <div>
@@ -1748,10 +2052,13 @@ export default function Tutorial() {
                 <Input
                   id="edit-tags"
                   placeholder="e.g. basics, navigation, getting started"
-                  value={newTutorial.tags.join(', ')}
+                  value={newTutorial.tags.join(", ")}
                   onChange={(e) => {
-                    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
-                    setNewTutorial({...newTutorial, tags});
+                    const tags = e.target.value
+                      .split(",")
+                      .map((tag) => tag.trim())
+                      .filter((tag) => tag);
+                    setNewTutorial({ ...newTutorial, tags });
                   }}
                 />
               </div>
@@ -1762,11 +2069,15 @@ export default function Tutorial() {
               <div>
                 <Label>Tutorial Instructions</Label>
                 <p className="text-xs text-muted-foreground mb-2">
-                  Write detailed instructions that will help users understand the process. Use headings, lists, and formatting to make it clear.
+                  Write detailed instructions that will help users understand
+                  the process. Use headings, lists, and formatting to make it
+                  clear.
                 </p>
                 <RichTextEditor
                   value={newTutorial.instructions}
-                  onChange={(value) => setNewTutorial({...newTutorial, instructions: value})}
+                  onChange={(value) =>
+                    setNewTutorial({ ...newTutorial, instructions: value })
+                  }
                   placeholder="Write your tutorial instructions here. You can use headings, lists, bold text, and more..."
                   minHeight={300}
                   allowImages={true}
@@ -1786,18 +2097,21 @@ export default function Tutorial() {
                   onClick={() => {
                     setNewTutorial({
                       ...newTutorial,
-                      steps: [...newTutorial.steps, {
-                        stepNumber: newTutorial.steps.length + 1,
-                        title: currentStep.title,
-                        description: currentStep.description,
-                        isRequired: currentStep.isRequired
-                      }]
+                      steps: [
+                        ...newTutorial.steps,
+                        {
+                          stepNumber: newTutorial.steps.length + 1,
+                          title: currentStep.title,
+                          description: currentStep.description,
+                          isRequired: currentStep.isRequired,
+                        },
+                      ],
                     });
                     setCurrentStep({
                       stepNumber: newTutorial.steps.length + 2,
-                      title: '',
-                      description: '',
-                      isRequired: false
+                      title: "",
+                      description: "",
+                      isRequired: false,
                     });
                   }}
                   disabled={!currentStep.title || !currentStep.description}
@@ -1809,7 +2123,9 @@ export default function Tutorial() {
 
               {/* Current Step Form */}
               <Card className="p-4">
-                <h4 className="font-medium mb-3">Step {currentStep.stepNumber}</h4>
+                <h4 className="font-medium mb-3">
+                  Step {currentStep.stepNumber}
+                </h4>
                 <div className="space-y-3">
                   <div>
                     <Label htmlFor="edit-stepTitle">Step Title *</Label>
@@ -1817,16 +2133,28 @@ export default function Tutorial() {
                       id="edit-stepTitle"
                       placeholder="e.g., Navigate to the dashboard"
                       value={currentStep.title}
-                      onChange={(e) => setCurrentStep({...currentStep, title: e.target.value})}
+                      onChange={(e) =>
+                        setCurrentStep({
+                          ...currentStep,
+                          title: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div>
-                    <Label htmlFor="edit-stepDescription">Step Description *</Label>
+                    <Label htmlFor="edit-stepDescription">
+                      Step Description *
+                    </Label>
                     <Textarea
                       id="edit-stepDescription"
                       placeholder="Detailed description of what the user should do"
                       value={currentStep.description}
-                      onChange={(e) => setCurrentStep({...currentStep, description: e.target.value})}
+                      onChange={(e) =>
+                        setCurrentStep({
+                          ...currentStep,
+                          description: e.target.value,
+                        })
+                      }
                       rows={2}
                     />
                   </div>
@@ -1835,9 +2163,16 @@ export default function Tutorial() {
                       type="checkbox"
                       id="edit-stepRequired"
                       checked={currentStep.isRequired}
-                      onChange={(e) => setCurrentStep({...currentStep, isRequired: e.target.checked})}
+                      onChange={(e) =>
+                        setCurrentStep({
+                          ...currentStep,
+                          isRequired: e.target.checked,
+                        })
+                      }
                     />
-                    <Label htmlFor="edit-stepRequired">This step is required</Label>
+                    <Label htmlFor="edit-stepRequired">
+                      This step is required
+                    </Label>
                   </div>
                 </div>
               </Card>
@@ -1851,25 +2186,40 @@ export default function Tutorial() {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">Step {step.stepNumber}: {step.title}</span>
-                            {step.isRequired && <Badge variant="secondary" className="text-xs">Required</Badge>}
+                            <span className="font-medium">
+                              Step {step.stepNumber}: {step.title}
+                            </span>
+                            {step.isRequired && (
+                              <Badge variant="secondary" className="text-xs">
+                                Required
+                              </Badge>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {step.description}
+                          </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            const updatedSteps = newTutorial.steps.filter((_, i) => i !== index);
+                            const updatedSteps = newTutorial.steps.filter(
+                              (_, i) => i !== index,
+                            );
                             // Renumber steps
-                            const renumberedSteps = updatedSteps.map((s, i) => ({
-                              ...s,
-                              stepNumber: i + 1
-                            }));
-                            setNewTutorial({...newTutorial, steps: renumberedSteps});
+                            const renumberedSteps = updatedSteps.map(
+                              (s, i) => ({
+                                ...s,
+                                stepNumber: i + 1,
+                              }),
+                            );
+                            setNewTutorial({
+                              ...newTutorial,
+                              steps: renumberedSteps,
+                            });
                             setCurrentStep({
                               ...currentStep,
-                              stepNumber: renumberedSteps.length + 1
+                              stepNumber: renumberedSteps.length + 1,
                             });
                           }}
                         >
@@ -1884,32 +2234,39 @@ export default function Tutorial() {
           </Tabs>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setIsEditDialogOpen(false);
-              setEditingTutorial(null);
-              // Reset form
-              setNewTutorial({
-                title: '',
-                description: '',
-                category: 'getting_started',
-                instructions: '',
-                steps: [],
-                targetRoles: ['user'],
-                isRequired: false,
-                tags: []
-              });
-              setCurrentStep({
-                stepNumber: 1,
-                title: '',
-                description: '',
-                isRequired: false
-              });
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                setEditingTutorial(null);
+                // Reset form
+                setNewTutorial({
+                  title: "",
+                  description: "",
+                  category: "getting_started",
+                  instructions: "",
+                  steps: [],
+                  targetRoles: ["user"],
+                  isRequired: false,
+                  tags: [],
+                });
+                setCurrentStep({
+                  stepNumber: 1,
+                  title: "",
+                  description: "",
+                  isRequired: false,
+                });
+              }}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleSaveEditedTutorial}
-              disabled={!newTutorial.title || !newTutorial.description || !newTutorial.instructions}
+              disabled={
+                !newTutorial.title ||
+                !newTutorial.description ||
+                !newTutorial.instructions
+              }
             >
               Save Changes
             </Button>
@@ -1918,24 +2275,30 @@ export default function Tutorial() {
       </Dialog>
 
       {/* Upload Video Dialog */}
-      <Dialog open={isUploadVideoOpen} onOpenChange={(open) => {
-        setIsUploadVideoOpen(open);
-        if (!open) {
-          // Reset upload state when dialog closes
-          setVideoUpload({
-            tutorialId: '',
-            file: null,
-            uploadProgress: 0,
-            isUploading: false,
-            previewUrl: '',
-            dragActive: false
-          });
-        }
-      }}>
+      <Dialog
+        open={isUploadVideoOpen}
+        onOpenChange={(open) => {
+          setIsUploadVideoOpen(open);
+          if (!open) {
+            // Reset upload state when dialog closes
+            setVideoUpload({
+              tutorialId: "",
+              file: null,
+              uploadProgress: 0,
+              isUploading: false,
+              previewUrl: "",
+              dragActive: false,
+            });
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Upload Tutorial Video</DialogTitle>
-            <DialogDescription>Upload a video file to enhance your tutorial with visual demonstrations</DialogDescription>
+            <DialogDescription>
+              Upload a video file to enhance your tutorial with visual
+              demonstrations
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -1944,28 +2307,37 @@ export default function Tutorial() {
               <Label htmlFor="tutorial-select">Select Tutorial *</Label>
               <Select
                 value={videoUpload.tutorialId}
-                onValueChange={(value) => setVideoUpload({...videoUpload, tutorialId: value})}
+                onValueChange={(value) =>
+                  setVideoUpload({ ...videoUpload, tutorialId: value })
+                }
                 disabled={videoUpload.isUploading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a tutorial to add video to" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockTutorials.filter(t => !t.videoUrl).map((tutorial) => (
-                    <SelectItem key={tutorial.id} value={tutorial.id}>
-                      <div>
-                        <div className="font-medium">{tutorial.title}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.name}
+                  {mockTutorials
+                    .filter((t) => !t.videoUrl)
+                    .map((tutorial) => (
+                      <SelectItem key={tutorial.id} value={tutorial.id}>
+                        <div>
+                          <div className="font-medium">{tutorial.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {
+                              TUTORIAL_CATEGORIES_DATA.find(
+                                (cat) => cat.id === tutorial.category,
+                              )?.name
+                            }
+                          </div>
                         </div>
-                      </div>
-                    </SelectItem>
-                  ))}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
-              {mockTutorials.filter(t => !t.videoUrl).length === 0 && (
+              {mockTutorials.filter((t) => !t.videoUrl).length === 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  All tutorials already have videos. Create a new tutorial first.
+                  All tutorials already have videos. Create a new tutorial
+                  first.
                 </p>
               )}
             </div>
@@ -1976,26 +2348,30 @@ export default function Tutorial() {
               <div
                 className={cn(
                   "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
-                  videoUpload.dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300",
-                  videoUpload.isUploading && "opacity-50 pointer-events-none"
+                  videoUpload.dragActive
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-300",
+                  videoUpload.isUploading && "opacity-50 pointer-events-none",
                 )}
                 onDragEnter={(e) => {
                   e.preventDefault();
-                  setVideoUpload({...videoUpload, dragActive: true});
+                  setVideoUpload({ ...videoUpload, dragActive: true });
                 }}
                 onDragLeave={(e) => {
                   e.preventDefault();
-                  setVideoUpload({...videoUpload, dragActive: false});
+                  setVideoUpload({ ...videoUpload, dragActive: false });
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
-                  setVideoUpload({...videoUpload, dragActive: false});
+                  setVideoUpload({ ...videoUpload, dragActive: false });
 
                   const files = Array.from(e.dataTransfer.files);
-                  const videoFile = files.find(file => file.type.startsWith('video/'));
+                  const videoFile = files.find((file) =>
+                    file.type.startsWith("video/"),
+                  );
 
                   if (videoFile) {
                     handleFileSelect(videoFile);
@@ -2030,7 +2406,7 @@ export default function Tutorial() {
                         setVideoUpload({
                           ...videoUpload,
                           file: null,
-                          previewUrl: ''
+                          previewUrl: "",
                         });
                       }}
                       disabled={videoUpload.isUploading}
@@ -2044,17 +2420,22 @@ export default function Tutorial() {
                       <Upload className="h-12 w-12 text-gray-400" />
                     </div>
                     <div>
-                      <p className="text-lg font-medium">Drop your video file here</p>
-                      <p className="text-sm text-muted-foreground">or click to browse</p>
+                      <p className="text-lg font-medium">
+                        Drop your video file here
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        or click to browse
+                      </p>
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.accept = 'video/*';
+                        const input = document.createElement("input");
+                        input.type = "file";
+                        input.accept = "video/*";
                         input.onchange = (e) => {
-                          const file = (e.target as HTMLInputElement).files?.[0];
+                          const file = (e.target as HTMLInputElement)
+                            .files?.[0];
                           if (file) {
                             handleFileSelect(file);
                           }
@@ -2102,7 +2483,11 @@ export default function Tutorial() {
             </Button>
             <Button
               onClick={handleVideoUpload}
-              disabled={!videoUpload.tutorialId || !videoUpload.file || videoUpload.isUploading}
+              disabled={
+                !videoUpload.tutorialId ||
+                !videoUpload.file ||
+                videoUpload.isUploading
+              }
             >
               {videoUpload.isUploading ? (
                 <>
