@@ -803,6 +803,172 @@ export interface FilterQuery extends PaginationQuery, SortQuery, DateRangeQuery 
   [key: string]: any;
 }
 
+// ===== EXPENSE MANAGEMENT TYPES =====
+export type ExpenseType = 'administrative' | 'operational' | 'marketing' | 'utilities' | 'miscellaneous';
+export type ExpenseStatus = 'pending' | 'approved' | 'rejected';
+
+export interface SalaryConfig {
+  users: {
+    firstTierRate: number;     // Rate for first N files (in currency)
+    secondTierRate: number;    // Rate after first tier (in currency)
+    firstTierLimit: number;    // Number of files for first tier (e.g., 500)
+  };
+  projectManagers: {
+    [pmId: string]: number;    // Individual monthly salaries by PM ID
+  };
+  currency: 'USD' | 'INR';
+  updatedAt: string;
+  updatedBy: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface UserSalaryData {
+  id: string;
+  name: string;
+  role: string;
+
+  // File counts (resets daily)
+  todayFiles: number;
+  weeklyFiles: number;
+  monthlyFiles: number;
+
+  // Earnings based on file counts
+  todayEarnings: number;
+  weeklyEarnings: number;
+  monthlyEarnings: number;
+
+  // Performance metrics
+  attendanceRate: number;
+  lastActive: string;
+}
+
+export interface ProjectManagerSalaryData {
+  id: string;
+  name: string;
+  role: string;
+  monthlySalary: number;     // Fixed monthly amount
+  attendanceRate: number;
+  lastActive: string;
+  department?: string;
+}
+
+export interface SalaryBreakdown {
+  period: string;           // Date or period label
+  files: number;            // Total files processed
+  tier1Files: number;       // Files in first tier
+  tier1Rate: number;        // Rate for first tier
+  tier1Amount: number;      // Earnings from first tier
+  tier2Files: number;       // Files in second tier
+  tier2Rate: number;        // Rate for second tier
+  tier2Amount: number;      // Earnings from second tier
+  totalAmount: number;      // Total earnings for period
+}
+
+export interface ExpenseEntry {
+  id: string;
+  category: string;
+  description: string;
+  amount: number;
+  date: string;              // YYYY-MM-DD format
+  month: string;            // YYYY-MM format
+  type: ExpenseType;
+  receipt?: string;         // File path or URL
+  approvedBy: string;       // User name or ID
+  status: ExpenseStatus;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface CreateExpenseRequest {
+  category: string;
+  description: string;
+  amount: number;
+  date: string;
+  type: ExpenseType;
+  receipt?: string;
+}
+
+export interface UpdateExpenseRequest {
+  category?: string;
+  description?: string;
+  amount?: number;
+  date?: string;
+  type?: ExpenseType;
+  receipt?: string;
+  status?: ExpenseStatus;
+}
+
+export interface ProfitLossData {
+  month: string;            // YYYY-MM format
+  revenue: number;
+  salaryExpense: number;    // Total salary costs
+  adminExpense: number;     // Total administrative expenses
+  totalExpense: number;     // All expenses combined
+  netProfit: number;        // Revenue - Total Expense
+  profitMargin: number;     // (Net Profit / Revenue) * 100
+}
+
+export interface ExpenseBreakdown {
+  name: string;             // Category name
+  value: number;            // Amount
+  percentage: number;       // Percentage of total
+  fill: string;            // Color for charts
+  count: number;           // Number of entries
+}
+
+export interface ExpenseDashboardData {
+  currentMonth: {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    profitMargin: number;
+    salaryExpenses: number;
+    adminExpenses: number;
+  };
+  trends: {
+    revenueGrowth: number;    // Month-over-month percentage
+    expenseGrowth: number;
+    profitGrowth: number;
+  };
+  alerts: {
+    type: 'budget_warning' | 'expense_spike' | 'profit_decline';
+    message: string;
+    severity: 'low' | 'medium' | 'high';
+  }[];
+  topExpenseCategories: ExpenseBreakdown[];
+}
+
+export interface ExpenseListQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  type?: ExpenseType;
+  status?: ExpenseStatus;
+  category?: string;
+  from?: string;           // Date filter
+  to?: string;             // Date filter
+  month?: string;          // YYYY-MM format
+  sortBy?: 'date' | 'amount' | 'category' | 'type';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface UpdateSalaryConfigRequest {
+  users?: {
+    firstTierRate?: number;
+    secondTierRate?: number;
+    firstTierLimit?: number;
+  };
+  projectManagers?: {
+    [pmId: string]: number;
+  };
+}
+
 // Type guards for runtime type checking
 export const isUserRole = (role: string): role is UserRole => {
   return ['super_admin', 'project_manager', 'user'].includes(role);
