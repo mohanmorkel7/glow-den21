@@ -3,6 +3,7 @@
 ## Authentication & Authorization
 
 All endpoints except `/auth/login` require a valid JWT token in the Authorization header:
+
 ```
 Authorization: Bearer <jwt_token>
 ```
@@ -10,6 +11,7 @@ Authorization: Bearer <jwt_token>
 Role-based access control (RBAC) is enforced on all endpoints based on user permissions.
 
 ## Base URL
+
 ```
 /api
 ```
@@ -19,14 +21,18 @@ Role-based access control (RBAC) is enforced on all endpoints based on user perm
 ## 🔐 Authentication Endpoints
 
 ### POST /auth/login
+
 Login user and get JWT token
+
 ```json
 {
   "email": "admin@websyntactic.com",
   "password": "password123"
 }
 ```
+
 **Response:**
+
 ```json
 {
   "token": "jwt_token_here",
@@ -41,13 +47,17 @@ Login user and get JWT token
 ```
 
 ### POST /auth/logout
+
 Logout and invalidate token
+
 ```json
 {}
 ```
 
 ### POST /auth/refresh
+
 Refresh JWT token
+
 ```json
 {
   "refreshToken": "refresh_token_here"
@@ -55,7 +65,9 @@ Refresh JWT token
 ```
 
 ### POST /auth/reset-password
+
 Send password reset email
+
 ```json
 {
   "email": "user@example.com"
@@ -67,8 +79,10 @@ Send password reset email
 ## 👥 User Management Endpoints
 
 ### GET /users
+
 List users with filtering and pagination
 **Query Parameters:**
+
 - `search` - Search by name or email
 - `role` - Filter by role (super_admin, project_manager, user)
 - `status` - Filter by status (active, inactive)
@@ -76,6 +90,7 @@ List users with filtering and pagination
 - `limit` - Items per page (default: 20)
 
 **Response:**
+
 ```json
 {
   "users": [
@@ -103,11 +118,14 @@ List users with filtering and pagination
 ```
 
 ### GET /users/:id
+
 Get single user details
 **Response:** Single user object
 
 ### POST /users
+
 Create new user (super_admin only)
+
 ```json
 {
   "name": "Jane Smith",
@@ -121,7 +139,9 @@ Create new user (super_admin only)
 ```
 
 ### PUT /users/:id
+
 Update user (super_admin or self for profile fields)
+
 ```json
 {
   "name": "Jane Smith Updated",
@@ -131,7 +151,9 @@ Update user (super_admin or self for profile fields)
 ```
 
 ### PATCH /users/:id/status
+
 Toggle user active/inactive status (super_admin only)
+
 ```json
 {
   "status": "inactive"
@@ -139,13 +161,17 @@ Toggle user active/inactive status (super_admin only)
 ```
 
 ### DELETE /users/:id
+
 Delete user (super_admin only, cannot delete self)
 
 ### GET /users/:id/projects
+
 Get projects assigned to user
 
 ### POST /users/:id/change-password
+
 Change user password
+
 ```json
 {
   "currentPassword": "oldPassword",
@@ -158,14 +184,17 @@ Change user password
 ## 📊 Project Management Endpoints
 
 ### GET /projects
+
 List projects with filtering
 **Query Parameters:**
+
 - `search` - Search by name or description
 - `status` - Filter by status
 - `assignedUser` - Filter by assigned user ID
 - `page`, `limit` - Pagination
 
 **Response:**
+
 ```json
 {
   "projects": [
@@ -193,10 +222,13 @@ List projects with filtering
 ```
 
 ### GET /projects/:id
+
 Get single project with full details including assigned users
 
 ### POST /projects
+
 Create new project (super_admin, project_manager)
+
 ```json
 {
   "name": "New Project",
@@ -211,13 +243,17 @@ Create new project (super_admin, project_manager)
 ```
 
 ### PUT /projects/:id
+
 Update project
 
 ### DELETE /projects/:id
+
 Delete project (super_admin only)
 
 ### POST /projects/:id/assign
+
 Assign users to project
+
 ```json
 {
   "userIds": ["user_id_1", "user_id_2"],
@@ -226,12 +262,15 @@ Assign users to project
 ```
 
 ### DELETE /projects/:id/assign/:userId
+
 Remove user from project
 
 ### GET /projects/:id/assignments
+
 Get project team assignments
 
 ### GET /projects/:id/progress
+
 Get detailed project progress metrics
 
 ---
@@ -239,8 +278,10 @@ Get detailed project progress metrics
 ## 📈 Daily Counts Endpoints
 
 ### GET /daily-counts
+
 List daily count submissions
 **Query Parameters:**
+
 - `userId` - Filter by user
 - `projectId` - Filter by project
 - `from`, `to` - Date range filter
@@ -248,6 +289,7 @@ List daily count submissions
 - `page`, `limit` - Pagination
 
 **Response:**
+
 ```json
 {
   "dailyCounts": [
@@ -281,10 +323,13 @@ List daily count submissions
 ```
 
 ### GET /daily-counts/:id
+
 Get single daily count submission
 
 ### POST /daily-counts
+
 Submit daily count
+
 ```json
 {
   "projectId": "uuid",
@@ -295,10 +340,13 @@ Submit daily count
 ```
 
 ### PUT /daily-counts/:id
+
 Update daily count (before approval only)
 
 ### POST /daily-counts/:id/approve
+
 Approve daily count submission (project_manager, super_admin)
+
 ```json
 {
   "notes": "Approved - good work"
@@ -306,7 +354,9 @@ Approve daily count submission (project_manager, super_admin)
 ```
 
 ### POST /daily-counts/:id/reject
+
 Reject daily count submission
+
 ```json
 {
   "reason": "Count seems too high, please verify"
@@ -314,10 +364,12 @@ Reject daily count submission
 ```
 
 ### GET /daily-counts/export
+
 Export daily counts to CSV/Excel
 **Query Parameters:** Same as list endpoint plus `format=csv|excel`
 
 ### POST /daily-counts/import
+
 Bulk import daily counts (CSV upload)
 
 ---
@@ -325,11 +377,14 @@ Bulk import daily counts (CSV upload)
 ## 📊 Reports & Analytics Endpoints
 
 ### GET /reports/dashboard-summary
+
 Get dashboard summary statistics
 **Query Parameters:**
+
 - `period` - week|month|quarter|year
 
 **Response:**
+
 ```json
 {
   "overallEfficiency": 97.1,
@@ -343,13 +398,16 @@ Get dashboard summary statistics
 ```
 
 ### GET /reports/productivity
+
 Get productivity time-series data
 **Query Parameters:**
+
 - `from`, `to` - Date range
 - `projectId` - Optional project filter
 - `groupBy` - day|week|month
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -364,8 +422,10 @@ Get productivity time-series data
 ```
 
 ### GET /reports/projects/overview
+
 Get project performance overview
 **Response:**
+
 ```json
 {
   "projects": [
@@ -382,8 +442,10 @@ Get project performance overview
 ```
 
 ### GET /reports/team-performance
+
 Get team performance metrics
 **Response:**
+
 ```json
 {
   "users": [
@@ -401,8 +463,10 @@ Get team performance metrics
 ```
 
 ### GET /reports/export
+
 Export comprehensive report
 **Query Parameters:**
+
 - `type` - productivity|project|team
 - `format` - csv|excel|pdf
 - Other filters based on type
@@ -412,8 +476,10 @@ Export comprehensive report
 ## 🔐 Permissions & Roles Endpoints
 
 ### GET /permissions
+
 List all permissions
 **Response:**
+
 ```json
 {
   "permissions": [
@@ -431,16 +497,21 @@ List all permissions
 ```
 
 ### PUT /permissions/:id/toggle
+
 Toggle permission active status (super_admin only)
 
 ### GET /roles
+
 List all roles with permissions
 
 ### GET /roles/:id
+
 Get single role with detailed permissions
 
 ### POST /roles
+
 Create new role (super_admin only)
+
 ```json
 {
   "id": "quality_analyst",
@@ -451,16 +522,21 @@ Create new role (super_admin only)
 ```
 
 ### PUT /roles/:id
+
 Update role
 
 ### DELETE /roles/:id
+
 Delete role (super_admin only, cannot delete default roles)
 
 ### GET /role-assignments
+
 List user role assignments
 
 ### POST /role-assignments
+
 Assign role to user
+
 ```json
 {
   "userId": "uuid",
@@ -473,14 +549,17 @@ Assign role to user
 ## 🔔 Notifications Endpoints
 
 ### GET /notifications
+
 List notifications for current user
 **Query Parameters:**
+
 - `category` - Filter by category
 - `type` - Filter by type
 - `unreadOnly` - boolean
 - `page`, `limit` - Pagination
 
 **Response:**
+
 ```json
 {
   "notifications": [
@@ -505,10 +584,13 @@ List notifications for current user
 ```
 
 ### GET /notifications/:id
+
 Get single notification
 
 ### POST /notifications
+
 Create and send notification (super_admin, project_manager)
+
 ```json
 {
   "title": "System Maintenance",
@@ -521,19 +603,25 @@ Create and send notification (super_admin, project_manager)
 ```
 
 ### PATCH /notifications/:id/read
+
 Mark notification as read
 
 ### POST /notifications/mark-all-read
+
 Mark all notifications as read for current user
 
 ### DELETE /notifications/:id
+
 Delete notification (super_admin only)
 
 ### GET /notification-settings
+
 Get current user's notification preferences
 
 ### PUT /notification-settings
+
 Update notification preferences
+
 ```json
 {
   "emailEnabled": true,
@@ -554,10 +642,13 @@ Update notification preferences
 ## ⚙️ Settings Endpoints
 
 ### GET /settings/profile
+
 Get current user's profile
 
 ### PUT /settings/profile
+
 Update current user's profile
+
 ```json
 {
   "name": "Updated Name",
@@ -570,10 +661,13 @@ Update current user's profile
 ```
 
 ### GET /settings/company
+
 Get company settings (super_admin, project_manager)
 
 ### PUT /settings/company
+
 Update company settings (super_admin only)
+
 ```json
 {
   "name": "Company Name",
@@ -592,10 +686,13 @@ Update company settings (super_admin only)
 ```
 
 ### GET /settings/system
+
 Get system settings (super_admin only)
 
 ### PUT /settings/system
+
 Update system settings (super_admin only)
+
 ```json
 {
   "maxFileSize": 50,
@@ -610,10 +707,13 @@ Update system settings (super_admin only)
 ```
 
 ### GET /settings/security
+
 Get security settings (super_admin only)
 
 ### PUT /settings/security
+
 Update security settings (super_admin only)
+
 ```json
 {
   "passwordMinLength": 8,
@@ -632,10 +732,13 @@ Update security settings (super_admin only)
 ## 🔗 Integration Endpoints
 
 ### GET /integrations/email
+
 Get email integration settings (super_admin only)
 
 ### PUT /integrations/email
+
 Update email integration settings (super_admin only)
+
 ```json
 {
   "smtpServer": "smtp.gmail.com",
@@ -647,6 +750,7 @@ Update email integration settings (super_admin only)
 ```
 
 ### POST /integrations/email/test
+
 Test email configuration
 
 ---
@@ -654,8 +758,10 @@ Test email configuration
 ## 💰 Expense Management Endpoints
 
 ### GET /expenses
+
 List expenses with filtering and pagination
 **Query Parameters:**
+
 - `search` - Search by category or description
 - `type` - Filter by expense type (administrative, operational, marketing, utilities, miscellaneous)
 - `status` - Filter by status (pending, approved, rejected)
@@ -667,6 +773,7 @@ List expenses with filtering and pagination
 - `page`, `limit` - Pagination
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -702,10 +809,13 @@ List expenses with filtering and pagination
 ```
 
 ### GET /expenses/:id
+
 Get single expense details
 
 ### POST /expenses
+
 Create new expense entry
+
 ```json
 {
   "category": "Office Supplies",
@@ -718,7 +828,9 @@ Create new expense entry
 ```
 
 ### PUT /expenses/:id
+
 Update expense entry
+
 ```json
 {
   "category": "Updated Category",
@@ -729,7 +841,9 @@ Update expense entry
 ```
 
 ### POST /expenses/:id/approve
+
 Approve or reject expense
+
 ```json
 {
   "status": "approved",
@@ -738,11 +852,14 @@ Approve or reject expense
 ```
 
 ### DELETE /expenses/:id
+
 Delete expense entry (admin only)
 
 ### GET /expenses/export
+
 Export expenses report
 **Query Parameters:**
+
 - `format` - Export format (csv, excel, pdf)
 - `month` - Filter by month
 - `type` - Filter by expense type
@@ -752,14 +869,16 @@ Export expenses report
 ## 💵 Salary Management Endpoints
 
 ### GET /expenses/salary/config
+
 Get current salary configuration
 **Response:**
+
 ```json
 {
   "data": {
     "users": {
-      "firstTierRate": 0.50,
-      "secondTierRate": 0.60,
+      "firstTierRate": 0.5,
+      "secondTierRate": 0.6,
       "firstTierLimit": 500
     },
     "projectManagers": {
@@ -777,7 +896,9 @@ Get current salary configuration
 ```
 
 ### PUT /expenses/salary/config
+
 Update salary configuration (super_admin only)
+
 ```json
 {
   "users": {
@@ -793,11 +914,14 @@ Update salary configuration (super_admin only)
 ```
 
 ### GET /expenses/salary/users
+
 Get user salary data and file processing statistics
 **Query Parameters:**
+
 - `month` - Target month (YYYY-MM, default: current month)
 
 **Response:**
+
 ```json
 {
   "data": [
@@ -808,16 +932,16 @@ Get user salary data and file processing statistics
       "todayFiles": 750,
       "weeklyFiles": 4200,
       "monthlyFiles": 15200,
-      "todayEarnings": 400.00,
-      "weeklyEarnings": 2320.00,
-      "monthlyEarnings": 8320.00,
+      "todayEarnings": 400.0,
+      "weeklyEarnings": 2320.0,
+      "monthlyEarnings": 8320.0,
       "attendanceRate": 95.2,
       "lastActive": "2024-01-21T14:30:00Z"
     }
   ],
   "summary": {
-    "totalMonthlyEarnings": 31960.00,
-    "averageMonthlyEarnings": 7990.00,
+    "totalMonthlyEarnings": 31960.0,
+    "averageMonthlyEarnings": 7990.0,
     "totalTodayFiles": 2700,
     "totalMonthlyFiles": 58100,
     "activeUsers": 4
@@ -827,8 +951,10 @@ Get user salary data and file processing statistics
 ```
 
 ### GET /expenses/salary/project-managers
+
 Get project manager salary data
 **Response:**
+
 ```json
 {
   "data": [
@@ -855,11 +981,14 @@ Get project manager salary data
 ## 📊 Financial Analytics Endpoints
 
 ### GET /expenses/analytics/dashboard
+
 Get expense dashboard analytics
 **Query Parameters:**
+
 - `month` - Target month (YYYY-MM, default: current month)
 
 **Response:**
+
 ```json
 {
   "data": {
@@ -897,8 +1026,10 @@ Get expense dashboard analytics
 ```
 
 ### GET /expenses/analytics/profit-loss
+
 Get historical profit & loss data
 **Response:**
+
 ```json
 {
   "data": [
@@ -916,14 +1047,18 @@ Get historical profit & loss data
 ```
 
 ### GET /expenses/analytics/breakdown
+
 Get detailed expense breakdown by category and type
 **Query Parameters:**
+
 - `period` - Time period (month, quarter, year)
 - `from`, `to` - Date range
 
 ### GET /expenses/analytics/trends
+
 Get expense trends and comparisons
 **Query Parameters:**
+
 - `period` - Comparison period (month, quarter, year)
 - `type` - Expense type filter
 
@@ -932,13 +1067,17 @@ Get expense trends and comparisons
 ## 💰 Budget Management Endpoints
 
 ### GET /expenses/budgets
+
 List monthly budgets
 **Query Parameters:**
+
 - `month` - Target month (YYYY-MM)
 - `type` - Expense type filter
 
 ### POST /expenses/budgets
+
 Create monthly budget
+
 ```json
 {
   "month": "2024-02",
@@ -956,9 +1095,11 @@ Create monthly budget
 ```
 
 ### PUT /expenses/budgets/:id
+
 Update budget allocation
 
 ### GET /expenses/budgets/alerts
+
 Get budget alerts and warnings
 
 ---
@@ -966,8 +1107,10 @@ Get budget alerts and warnings
 ## 📋 Expense Categories Endpoints
 
 ### GET /expenses/categories
+
 List expense categories
 **Response:**
+
 ```json
 {
   "data": [
@@ -988,7 +1131,9 @@ List expense categories
 ```
 
 ### POST /expenses/categories
+
 Create expense category (super_admin only)
+
 ```json
 {
   "name": "Training & Development",
@@ -1001,9 +1146,11 @@ Create expense category (super_admin only)
 ```
 
 ### PUT /expenses/categories/:id
+
 Update expense category
 
 ### DELETE /expenses/categories/:id
+
 Delete expense category (super_admin only)
 
 ---
@@ -1011,21 +1158,27 @@ Delete expense category (super_admin only)
 ## 💾 Data Management Endpoints
 
 ### POST /data/backup
+
 Create manual backup (super_admin only)
 
 ### GET /data/backups
+
 List backup history
 
 ### GET /data/backup/:id/download
+
 Download backup file
 
 ### POST /data/export
+
 Export system data
 **Query Parameters:**
+
 - `type` - users|projects|counts|all
 - `format` - csv|excel|json
 
 ### POST /data/import
+
 Import system data (file upload)
 
 ---
@@ -1033,7 +1186,9 @@ Import system data (file upload)
 ## 📊 System Status Endpoints
 
 ### GET /health
+
 System health check
+
 ```json
 {
   "status": "healthy",
@@ -1044,7 +1199,9 @@ System health check
 ```
 
 ### GET /stats
+
 System statistics (super_admin only)
+
 ```json
 {
   "totalUsers": 45,
@@ -1077,6 +1234,7 @@ All endpoints return consistent error responses:
 ```
 
 ### Common Error Codes
+
 - `AUTHENTICATION_REQUIRED` - 401
 - `AUTHORIZATION_FAILED` - 403
 - `VALIDATION_ERROR` - 400
@@ -1090,12 +1248,14 @@ All endpoints return consistent error responses:
 ## Rate Limiting
 
 API endpoints are rate limited:
+
 - Authentication: 5 requests per minute
 - General API: 1000 requests per hour per user
 - Reports/Export: 10 requests per minute
 - File uploads: 5 requests per minute
 
 Rate limit headers are included in responses:
+
 ```
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 999

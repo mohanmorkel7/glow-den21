@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Calculator,
   Plus,
@@ -27,8 +54,8 @@ import {
   Edit,
   Trash2,
   Filter,
-  FileText
-} from 'lucide-react';
+  FileText,
+} from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -45,8 +72,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ComposedChart
-} from 'recharts';
+  ComposedChart,
+} from "recharts";
 
 interface SalaryEntry {
   id: string;
@@ -60,7 +87,7 @@ interface SalaryEntry {
   netSalary: number;
   month: string;
   paymentDate: string;
-  status: 'pending' | 'paid' | 'processing';
+  status: "pending" | "paid" | "processing";
 }
 
 interface ExpenseEntry {
@@ -70,10 +97,15 @@ interface ExpenseEntry {
   amount: number;
   date: string;
   month: string;
-  type: 'administrative' | 'operational' | 'marketing' | 'utilities' | 'miscellaneous';
+  type:
+    | "administrative"
+    | "operational"
+    | "marketing"
+    | "utilities"
+    | "miscellaneous";
   receipt?: string;
   approvedBy: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
 }
 
 interface ProfitLossData {
@@ -88,184 +120,220 @@ interface ProfitLossData {
 
 export default function Expense() {
   const navigate = useNavigate();
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date().toISOString().slice(0, 7),
+  );
   const [isAddSalaryOpen, setIsAddSalaryOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [isViewExpenseOpen, setIsViewExpenseOpen] = useState(false);
   const [isEditExpenseOpen, setIsEditExpenseOpen] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(
+    null,
+  );
 
   // Mock data for demonstration
   const currentMonth = new Date().toISOString().slice(0, 7);
-  
+
   const salaryEntries: SalaryEntry[] = [
     {
-      id: '1',
-      employeeName: 'John Smith',
-      employeeId: 'EMP001',
-      designation: 'Project Manager',
-      department: 'Operations',
+      id: "1",
+      employeeName: "John Smith",
+      employeeId: "EMP001",
+      designation: "Project Manager",
+      department: "Operations",
       baseSalary: 65000,
       bonus: 5000,
       deductions: 8000,
       netSalary: 62000,
       month: currentMonth,
-      paymentDate: '2024-01-30',
-      status: 'paid'
+      paymentDate: "2024-01-30",
+      status: "paid",
     },
     {
-      id: '2',
-      employeeName: 'Sarah Johnson',
-      employeeId: 'EMP002',
-      designation: 'Data Analyst',
-      department: 'Operations',
+      id: "2",
+      employeeName: "Sarah Johnson",
+      employeeId: "EMP002",
+      designation: "Data Analyst",
+      department: "Operations",
       baseSalary: 45000,
       bonus: 2000,
       deductions: 5500,
       netSalary: 41500,
       month: currentMonth,
-      paymentDate: '2024-01-30',
-      status: 'paid'
+      paymentDate: "2024-01-30",
+      status: "paid",
     },
     {
-      id: '3',
-      employeeName: 'Mike Davis',
-      employeeId: 'EMP003',
-      designation: 'Data Entry Specialist',
-      department: 'Operations',
+      id: "3",
+      employeeName: "Mike Davis",
+      employeeId: "EMP003",
+      designation: "Data Entry Specialist",
+      department: "Operations",
       baseSalary: 35000,
       bonus: 1500,
       deductions: 4200,
       netSalary: 32300,
       month: currentMonth,
-      paymentDate: '2024-01-30',
-      status: 'processing'
-    }
+      paymentDate: "2024-01-30",
+      status: "processing",
+    },
   ];
 
   const expenseEntries: ExpenseEntry[] = [
     {
-      id: '1',
-      category: 'Office Rent',
-      description: 'Monthly office rent payment',
+      id: "1",
+      category: "Office Rent",
+      description: "Monthly office rent payment",
       amount: 25000,
-      date: '2024-01-01',
+      date: "2024-01-01",
       month: currentMonth,
-      type: 'administrative',
-      approvedBy: 'Admin',
-      status: 'approved'
+      type: "administrative",
+      approvedBy: "Admin",
+      status: "approved",
     },
     {
-      id: '2',
-      category: 'Utilities',
-      description: 'Electricity and internet bills',
+      id: "2",
+      category: "Utilities",
+      description: "Electricity and internet bills",
       amount: 5500,
-      date: '2024-01-05',
+      date: "2024-01-05",
       month: currentMonth,
-      type: 'utilities',
-      approvedBy: 'Admin',
-      status: 'approved'
+      type: "utilities",
+      approvedBy: "Admin",
+      status: "approved",
     },
     {
-      id: '3',
-      category: 'Software Licenses',
-      description: 'Annual software subscription renewals',
+      id: "3",
+      category: "Software Licenses",
+      description: "Annual software subscription renewals",
       amount: 8000,
-      date: '2024-01-10',
+      date: "2024-01-10",
       month: currentMonth,
-      type: 'operational',
-      approvedBy: 'Admin',
-      status: 'approved'
+      type: "operational",
+      approvedBy: "Admin",
+      status: "approved",
     },
     {
-      id: '4',
-      category: 'Marketing',
-      description: 'Digital marketing campaigns',
+      id: "4",
+      category: "Marketing",
+      description: "Digital marketing campaigns",
       amount: 12000,
-      date: '2024-01-15',
+      date: "2024-01-15",
       month: currentMonth,
-      type: 'marketing',
-      approvedBy: 'Admin',
-      status: 'pending'
-    }
+      type: "marketing",
+      approvedBy: "Admin",
+      status: "pending",
+    },
   ];
 
   const profitLossData: ProfitLossData[] = [
     {
-      month: '2023-10',
+      month: "2023-10",
       revenue: 285000,
       salaryExpense: 145000,
       adminExpense: 45000,
       totalExpense: 190000,
       netProfit: 95000,
-      profitMargin: 33.3
+      profitMargin: 33.3,
     },
     {
-      month: '2023-11',
+      month: "2023-11",
       revenue: 320000,
       salaryExpense: 152000,
       adminExpense: 48000,
       totalExpense: 200000,
       netProfit: 120000,
-      profitMargin: 37.5
+      profitMargin: 37.5,
     },
     {
-      month: '2023-12',
+      month: "2023-12",
       revenue: 375000,
       salaryExpense: 165000,
       adminExpense: 52000,
       totalExpense: 217000,
       netProfit: 158000,
-      profitMargin: 42.1
+      profitMargin: 42.1,
     },
     {
-      month: '2024-01',
+      month: "2024-01",
       revenue: 420000,
       salaryExpense: 170000,
       adminExpense: 50500,
       totalExpense: 220500,
       netProfit: 199500,
-      profitMargin: 47.5
-    }
+      profitMargin: 47.5,
+    },
   ];
 
   // Calculate current month statistics
   const currentMonthSalary = salaryEntries
-    .filter(entry => entry.month === selectedMonth)
+    .filter((entry) => entry.month === selectedMonth)
     .reduce((sum, entry) => sum + entry.netSalary, 0);
 
   const currentMonthExpenses = expenseEntries
-    .filter(entry => entry.month === selectedMonth)
+    .filter((entry) => entry.month === selectedMonth)
     .reduce((sum, entry) => sum + entry.amount, 0);
 
-  const currentMonthData = profitLossData.find(data => data.month === selectedMonth);
+  const currentMonthData = profitLossData.find(
+    (data) => data.month === selectedMonth,
+  );
   const totalExpense = currentMonthSalary + currentMonthExpenses;
   const estimatedRevenue = currentMonthData?.revenue || 420000;
   const netProfit = estimatedRevenue - totalExpense;
-  const profitMargin = ((netProfit / estimatedRevenue) * 100);
+  const profitMargin = (netProfit / estimatedRevenue) * 100;
 
   // Expense breakdown for pie chart
   const expenseBreakdown = [
-    { name: 'Salaries', value: currentMonthSalary, fill: '#3b82f6' },
-    { name: 'Administrative', value: expenseEntries.filter(e => e.type === 'administrative').reduce((sum, e) => sum + e.amount, 0), fill: '#ef4444' },
-    { name: 'Operational', value: expenseEntries.filter(e => e.type === 'operational').reduce((sum, e) => sum + e.amount, 0), fill: '#f59e0b' },
-    { name: 'Marketing', value: expenseEntries.filter(e => e.type === 'marketing').reduce((sum, e) => sum + e.amount, 0), fill: '#10b981' },
-    { name: 'Utilities', value: expenseEntries.filter(e => e.type === 'utilities').reduce((sum, e) => sum + e.amount, 0), fill: '#8b5cf6' }
+    { name: "Salaries", value: currentMonthSalary, fill: "#3b82f6" },
+    {
+      name: "Administrative",
+      value: expenseEntries
+        .filter((e) => e.type === "administrative")
+        .reduce((sum, e) => sum + e.amount, 0),
+      fill: "#ef4444",
+    },
+    {
+      name: "Operational",
+      value: expenseEntries
+        .filter((e) => e.type === "operational")
+        .reduce((sum, e) => sum + e.amount, 0),
+      fill: "#f59e0b",
+    },
+    {
+      name: "Marketing",
+      value: expenseEntries
+        .filter((e) => e.type === "marketing")
+        .reduce((sum, e) => sum + e.amount, 0),
+      fill: "#10b981",
+    },
+    {
+      name: "Utilities",
+      value: expenseEntries
+        .filter((e) => e.type === "utilities")
+        .reduce((sum, e) => sum + e.amount, 0),
+      fill: "#8b5cf6",
+    },
   ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'paid': case 'approved': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'processing': return 'bg-blue-100 text-blue-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "paid":
+      case "approved":
+        return "bg-green-100 text-green-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString("en-IN")}`;
   };
 
   // Handler functions for expense management
@@ -280,37 +348,49 @@ export default function Expense() {
   };
 
   const handleDeleteExpense = (expense: ExpenseEntry) => {
-    if (window.confirm(`Are you sure you want to delete the expense "${expense.description}"?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the expense "${expense.description}"?`,
+      )
+    ) {
       // In a real application, you would call an API to delete the expense
-      console.log('Deleting expense:', expense.id);
-      alert('Expense deleted successfully!');
+      console.log("Deleting expense:", expense.id);
+      alert("Expense deleted successfully!");
     }
   };
 
   const handleExportReport = () => {
     // Generate CSV data for export
     const csvData = [
-      ['Date', 'Category', 'Type', 'Description', 'Amount', 'Status', 'Approved By'],
-      ...expenseEntries.map(entry => [
+      [
+        "Date",
+        "Category",
+        "Type",
+        "Description",
+        "Amount",
+        "Status",
+        "Approved By",
+      ],
+      ...expenseEntries.map((entry) => [
         new Date(entry.date).toLocaleDateString(),
         entry.category,
         entry.type,
         entry.description,
         entry.amount.toString(),
         entry.status,
-        entry.approvedBy
-      ])
+        entry.approvedBy,
+      ]),
     ];
 
-    const csvContent = csvData.map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const csvContent = csvData.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
 
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `expense-report-${selectedMonth}.csv`);
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute("download", `expense-report-${selectedMonth}.csv`);
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -322,7 +402,9 @@ export default function Expense() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Expense Management</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Expense Management
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage salaries, expenses, and track profit & loss analytics
           </p>
@@ -352,20 +434,29 @@ export default function Expense() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(estimatedRevenue)}</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold text-green-600">
+              {formatCurrency(estimatedRevenue)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Expenses
+            </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(totalExpense)}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {formatCurrency(totalExpense)}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Salary: {formatCurrency(currentMonthSalary)} | Other: {formatCurrency(currentMonthExpenses)}
+              Salary: {formatCurrency(currentMonthSalary)} | Other:{" "}
+              {formatCurrency(currentMonthExpenses)}
             </p>
           </CardContent>
         </Card>
@@ -373,13 +464,16 @@ export default function Expense() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-            {netProfit >= 0 ? 
-              <TrendingUp className="h-4 w-4 text-green-600" /> : 
+            {netProfit >= 0 ? (
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            ) : (
               <TrendingDown className="h-4 w-4 text-red-600" />
-            }
+            )}
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div
+              className={`text-2xl font-bold ${netProfit >= 0 ? "text-green-600" : "text-red-600"}`}
+            >
               {formatCurrency(netProfit)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -401,7 +495,11 @@ export default function Expense() {
       </div>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="salary">Salary Management</TabsTrigger>
@@ -426,11 +524,23 @@ export default function Expense() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
                     <Legend />
                     <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" />
-                    <Bar dataKey="totalExpense" fill="#ef4444" name="Total Expense" />
-                    <Line type="monotone" dataKey="netProfit" stroke="#10b981" strokeWidth={3} name="Net Profit" />
+                    <Bar
+                      dataKey="totalExpense"
+                      fill="#ef4444"
+                      name="Total Expense"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="netProfit"
+                      stroke="#10b981"
+                      strokeWidth={3}
+                      name="Net Profit"
+                    />
                   </ComposedChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -453,13 +563,17 @@ export default function Expense() {
                       cy="50%"
                       outerRadius={80}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
                     >
                       {expenseBreakdown.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
                   </RechartsPieChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -470,7 +584,9 @@ export default function Expense() {
           <Card>
             <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
-              <CardDescription>Latest salary payments and expense entries</CardDescription>
+              <CardDescription>
+                Latest salary payments and expense entries
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -485,37 +601,53 @@ export default function Expense() {
                 </TableHeader>
                 <TableBody>
                   {[
-                    ...salaryEntries.slice(0, 3).map(entry => ({
+                    ...salaryEntries.slice(0, 3).map((entry) => ({
                       date: entry.paymentDate,
-                      type: 'Salary',
+                      type: "Salary",
                       description: `Salary payment - ${entry.employeeName}`,
                       amount: entry.netSalary,
-                      status: entry.status
+                      status: entry.status,
                     })),
-                    ...expenseEntries.slice(0, 3).map(entry => ({
+                    ...expenseEntries.slice(0, 3).map((entry) => ({
                       date: entry.date,
-                      type: 'Expense',
+                      type: "Expense",
                       description: entry.description,
                       amount: entry.amount,
-                      status: entry.status
-                    }))
-                  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6).map((transaction, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={transaction.type === 'Salary' ? 'default' : 'secondary'}>
-                          {transaction.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(transaction.amount)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(transaction.status)}>
-                          {transaction.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      status: entry.status,
+                    })),
+                  ]
+                    .sort(
+                      (a, b) =>
+                        new Date(b.date).getTime() - new Date(a.date).getTime(),
+                    )
+                    .slice(0, 6)
+                    .map((transaction, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              transaction.type === "Salary"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {transaction.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{transaction.description}</TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(transaction.amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(transaction.status)}>
+                            {transaction.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </CardContent>
@@ -527,10 +659,16 @@ export default function Expense() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Salary Management</h3>
-              <p className="text-sm text-muted-foreground">File-based earnings and salary tracking</p>
+              <p className="text-sm text-muted-foreground">
+                File-based earnings and salary tracking
+              </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/salary')}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/salary")}
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 View Full Details
               </Button>
@@ -544,102 +682,151 @@ export default function Expense() {
                 <DialogContent className="sm:max-w-[600px] max-h-[70vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Update Salary Configuration</DialogTitle>
-                    <DialogDescription>Configure salary rates and limits for users and project managers</DialogDescription>
+                    <DialogDescription>
+                      Configure salary rates and limits for users and project
+                      managers
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-6">
                     {/* User Configuration */}
                     <div className="space-y-4">
-                      <h4 className="font-medium text-lg">User File-Based Salary</h4>
+                      <h4 className="font-medium text-lg">
+                        User File-Based Salary
+                      </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="firstTierRate">First Tier Rate (₹)</Label>
+                          <Label htmlFor="firstTierRate">
+                            First Tier Rate (₹)
+                          </Label>
                           <Input
                             id="firstTierRate"
                             type="number"
                             step="0.01"
                             defaultValue="0.50"
                           />
-                          <p className="text-xs text-muted-foreground">Per file rate for first tier</p>
+                          <p className="text-xs text-muted-foreground">
+                            Per file rate for first tier
+                          </p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="secondTierRate">Second Tier Rate (₹)</Label>
+                          <Label htmlFor="secondTierRate">
+                            Second Tier Rate (₹)
+                          </Label>
                           <Input
                             id="secondTierRate"
                             type="number"
                             step="0.01"
                             defaultValue="0.60"
                           />
-                          <p className="text-xs text-muted-foreground">Per file rate for second tier</p>
+                          <p className="text-xs text-muted-foreground">
+                            Per file rate for second tier
+                          </p>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="firstTierLimit">First Tier Limit (Files)</Label>
+                        <Label htmlFor="firstTierLimit">
+                          First Tier Limit (Files)
+                        </Label>
                         <Input
                           id="firstTierLimit"
                           type="number"
                           defaultValue="500"
                         />
-                        <p className="text-xs text-muted-foreground">Number of files for first tier pricing</p>
+                        <p className="text-xs text-muted-foreground">
+                          Number of files for first tier pricing
+                        </p>
                       </div>
                     </div>
 
                     {/* Project Manager Configuration */}
                     <div className="space-y-4">
-                      <h4 className="font-medium text-lg">Project Manager Individual Salaries</h4>
+                      <h4 className="font-medium text-lg">
+                        Project Manager Individual Salaries
+                      </h4>
                       <div className="space-y-3">
                         <div className="space-y-2 p-3 border border-gray-200 rounded-lg">
-                          <Label htmlFor="salary-pm1">Emily Wilson - Monthly Salary (₹)</Label>
+                          <Label htmlFor="salary-pm1">
+                            Emily Wilson - Monthly Salary (₹)
+                          </Label>
                           <Input
                             id="salary-pm1"
                             type="number"
                             defaultValue="30000"
                           />
                           <p className="text-xs text-muted-foreground">
-                            Current: ₹30,000.00 | Role: Project Manager | ID: PM_001
+                            Current: ₹30,000.00 | Role: Project Manager | ID:
+                            PM_001
                           </p>
                         </div>
                         <div className="space-y-2 p-3 border border-gray-200 rounded-lg">
-                          <Label htmlFor="salary-pm2">John Smith - Monthly Salary (₹)</Label>
+                          <Label htmlFor="salary-pm2">
+                            John Smith - Monthly Salary (₹)
+                          </Label>
                           <Input
                             id="salary-pm2"
                             type="number"
                             defaultValue="20000"
                           />
                           <p className="text-xs text-muted-foreground">
-                            Current: ₹20,000.00 | Role: Project Manager | ID: PM_002
+                            Current: ₹20,000.00 | Role: Project Manager | ID:
+                            PM_002
                           </p>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Configure individual monthly salaries for each project manager. Changes allow for increments/decrements.
+                        Configure individual monthly salaries for each project
+                        manager. Changes allow for increments/decrements.
                       </p>
                     </div>
 
                     {/* Current Summary */}
                     <div className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <h4 className="font-medium text-blue-800">Current Configuration Summary</h4>
+                      <h4 className="font-medium text-blue-800">
+                        Current Configuration Summary
+                      </h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-muted-foreground">First 500 files:</span>
-                          <span className="ml-2 font-medium text-green-600">₹0.50 per file</span>
+                          <span className="text-muted-foreground">
+                            First 500 files:
+                          </span>
+                          <span className="ml-2 font-medium text-green-600">
+                            ₹0.50 per file
+                          </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">After 500 files:</span>
-                          <span className="ml-2 font-medium text-green-600">₹0.60 per file</span>
+                          <span className="text-muted-foreground">
+                            After 500 files:
+                          </span>
+                          <span className="ml-2 font-medium text-green-600">
+                            ₹0.60 per file
+                          </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Total PM Salaries:</span>
-                          <span className="ml-2 font-medium text-purple-600">₹50,000.00</span>
+                          <span className="text-muted-foreground">
+                            Total PM Salaries:
+                          </span>
+                          <span className="ml-2 font-medium text-purple-600">
+                            ₹50,000.00
+                          </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Est. User Earnings:</span>
-                          <span className="ml-2 font-medium text-blue-600">₹31,960.00</span>
+                          <span className="text-muted-foreground">
+                            Est. User Earnings:
+                          </span>
+                          <span className="ml-2 font-medium text-blue-600">
+                            ₹31,960.00
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsAddSalaryOpen(false)}>Cancel</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddSalaryOpen(false)}
+                    >
+                      Cancel
+                    </Button>
                     <Button onClick={() => setIsAddSalaryOpen(false)}>
                       <Calculator className="h-4 w-4 mr-2" />
                       Save Configuration
@@ -654,18 +841,24 @@ export default function Expense() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Today's Total Files</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Today's Total Files
+                </CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">2,700</div>
-                <p className="text-xs text-muted-foreground">All users combined</p>
+                <p className="text-xs text-muted-foreground">
+                  All users combined
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Weekly Files</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Weekly Files
+                </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -676,23 +869,31 @@ export default function Expense() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Files</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Monthly Files
+                </CardTitle>
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">58,100</div>
-                <p className="text-xs text-muted-foreground">This month total</p>
+                <p className="text-xs text-muted-foreground">
+                  This month total
+                </p>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Daily Files</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Avg Daily Files
+                </CardTitle>
                 <Calculator className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">675</div>
-                <p className="text-xs text-muted-foreground">Per user average</p>
+                <p className="text-xs text-muted-foreground">
+                  Per user average
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -704,7 +905,9 @@ export default function Expense() {
                 <Users className="h-5 w-5" />
                 User File-Based Earnings
               </CardTitle>
-              <CardDescription>Real-time file processing counts and earnings</CardDescription>
+              <CardDescription>
+                Real-time file processing counts and earnings
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -724,17 +927,23 @@ export default function Expense() {
                     <TableCell>
                       <div>
                         <div className="font-medium">Sarah Johnson</div>
-                        <div className="text-sm text-muted-foreground">Data Analyst</div>
+                        <div className="text-sm text-muted-foreground">
+                          Data Analyst
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Badge className="bg-blue-100 text-blue-800">750</Badge>
-                        <span className="text-xs text-green-600">Tier 2 rate</span>
+                        <span className="text-xs text-green-600">
+                          Tier 2 rate
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-semibold text-green-600">₹400.00</div>
+                      <div className="font-semibold text-green-600">
+                        ₹400.00
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-blue-600">4,200</div>
@@ -746,24 +955,34 @@ export default function Expense() {
                       <div className="font-bold text-green-600">₹8,320.00</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Excellent
+                      </Badge>
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>
                       <div>
                         <div className="font-medium">Mike Davis</div>
-                        <div className="text-sm text-muted-foreground">Data Entry Specialist</div>
+                        <div className="text-sm text-muted-foreground">
+                          Data Entry Specialist
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-orange-100 text-orange-800">420</Badge>
-                        <span className="text-xs text-blue-600">Tier 1 rate</span>
+                        <Badge className="bg-orange-100 text-orange-800">
+                          420
+                        </Badge>
+                        <span className="text-xs text-blue-600">
+                          Tier 1 rate
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-semibold text-green-600">₹210.00</div>
+                      <div className="font-semibold text-green-600">
+                        ₹210.00
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-blue-600">2,800</div>
@@ -782,17 +1001,23 @@ export default function Expense() {
                     <TableCell>
                       <div>
                         <div className="font-medium">David Chen</div>
-                        <div className="text-sm text-muted-foreground">Data Analyst</div>
+                        <div className="text-sm text-muted-foreground">
+                          Data Analyst
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Badge className="bg-blue-100 text-blue-800">680</Badge>
-                        <span className="text-xs text-green-600">Tier 2 rate</span>
+                        <span className="text-xs text-green-600">
+                          Tier 2 rate
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-semibold text-green-600">₹358.00</div>
+                      <div className="font-semibold text-green-600">
+                        ₹358.00
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-blue-600">3,900</div>
@@ -804,24 +1029,34 @@ export default function Expense() {
                       <div className="font-bold text-green-600">₹7,900.00</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Excellent
+                      </Badge>
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>
                       <div>
                         <div className="font-medium">Lisa Chen</div>
-                        <div className="text-sm text-muted-foreground">Senior Data Analyst</div>
+                        <div className="text-sm text-muted-foreground">
+                          Senior Data Analyst
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Badge className="bg-green-100 text-green-800">850</Badge>
-                        <span className="text-xs text-green-600">Tier 2 rate</span>
+                        <Badge className="bg-green-100 text-green-800">
+                          850
+                        </Badge>
+                        <span className="text-xs text-green-600">
+                          Tier 2 rate
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-semibold text-green-600">₹460.00</div>
+                      <div className="font-semibold text-green-600">
+                        ₹460.00
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-blue-600">5,100</div>
@@ -833,7 +1068,9 @@ export default function Expense() {
                       <div className="font-bold text-green-600">₹10,110.00</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Excellent
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -848,7 +1085,9 @@ export default function Expense() {
                 <Building className="h-5 w-5" />
                 Project Manager Salaries
               </CardTitle>
-              <CardDescription>Fixed monthly salaries for project managers</CardDescription>
+              <CardDescription>
+                Fixed monthly salaries for project managers
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -867,52 +1106,72 @@ export default function Expense() {
                     <TableCell>
                       <div>
                         <div className="font-medium">Emily Wilson</div>
-                        <div className="text-sm text-muted-foreground">PM_001</div>
+                        <div className="text-sm text-muted-foreground">
+                          PM_001
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">Operations</div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-bold text-purple-600">₹30,000.00</div>
+                      <div className="font-bold text-purple-600">
+                        ₹30,000.00
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <Badge className="bg-green-100 text-green-800">Excellent</Badge>
-                        <div className="text-xs text-muted-foreground">98.5%</div>
+                        <Badge className="bg-green-100 text-green-800">
+                          Excellent
+                        </Badge>
+                        <div className="text-xs text-muted-foreground">
+                          98.5%
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">Jan 21, 2024 5:30 PM</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Active
+                      </Badge>
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>
                       <div>
                         <div className="font-medium">John Smith</div>
-                        <div className="text-sm text-muted-foreground">PM_002</div>
+                        <div className="text-sm text-muted-foreground">
+                          PM_002
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">Operations</div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-bold text-purple-600">₹20,000.00</div>
+                      <div className="font-bold text-purple-600">
+                        ₹20,000.00
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <Badge className="bg-blue-100 text-blue-800">Good</Badge>
-                        <div className="text-xs text-muted-foreground">94.2%</div>
+                        <Badge className="bg-blue-100 text-blue-800">
+                          Good
+                        </Badge>
+                        <div className="text-xs text-muted-foreground">
+                          94.2%
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">Jan 21, 2024 4:45 PM</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Active
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -927,7 +1186,9 @@ export default function Expense() {
                 <Calculator className="h-5 w-5" />
                 Current Rate Configuration
               </CardTitle>
-              <CardDescription>File processing rates and salary calculation settings</CardDescription>
+              <CardDescription>
+                File processing rates and salary calculation settings
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -936,24 +1197,34 @@ export default function Expense() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between p-2 bg-green-50 rounded">
                       <span>First 500 files:</span>
-                      <span className="font-medium text-green-600">₹0.50 per file</span>
+                      <span className="font-medium text-green-600">
+                        ₹0.50 per file
+                      </span>
                     </div>
                     <div className="flex justify-between p-2 bg-blue-50 rounded">
                       <span>After 500 files:</span>
-                      <span className="font-medium text-blue-600">₹0.60 per file</span>
+                      <span className="font-medium text-blue-600">
+                        ₹0.60 per file
+                      </span>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="font-medium">Total Monthly Salary Allocation</h4>
+                  <h4 className="font-medium">
+                    Total Monthly Salary Allocation
+                  </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between p-2 bg-purple-50 rounded">
                       <span>Total User Earnings:</span>
-                      <span className="font-medium text-purple-600">₹31,960.00</span>
+                      <span className="font-medium text-purple-600">
+                        ₹31,960.00
+                      </span>
                     </div>
                     <div className="flex justify-between p-2 bg-purple-50 rounded">
                       <span>Total PM Salaries:</span>
-                      <span className="font-medium text-purple-600">₹50,000.00</span>
+                      <span className="font-medium text-purple-600">
+                        ₹50,000.00
+                      </span>
                     </div>
                     <div className="flex justify-between p-2 bg-gray-800 text-white rounded">
                       <span className="font-semibold">Total Monthly Cost:</span>
@@ -971,7 +1242,9 @@ export default function Expense() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Administrative Expenses</h3>
-              <p className="text-sm text-muted-foreground">Track and manage company expenses</p>
+              <p className="text-sm text-muted-foreground">
+                Track and manage company expenses
+              </p>
             </div>
             <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
               <DialogTrigger asChild>
@@ -983,7 +1256,9 @@ export default function Expense() {
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Add Expense Entry</DialogTitle>
-                  <DialogDescription>Record a new company expense</DialogDescription>
+                  <DialogDescription>
+                    Record a new company expense
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -998,11 +1273,17 @@ export default function Expense() {
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="administrative">Administrative</SelectItem>
-                          <SelectItem value="operational">Operational</SelectItem>
+                          <SelectItem value="administrative">
+                            Administrative
+                          </SelectItem>
+                          <SelectItem value="operational">
+                            Operational
+                          </SelectItem>
                           <SelectItem value="marketing">Marketing</SelectItem>
                           <SelectItem value="utilities">Utilities</SelectItem>
-                          <SelectItem value="miscellaneous">Miscellaneous</SelectItem>
+                          <SelectItem value="miscellaneous">
+                            Miscellaneous
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1023,8 +1304,15 @@ export default function Expense() {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddExpenseOpen(false)}>Cancel</Button>
-                  <Button onClick={() => setIsAddExpenseOpen(false)}>Save Expense</Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAddExpenseOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={() => setIsAddExpenseOpen(false)}>
+                    Save Expense
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -1047,15 +1335,21 @@ export default function Expense() {
                 <TableBody>
                   {expenseEntries.map((entry) => (
                     <TableRow key={entry.id}>
-                      <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
-                      <TableCell className="font-medium">{entry.category}</TableCell>
+                      <TableCell>
+                        {new Date(entry.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {entry.category}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="capitalize">
                           {entry.type}
                         </Badge>
                       </TableCell>
                       <TableCell>{entry.description}</TableCell>
-                      <TableCell className="font-semibold">{formatCurrency(entry.amount)}</TableCell>
+                      <TableCell className="font-semibold">
+                        {formatCurrency(entry.amount)}
+                      </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(entry.status)}>
                           {entry.status}
@@ -1063,13 +1357,25 @@ export default function Expense() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleViewExpense(entry)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewExpense(entry)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleEditExpense(entry)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditExpense(entry)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteExpense(entry)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteExpense(entry)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -1096,11 +1402,31 @@ export default function Expense() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
                     <Legend />
-                    <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Revenue" />
-                    <Line type="monotone" dataKey="totalExpense" stroke="#ef4444" strokeWidth={2} name="Total Expense" />
-                    <Line type="monotone" dataKey="netProfit" stroke="#10b981" strokeWidth={2} name="Net Profit" />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      name="Revenue"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="totalExpense"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      name="Total Expense"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="netProfit"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      name="Net Profit"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -1117,8 +1443,14 @@ export default function Expense() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                    <Bar dataKey="profitMargin" fill="#8b5cf6" name="Profit Margin %" />
+                    <Tooltip
+                      formatter={(value) => `${Number(value).toFixed(1)}%`}
+                    />
+                    <Bar
+                      dataKey="profitMargin"
+                      fill="#8b5cf6"
+                      name="Profit Margin %"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -1132,13 +1464,20 @@ export default function Expense() {
               <CardContent>
                 <div className="space-y-4">
                   {expenseBreakdown.map((category, index) => {
-                    const percentage = (category.value / expenseBreakdown.reduce((sum, item) => sum + item.value, 0)) * 100;
+                    const percentage =
+                      (category.value /
+                        expenseBreakdown.reduce(
+                          (sum, item) => sum + item.value,
+                          0,
+                        )) *
+                      100;
                     return (
                       <div key={index} className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{category.name}</span>
                           <span className="text-sm text-muted-foreground">
-                            {formatCurrency(category.value)} ({percentage.toFixed(1)}%)
+                            {formatCurrency(category.value)} (
+                            {percentage.toFixed(1)}%)
                           </span>
                         </div>
                         <Progress value={percentage} className="h-2" />
@@ -1188,60 +1527,91 @@ export default function Expense() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>View Expense Details</DialogTitle>
-            <DialogDescription>Detailed information about the expense entry</DialogDescription>
+            <DialogDescription>
+              Detailed information about the expense entry
+            </DialogDescription>
           </DialogHeader>
           {selectedExpense && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Date</Label>
-                  <p className="text-sm">{new Date(selectedExpense.date).toLocaleDateString()}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Date
+                  </Label>
+                  <p className="text-sm">
+                    {new Date(selectedExpense.date).toLocaleDateString()}
+                  </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Category</Label>
-                  <p className="text-sm font-medium">{selectedExpense.category}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Category
+                  </Label>
+                  <p className="text-sm font-medium">
+                    {selectedExpense.category}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Type</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Type
+                  </Label>
                   <Badge variant="outline" className="capitalize">
                     {selectedExpense.type}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
-                  <p className="text-sm font-semibold text-green-600">{formatCurrency(selectedExpense.amount)}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Amount
+                  </Label>
+                  <p className="text-sm font-semibold text-green-600">
+                    {formatCurrency(selectedExpense.amount)}
+                  </p>
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Description</Label>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Description
+                </Label>
                 <p className="text-sm">{selectedExpense.description}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Status
+                  </Label>
                   <Badge className={getStatusColor(selectedExpense.status)}>
                     {selectedExpense.status}
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Approved By</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Approved By
+                  </Label>
                   <p className="text-sm">{selectedExpense.approvedBy}</p>
                 </div>
               </div>
               <div>
-                <Label className="text-sm font-medium text-muted-foreground">Month</Label>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Month
+                </Label>
                 <p className="text-sm">{selectedExpense.month}</p>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsViewExpenseOpen(false)}>Close</Button>
-            <Button onClick={() => {
-              setIsViewExpenseOpen(false);
-              if (selectedExpense) handleEditExpense(selectedExpense);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewExpenseOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={() => {
+                setIsViewExpenseOpen(false);
+                if (selectedExpense) handleEditExpense(selectedExpense);
+              }}
+            >
               <Edit className="h-4 w-4 mr-2" />
               Edit Expense
             </Button>
@@ -1254,14 +1624,19 @@ export default function Expense() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Edit Expense Entry</DialogTitle>
-            <DialogDescription>Update the expense information</DialogDescription>
+            <DialogDescription>
+              Update the expense information
+            </DialogDescription>
           </DialogHeader>
           {selectedExpense && (
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-category">Category</Label>
-                  <Input id="edit-category" defaultValue={selectedExpense.category} />
+                  <Input
+                    id="edit-category"
+                    defaultValue={selectedExpense.category}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="edit-type">Type</Label>
@@ -1270,27 +1645,42 @@ export default function Expense() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="administrative">Administrative</SelectItem>
+                      <SelectItem value="administrative">
+                        Administrative
+                      </SelectItem>
                       <SelectItem value="operational">Operational</SelectItem>
                       <SelectItem value="marketing">Marketing</SelectItem>
                       <SelectItem value="utilities">Utilities</SelectItem>
-                      <SelectItem value="miscellaneous">Miscellaneous</SelectItem>
+                      <SelectItem value="miscellaneous">
+                        Miscellaneous
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <div>
                 <Label htmlFor="edit-description">Description</Label>
-                <Input id="edit-description" defaultValue={selectedExpense.description} />
+                <Input
+                  id="edit-description"
+                  defaultValue={selectedExpense.description}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-amount">Amount</Label>
-                  <Input id="edit-amount" type="number" defaultValue={selectedExpense.amount} />
+                  <Input
+                    id="edit-amount"
+                    type="number"
+                    defaultValue={selectedExpense.amount}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="edit-date">Date</Label>
-                  <Input id="edit-date" type="date" defaultValue={selectedExpense.date} />
+                  <Input
+                    id="edit-date"
+                    type="date"
+                    defaultValue={selectedExpense.date}
+                  />
                 </div>
               </div>
               <div>
@@ -1309,13 +1699,20 @@ export default function Expense() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditExpenseOpen(false)}>Cancel</Button>
-            <Button onClick={() => {
-              // In a real application, you would save the changes here
-              console.log('Saving expense changes for:', selectedExpense?.id);
-              setIsEditExpenseOpen(false);
-              alert('Expense updated successfully!');
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditExpenseOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                // In a real application, you would save the changes here
+                console.log("Saving expense changes for:", selectedExpense?.id);
+                setIsEditExpenseOpen(false);
+                alert("Expense updated successfully!");
+              }}
+            >
               Save Changes
             </Button>
           </DialogFooter>

@@ -2,8 +2,8 @@
 // Used by both client and server for type safety
 
 // ===== USER TYPES =====
-export type UserRole = 'super_admin' | 'project_manager' | 'user';
-export type UserStatus = 'active' | 'inactive';
+export type UserRole = "super_admin" | "project_manager" | "user";
+export type UserStatus = "active" | "inactive";
 
 export interface User {
   id: string;
@@ -15,7 +15,7 @@ export interface User {
   department?: string;
   jobTitle?: string;
   avatarUrl?: string;
-  theme?: 'light' | 'dark' | 'system';
+  theme?: "light" | "dark" | "system";
   language?: string;
   notificationsEnabled?: boolean;
   joinDate: string;
@@ -41,7 +41,7 @@ export interface UpdateUserRequest {
   role?: UserRole;
   department?: string;
   jobTitle?: string;
-  theme?: 'light' | 'dark' | 'system';
+  theme?: "light" | "dark" | "system";
   language?: string;
   notificationsEnabled?: boolean;
 }
@@ -52,9 +52,9 @@ export interface ChangePasswordRequest {
 }
 
 // ===== PROJECT TYPES =====
-export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed';
-export type ProjectPriority = 'low' | 'medium' | 'high';
-export type ProjectType = 'monthly' | 'weekly' | 'both';
+export type ProjectStatus = "planning" | "active" | "on_hold" | "completed";
+export type ProjectPriority = "low" | "medium" | "high";
+export type ProjectType = "monthly" | "weekly" | "both";
 
 export interface FileTargets {
   monthly?: number;
@@ -71,7 +71,7 @@ export interface FileCounts {
 
 export interface ProjectRates {
   ratePerFile: number; // USD per file
-  currency: 'USD';
+  currency: "USD";
 }
 
 export interface Project {
@@ -143,7 +143,11 @@ export interface ProjectAssignmentRequest {
 }
 
 // ===== DAILY COUNT TYPES =====
-export type DailyCountStatus = 'pending' | 'submitted' | 'approved' | 'rejected';
+export type DailyCountStatus =
+  | "pending"
+  | "submitted"
+  | "approved"
+  | "rejected";
 
 export interface DailyCount {
   id: string;
@@ -215,8 +219,8 @@ export interface DailyCountStatistics {
 }
 
 // ===== NOTIFICATION TYPES =====
-export type NotificationType = 'info' | 'warning' | 'error' | 'success';
-export type NotificationCategory = 'system' | 'project' | 'user' | 'deadline';
+export type NotificationType = "info" | "warning" | "error" | "success";
+export type NotificationCategory = "system" | "project" | "user" | "deadline";
 
 export interface Notification {
   id: string;
@@ -345,13 +349,13 @@ export interface SecuritySettings {
   maxLoginAttempts: number;
   lockoutDuration: number;
   twoFactorEnabled: boolean;
-  sessionSecurity: 'basic' | 'enhanced' | 'strict';
+  sessionSecurity: "basic" | "enhanced" | "strict";
 }
 
 export interface EmailIntegrationSettings {
   smtpServer?: string;
   smtpPort: number;
-  smtpSecurity: 'none' | 'tls' | 'ssl';
+  smtpSecurity: "none" | "tls" | "ssl";
   smtpUsername?: string;
   smtpPassword?: string;
   isConfigured: boolean;
@@ -442,7 +446,8 @@ export interface PaginatedResponse<T = any> {
   };
 }
 
-export interface ListResponse<T = any> extends ApiResponse<PaginatedResponse<T>> {}
+export interface ListResponse<T = any>
+  extends ApiResponse<PaginatedResponse<T>> {}
 
 // ===== QUERY PARAMETERS =====
 export interface PaginationQuery {
@@ -479,11 +484,11 @@ export interface NotificationListQuery extends SearchQuery {
 }
 
 export interface ReportQuery {
-  period?: 'week' | 'month' | 'quarter' | 'year';
+  period?: "week" | "month" | "quarter" | "year";
   from?: string;
   to?: string;
   projectId?: string;
-  groupBy?: 'day' | 'week' | 'month';
+  groupBy?: "day" | "week" | "month";
 }
 
 // ===== BACKUP & DATA MANAGEMENT =====
@@ -491,8 +496,8 @@ export interface BackupInfo {
   id: string;
   filename: string;
   fileSize: number;
-  backupType: 'full' | 'incremental';
-  status: 'in_progress' | 'completed' | 'failed';
+  backupType: "full" | "incremental";
+  status: "in_progress" | "completed" | "failed";
   startedAt: string;
   completedAt?: string;
   errorMessage?: string;
@@ -512,13 +517,13 @@ export interface SystemStats {
 }
 
 export interface HealthCheck {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  database: 'connected' | 'disconnected';
+  status: "healthy" | "degraded" | "unhealthy";
+  database: "connected" | "disconnected";
   version: string;
   uptime: number;
   checks: {
     [key: string]: {
-      status: 'pass' | 'fail';
+      status: "pass" | "fail";
       message?: string;
     };
   };
@@ -540,8 +545,8 @@ export interface ApiError {
 
 // ===== EXPORT TYPES =====
 export interface ExportRequest {
-  type: 'users' | 'projects' | 'counts' | 'all';
-  format: 'csv' | 'excel' | 'json';
+  type: "users" | "projects" | "counts" | "all";
+  format: "csv" | "excel" | "json";
   from?: string;
   to?: string;
   filters?: Record<string, any>;
@@ -579,7 +584,7 @@ export interface ProjectBilling {
   amountUSD: number;
   amountINR: number;
   conversionRate: number;
-  status: 'draft' | 'finalized' | 'paid';
+  status: "draft" | "finalized" | "paid";
   createdAt: string;
 }
 
@@ -596,8 +601,8 @@ export interface MonthlyBillingSummary {
 export interface BillingExportRequest {
   month?: string;
   projectId?: string;
-  format: 'csv' | 'excel' | 'pdf';
-  currency: 'USD' | 'INR' | 'both';
+  format: "csv" | "excel" | "pdf";
+  currency: "USD" | "INR" | "both";
 }
 
 // ===== CHART DATA TYPES =====
@@ -623,10 +628,19 @@ export interface ProjectProgressChart {
 }
 
 // ===== FILE PROCESSING TYPES =====
-export type FileProcessingJobType = 'mo_monthly' | 'mo_weekly';
-export type AssignmentType = 'automation' | 'manual';
-export type FileProcessingJobStatus = 'draft' | 'active' | 'paused' | 'completed' | 'cancelled';
-export type JobAssignmentStatus = 'pending' | 'assigned' | 'in_progress' | 'completed';
+export type FileProcessingJobType = "mo_monthly" | "mo_weekly";
+export type AssignmentType = "automation" | "manual";
+export type FileProcessingJobStatus =
+  | "draft"
+  | "active"
+  | "paused"
+  | "completed"
+  | "cancelled";
+export type JobAssignmentStatus =
+  | "pending"
+  | "assigned"
+  | "in_progress"
+  | "completed";
 
 export interface FileProcessingJob {
   id: string;
@@ -780,14 +794,14 @@ export interface FileProcessingBilling {
   conversionRate: number;
 
   period: string; // YYYY-MM format
-  status: 'draft' | 'finalized' | 'invoiced' | 'paid';
+  status: "draft" | "finalized" | "invoiced" | "paid";
 
   createdAt: string;
   updatedAt: string;
 }
 
 // ===== UTILITY TYPES =====
-export type SortOrder = 'asc' | 'desc';
+export type SortOrder = "asc" | "desc";
 
 export interface SortQuery {
   sortBy?: string;
@@ -799,24 +813,32 @@ export interface DateRangeQuery {
   to?: string;
 }
 
-export interface FilterQuery extends PaginationQuery, SortQuery, DateRangeQuery {
+export interface FilterQuery
+  extends PaginationQuery,
+    SortQuery,
+    DateRangeQuery {
   [key: string]: any;
 }
 
 // ===== EXPENSE MANAGEMENT TYPES =====
-export type ExpenseType = 'administrative' | 'operational' | 'marketing' | 'utilities' | 'miscellaneous';
-export type ExpenseStatus = 'pending' | 'approved' | 'rejected';
+export type ExpenseType =
+  | "administrative"
+  | "operational"
+  | "marketing"
+  | "utilities"
+  | "miscellaneous";
+export type ExpenseStatus = "pending" | "approved" | "rejected";
 
 export interface SalaryConfig {
   users: {
-    firstTierRate: number;     // Rate for first N files (in currency)
-    secondTierRate: number;    // Rate after first tier (in currency)
-    firstTierLimit: number;    // Number of files for first tier (e.g., 500)
+    firstTierRate: number; // Rate for first N files (in currency)
+    secondTierRate: number; // Rate after first tier (in currency)
+    firstTierLimit: number; // Number of files for first tier (e.g., 500)
   };
   projectManagers: {
-    [pmId: string]: number;    // Individual monthly salaries by PM ID
+    [pmId: string]: number; // Individual monthly salaries by PM ID
   };
-  currency: 'USD' | 'INR';
+  currency: "USD" | "INR";
   updatedAt: string;
   updatedBy: {
     id: string;
@@ -848,22 +870,22 @@ export interface ProjectManagerSalaryData {
   id: string;
   name: string;
   role: string;
-  monthlySalary: number;     // Fixed monthly amount
+  monthlySalary: number; // Fixed monthly amount
   attendanceRate: number;
   lastActive: string;
   department?: string;
 }
 
 export interface SalaryBreakdown {
-  period: string;           // Date or period label
-  files: number;            // Total files processed
-  tier1Files: number;       // Files in first tier
-  tier1Rate: number;        // Rate for first tier
-  tier1Amount: number;      // Earnings from first tier
-  tier2Files: number;       // Files in second tier
-  tier2Rate: number;        // Rate for second tier
-  tier2Amount: number;      // Earnings from second tier
-  totalAmount: number;      // Total earnings for period
+  period: string; // Date or period label
+  files: number; // Total files processed
+  tier1Files: number; // Files in first tier
+  tier1Rate: number; // Rate for first tier
+  tier1Amount: number; // Earnings from first tier
+  tier2Files: number; // Files in second tier
+  tier2Rate: number; // Rate for second tier
+  tier2Amount: number; // Earnings from second tier
+  totalAmount: number; // Total earnings for period
 }
 
 export interface ExpenseEntry {
@@ -871,11 +893,11 @@ export interface ExpenseEntry {
   category: string;
   description: string;
   amount: number;
-  date: string;              // YYYY-MM-DD format
-  month: string;            // YYYY-MM format
+  date: string; // YYYY-MM-DD format
+  month: string; // YYYY-MM format
   type: ExpenseType;
-  receipt?: string;         // File path or URL
-  approvedBy: string;       // User name or ID
+  receipt?: string; // File path or URL
+  approvedBy: string; // User name or ID
   status: ExpenseStatus;
   createdAt: string;
   updatedAt: string;
@@ -905,21 +927,21 @@ export interface UpdateExpenseRequest {
 }
 
 export interface ProfitLossData {
-  month: string;            // YYYY-MM format
+  month: string; // YYYY-MM format
   revenue: number;
-  salaryExpense: number;    // Total salary costs
-  adminExpense: number;     // Total administrative expenses
-  totalExpense: number;     // All expenses combined
-  netProfit: number;        // Revenue - Total Expense
-  profitMargin: number;     // (Net Profit / Revenue) * 100
+  salaryExpense: number; // Total salary costs
+  adminExpense: number; // Total administrative expenses
+  totalExpense: number; // All expenses combined
+  netProfit: number; // Revenue - Total Expense
+  profitMargin: number; // (Net Profit / Revenue) * 100
 }
 
 export interface ExpenseBreakdown {
-  name: string;             // Category name
-  value: number;            // Amount
-  percentage: number;       // Percentage of total
-  fill: string;            // Color for charts
-  count: number;           // Number of entries
+  name: string; // Category name
+  value: number; // Amount
+  percentage: number; // Percentage of total
+  fill: string; // Color for charts
+  count: number; // Number of entries
 }
 
 export interface ExpenseDashboardData {
@@ -932,14 +954,14 @@ export interface ExpenseDashboardData {
     adminExpenses: number;
   };
   trends: {
-    revenueGrowth: number;    // Month-over-month percentage
+    revenueGrowth: number; // Month-over-month percentage
     expenseGrowth: number;
     profitGrowth: number;
   };
   alerts: {
-    type: 'budget_warning' | 'expense_spike' | 'profit_decline';
+    type: "budget_warning" | "expense_spike" | "profit_decline";
     message: string;
-    severity: 'low' | 'medium' | 'high';
+    severity: "low" | "medium" | "high";
   }[];
   topExpenseCategories: ExpenseBreakdown[];
 }
@@ -951,11 +973,11 @@ export interface ExpenseListQuery {
   type?: ExpenseType;
   status?: ExpenseStatus;
   category?: string;
-  from?: string;           // Date filter
-  to?: string;             // Date filter
-  month?: string;          // YYYY-MM format
-  sortBy?: 'date' | 'amount' | 'category' | 'type';
-  sortOrder?: 'asc' | 'desc';
+  from?: string; // Date filter
+  to?: string; // Date filter
+  month?: string; // YYYY-MM format
+  sortBy?: "date" | "amount" | "category" | "type";
+  sortOrder?: "asc" | "desc";
 }
 
 export interface UpdateSalaryConfigRequest {
@@ -971,29 +993,39 @@ export interface UpdateSalaryConfigRequest {
 
 // Type guards for runtime type checking
 export const isUserRole = (role: string): role is UserRole => {
-  return ['super_admin', 'project_manager', 'user'].includes(role);
+  return ["super_admin", "project_manager", "user"].includes(role);
 };
 
 export const isProjectStatus = (status: string): status is ProjectStatus => {
-  return ['planning', 'active', 'on_hold', 'completed'].includes(status);
+  return ["planning", "active", "on_hold", "completed"].includes(status);
 };
 
-export const isDailyCountStatus = (status: string): status is DailyCountStatus => {
-  return ['pending', 'submitted', 'approved', 'rejected'].includes(status);
+export const isDailyCountStatus = (
+  status: string,
+): status is DailyCountStatus => {
+  return ["pending", "submitted", "approved", "rejected"].includes(status);
 };
 
 export const isNotificationType = (type: string): type is NotificationType => {
-  return ['info', 'warning', 'error', 'success'].includes(type);
+  return ["info", "warning", "error", "success"].includes(type);
 };
 
-export const isNotificationCategory = (category: string): category is NotificationCategory => {
-  return ['system', 'project', 'user', 'deadline'].includes(category);
+export const isNotificationCategory = (
+  category: string,
+): category is NotificationCategory => {
+  return ["system", "project", "user", "deadline"].includes(category);
 };
 
 export const isExpenseType = (type: string): type is ExpenseType => {
-  return ['administrative', 'operational', 'marketing', 'utilities', 'miscellaneous'].includes(type);
+  return [
+    "administrative",
+    "operational",
+    "marketing",
+    "utilities",
+    "miscellaneous",
+  ].includes(type);
 };
 
 export const isExpenseStatus = (status: string): status is ExpenseStatus => {
-  return ['pending', 'approved', 'rejected'].includes(status);
+  return ["pending", "approved", "rejected"].includes(status);
 };

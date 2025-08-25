@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,8 +20,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Users,
@@ -40,8 +40,8 @@ import {
   DollarSign,
   ChevronDown,
   User,
-  Calculator
-} from 'lucide-react';
+  Calculator,
+} from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -56,77 +56,77 @@ interface NavItem {
 
 const navigationItems: NavItem[] = [
   {
-    label: 'Dashboard',
-    path: '/dashboard',
+    label: "Dashboard",
+    path: "/dashboard",
     icon: LayoutDashboard,
-    roles: ['super_admin', 'project_manager', 'user']
+    roles: ["super_admin", "project_manager", "user"],
   },
   {
-    label: 'User Management',
-    path: '/users',
+    label: "User Management",
+    path: "/users",
     icon: Users,
-    roles: ['super_admin']
+    roles: ["super_admin"],
   },
   {
-    label: 'Projects',
-    path: '/projects',
+    label: "Projects",
+    path: "/projects",
     icon: FolderOpen,
-    roles: ['super_admin']
+    roles: ["super_admin"],
   },
   {
-    label: 'File Process',
-    path: '/file-process',
+    label: "File Process",
+    path: "/file-process",
     icon: FileText,
-    roles: ['super_admin', 'project_manager']
+    roles: ["super_admin", "project_manager"],
   },
   {
-    label: 'Request Files',
-    path: '/request-files',
+    label: "Request Files",
+    path: "/request-files",
     icon: Upload,
-    roles: ['user']
+    roles: ["user"],
   },
   {
-    label: 'Billing',
-    path: '/billing',
+    label: "Billing",
+    path: "/billing",
     icon: Receipt,
-    roles: ['super_admin']
+    roles: ["super_admin"],
   },
   {
-    label: 'Salary',
-    path: '/salary',
+    label: "Salary",
+    path: "/salary",
     icon: DollarSign,
-    roles: ['super_admin']
+    roles: ["super_admin"],
   },
   {
-    label: 'Expense',
-    path: '/expense',
+    label: "Expense",
+    path: "/expense",
     icon: Calculator,
-    roles: ['super_admin']
+    roles: ["super_admin"],
   },
   {
-    label: 'Reports',
-    path: '/reports',
+    label: "Reports",
+    path: "/reports",
     icon: BarChart3,
-    roles: ['super_admin', 'project_manager']
+    roles: ["super_admin", "project_manager"],
   },
   {
-    label: 'Permissions',
-    path: '/permissions',
+    label: "Permissions",
+    path: "/permissions",
     icon: Shield,
-    roles: ['super_admin']
+    roles: ["super_admin"],
   },
   {
-    label: 'Notifications',
-    path: '/notifications',
+    label: "Notifications",
+    path: "/notifications",
     icon: Mail,
-    roles: ['super_admin', 'project_manager', 'user']
+    roles: ["super_admin", "project_manager", "user"],
   },
   {
-    label: 'Settings',
-    path: '/settings',
+    label: "Settings",
+    path: "/settings",
     icon: Settings,
-    roles: ['super_admin']
-  }
+    roles: ["super_admin"],
+  },
 ];
 
 export default function Layout({ children }: LayoutProps) {
@@ -140,12 +140,12 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
     setShowLogoutDialog(false);
   };
 
-  const filteredNavItems = navigationItems.filter(item => 
-    item.roles.includes(user.role)
+  const filteredNavItems = navigationItems.filter((item) =>
+    item.roles.includes(user.role),
   );
 
   const NavContent = () => (
@@ -169,14 +169,14 @@ export default function Layout({ children }: LayoutProps) {
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Button
                 key={item.path}
                 variant={isActive ? "default" : "ghost"}
                 className={cn(
                   "w-full justify-start gap-3 h-11",
-                  isActive && "bg-primary text-primary-foreground"
+                  isActive && "bg-primary text-primary-foreground",
                 )}
                 onClick={() => {
                   navigate(item.path);
@@ -195,17 +195,27 @@ export default function Layout({ children }: LayoutProps) {
       <div className="p-4 border-t bg-background">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between gap-3 h-12 hover:bg-accent text-foreground">
+            <Button
+              variant="ghost"
+              className="w-full justify-between gap-3 h-12 hover:bg-accent text-foreground"
+            >
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
                   <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-                    {user?.name ? user.name.split(' ').map(n => n[0]).join('') : 'U'}
+                    {user?.name
+                      ? user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                      : "U"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
-                  <p className="text-sm font-medium text-foreground">{user?.name || 'User'}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {user?.name || "User"}
+                  </p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {user?.role ? user.role.replace('_', ' ') : 'User'}
+                    {user?.role ? user.role.replace("_", " ") : "User"}
                   </p>
                 </div>
               </div>
@@ -213,16 +223,19 @@ export default function Layout({ children }: LayoutProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 z-50">
-            <DropdownMenuItem onClick={() => navigate('/profile')}>
+            <DropdownMenuItem onClick={() => navigate("/profile")}>
               <User className="mr-2 h-4 w-4" />
               Profile Settings
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/notifications')}>
+            <DropdownMenuItem onClick={() => navigate("/notifications")}>
               <Bell className="mr-2 h-4 w-4" />
               Notifications
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setShowLogoutDialog(true)} className="text-red-600">
+            <DropdownMenuItem
+              onClick={() => setShowLogoutDialog(true)}
+              className="text-red-600"
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Sign Out
             </DropdownMenuItem>
@@ -242,7 +255,10 @@ export default function Layout({ children }: LayoutProps) {
       {/* Mobile Sidebar */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
           <div className="fixed left-0 top-0 bottom-0 w-64 bg-card border-r">
             <div className="flex items-center justify-between p-4">
               <div className="flex items-center gap-3">
@@ -253,7 +269,11 @@ export default function Layout({ children }: LayoutProps) {
                 />
                 <span className="font-semibold">Web Syntactic</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(false)}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -277,7 +297,7 @@ export default function Layout({ children }: LayoutProps) {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            
+
             <div className="flex items-center gap-4 ml-auto">
               <Button variant="ghost" size="sm">
                 <Bell className="h-4 w-4" />
@@ -287,9 +307,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         {/* Page Content */}
-        <main className="p-6">
-          {children}
-        </main>
+        <main className="p-6">{children}</main>
       </div>
 
       {/* Logout Confirmation Dialog */}
@@ -298,12 +316,16 @@ export default function Layout({ children }: LayoutProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Sign Out</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to sign out? You will need to log in again to access your account.
+              Are you sure you want to sign out? You will need to log in again
+              to access your account.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Sign Out
             </AlertDialogAction>
           </AlertDialogFooter>
