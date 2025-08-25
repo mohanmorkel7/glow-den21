@@ -310,11 +310,14 @@ function VideoPlayer({ src, title, onTimeUpdate, onProgress }: VideoPlayerProps)
 
 export default function Tutorial() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('browse');
   const [selectedCategory, setSelectedCategory] = useState<TutorialCategory | 'all'>('all');
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
   const [videoUpload, setVideoUpload] = useState({
     tutorialId: '',
