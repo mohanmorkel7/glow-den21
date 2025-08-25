@@ -178,6 +178,10 @@ export function createServer() {
   app.get("/api/dashboard/productivity-trend", getProductivityTrend);
   app.get("/api/dashboard/user", getUserDashboard);
 
+  // ===== EXPENSE MANAGEMENT ROUTES =====
+  // All expense routes require authentication
+  app.use("/api/expenses", authenticateToken, expenseRoutes);
+
   // Error handling middleware
   app.use((err: any, _req: any, res: any, _next: any) => {
     console.error("Unhandled error:", err);
