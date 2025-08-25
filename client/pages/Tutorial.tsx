@@ -683,6 +683,98 @@ export default function Tutorial() {
     }
   };
 
+  // Handle edit tutorial
+  const handleEditTutorial = (tutorial: Tutorial) => {
+    setEditingTutorial(tutorial);
+    setNewTutorial({
+      title: tutorial.title,
+      description: tutorial.description,
+      category: tutorial.category,
+      instructions: tutorial.instructions,
+      steps: tutorial.steps.map(step => ({
+        stepNumber: step.stepNumber,
+        title: step.title,
+        description: step.description,
+        isRequired: step.isRequired
+      })),
+      targetRoles: tutorial.targetRoles,
+      isRequired: tutorial.isRequired,
+      tags: tutorial.tags
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Handle save edited tutorial
+  const handleSaveEditedTutorial = () => {
+    if (!editingTutorial) return;
+
+    // Here you would update the tutorial via API
+    console.log('Updating tutorial:', editingTutorial.id, newTutorial);
+
+    toast({
+      title: "Tutorial updated",
+      description: `"${newTutorial.title}" has been updated successfully`
+    });
+
+    setIsEditDialogOpen(false);
+    setEditingTutorial(null);
+
+    // Reset form
+    setNewTutorial({
+      title: '',
+      description: '',
+      category: 'getting_started',
+      instructions: '',
+      steps: [],
+      targetRoles: ['user'],
+      isRequired: false,
+      tags: []
+    });
+  };
+
+  // Handle delete tutorial
+  const handleDeleteTutorial = (tutorial: Tutorial) => {
+    // Here you would delete the tutorial via API
+    console.log('Deleting tutorial:', tutorial.id);
+
+    toast({
+      title: "Tutorial deleted",
+      description: `"${tutorial.title}" has been deleted successfully`,
+      variant: "destructive"
+    });
+  };
+
+  // Handle create tutorial
+  const handleCreateTutorial = () => {
+    // Here you would save the tutorial via API
+    console.log('Creating tutorial:', newTutorial);
+
+    toast({
+      title: "Tutorial created",
+      description: `"${newTutorial.title}" has been created successfully`
+    });
+
+    setIsCreateDialogOpen(false);
+
+    // Reset form
+    setNewTutorial({
+      title: '',
+      description: '',
+      category: 'getting_started',
+      instructions: '',
+      steps: [],
+      targetRoles: ['user'],
+      isRequired: false,
+      tags: []
+    });
+    setCurrentStep({
+      stepNumber: 1,
+      title: '',
+      description: '',
+      isRequired: false
+    });
+  };
+
   const getCategoryIcon = (category: TutorialCategory) => {
     const categoryInfo = TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === category);
     switch (categoryInfo?.icon) {
