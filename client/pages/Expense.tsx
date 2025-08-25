@@ -196,7 +196,7 @@ export default function Expense() {
   ];
 
   // Base recurring monthly expenses
-  const baseRecurringExpenses: Omit<ExpenseEntry, 'id' | 'date' | 'month'>[] = [
+  const baseRecurringExpenses: Omit<ExpenseEntry, "id" | "date" | "month">[] = [
     {
       category: "Office Rent",
       description: "Monthly office rent payment",
@@ -297,7 +297,7 @@ export default function Expense() {
     }));
 
     const currentMonthOneTime = oneTimeExpenses.filter(
-      expense => expense.month === month || expense.createdMonth === month
+      (expense) => expense.month === month || expense.createdMonth === month,
     );
 
     return [...monthlyExpenses, ...currentMonthOneTime];
@@ -439,7 +439,12 @@ export default function Expense() {
 
   // New handlers for expense management
   const handleAddExpense = () => {
-    if (!newExpense.category || !newExpense.description || !newExpense.amount || !newExpense.type) {
+    if (
+      !newExpense.category ||
+      !newExpense.description ||
+      !newExpense.amount ||
+      !newExpense.type
+    ) {
       alert("Please fill in all required fields");
       return;
     }
@@ -453,7 +458,8 @@ export default function Expense() {
       month: selectedMonth,
       type: newExpense.type as any,
       frequency: newExpense.frequency,
-      createdMonth: newExpense.frequency === "one-time" ? selectedMonth : undefined,
+      createdMonth:
+        newExpense.frequency === "one-time" ? selectedMonth : undefined,
       approvedBy: "Admin",
       status: "pending",
     };
@@ -461,11 +467,15 @@ export default function Expense() {
     if (newExpense.frequency === "monthly") {
       // Add to base recurring expenses
       console.log("Adding recurring monthly expense:", expenseToAdd);
-      alert(`Monthly recurring expense "${newExpense.category}" added successfully! It will appear in all months.`);
+      alert(
+        `Monthly recurring expense "${newExpense.category}" added successfully! It will appear in all months.`,
+      );
     } else {
       // Add as one-time expense
       console.log("Adding one-time expense:", expenseToAdd);
-      alert(`One-time expense "${newExpense.category}" added successfully for ${selectedMonth}!`);
+      alert(
+        `One-time expense "${newExpense.category}" added successfully for ${selectedMonth}!`,
+      );
     }
 
     // Reset form
@@ -1390,13 +1400,16 @@ export default function Expense() {
                 <DialogHeader>
                   <DialogTitle>Add Expense Entry</DialogTitle>
                   <DialogDescription>
-                    Record a new company expense - choose monthly recurring or one-time
+                    Record a new company expense - choose monthly recurring or
+                    one-time
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   {/* Frequency Selection - Prominent */}
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Label className="text-base font-medium">Expense Frequency *</Label>
+                    <Label className="text-base font-medium">
+                      Expense Frequency *
+                    </Label>
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <label className="flex items-center space-x-2 cursor-pointer">
                         <input
@@ -1404,12 +1417,21 @@ export default function Expense() {
                           name="frequency"
                           value="one-time"
                           checked={newExpense.frequency === "one-time"}
-                          onChange={(e) => setNewExpense({...newExpense, frequency: e.target.value as "monthly" | "one-time"})}
+                          onChange={(e) =>
+                            setNewExpense({
+                              ...newExpense,
+                              frequency: e.target.value as
+                                | "monthly"
+                                | "one-time",
+                            })
+                          }
                           className="text-blue-600"
                         />
                         <div>
                           <span className="font-medium">One-time Expense</span>
-                          <p className="text-xs text-muted-foreground">For this month only</p>
+                          <p className="text-xs text-muted-foreground">
+                            For this month only
+                          </p>
                         </div>
                       </label>
                       <label className="flex items-center space-x-2 cursor-pointer">
@@ -1418,12 +1440,21 @@ export default function Expense() {
                           name="frequency"
                           value="monthly"
                           checked={newExpense.frequency === "monthly"}
-                          onChange={(e) => setNewExpense({...newExpense, frequency: e.target.value as "monthly" | "one-time"})}
+                          onChange={(e) =>
+                            setNewExpense({
+                              ...newExpense,
+                              frequency: e.target.value as
+                                | "monthly"
+                                | "one-time",
+                            })
+                          }
                           className="text-blue-600"
                         />
                         <div>
                           <span className="font-medium">Monthly Recurring</span>
-                          <p className="text-xs text-muted-foreground">Appears every month</p>
+                          <p className="text-xs text-muted-foreground">
+                            Appears every month
+                          </p>
                         </div>
                       </label>
                     </div>
@@ -1435,12 +1466,22 @@ export default function Expense() {
                       <Input
                         placeholder="e.g., Office Rent, Utilities"
                         value={newExpense.category}
-                        onChange={(e) => setNewExpense({...newExpense, category: e.target.value})}
+                        onChange={(e) =>
+                          setNewExpense({
+                            ...newExpense,
+                            category: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div>
                       <Label htmlFor="type">Type *</Label>
-                      <Select value={newExpense.type} onValueChange={(value) => setNewExpense({...newExpense, type: value})}>
+                      <Select
+                        value={newExpense.type}
+                        onValueChange={(value) =>
+                          setNewExpense({ ...newExpense, type: value })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
@@ -1466,7 +1507,12 @@ export default function Expense() {
                     <Input
                       placeholder="Enter detailed expense description"
                       value={newExpense.description}
-                      onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                      onChange={(e) =>
+                        setNewExpense({
+                          ...newExpense,
+                          description: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -1477,7 +1523,12 @@ export default function Expense() {
                         type="number"
                         placeholder="Enter amount"
                         value={newExpense.amount}
-                        onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
+                        onChange={(e) =>
+                          setNewExpense({
+                            ...newExpense,
+                            amount: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div>
@@ -1485,7 +1536,9 @@ export default function Expense() {
                       <Input
                         type="date"
                         value={newExpense.date}
-                        onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
+                        onChange={(e) =>
+                          setNewExpense({ ...newExpense, date: e.target.value })
+                        }
                       />
                     </div>
                   </div>
@@ -1494,7 +1547,9 @@ export default function Expense() {
                   {newExpense.frequency === "monthly" && (
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                       <p className="text-sm text-green-800">
-                        💡 <strong>Monthly Recurring:</strong> This expense will automatically appear in all months. Perfect for rent, utilities, insurance, etc.
+                        💡 <strong>Monthly Recurring:</strong> This expense will
+                        automatically appear in all months. Perfect for rent,
+                        utilities, insurance, etc.
                       </p>
                     </div>
                   )}
@@ -1502,7 +1557,9 @@ export default function Expense() {
                   {newExpense.frequency === "one-time" && (
                     <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-sm text-orange-800">
-                        💡 <strong>One-time Expense:</strong> This expense will only appear in {selectedMonth}. Perfect for equipment purchases, special projects, etc.
+                        💡 <strong>One-time Expense:</strong> This expense will
+                        only appear in {selectedMonth}. Perfect for equipment
+                        purchases, special projects, etc.
                       </p>
                     </div>
                   )}
@@ -1518,7 +1575,9 @@ export default function Expense() {
                     Cancel
                   </Button>
                   <Button onClick={handleAddExpense}>
-                    {newExpense.frequency === "monthly" ? "Add Monthly Expense" : "Add One-time Expense"}
+                    {newExpense.frequency === "monthly"
+                      ? "Add Monthly Expense"
+                      : "Add One-time Expense"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1529,37 +1588,67 @@ export default function Expense() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <Card className="border-l-4 border-l-blue-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Monthly Recurring</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Monthly Recurring
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(expenseEntries.filter(e => e.frequency === "monthly").reduce((sum, e) => sum + e.amount, 0))}
+                  {formatCurrency(
+                    expenseEntries
+                      .filter((e) => e.frequency === "monthly")
+                      .reduce((sum, e) => sum + e.amount, 0),
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">{expenseEntries.filter(e => e.frequency === "monthly").length} expenses</p>
+                <p className="text-xs text-muted-foreground">
+                  {
+                    expenseEntries.filter((e) => e.frequency === "monthly")
+                      .length
+                  }{" "}
+                  expenses
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-l-4 border-l-orange-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">One-time ({selectedMonth})</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  One-time ({selectedMonth})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">
-                  {formatCurrency(expenseEntries.filter(e => e.frequency === "one-time").reduce((sum, e) => sum + e.amount, 0))}
+                  {formatCurrency(
+                    expenseEntries
+                      .filter((e) => e.frequency === "one-time")
+                      .reduce((sum, e) => sum + e.amount, 0),
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">{expenseEntries.filter(e => e.frequency === "one-time").length} expenses</p>
+                <p className="text-xs text-muted-foreground">
+                  {
+                    expenseEntries.filter((e) => e.frequency === "one-time")
+                      .length
+                  }{" "}
+                  expenses
+                </p>
               </CardContent>
             </Card>
 
             <Card className="border-l-4 border-l-green-500">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total This Month</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total This Month
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(expenseEntries.reduce((sum, e) => sum + e.amount, 0))}
+                  {formatCurrency(
+                    expenseEntries.reduce((sum, e) => sum + e.amount, 0),
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">{expenseEntries.length} total expenses</p>
+                <p className="text-xs text-muted-foreground">
+                  {expenseEntries.length} total expenses
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -1571,7 +1660,8 @@ export default function Expense() {
                 Expense Details for {selectedMonth}
               </CardTitle>
               <CardDescription>
-                View all monthly recurring and one-time expenses for the selected month
+                View all monthly recurring and one-time expenses for the
+                selected month
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -1590,14 +1680,21 @@ export default function Expense() {
                 </TableHeader>
                 <TableBody>
                   {expenseEntries.map((entry) => (
-                    <TableRow key={entry.id} className={entry.frequency === "monthly" ? "bg-blue-50/50" : ""}>
+                    <TableRow
+                      key={entry.id}
+                      className={
+                        entry.frequency === "monthly" ? "bg-blue-50/50" : ""
+                      }
+                    >
                       <TableCell>
                         {new Date(entry.date).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-medium">
                         {entry.category}
                         {entry.frequency === "monthly" && (
-                          <div className="text-xs text-blue-600 font-medium">🔄 Recurring</div>
+                          <div className="text-xs text-blue-600 font-medium">
+                            🔄 Recurring
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
@@ -1607,10 +1704,20 @@ export default function Expense() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={entry.frequency === "monthly" ? "default" : "secondary"}
-                          className={entry.frequency === "monthly" ? "bg-blue-600" : "bg-orange-600 text-white"}
+                          variant={
+                            entry.frequency === "monthly"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            entry.frequency === "monthly"
+                              ? "bg-blue-600"
+                              : "bg-orange-600 text-white"
+                          }
                         >
-                          {entry.frequency === "monthly" ? "Monthly" : "One-time"}
+                          {entry.frequency === "monthly"
+                            ? "Monthly"
+                            : "One-time"}
                         </Badge>
                       </TableCell>
                       <TableCell>{entry.description}</TableCell>
@@ -1643,7 +1750,11 @@ export default function Expense() {
                             size="sm"
                             onClick={() => handleDeleteExpense(entry)}
                             disabled={entry.frequency === "monthly"}
-                            title={entry.frequency === "monthly" ? "Cannot delete recurring expenses from monthly view" : "Delete expense"}
+                            title={
+                              entry.frequency === "monthly"
+                                ? "Cannot delete recurring expenses from monthly view"
+                                : "Delete expense"
+                            }
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

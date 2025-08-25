@@ -275,12 +275,48 @@ export default function Dashboard() {
 
   // Enhanced mock data for admin dashboard
   const monthlyPerformanceData = [
-    { month: "Jan", completed: 2450000, target: 2500000, revenue: 98000, efficiency: 98 },
-    { month: "Feb", completed: 2680000, target: 2700000, revenue: 107200, efficiency: 99.3 },
-    { month: "Mar", completed: 2890000, target: 2800000, revenue: 115600, efficiency: 103.2 },
-    { month: "Apr", completed: 2750000, target: 2900000, revenue: 110000, efficiency: 94.8 },
-    { month: "May", completed: 3120000, target: 3000000, revenue: 124800, efficiency: 104 },
-    { month: "Jun", completed: 2980000, target: 3100000, revenue: 119200, efficiency: 96.1 }
+    {
+      month: "Jan",
+      completed: 2450000,
+      target: 2500000,
+      revenue: 98000,
+      efficiency: 98,
+    },
+    {
+      month: "Feb",
+      completed: 2680000,
+      target: 2700000,
+      revenue: 107200,
+      efficiency: 99.3,
+    },
+    {
+      month: "Mar",
+      completed: 2890000,
+      target: 2800000,
+      revenue: 115600,
+      efficiency: 103.2,
+    },
+    {
+      month: "Apr",
+      completed: 2750000,
+      target: 2900000,
+      revenue: 110000,
+      efficiency: 94.8,
+    },
+    {
+      month: "May",
+      completed: 3120000,
+      target: 3000000,
+      revenue: 124800,
+      efficiency: 104,
+    },
+    {
+      month: "Jun",
+      completed: 2980000,
+      target: 3100000,
+      revenue: 119200,
+      efficiency: 96.1,
+    },
   ];
 
   const teamPerformanceData = [
@@ -288,7 +324,7 @@ export default function Dashboard() {
     { name: "Team Beta", files: 420000, efficiency: 94.2, projects: 2 },
     { name: "Team Gamma", files: 380000, efficiency: 92.8, projects: 3 },
     { name: "Team Delta", files: 310000, efficiency: 89.5, projects: 2 },
-    { name: "Team Echo", files: 290000, efficiency: 88.1, projects: 1 }
+    { name: "Team Echo", files: 290000, efficiency: 88.1, projects: 1 },
   ];
 
   const projectDistributionData = [
@@ -296,7 +332,7 @@ export default function Dashboard() {
     { name: "Data Entry", value: 25, files: 850000, color: "#00C49F" },
     { name: "Document Processing", value: 20, files: 680000, color: "#FFBB28" },
     { name: "Quality Check", value: 12, files: 410000, color: "#FF8042" },
-    { name: "Others", value: 8, files: 270000, color: "#8884D8" }
+    { name: "Others", value: 8, files: 270000, color: "#8884D8" },
   ];
 
   const dailyTrendsData = [
@@ -306,14 +342,14 @@ export default function Dashboard() {
     { day: "Thu", files: 20100, users: 45, efficiency: 96.2 },
     { day: "Fri", files: 19800, users: 43, efficiency: 95.1 },
     { day: "Sat", files: 16500, users: 38, efficiency: 88.3 },
-    { day: "Sun", files: 15200, users: 35, efficiency: 86.8 }
+    { day: "Sun", files: 15200, users: 35, efficiency: 86.8 },
   ];
 
   const revenueData = [
     { quarter: "Q1", revenue: 320800, expenses: 245600, profit: 75200 },
     { quarter: "Q2", revenue: 345600, expenses: 258400, profit: 87200 },
     { quarter: "Q3", revenue: 398200, expenses: 284800, profit: 113400 },
-    { quarter: "Q4", revenue: 412800, expenses: 295200, profit: 117600 }
+    { quarter: "Q4", revenue: 412800, expenses: 295200, profit: 117600 },
   ];
 
   // Render comprehensive admin dashboard
@@ -335,7 +371,9 @@ export default function Dashboard() {
           </Badge>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Last updated</p>
-            <p className="text-sm font-medium">{new Date().toLocaleTimeString()}</p>
+            <p className="text-sm font-medium">
+              {new Date().toLocaleTimeString()}
+            </p>
           </div>
         </div>
       </div>
@@ -351,7 +389,9 @@ export default function Dashboard() {
             <div className="text-3xl font-bold text-blue-600">
               {formatCurrency(1245680, "USD")}
             </div>
-            <p className="text-xs text-muted-foreground">+12.5% from last quarter</p>
+            <p className="text-xs text-muted-foreground">
+              +12.5% from last quarter
+            </p>
             <div className="flex items-center mt-2 text-xs">
               <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
               <span className="text-green-500">+8.2% this month</span>
@@ -361,7 +401,9 @@ export default function Dashboard() {
 
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Files Processed</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Files Processed
+            </CardTitle>
             <FileText className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -370,7 +412,9 @@ export default function Dashboard() {
             </div>
             <p className="text-xs text-muted-foreground">This month</p>
             <Progress value={87.5} className="mt-2 h-2" />
-            <p className="text-xs text-muted-foreground mt-1">87.5% of monthly target</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              87.5% of monthly target
+            </p>
           </CardContent>
         </Card>
 
@@ -393,12 +437,16 @@ export default function Dashboard() {
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overall Efficiency</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Overall Efficiency
+            </CardTitle>
             <Target className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-600">94.7%</div>
-            <p className="text-xs text-muted-foreground">Average team performance</p>
+            <p className="text-xs text-muted-foreground">
+              Average team performance
+            </p>
             <div className="flex items-center mt-2 text-xs">
               <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
               <span className="text-green-500">+2.1% improvement</span>
@@ -416,7 +464,9 @@ export default function Dashboard() {
               <BarChart3 className="h-5 w-5 text-primary" />
               Monthly Performance Trends
             </CardTitle>
-            <CardDescription>Files processed vs targets over time</CardDescription>
+            <CardDescription>
+              Files processed vs targets over time
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -427,16 +477,37 @@ export default function Dashboard() {
                 <YAxis yAxisId="right" orientation="right" />
                 <Tooltip
                   formatter={(value, name) => [
-                    typeof value === 'number' ? value.toLocaleString() : value,
-                    name === 'completed' ? 'Files Completed' :
-                    name === 'target' ? 'Target' :
-                    name === 'revenue' ? 'Revenue ($)' : name
+                    typeof value === "number" ? value.toLocaleString() : value,
+                    name === "completed"
+                      ? "Files Completed"
+                      : name === "target"
+                        ? "Target"
+                        : name === "revenue"
+                          ? "Revenue ($)"
+                          : name,
                   ]}
                 />
                 <Legend />
-                <Bar yAxisId="left" dataKey="completed" fill="#3b82f6" name="Completed" />
-                <Bar yAxisId="left" dataKey="target" fill="#e5e7eb" name="Target" />
-                <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} name="Revenue" />
+                <Bar
+                  yAxisId="left"
+                  dataKey="completed"
+                  fill="#3b82f6"
+                  name="Completed"
+                />
+                <Bar
+                  yAxisId="left"
+                  dataKey="target"
+                  fill="#e5e7eb"
+                  name="Target"
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#10b981"
+                  strokeWidth={3}
+                  name="Revenue"
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
@@ -483,7 +554,9 @@ export default function Dashboard() {
               <Users className="h-5 w-5 text-primary" />
               Team Performance Analysis
             </CardTitle>
-            <CardDescription>Current team productivity and efficiency metrics</CardDescription>
+            <CardDescription>
+              Current team productivity and efficiency metrics
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -493,9 +566,12 @@ export default function Dashboard() {
                 <YAxis dataKey="name" type="category" width={80} />
                 <Tooltip
                   formatter={(value, name) => [
-                    typeof value === 'number' ? value.toLocaleString() : value,
-                    name === 'files' ? 'Files Processed' :
-                    name === 'efficiency' ? 'Efficiency (%)' : name
+                    typeof value === "number" ? value.toLocaleString() : value,
+                    name === "files"
+                      ? "Files Processed"
+                      : name === "efficiency"
+                        ? "Efficiency (%)"
+                        : name,
                   ]}
                 />
                 <Legend />
@@ -518,7 +594,9 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Total Files</p>
+                  <p className="text-sm font-medium text-blue-900">
+                    Total Files
+                  </p>
                   <p className="text-2xl font-bold text-blue-600">127K</p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-500" />
@@ -526,7 +604,9 @@ export default function Dashboard() {
 
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-green-900">Avg Efficiency</p>
+                  <p className="text-sm font-medium text-green-900">
+                    Avg Efficiency
+                  </p>
                   <p className="text-2xl font-bold text-green-600">92.1%</p>
                 </div>
                 <Target className="h-8 w-8 text-green-500" />
@@ -542,7 +622,9 @@ export default function Dashboard() {
 
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-orange-900">Active Users</p>
+                  <p className="text-sm font-medium text-orange-900">
+                    Active Users
+                  </p>
                   <p className="text-2xl font-bold text-orange-600">42</p>
                 </div>
                 <Activity className="h-8 w-8 text-orange-500" />
@@ -561,7 +643,9 @@ export default function Dashboard() {
               <Activity className="h-5 w-5 text-primary" />
               Daily Productivity Trends
             </CardTitle>
-            <CardDescription>Week-over-week daily performance patterns</CardDescription>
+            <CardDescription>
+              Week-over-week daily performance patterns
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -571,15 +655,35 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
-                    typeof value === 'number' ? value.toLocaleString() : value,
-                    name === 'files' ? 'Files' :
-                    name === 'users' ? 'Active Users' :
-                    name === 'efficiency' ? 'Efficiency %' : name
+                    typeof value === "number" ? value.toLocaleString() : value,
+                    name === "files"
+                      ? "Files"
+                      : name === "users"
+                        ? "Active Users"
+                        : name === "efficiency"
+                          ? "Efficiency %"
+                          : name,
                   ]}
                 />
                 <Legend />
-                <Area type="monotone" dataKey="files" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Files" />
-                <Area type="monotone" dataKey="efficiency" stackId="2" stroke="#10b981" fill="#10b981" fillOpacity={0.4} name="Efficiency %" />
+                <Area
+                  type="monotone"
+                  dataKey="files"
+                  stackId="1"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
+                  fillOpacity={0.6}
+                  name="Files"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="efficiency"
+                  stackId="2"
+                  stroke="#10b981"
+                  fill="#10b981"
+                  fillOpacity={0.4}
+                  name="Efficiency %"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -592,7 +696,9 @@ export default function Dashboard() {
               <TrendingUp className="h-5 w-5 text-primary" />
               Revenue & Profit Analysis
             </CardTitle>
-            <CardDescription>Quarterly financial performance breakdown</CardDescription>
+            <CardDescription>
+              Quarterly financial performance breakdown
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -602,10 +708,14 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
-                    `$${typeof value === 'number' ? value.toLocaleString() : value}`,
-                    name === 'revenue' ? 'Revenue' :
-                    name === 'expenses' ? 'Expenses' :
-                    name === 'profit' ? 'Profit' : name
+                    `$${typeof value === "number" ? value.toLocaleString() : value}`,
+                    name === "revenue"
+                      ? "Revenue"
+                      : name === "expenses"
+                        ? "Expenses"
+                        : name === "profit"
+                          ? "Profit"
+                          : name,
                   ]}
                 />
                 <Legend />
@@ -632,8 +742,12 @@ export default function Dashboard() {
               <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900">Critical: Server Load High</p>
-                  <p className="text-xs text-red-700">Processing server at 89% capacity - consider load balancing</p>
+                  <p className="text-sm font-medium text-red-900">
+                    Critical: Server Load High
+                  </p>
+                  <p className="text-xs text-red-700">
+                    Processing server at 89% capacity - consider load balancing
+                  </p>
                 </div>
                 <span className="text-xs text-red-600">2 min ago</span>
               </div>
@@ -641,8 +755,12 @@ export default function Dashboard() {
               <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <Timer className="h-5 w-5 text-yellow-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-yellow-900">Daily Target Alert</p>
-                  <p className="text-xs text-yellow-700">3 teams are 15% below daily processing targets</p>
+                  <p className="text-sm font-medium text-yellow-900">
+                    Daily Target Alert
+                  </p>
+                  <p className="text-xs text-yellow-700">
+                    3 teams are 15% below daily processing targets
+                  </p>
                 </div>
                 <span className="text-xs text-yellow-600">15 min ago</span>
               </div>
@@ -650,8 +768,12 @@ export default function Dashboard() {
               <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <CheckCircle className="h-5 w-5 text-green-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-green-900">Milestone Achieved</p>
-                  <p className="text-xs text-green-700">Project Alpha reached 500K files processed milestone</p>
+                  <p className="text-sm font-medium text-green-900">
+                    Milestone Achieved
+                  </p>
+                  <p className="text-xs text-green-700">
+                    Project Alpha reached 500K files processed milestone
+                  </p>
                 </div>
                 <span className="text-xs text-green-600">1 hour ago</span>
               </div>
@@ -659,8 +781,12 @@ export default function Dashboard() {
               <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <Users className="h-5 w-5 text-blue-600" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900">New Team Member</p>
-                  <p className="text-xs text-blue-700">Sarah Johnson joined Team Beta - pending orientation</p>
+                  <p className="text-sm font-medium text-blue-900">
+                    New Team Member
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Sarah Johnson joined Team Beta - pending orientation
+                  </p>
                 </div>
                 <span className="text-xs text-blue-600">3 hours ago</span>
               </div>
@@ -683,9 +809,10 @@ export default function Dashboard() {
                 onClick={() => {
                   toast({
                     title: "Navigating to User Management",
-                    description: "Opening team and user management interface..."
+                    description:
+                      "Opening team and user management interface...",
                   });
-                  navigate('/users');
+                  navigate("/users");
                 }}
               >
                 <Users className="h-4 w-4 mr-2" />
@@ -697,9 +824,10 @@ export default function Dashboard() {
                 onClick={() => {
                   toast({
                     title: "Opening Project Management",
-                    description: "Accessing project overview and management tools..."
+                    description:
+                      "Accessing project overview and management tools...",
                   });
-                  navigate('/projects');
+                  navigate("/projects");
                 }}
               >
                 <FolderOpen className="h-4 w-4 mr-2" />
@@ -711,9 +839,9 @@ export default function Dashboard() {
                 onClick={() => {
                   toast({
                     title: "Opening Reports & Analytics",
-                    description: "Loading comprehensive business reports..."
+                    description: "Loading comprehensive business reports...",
                   });
-                  navigate('/reports');
+                  navigate("/reports");
                 }}
               >
                 <FileText className="h-4 w-4 mr-2" />
@@ -725,9 +853,10 @@ export default function Dashboard() {
                 onClick={() => {
                   toast({
                     title: "Opening File Process Management",
-                    description: "Accessing target settings and file processing controls..."
+                    description:
+                      "Accessing target settings and file processing controls...",
                   });
-                  navigate('/file-process');
+                  navigate("/file-process");
                 }}
               >
                 <Target className="h-4 w-4 mr-2" />
@@ -739,9 +868,10 @@ export default function Dashboard() {
                 onClick={() => {
                   toast({
                     title: "Advanced Analytics",
-                    description: "Opening detailed performance analytics dashboard..."
+                    description:
+                      "Opening detailed performance analytics dashboard...",
                   });
-                  navigate('/reports');
+                  navigate("/reports");
                 }}
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
