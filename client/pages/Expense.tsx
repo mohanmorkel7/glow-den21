@@ -472,116 +472,362 @@ export default function Expense() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold">Salary Management</h3>
-              <p className="text-sm text-muted-foreground">Manage employee salaries and payroll</p>
+              <p className="text-sm text-muted-foreground">File-based earnings and salary tracking</p>
             </div>
-            <Dialog open={isAddSalaryOpen} onOpenChange={setIsAddSalaryOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Salary Entry
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                  <DialogTitle>Add Salary Entry</DialogTitle>
-                  <DialogDescription>Create a new salary entry for an employee</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="employee">Employee</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="emp1">John Smith</SelectItem>
-                          <SelectItem value="emp2">Sarah Johnson</SelectItem>
-                          <SelectItem value="emp3">Mike Davis</SelectItem>
-                        </SelectContent>
-                      </Select>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                View Full Details
+              </Button>
+              <Dialog open={isAddSalaryOpen} onOpenChange={setIsAddSalaryOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Update Salary Config
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Update Salary Configuration</DialogTitle>
+                    <DialogDescription>Update file-based rates and salary settings</DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstTierRate">First 500 Files Rate (₹)</Label>
+                        <Input type="number" step="0.01" defaultValue="0.50" />
+                      </div>
+                      <div>
+                        <Label htmlFor="secondTierRate">After 500 Files Rate (₹)</Label>
+                        <Input type="number" step="0.01" defaultValue="0.60" />
+                      </div>
                     </div>
                     <div>
-                      <Label htmlFor="month">Month</Label>
-                      <Input type="month" defaultValue={currentMonth} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="baseSalary">Base Salary</Label>
-                      <Input type="number" placeholder="Enter base salary" />
-                    </div>
-                    <div>
-                      <Label htmlFor="bonus">Bonus</Label>
-                      <Input type="number" placeholder="Enter bonus amount" />
+                      <Label htmlFor="pmSalary">Project Manager Monthly Salary</Label>
+                      <Input type="number" placeholder="Enter monthly salary" />
                     </div>
                   </div>
-                  <div>
-                    <Label htmlFor="deductions">Deductions</Label>
-                    <Input type="number" placeholder="Enter deduction amount" />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsAddSalaryOpen(false)}>Cancel</Button>
-                  <Button onClick={() => setIsAddSalaryOpen(false)}>Save Entry</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddSalaryOpen(false)}>Cancel</Button>
+                    <Button onClick={() => setIsAddSalaryOpen(false)}>Save Configuration</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
+          {/* File Count Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Today's Total Files</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">2,700</div>
+                <p className="text-xs text-muted-foreground">All users combined</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Weekly Files</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">15,800</div>
+                <p className="text-xs text-muted-foreground">This week total</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Monthly Files</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">58,100</div>
+                <p className="text-xs text-muted-foreground">This month total</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Avg Daily Files</CardTitle>
+                <Calculator className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">675</div>
+                <p className="text-xs text-muted-foreground">Per user average</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* User File-Based Salaries */}
           <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                User File-Based Earnings
+              </CardTitle>
+              <CardDescription>Real-time file processing counts and earnings</CardDescription>
+            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Employee</TableHead>
-                    <TableHead>Designation</TableHead>
-                    <TableHead>Base Salary</TableHead>
-                    <TableHead>Bonus</TableHead>
-                    <TableHead>Deductions</TableHead>
-                    <TableHead>Net Salary</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Today's Files</TableHead>
+                    <TableHead>Today's Earnings</TableHead>
+                    <TableHead>Weekly Files</TableHead>
+                    <TableHead>Monthly Files</TableHead>
+                    <TableHead>Monthly Earnings</TableHead>
+                    <TableHead>Performance</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {salaryEntries.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{entry.employeeName}</div>
-                          <div className="text-sm text-muted-foreground">{entry.employeeId}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{entry.designation}</div>
-                          <div className="text-sm text-muted-foreground">{entry.department}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{formatCurrency(entry.baseSalary)}</TableCell>
-                      <TableCell>{formatCurrency(entry.bonus)}</TableCell>
-                      <TableCell>{formatCurrency(entry.deductions)}</TableCell>
-                      <TableCell className="font-semibold">{formatCurrency(entry.netSalary)}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(entry.status)}>
-                          {entry.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  <TableRow>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">Sarah Johnson</div>
+                        <div className="text-sm text-muted-foreground">Data Analyst</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800">750</Badge>
+                        <span className="text-xs text-green-600">Tier 2 rate</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-green-600">₹400.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-blue-600">4,200</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">15,200</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-green-600">₹8,320.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">Mike Davis</div>
+                        <div className="text-sm text-muted-foreground">Data Entry Specialist</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-orange-100 text-orange-800">420</Badge>
+                        <span className="text-xs text-blue-600">Tier 1 rate</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-green-600">₹210.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-blue-600">2,800</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">9,800</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-green-600">₹5,630.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="bg-blue-100 text-blue-800">Good</Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">David Chen</div>
+                        <div className="text-sm text-muted-foreground">Data Analyst</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800">680</Badge>
+                        <span className="text-xs text-green-600">Tier 2 rate</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-green-600">₹358.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-blue-600">3,900</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">14,500</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-green-600">₹7,900.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">Lisa Chen</div>
+                        <div className="text-sm text-muted-foreground">Senior Data Analyst</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-green-100 text-green-800">850</Badge>
+                        <span className="text-xs text-green-600">Tier 2 rate</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-semibold text-green-600">₹460.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium text-blue-600">5,100</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">18,600</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-green-600">₹10,110.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+
+          {/* Project Manager Salaries */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Project Manager Salaries
+              </CardTitle>
+              <CardDescription>Fixed monthly salaries for project managers</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Project Manager</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Monthly Salary</TableHead>
+                    <TableHead>Attendance Rate</TableHead>
+                    <TableHead>Last Active</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">Emily Wilson</div>
+                        <div className="text-sm text-muted-foreground">PM_001</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">Operations</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-purple-600">₹30,000.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge className="bg-green-100 text-green-800">Excellent</Badge>
+                        <div className="text-xs text-muted-foreground">98.5%</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">Jan 21, 2024 5:30 PM</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">John Smith</div>
+                        <div className="text-sm text-muted-foreground">PM_002</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">Operations</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-bold text-purple-600">₹20,000.00</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <Badge className="bg-blue-100 text-blue-800">Good</Badge>
+                        <div className="text-xs text-muted-foreground">94.2%</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">Jan 21, 2024 4:45 PM</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Rate Configuration Display */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Current Rate Configuration
+              </CardTitle>
+              <CardDescription>File processing rates and salary calculation settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h4 className="font-medium">User File-Based Rates</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between p-2 bg-green-50 rounded">
+                      <span>First 500 files:</span>
+                      <span className="font-medium text-green-600">₹0.50 per file</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-blue-50 rounded">
+                      <span>After 500 files:</span>
+                      <span className="font-medium text-blue-600">₹0.60 per file</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <h4 className="font-medium">Total Monthly Salary Allocation</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between p-2 bg-purple-50 rounded">
+                      <span>Total User Earnings:</span>
+                      <span className="font-medium text-purple-600">₹31,960.00</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-purple-50 rounded">
+                      <span>Total PM Salaries:</span>
+                      <span className="font-medium text-purple-600">₹50,000.00</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-gray-800 text-white rounded">
+                      <span className="font-semibold">Total Monthly Cost:</span>
+                      <span className="font-bold">₹81,960.00</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
