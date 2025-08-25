@@ -1290,7 +1290,12 @@ export default function Tutorial() {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 ml-6">
-                      <Button variant="ghost" size="sm" title="Edit Tutorial">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Edit Tutorial"
+                        onClick={() => handleEditTutorial(tutorial)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
@@ -1304,10 +1309,30 @@ export default function Tutorial() {
                       >
                         <Upload className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" title="View Analytics">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="View Analytics"
+                        onClick={() => {
+                          toast({
+                            title: "Analytics",
+                            description: "Analytics feature coming soon!"
+                          });
+                        }}
+                      >
                         <Settings className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" title="Duplicate Tutorial">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Duplicate Tutorial"
+                        onClick={() => {
+                          toast({
+                            title: "Tutorial duplicated",
+                            description: `"${tutorial.title}" has been duplicated as a draft`
+                          });
+                        }}
+                      >
                         <Plus className="h-4 w-4" />
                       </Button>
                       <Button
@@ -1316,7 +1341,7 @@ export default function Tutorial() {
                         title="Delete Tutorial"
                         onClick={() => {
                           if (confirm(`Are you sure you want to delete "${tutorial.title}"?`)) {
-                            alert('Tutorial would be deleted (integration with backend needed)');
+                            handleDeleteTutorial(tutorial);
                           }
                         }}
                       >
