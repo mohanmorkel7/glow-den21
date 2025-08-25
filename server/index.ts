@@ -59,6 +59,9 @@ import {
   getUserDashboard,
 } from "./routes/dashboard";
 
+// Import expense management routes
+import expenseRoutes from "./routes/expenses";
+
 export function createServer() {
   const app = express();
 
