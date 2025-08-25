@@ -54,9 +54,18 @@ class ApiClient {
 
       if (contentType && contentType.includes("application/json")) {
         try {
-          data = await response.json();
+          // Clone the response to avoid "body stream already read" errors
+          const responseClone = response.clone();
+          data = await responseClone.json();
         } catch (jsonError) {
           console.error(`JSON parsing failed for ${endpoint}:`, jsonError);
+          // Try to get response text for better error reporting
+          try {
+            const responseText = await response.text();
+            console.error(`Response text:`, responseText);
+          } catch (textError) {
+            console.error(`Could not read response text:`, textError);
+          }
           throw new Error(`Invalid JSON response from ${endpoint}`);
         }
       } else {
@@ -70,6 +79,17 @@ class ApiClient {
 
       return data.data as T;
     } catch (error) {
+      // Handle specific network errors
+      if (error instanceof TypeError && error.message.includes('body stream already read')) {
+        console.error(`Body stream error for ${endpoint}:`, error);
+        throw new Error(`Network error: Request failed due to stream issue. Please try again.`);
+      }
+
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error(`Network error for ${endpoint}:`, error);
+        throw new Error(`Network error: Unable to connect to server. Please check your connection.`);
+      }
+
       console.error(`API request failed for ${endpoint}:`, error);
       throw error;
     }
