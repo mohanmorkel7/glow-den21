@@ -1386,22 +1386,61 @@ export default function Expense() {
                   Add Expense
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                   <DialogTitle>Add Expense Entry</DialogTitle>
                   <DialogDescription>
-                    Record a new company expense
+                    Record a new company expense - choose monthly recurring or one-time
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
+                  {/* Frequency Selection - Prominent */}
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Label className="text-base font-medium">Expense Frequency *</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="frequency"
+                          value="one-time"
+                          checked={newExpense.frequency === "one-time"}
+                          onChange={(e) => setNewExpense({...newExpense, frequency: e.target.value as "monthly" | "one-time"})}
+                          className="text-blue-600"
+                        />
+                        <div>
+                          <span className="font-medium">One-time Expense</span>
+                          <p className="text-xs text-muted-foreground">For this month only</p>
+                        </div>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="frequency"
+                          value="monthly"
+                          checked={newExpense.frequency === "monthly"}
+                          onChange={(e) => setNewExpense({...newExpense, frequency: e.target.value as "monthly" | "one-time"})}
+                          className="text-blue-600"
+                        />
+                        <div>
+                          <span className="font-medium">Monthly Recurring</span>
+                          <p className="text-xs text-muted-foreground">Appears every month</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Input placeholder="e.g., Office Supplies" />
+                      <Label htmlFor="category">Category *</Label>
+                      <Input
+                        placeholder="e.g., Office Rent, Utilities"
+                        value={newExpense.category}
+                        onChange={(e) => setNewExpense({...newExpense, category: e.target.value})}
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="type">Type</Label>
-                      <Select>
+                      <Label htmlFor="type">Type *</Label>
+                      <Select value={newExpense.type} onValueChange={(value) => setNewExpense({...newExpense, type: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
@@ -1421,30 +1460,65 @@ export default function Expense() {
                       </Select>
                     </div>
                   </div>
+
                   <div>
-                    <Label htmlFor="description">Description</Label>
-                    <Input placeholder="Enter expense description" />
+                    <Label htmlFor="description">Description *</Label>
+                    <Input
+                      placeholder="Enter detailed expense description"
+                      value={newExpense.description}
+                      onChange={(e) => setNewExpense({...newExpense, description: e.target.value})}
+                    />
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="amount">Amount</Label>
-                      <Input type="number" placeholder="Enter amount" />
+                      <Label htmlFor="amount">Amount (₹) *</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter amount"
+                        value={newExpense.amount}
+                        onChange={(e) => setNewExpense({...newExpense, amount: e.target.value})}
+                      />
                     </div>
                     <div>
-                      <Label htmlFor="date">Date</Label>
-                      <Input type="date" />
+                      <Label htmlFor="date">Date *</Label>
+                      <Input
+                        type="date"
+                        value={newExpense.date}
+                        onChange={(e) => setNewExpense({...newExpense, date: e.target.value})}
+                      />
                     </div>
                   </div>
+
+                  {/* Helpful info based on frequency */}
+                  {newExpense.frequency === "monthly" && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        💡 <strong>Monthly Recurring:</strong> This expense will automatically appear in all months. Perfect for rent, utilities, insurance, etc.
+                      </p>
+                    </div>
+                  )}
+
+                  {newExpense.frequency === "one-time" && (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm text-orange-800">
+                        💡 <strong>One-time Expense:</strong> This expense will only appear in {selectedMonth}. Perfect for equipment purchases, special projects, etc.
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button
                     variant="outline"
-                    onClick={() => setIsAddExpenseOpen(false)}
+                    onClick={() => {
+                      resetExpenseForm();
+                      setIsAddExpenseOpen(false);
+                    }}
                   >
                     Cancel
                   </Button>
-                  <Button onClick={() => setIsAddExpenseOpen(false)}>
-                    Save Expense
+                  <Button onClick={handleAddExpense}>
+                    {newExpense.frequency === "monthly" ? "Add Monthly Expense" : "Add One-time Expense"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
