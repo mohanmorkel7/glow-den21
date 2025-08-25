@@ -87,6 +87,7 @@ interface ProfitLossData {
 }
 
 export default function Expense() {
+  const navigate = useNavigate();
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [isAddSalaryOpen, setIsAddSalaryOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
