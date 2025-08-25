@@ -989,3 +989,11 @@ export const isNotificationType = (type: string): type is NotificationType => {
 export const isNotificationCategory = (category: string): category is NotificationCategory => {
   return ['system', 'project', 'user', 'deadline'].includes(category);
 };
+
+export const isExpenseType = (type: string): type is ExpenseType => {
+  return ['administrative', 'operational', 'marketing', 'utilities', 'miscellaneous'].includes(type);
+};
+
+export const isExpenseStatus = (status: string): status is ExpenseStatus => {
+  return ['pending', 'approved', 'rejected'].includes(status);
+};
