@@ -1125,43 +1125,204 @@ export default function Tutorial() {
         </DialogContent>
       </Dialog>
 
-      {/* Upload Video Dialog (placeholder) */}
-      <Dialog open={isUploadVideoOpen} onOpenChange={setIsUploadVideoOpen}>
-        <DialogContent>
+      {/* Upload Video Dialog */}
+      <Dialog open={isUploadVideoOpen} onOpenChange={(open) => {
+        setIsUploadVideoOpen(open);
+        if (!open) {
+          // Reset upload state when dialog closes
+          setVideoUpload({
+            tutorialId: '',
+            file: null,
+            uploadProgress: 0,
+            isUploading: false,
+            previewUrl: '',
+            dragActive: false
+          });
+        }
+      }}>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Upload Tutorial Video</DialogTitle>
-            <DialogDescription>Upload a video file for an existing tutorial</DialogDescription>
+            <DialogDescription>Upload a video file to enhance your tutorial with visual demonstrations</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+
+          <div className="space-y-6">
+            {/* Tutorial Selection */}
             <div>
-              <Label htmlFor="tutorial-select">Select Tutorial</Label>
-              <Select>
+              <Label htmlFor="tutorial-select">Select Tutorial *</Label>
+              <Select
+                value={videoUpload.tutorialId}
+                onValueChange={(value) => setVideoUpload({...videoUpload, tutorialId: value})}
+                disabled={videoUpload.isUploading}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a tutorial" />
+                  <SelectValue placeholder="Choose a tutorial to add video to" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockTutorials.map((tutorial) => (
+                  {mockTutorials.filter(t => !t.videoUrl).map((tutorial) => (
                     <SelectItem key={tutorial.id} value={tutorial.id}>
-                      {tutorial.title}
+                      <div>
+                        <div className="font-medium">{tutorial.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.name}
+                        </div>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {mockTutorials.filter(t => !t.videoUrl).length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  All tutorials already have videos. Create a new tutorial first.
+                </p>
+              )}
             </div>
+
+            {/* File Upload Area */}
             <div>
-              <Label htmlFor="video-file">Video File</Label>
-              <Input id="video-file" type="file" accept="video/*" />
-              <p className="text-xs text-muted-foreground mt-1">
-                Supported formats: MP4, AVI, MOV. Max size: 500MB
-              </p>
+              <Label>Video File *</Label>
+              <div
+                className={cn(
+                  "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+                  videoUpload.dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300",
+                  videoUpload.isUploading && "opacity-50 pointer-events-none"
+                )}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setVideoUpload({...videoUpload, dragActive: true});
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  setVideoUpload({...videoUpload, dragActive: false});
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setVideoUpload({...videoUpload, dragActive: false});
+
+                  const files = Array.from(e.dataTransfer.files);
+                  const videoFile = files.find(file => file.type.startsWith('video/'));
+
+                  if (videoFile) {
+                    handleFileSelect(videoFile);
+                  }
+                }}
+              >
+                {videoUpload.file ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center">
+                      <FileText className="h-12 w-12 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{videoUpload.file.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {(videoUpload.file.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                    {videoUpload.previewUrl && (
+                      <video
+                        src={videoUpload.previewUrl}
+                        className="max-w-full h-32 mx-auto rounded"
+                        controls
+                      />
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (videoUpload.previewUrl) {
+                          URL.revokeObjectURL(videoUpload.previewUrl);
+                        }
+                        setVideoUpload({
+                          ...videoUpload,
+                          file: null,
+                          previewUrl: ''
+                        });
+                      }}
+                      disabled={videoUpload.isUploading}
+                    >
+                      Remove File
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center">
+                      <Upload className="h-12 w-12 text-gray-400" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-medium">Drop your video file here</p>
+                      <p className="text-sm text-muted-foreground">or click to browse</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'video/*';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) {
+                            handleFileSelect(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                      disabled={videoUpload.isUploading}
+                    >
+                      Browse Files
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <p>• Supported formats: MP4, AVI, MOV, WMV</p>
+                <p>• Maximum file size: 500MB</p>
+                <p>• Recommended resolution: 1080p or 720p</p>
+                <p>• For best quality, use MP4 format with H.264 codec</p>
+              </div>
             </div>
+
+            {/* Upload Progress */}
+            {videoUpload.isUploading && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Uploading video...</span>
+                  <span>{videoUpload.uploadProgress}%</span>
+                </div>
+                <Progress value={videoUpload.uploadProgress} />
+                <p className="text-xs text-muted-foreground">
+                  Please don't close this dialog while uploading.
+                </p>
+              </div>
+            )}
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsUploadVideoOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsUploadVideoOpen(false)}
+              disabled={videoUpload.isUploading}
+            >
               Cancel
             </Button>
-            <Button onClick={() => setIsUploadVideoOpen(false)}>
-              Upload Video
+            <Button
+              onClick={handleVideoUpload}
+              disabled={!videoUpload.tutorialId || !videoUpload.file || videoUpload.isUploading}
+            >
+              {videoUpload.isUploading ? (
+                <>
+                  <Upload className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Video
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
