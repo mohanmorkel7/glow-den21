@@ -21,6 +21,7 @@ import Permissions from "./pages/Permissions";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import Expense from "./pages/Expense";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
