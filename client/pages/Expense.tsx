@@ -1182,6 +1182,145 @@ export default function Expense() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* View Expense Dialog */}
+      <Dialog open={isViewExpenseOpen} onOpenChange={setIsViewExpenseOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>View Expense Details</DialogTitle>
+            <DialogDescription>Detailed information about the expense entry</DialogDescription>
+          </DialogHeader>
+          {selectedExpense && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Date</Label>
+                  <p className="text-sm">{new Date(selectedExpense.date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Category</Label>
+                  <p className="text-sm font-medium">{selectedExpense.category}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Type</Label>
+                  <Badge variant="outline" className="capitalize">
+                    {selectedExpense.type}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Amount</Label>
+                  <p className="text-sm font-semibold text-green-600">{formatCurrency(selectedExpense.amount)}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Description</Label>
+                <p className="text-sm">{selectedExpense.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Status</Label>
+                  <Badge className={getStatusColor(selectedExpense.status)}>
+                    {selectedExpense.status}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Approved By</Label>
+                  <p className="text-sm">{selectedExpense.approvedBy}</p>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Month</Label>
+                <p className="text-sm">{selectedExpense.month}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewExpenseOpen(false)}>Close</Button>
+            <Button onClick={() => {
+              setIsViewExpenseOpen(false);
+              if (selectedExpense) handleEditExpense(selectedExpense);
+            }}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Expense
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Expense Dialog */}
+      <Dialog open={isEditExpenseOpen} onOpenChange={setIsEditExpenseOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Expense Entry</DialogTitle>
+            <DialogDescription>Update the expense information</DialogDescription>
+          </DialogHeader>
+          {selectedExpense && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-category">Category</Label>
+                  <Input id="edit-category" defaultValue={selectedExpense.category} />
+                </div>
+                <div>
+                  <Label htmlFor="edit-type">Type</Label>
+                  <Select defaultValue={selectedExpense.type}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="administrative">Administrative</SelectItem>
+                      <SelectItem value="operational">Operational</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
+                      <SelectItem value="utilities">Utilities</SelectItem>
+                      <SelectItem value="miscellaneous">Miscellaneous</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Input id="edit-description" defaultValue={selectedExpense.description} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-amount">Amount</Label>
+                  <Input id="edit-amount" type="number" defaultValue={selectedExpense.amount} />
+                </div>
+                <div>
+                  <Label htmlFor="edit-date">Date</Label>
+                  <Input id="edit-date" type="date" defaultValue={selectedExpense.date} />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-status">Status</Label>
+                <Select defaultValue={selectedExpense.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditExpenseOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              // In a real application, you would save the changes here
+              console.log('Saving expense changes for:', selectedExpense?.id);
+              setIsEditExpenseOpen(false);
+              alert('Expense updated successfully!');
+            }}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
