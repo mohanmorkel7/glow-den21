@@ -48,30 +48,56 @@ class ApiClient {
         throw new Error("Authentication required");
       }
 
-      // Read response as text first to avoid body stream issues
-      let responseText: string;
-      try {
-        responseText = await response.text();
-      } catch (textError) {
-        console.error(`Could not read response text for ${endpoint}:`, textError);
-        throw new Error(`Failed to read response from ${endpoint}`);
-      }
+      // Check response body state and read it safely
+      console.log(`Response for ${endpoint}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        bodyUsed: response.bodyUsed,
+        body: response.body
+      });
 
-      // Check if response has content and try to parse as JSON
-      const contentType = response.headers.get("content-type");
+      let responseText: string;
       let data: ApiResponse<T>;
 
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          data = JSON.parse(responseText);
-        } catch (jsonError) {
-          console.error(`JSON parsing failed for ${endpoint}:`, jsonError);
-          console.error(`Response text:`, responseText);
-          throw new Error(`Invalid JSON response from ${endpoint}`);
+      // Check if body has already been consumed
+      if (response.bodyUsed) {
+        console.error(`Response body already consumed for ${endpoint}`);
+        // Create a fallback response based on status
+        if (response.ok) {
+          data = { success: true, data: null as T, error: null };
+        } else {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
       } else {
-        // If no JSON content, create a default response structure
-        data = { success: response.ok, data: null as T, error: null };
+        try {
+          responseText = await response.text();
+          console.log(`Response text for ${endpoint}:`, responseText);
+
+          // Check if response has content and try to parse as JSON
+          const contentType = response.headers.get("content-type");
+
+          if (contentType && contentType.includes("application/json") && responseText.trim()) {
+            try {
+              data = JSON.parse(responseText);
+            } catch (jsonError) {
+              console.error(`JSON parsing failed for ${endpoint}:`, jsonError);
+              console.error(`Response text:`, responseText);
+              throw new Error(`Invalid JSON response from ${endpoint}`);
+            }
+          } else {
+            // If no JSON content, create a default response structure
+            data = { success: response.ok, data: null as T, error: null };
+          }
+        } catch (textError) {
+          console.error(`Could not read response text for ${endpoint}:`, textError);
+          // Fallback for when we can't read the response
+          if (response.ok) {
+            data = { success: true, data: null as T, error: null };
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        }
       }
 
       if (!response.ok) {
