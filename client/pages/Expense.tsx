@@ -103,9 +103,11 @@ interface ExpenseEntry {
     | "marketing"
     | "utilities"
     | "miscellaneous";
+  frequency: "monthly" | "one-time";
   receipt?: string;
   approvedBy: string;
   status: "pending" | "approved" | "rejected";
+  createdMonth?: string; // For tracking when one-time expenses were originally created
 }
 
 interface ProfitLossData {
@@ -1116,7 +1118,7 @@ export default function Expense() {
                     </TableCell>
                     <TableCell>
                       <div className="font-bold text-purple-600">
-                        ₹30,000.00
+                        ���30,000.00
                       </div>
                     </TableCell>
                     <TableCell>
