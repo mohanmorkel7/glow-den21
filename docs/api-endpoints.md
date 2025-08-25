@@ -651,6 +651,363 @@ Test email configuration
 
 ---
 
+## 💰 Expense Management Endpoints
+
+### GET /expenses
+List expenses with filtering and pagination
+**Query Parameters:**
+- `search` - Search by category or description
+- `type` - Filter by expense type (administrative, operational, marketing, utilities, miscellaneous)
+- `status` - Filter by status (pending, approved, rejected)
+- `category` - Filter by category name
+- `from`, `to` - Date range filter (YYYY-MM-DD)
+- `month` - Filter by month (YYYY-MM)
+- `sortBy` - Sort field (date, amount, category, type)
+- `sortOrder` - Sort order (asc, desc)
+- `page`, `limit` - Pagination
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "category": "Office Rent",
+      "description": "Monthly office rent payment",
+      "amount": 25000,
+      "date": "2024-01-01",
+      "month": "2024-01",
+      "type": "administrative",
+      "receipt": "/uploads/receipts/rent-jan-2024.pdf",
+      "status": "approved",
+      "approvedBy": "Admin User",
+      "approvedAt": "2024-01-02T10:00:00Z",
+      "createdBy": {
+        "id": "uuid",
+        "name": "Creator Name"
+      },
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-02T10:00:00Z"
+    }
+  ],
+  "statistics": {
+    "totalExpenses": 50500,
+    "approvedCount": 8,
+    "pendingCount": 2,
+    "rejectedCount": 1,
+    "entryCount": 11
+  },
+  "pagination": {...}
+}
+```
+
+### GET /expenses/:id
+Get single expense details
+
+### POST /expenses
+Create new expense entry
+```json
+{
+  "category": "Office Supplies",
+  "description": "Stationery and equipment purchase",
+  "amount": 2500,
+  "date": "2024-01-15",
+  "type": "administrative",
+  "receipt": "/uploads/receipts/supplies-jan-2024.pdf"
+}
+```
+
+### PUT /expenses/:id
+Update expense entry
+```json
+{
+  "category": "Updated Category",
+  "description": "Updated description",
+  "amount": 3000,
+  "status": "approved"
+}
+```
+
+### POST /expenses/:id/approve
+Approve or reject expense
+```json
+{
+  "status": "approved",
+  "notes": "Expense approved for payment"
+}
+```
+
+### DELETE /expenses/:id
+Delete expense entry (admin only)
+
+### GET /expenses/export
+Export expenses report
+**Query Parameters:**
+- `format` - Export format (csv, excel, pdf)
+- `month` - Filter by month
+- `type` - Filter by expense type
+
+---
+
+## 💵 Salary Management Endpoints
+
+### GET /expenses/salary/config
+Get current salary configuration
+**Response:**
+```json
+{
+  "data": {
+    "users": {
+      "firstTierRate": 0.50,
+      "secondTierRate": 0.60,
+      "firstTierLimit": 500
+    },
+    "projectManagers": {
+      "pm_1": 30000,
+      "pm_2": 20000
+    },
+    "currency": "INR",
+    "updatedAt": "2024-01-15T10:00:00Z",
+    "updatedBy": {
+      "id": "uuid",
+      "name": "Admin User"
+    }
+  }
+}
+```
+
+### PUT /expenses/salary/config
+Update salary configuration (super_admin only)
+```json
+{
+  "users": {
+    "firstTierRate": 0.55,
+    "secondTierRate": 0.65,
+    "firstTierLimit": 600
+  },
+  "projectManagers": {
+    "pm_1": 32000,
+    "pm_2": 22000
+  }
+}
+```
+
+### GET /expenses/salary/users
+Get user salary data and file processing statistics
+**Query Parameters:**
+- `month` - Target month (YYYY-MM, default: current month)
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Sarah Johnson",
+      "role": "user",
+      "todayFiles": 750,
+      "weeklyFiles": 4200,
+      "monthlyFiles": 15200,
+      "todayEarnings": 400.00,
+      "weeklyEarnings": 2320.00,
+      "monthlyEarnings": 8320.00,
+      "attendanceRate": 95.2,
+      "lastActive": "2024-01-21T14:30:00Z"
+    }
+  ],
+  "summary": {
+    "totalMonthlyEarnings": 31960.00,
+    "averageMonthlyEarnings": 7990.00,
+    "totalTodayFiles": 2700,
+    "totalMonthlyFiles": 58100,
+    "activeUsers": 4
+  },
+  "month": "2024-01"
+}
+```
+
+### GET /expenses/salary/project-managers
+Get project manager salary data
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "pm_1",
+      "name": "Emily Wilson",
+      "role": "project_manager",
+      "monthlySalary": 30000,
+      "attendanceRate": 98.5,
+      "lastActive": "2024-01-21T17:30:00Z",
+      "department": "Operations"
+    }
+  ],
+  "summary": {
+    "totalMonthlySalaries": 50000,
+    "averageMonthlySalary": 25000,
+    "activePMs": 2
+  }
+}
+```
+
+---
+
+## 📊 Financial Analytics Endpoints
+
+### GET /expenses/analytics/dashboard
+Get expense dashboard analytics
+**Query Parameters:**
+- `month` - Target month (YYYY-MM, default: current month)
+
+**Response:**
+```json
+{
+  "data": {
+    "currentMonth": {
+      "totalRevenue": 420000,
+      "totalExpenses": 270460,
+      "netProfit": 149540,
+      "profitMargin": 35.6,
+      "salaryExpenses": 81960,
+      "adminExpenses": 50500
+    },
+    "trends": {
+      "revenueGrowth": 12.5,
+      "expenseGrowth": 8.3,
+      "profitGrowth": 18.7
+    },
+    "alerts": [
+      {
+        "type": "budget_warning",
+        "message": "Marketing expenses are 15% over budget",
+        "severity": "medium"
+      }
+    ],
+    "topExpenseCategories": [
+      {
+        "name": "Salaries",
+        "value": 81960,
+        "percentage": 72.8,
+        "fill": "#3b82f6",
+        "count": 4
+      }
+    ]
+  }
+}
+```
+
+### GET /expenses/analytics/profit-loss
+Get historical profit & loss data
+**Response:**
+```json
+{
+  "data": [
+    {
+      "month": "2024-01",
+      "revenue": 420000,
+      "salaryExpense": 170000,
+      "adminExpense": 50500,
+      "totalExpense": 220500,
+      "netProfit": 199500,
+      "profitMargin": 47.5
+    }
+  ]
+}
+```
+
+### GET /expenses/analytics/breakdown
+Get detailed expense breakdown by category and type
+**Query Parameters:**
+- `period` - Time period (month, quarter, year)
+- `from`, `to` - Date range
+
+### GET /expenses/analytics/trends
+Get expense trends and comparisons
+**Query Parameters:**
+- `period` - Comparison period (month, quarter, year)
+- `type` - Expense type filter
+
+---
+
+## 💰 Budget Management Endpoints
+
+### GET /expenses/budgets
+List monthly budgets
+**Query Parameters:**
+- `month` - Target month (YYYY-MM)
+- `type` - Expense type filter
+
+### POST /expenses/budgets
+Create monthly budget
+```json
+{
+  "month": "2024-02",
+  "categories": [
+    {
+      "type": "administrative",
+      "amount": 30000
+    },
+    {
+      "type": "operational",
+      "amount": 15000
+    }
+  ]
+}
+```
+
+### PUT /expenses/budgets/:id
+Update budget allocation
+
+### GET /expenses/budgets/alerts
+Get budget alerts and warnings
+
+---
+
+## 📋 Expense Categories Endpoints
+
+### GET /expenses/categories
+List expense categories
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "name": "Office Rent",
+      "type": "administrative",
+      "description": "Monthly office space rental costs",
+      "isActive": true,
+      "defaultBudget": 25000,
+      "requiresApproval": true,
+      "requiresReceipt": true,
+      "maxAmount": 50000,
+      "createdAt": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### POST /expenses/categories
+Create expense category (super_admin only)
+```json
+{
+  "name": "Training & Development",
+  "type": "operational",
+  "description": "Employee training and skill development",
+  "defaultBudget": 5000,
+  "requiresApproval": true,
+  "requiresReceipt": false
+}
+```
+
+### PUT /expenses/categories/:id
+Update expense category
+
+### DELETE /expenses/categories/:id
+Delete expense category (super_admin only)
+
+---
+
 ## 💾 Data Management Endpoints
 
 ### POST /data/backup
