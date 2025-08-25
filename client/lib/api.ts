@@ -48,24 +48,25 @@ class ApiClient {
         throw new Error("Authentication required");
       }
 
-      // Check if response has content before trying to parse JSON
+      // Read response as text first to avoid body stream issues
+      let responseText: string;
+      try {
+        responseText = await response.text();
+      } catch (textError) {
+        console.error(`Could not read response text for ${endpoint}:`, textError);
+        throw new Error(`Failed to read response from ${endpoint}`);
+      }
+
+      // Check if response has content and try to parse as JSON
       const contentType = response.headers.get("content-type");
       let data: ApiResponse<T>;
 
       if (contentType && contentType.includes("application/json")) {
         try {
-          // Clone the response to avoid "body stream already read" errors
-          const responseClone = response.clone();
-          data = await responseClone.json();
+          data = JSON.parse(responseText);
         } catch (jsonError) {
           console.error(`JSON parsing failed for ${endpoint}:`, jsonError);
-          // Try to get response text for better error reporting
-          try {
-            const responseText = await response.text();
-            console.error(`Response text:`, responseText);
-          } catch (textError) {
-            console.error(`Could not read response text:`, textError);
-          }
+          console.error(`Response text:`, responseText);
           throw new Error(`Invalid JSON response from ${endpoint}`);
         }
       } else {
