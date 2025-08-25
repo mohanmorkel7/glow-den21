@@ -1638,12 +1638,7 @@ export default function Tutorial() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                // Here you would save the tutorial
-                console.log('Creating tutorial:', newTutorial);
-                alert('Tutorial created successfully! (This would integrate with the backend API)');
-                setIsCreateDialogOpen(false);
-              }}
+              onClick={handleCreateTutorial}
               disabled={!newTutorial.title || !newTutorial.description || !newTutorial.instructions}
             >
               Create Tutorial
