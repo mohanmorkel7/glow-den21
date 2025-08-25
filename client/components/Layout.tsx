@@ -63,6 +63,12 @@ const navigationItems: NavItem[] = [
     roles: ["super_admin", "project_manager", "user"],
   },
   {
+    label: "Tutorial",
+    path: "/tutorial",
+    icon: PlayCircle,
+    roles: ["super_admin", "project_manager", "user"],
+  },
+  {
     label: "User Management",
     path: "/users",
     icon: Users,
