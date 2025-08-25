@@ -84,15 +84,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.warn('Using mock authentication for development (database unavailable)');
 
       // Create mock user based on email domain and common test credentials
+      let role: 'super_admin' | 'project_manager' | 'user' = 'user';
+      let name = 'Test User';
+      let department = 'Operations';
+      let jobTitle = 'Operator';
+
+      // Determine role based on email patterns
+      if (email.includes('admin')) {
+        role = 'super_admin';
+        name = 'Admin User';
+        department = 'Administration';
+        jobTitle = 'System Administrator';
+      } else if (email.includes('manager') || email.includes('pm') || email.includes('project')) {
+        role = 'project_manager';
+        name = 'Project Manager';
+        department = 'Project Management';
+        jobTitle = 'Project Manager';
+      }
+
       const mockUser = {
-        id: 'mock-admin-id',
-        name: email.includes('admin') ? 'Admin User' : 'Test User',
+        id: `mock-${role}-id`,
+        name: name,
         email: email,
         phone: '+1-555-0123',
-        role: email.includes('admin') ? 'super_admin' as const : 'user' as const,
+        role: role,
         status: 'active' as const,
-        department: email.includes('admin') ? 'Administration' : 'Operations',
-        jobTitle: email.includes('admin') ? 'System Administrator' : 'Operator',
+        department: department,
+        jobTitle: jobTitle,
         joinDate: '2024-01-01',
         lastLogin: new Date().toISOString(),
         createdAt: '2024-01-01T00:00:00Z',
