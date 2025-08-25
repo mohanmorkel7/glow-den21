@@ -1525,7 +1525,55 @@ export default function Expense() {
             </Dialog>
           </div>
 
+          {/* Expense Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Monthly Recurring</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(expenseEntries.filter(e => e.frequency === "monthly").reduce((sum, e) => sum + e.amount, 0))}
+                </div>
+                <p className="text-xs text-muted-foreground">{expenseEntries.filter(e => e.frequency === "monthly").length} expenses</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">One-time ({selectedMonth})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  {formatCurrency(expenseEntries.filter(e => e.frequency === "one-time").reduce((sum, e) => sum + e.amount, 0))}
+                </div>
+                <p className="text-xs text-muted-foreground">{expenseEntries.filter(e => e.frequency === "one-time").length} expenses</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Total This Month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(expenseEntries.reduce((sum, e) => sum + e.amount, 0))}
+                </div>
+                <p className="text-xs text-muted-foreground">{expenseEntries.length} total expenses</p>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Expense Details for {selectedMonth}
+              </CardTitle>
+              <CardDescription>
+                View all monthly recurring and one-time expenses for the selected month
+              </CardDescription>
+            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -1533,6 +1581,7 @@ export default function Expense() {
                     <TableHead>Date</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Frequency</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
@@ -1541,16 +1590,27 @@ export default function Expense() {
                 </TableHeader>
                 <TableBody>
                   {expenseEntries.map((entry) => (
-                    <TableRow key={entry.id}>
+                    <TableRow key={entry.id} className={entry.frequency === "monthly" ? "bg-blue-50/50" : ""}>
                       <TableCell>
                         {new Date(entry.date).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-medium">
                         {entry.category}
+                        {entry.frequency === "monthly" && (
+                          <div className="text-xs text-blue-600 font-medium">🔄 Recurring</div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="capitalize">
                           {entry.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={entry.frequency === "monthly" ? "default" : "secondary"}
+                          className={entry.frequency === "monthly" ? "bg-blue-600" : "bg-orange-600 text-white"}
+                        >
+                          {entry.frequency === "monthly" ? "Monthly" : "One-time"}
                         </Badge>
                       </TableCell>
                       <TableCell>{entry.description}</TableCell>
@@ -1582,6 +1642,8 @@ export default function Expense() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteExpense(entry)}
+                            disabled={entry.frequency === "monthly"}
+                            title={entry.frequency === "monthly" ? "Cannot delete recurring expenses from monthly view" : "Delete expense"}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
