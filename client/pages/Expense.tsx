@@ -478,7 +478,7 @@ export default function Expense() {
               <p className="text-sm text-muted-foreground">File-based earnings and salary tracking</p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => navigate('/salary')}>
                 <FileText className="h-4 w-4 mr-2" />
                 View Full Details
               </Button>
