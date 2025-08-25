@@ -337,7 +337,7 @@ export default function Expense() {
               className="w-40"
             />
           </div>
-          <Button>
+          <Button onClick={handleExportReport}>
             <Download className="h-4 w-4 mr-2" />
             Export Report
           </Button>
