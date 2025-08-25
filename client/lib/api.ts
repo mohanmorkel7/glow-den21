@@ -45,10 +45,24 @@ class ApiClient {
         throw new Error("Authentication required");
       }
 
-      const data: ApiResponse<T> = await response.json();
+      // Check if response has content before trying to parse JSON
+      const contentType = response.headers.get("content-type");
+      let data: ApiResponse<T>;
+
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          console.error(`JSON parsing failed for ${endpoint}:`, jsonError);
+          throw new Error(`Invalid JSON response from ${endpoint}`);
+        }
+      } else {
+        // If no JSON content, create a default response structure
+        data = { success: response.ok, data: null as T, error: null };
+      }
 
       if (!response.ok) {
-        throw new Error(data.error?.message || `HTTP ${response.status}`);
+        throw new Error(data.error?.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return data.data as T;
