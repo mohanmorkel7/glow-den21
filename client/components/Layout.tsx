@@ -41,6 +41,7 @@ import {
   ChevronDown,
   User,
   Calculator,
+  PlayCircle,
 } from "lucide-react";
 
 interface LayoutProps {
