@@ -134,6 +134,19 @@ export default function Expense() {
     null,
   );
 
+  // New state for expense form
+  const [newExpense, setNewExpense] = useState({
+    category: "",
+    description: "",
+    amount: "",
+    date: new Date().toISOString().slice(0, 10),
+    type: "",
+    frequency: "one-time" as "monthly" | "one-time",
+  });
+
+  // Enhanced expenses state with recurring functionality
+  const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
+
   // Mock data for demonstration
   const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -1118,7 +1131,7 @@ export default function Expense() {
                     </TableCell>
                     <TableCell>
                       <div className="font-bold text-purple-600">
-                        ���30,000.00
+                        ₹30,000.00
                       </div>
                     </TableCell>
                     <TableCell>
