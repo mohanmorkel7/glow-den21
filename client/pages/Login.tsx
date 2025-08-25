@@ -35,7 +35,7 @@ export default function Login() {
             <img
               src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F9fe8c5272344441a957370f018a36cf2?format=webp&width=800"
               alt="Web Syntactic Solutions Logo"
-              className="h-16 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
           <p className="text-muted-foreground mt-2">BPO Management Platform</p>
