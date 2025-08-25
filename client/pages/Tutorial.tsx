@@ -852,56 +852,273 @@ export default function Tutorial() {
         {/* Manage Tutorials Tab (Admin/PM only) */}
         {canManageTutorials && (
           <TabsContent value="manage" className="space-y-6">
+            {/* Management Header */}
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold">Manage Tutorials</h3>
+              <div>
+                <h3 className="text-xl font-semibold">Manage Tutorials</h3>
+                <p className="text-sm text-muted-foreground">Create, edit, and organize training content</p>
+              </div>
               <div className="flex gap-2">
-                <Button variant="outline">
+                <Button variant="outline" size="sm">
                   <Upload className="h-4 w-4 mr-2" />
                   Bulk Import
                 </Button>
-                <Button>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Analytics
+                </Button>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create New
                 </Button>
               </div>
             </div>
 
-            {/* Tutorials Management Table */}
-            <Card>
-              <CardContent className="p-0">
-                <div className="space-y-4 p-6">
-                  {mockTutorials.map((tutorial) => (
-                    <div key={tutorial.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h4 className="font-medium">{tutorial.title}</h4>
-                        <p className="text-sm text-muted-foreground">{tutorial.description}</p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <Badge variant="outline">
-                            {TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.name}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {tutorial.viewCount} views • {tutorial.completionCount} completed
-                          </span>
-                          <Badge variant={tutorial.status === 'published' ? 'default' : 'secondary'}>
-                            {tutorial.status}
-                          </Badge>
+            {/* Management Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <PlayCircle className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium">Total Tutorials</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{mockTutorials.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium">Published</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">
+                    {mockTutorials.filter(t => t.status === 'published').length}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-medium">Total Views</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">
+                    {mockTutorials.reduce((sum, t) => sum + t.viewCount, 0)}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm font-medium">Avg. Completion</span>
+                  </div>
+                  <p className="text-2xl font-bold mt-1">
+                    {Math.round(
+                      mockTutorials.reduce((sum, t) => sum + (t.completionCount / t.viewCount * 100), 0) / mockTutorials.length
+                    )}%
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Filter and Search */}
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tutorials by title, description, or tags..."
+                  className="pl-10"
+                />
+              </div>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {TUTORIAL_CATEGORIES_DATA.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Tutorials Management List */}
+            <div className="space-y-4">
+              {mockTutorials.map((tutorial) => (
+                <Card key={tutorial.id} className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-3">
+                      {/* Tutorial Header */}
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0">
+                          {tutorial.videoUrl ? (
+                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                              <PlayCircle className="h-6 w-6 text-green-600" />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                              <FileText className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h4 className="font-semibold text-lg">{tutorial.title}</h4>
+                            <Badge
+                              variant={tutorial.status === 'published' ? 'default' : 'secondary'}
+                              className="capitalize"
+                            >
+                              {tutorial.status}
+                            </Badge>
+                            {tutorial.isRequired && (
+                              <Badge variant="outline" className="text-orange-600 border-orange-600">
+                                Required
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-muted-foreground mt-1">{tutorial.description}</p>
                         </div>
                       </div>
+
+                      {/* Tutorial Metadata */}
+                      <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Badge variant="outline" style={{
+                            borderColor: TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.color
+                          }}>
+                            {TUTORIAL_CATEGORIES_DATA.find(cat => cat.id === tutorial.category)?.name}
+                          </Badge>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          {tutorial.viewCount} views
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="h-4 w-4" />
+                          {tutorial.completionCount} completed
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {tutorial.steps.length} steps
+                        </span>
+                        <span>
+                          Created by {tutorial.createdBy.name}
+                        </span>
+                        <span>
+                          {new Date(tutorial.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {/* Tutorial Tags */}
+                      {tutorial.tags.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Tags:</span>
+                          {tutorial.tags.map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Target Roles */}
                       <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Upload className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <span className="text-xs text-muted-foreground">Target Roles:</span>
+                        {tutorial.targetRoles.map((role) => (
+                          <Badge key={role} variant="outline" className="text-xs capitalize">
+                            {role.replace('_', ' ')}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {/* Progress Analytics */}
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-medium">Completion Rate</span>
+                          <span className="text-xs text-muted-foreground">
+                            {Math.round((tutorial.completionCount / tutorial.viewCount) * 100)}%
+                          </span>
+                        </div>
+                        <Progress value={(tutorial.completionCount / tutorial.viewCount) * 100} className="h-2" />
                       </div>
                     </div>
-                  ))}
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 ml-6">
+                      <Button variant="ghost" size="sm" title="Edit Tutorial">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Upload/Replace Video"
+                        onClick={() => {
+                          setVideoUpload({...videoUpload, tutorialId: tutorial.id});
+                          setIsUploadVideoOpen(true);
+                        }}
+                      >
+                        <Upload className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" title="View Analytics">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" title="Duplicate Tutorial">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Delete Tutorial"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete "${tutorial.title}"?`)) {
+                            alert('Tutorial would be deleted (integration with backend needed)');
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Bulk Actions */}
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">Bulk Actions:</span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      Export Selected
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Publish Selected
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Archive Selected
+                    </Button>
+                  </div>
                 </div>
-              </CardContent>
+                <div className="text-xs text-muted-foreground">
+                  Select tutorials to perform bulk operations
+                </div>
+              </div>
             </Card>
           </TabsContent>
         )}
