@@ -607,14 +607,22 @@ export default function Tutorial() {
     // Validate file type
     const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/wmv'];
     if (!allowedTypes.includes(file.type)) {
-      alert('Please select a supported video format (MP4, AVI, MOV, WMV)');
+      toast({
+        title: "Invalid file type",
+        description: "Please select a supported video format (MP4, AVI, MOV, WMV)",
+        variant: "destructive"
+      });
       return;
     }
 
     // Validate file size (500MB limit)
     const maxSize = 500 * 1024 * 1024; // 500MB in bytes
     if (file.size > maxSize) {
-      alert('File size must be less than 500MB');
+      toast({
+        title: "File too large",
+        description: "File size must be less than 500MB",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -625,6 +633,11 @@ export default function Tutorial() {
       ...videoUpload,
       file,
       previewUrl
+    });
+
+    toast({
+      title: "File selected",
+      description: `${file.name} is ready for upload`
     });
   };
 
