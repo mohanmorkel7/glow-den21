@@ -1647,6 +1647,276 @@ export default function Tutorial() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Tutorial Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Tutorial</DialogTitle>
+            <DialogDescription>Update the tutorial content and settings</DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="basic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="basic">Basic Info</TabsTrigger>
+              <TabsTrigger value="content">Content & Instructions</TabsTrigger>
+              <TabsTrigger value="steps">Steps</TabsTrigger>
+            </TabsList>
+
+            {/* Basic Information Tab */}
+            <TabsContent value="basic" className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-title">Tutorial Title *</Label>
+                  <Input
+                    id="edit-title"
+                    placeholder="Enter tutorial title"
+                    value={newTutorial.title}
+                    onChange={(e) => setNewTutorial({...newTutorial, title: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-category">Category *</Label>
+                  <Select
+                    value={newTutorial.category}
+                    onValueChange={(value) => setNewTutorial({...newTutorial, category: value as TutorialCategory})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TUTORIAL_CATEGORIES_DATA.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-description">Description *</Label>
+                <Textarea
+                  id="edit-description"
+                  placeholder="Brief description of what users will learn"
+                  value={newTutorial.description}
+                  onChange={(e) => setNewTutorial({...newTutorial, description: e.target.value})}
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label>Target Roles *</Label>
+                <div className="flex gap-2 mt-2">
+                  {(['user', 'project_manager', 'super_admin'] as const).map((role) => (
+                    <label key={role} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={newTutorial.targetRoles.includes(role)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewTutorial({
+                              ...newTutorial,
+                              targetRoles: [...newTutorial.targetRoles, role]
+                            });
+                          } else {
+                            setNewTutorial({
+                              ...newTutorial,
+                              targetRoles: newTutorial.targetRoles.filter(r => r !== role)
+                            });
+                          }
+                        }}
+                      />
+                      <span className="text-sm capitalize">{role.replace('_', ' ')}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="edit-isRequired"
+                  checked={newTutorial.isRequired}
+                  onChange={(e) => setNewTutorial({...newTutorial, isRequired: e.target.checked})}
+                />
+                <Label htmlFor="edit-isRequired">This tutorial is required for new users</Label>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-tags">Tags (comma-separated)</Label>
+                <Input
+                  id="edit-tags"
+                  placeholder="e.g. basics, navigation, getting started"
+                  value={newTutorial.tags.join(', ')}
+                  onChange={(e) => {
+                    const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+                    setNewTutorial({...newTutorial, tags});
+                  }}
+                />
+              </div>
+            </TabsContent>
+
+            {/* Content & Instructions Tab */}
+            <TabsContent value="content" className="space-y-4">
+              <div>
+                <Label>Tutorial Instructions</Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Write detailed instructions that will help users understand the process. Use headings, lists, and formatting to make it clear.
+                </p>
+                <RichTextEditor
+                  value={newTutorial.instructions}
+                  onChange={(value) => setNewTutorial({...newTutorial, instructions: value})}
+                  placeholder="Write your tutorial instructions here. You can use headings, lists, bold text, and more..."
+                  minHeight={300}
+                  allowImages={true}
+                  allowLinks={true}
+                />
+              </div>
+            </TabsContent>
+
+            {/* Steps Tab */}
+            <TabsContent value="steps" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Tutorial Steps</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNewTutorial({
+                      ...newTutorial,
+                      steps: [...newTutorial.steps, {
+                        stepNumber: newTutorial.steps.length + 1,
+                        title: currentStep.title,
+                        description: currentStep.description,
+                        isRequired: currentStep.isRequired
+                      }]
+                    });
+                    setCurrentStep({
+                      stepNumber: newTutorial.steps.length + 2,
+                      title: '',
+                      description: '',
+                      isRequired: false
+                    });
+                  }}
+                  disabled={!currentStep.title || !currentStep.description}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Step
+                </Button>
+              </div>
+
+              {/* Current Step Form */}
+              <Card className="p-4">
+                <h4 className="font-medium mb-3">Step {currentStep.stepNumber}</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="edit-stepTitle">Step Title *</Label>
+                    <Input
+                      id="edit-stepTitle"
+                      placeholder="e.g., Navigate to the dashboard"
+                      value={currentStep.title}
+                      onChange={(e) => setCurrentStep({...currentStep, title: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-stepDescription">Step Description *</Label>
+                    <Textarea
+                      id="edit-stepDescription"
+                      placeholder="Detailed description of what the user should do"
+                      value={currentStep.description}
+                      onChange={(e) => setCurrentStep({...currentStep, description: e.target.value})}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="edit-stepRequired"
+                      checked={currentStep.isRequired}
+                      onChange={(e) => setCurrentStep({...currentStep, isRequired: e.target.checked})}
+                    />
+                    <Label htmlFor="edit-stepRequired">This step is required</Label>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Existing Steps */}
+              {newTutorial.steps.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">Added Steps:</h4>
+                  {newTutorial.steps.map((step, index) => (
+                    <Card key={index} className="p-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Step {step.stepNumber}: {step.title}</span>
+                            {step.isRequired && <Badge variant="secondary" className="text-xs">Required</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updatedSteps = newTutorial.steps.filter((_, i) => i !== index);
+                            // Renumber steps
+                            const renumberedSteps = updatedSteps.map((s, i) => ({
+                              ...s,
+                              stepNumber: i + 1
+                            }));
+                            setNewTutorial({...newTutorial, steps: renumberedSteps});
+                            setCurrentStep({
+                              ...currentStep,
+                              stepNumber: renumberedSteps.length + 1
+                            });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsEditDialogOpen(false);
+              setEditingTutorial(null);
+              // Reset form
+              setNewTutorial({
+                title: '',
+                description: '',
+                category: 'getting_started',
+                instructions: '',
+                steps: [],
+                targetRoles: ['user'],
+                isRequired: false,
+                tags: []
+              });
+              setCurrentStep({
+                stepNumber: 1,
+                title: '',
+                description: '',
+                isRequired: false
+              });
+            }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEditedTutorial}
+              disabled={!newTutorial.title || !newTutorial.description || !newTutorial.instructions}
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Upload Video Dialog */}
       <Dialog open={isUploadVideoOpen} onOpenChange={(open) => {
         setIsUploadVideoOpen(open);
