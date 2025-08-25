@@ -460,6 +460,27 @@ CREATE INDEX idx_activity_logs_user ON activity_logs(user_id);
 CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at DESC);
 CREATE INDEX idx_activity_logs_entity ON activity_logs(entity_type, entity_id);
 
+-- Expense management indexes
+CREATE INDEX idx_expenses_date ON expenses(expense_date);
+CREATE INDEX idx_expenses_month ON expenses(month);
+CREATE INDEX idx_expenses_type ON expenses(type);
+CREATE INDEX idx_expenses_status ON expenses(status);
+CREATE INDEX idx_expenses_created_by ON expenses(created_by_user_id);
+CREATE INDEX idx_expenses_approved_by ON expenses(approved_by_user_id);
+
+CREATE INDEX idx_user_salary_tracking_user_date ON user_salary_tracking(user_id, date);
+CREATE INDEX idx_user_salary_tracking_date ON user_salary_tracking(date);
+
+CREATE INDEX idx_pm_salaries_user ON pm_salaries(user_id);
+CREATE INDEX idx_pm_salaries_active ON pm_salaries(is_active);
+CREATE INDEX idx_pm_salaries_effective_from ON pm_salaries(effective_from);
+
+CREATE INDEX idx_monthly_budgets_month ON monthly_budgets(month);
+CREATE INDEX idx_monthly_budgets_type ON monthly_budgets(type);
+
+CREATE INDEX idx_expense_categories_type ON expense_categories(type);
+CREATE INDEX idx_expense_categories_active ON expense_categories(is_active);
+
 -- ====================
 -- VIEWS FOR COMMON QUERIES
 -- ====================
