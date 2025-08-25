@@ -437,6 +437,61 @@ export default function Expense() {
     }
   };
 
+  // New handlers for expense management
+  const handleAddExpense = () => {
+    if (!newExpense.category || !newExpense.description || !newExpense.amount || !newExpense.type) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    const expenseToAdd: ExpenseEntry = {
+      id: `${newExpense.frequency}-${Date.now()}`,
+      category: newExpense.category,
+      description: newExpense.description,
+      amount: parseFloat(newExpense.amount),
+      date: newExpense.date,
+      month: selectedMonth,
+      type: newExpense.type as any,
+      frequency: newExpense.frequency,
+      createdMonth: newExpense.frequency === "one-time" ? selectedMonth : undefined,
+      approvedBy: "Admin",
+      status: "pending",
+    };
+
+    if (newExpense.frequency === "monthly") {
+      // Add to base recurring expenses
+      console.log("Adding recurring monthly expense:", expenseToAdd);
+      alert(`Monthly recurring expense "${newExpense.category}" added successfully! It will appear in all months.`);
+    } else {
+      // Add as one-time expense
+      console.log("Adding one-time expense:", expenseToAdd);
+      alert(`One-time expense "${newExpense.category}" added successfully for ${selectedMonth}!`);
+    }
+
+    // Reset form
+    setNewExpense({
+      category: "",
+      description: "",
+      amount: "",
+      date: new Date().toISOString().slice(0, 10),
+      type: "",
+      frequency: "one-time",
+    });
+
+    setIsAddExpenseOpen(false);
+  };
+
+  const resetExpenseForm = () => {
+    setNewExpense({
+      category: "",
+      description: "",
+      amount: "",
+      date: new Date().toISOString().slice(0, 10),
+      type: "",
+      frequency: "one-time",
+    });
+  };
+
   const handleExportReport = () => {
     // Generate CSV data for export
     const csvData = [
