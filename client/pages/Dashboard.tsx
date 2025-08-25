@@ -51,6 +51,7 @@ import {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   if (!user) return null;
 
