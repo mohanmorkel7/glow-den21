@@ -675,23 +675,43 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <Button className="w-full justify-start" variant="outline">
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => navigate('/users')}
+              >
                 <Users className="h-4 w-4 mr-2" />
                 Manage Teams
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => navigate('/projects')}
+              >
                 <FolderOpen className="h-4 w-4 mr-2" />
                 View Projects
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => navigate('/reports')}
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 Generate Reports
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => navigate('/file-process')}
+              >
                 <Target className="h-4 w-4 mr-2" />
                 Set Targets
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => navigate('/reports')}
+              >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 View Analytics
               </Button>
