@@ -171,7 +171,7 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-2">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
