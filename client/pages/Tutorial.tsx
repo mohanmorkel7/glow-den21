@@ -647,27 +647,40 @@ export default function Tutorial() {
 
     setVideoUpload({...videoUpload, isUploading: true});
 
-    // Simulate upload progress
-    for (let progress = 0; progress <= 100; progress += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setVideoUpload(prev => ({...prev, uploadProgress: progress}));
+    try {
+      // Simulate upload progress
+      for (let progress = 0; progress <= 100; progress += 10) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        setVideoUpload(prev => ({...prev, uploadProgress: progress}));
+      }
+
+      // Simulate successful upload
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const tutorialTitle = mockTutorials.find(t => t.id === videoUpload.tutorialId)?.title;
+      toast({
+        title: "Upload successful",
+        description: `Video uploaded successfully for tutorial: ${tutorialTitle}`
+      });
+
+      // Reset upload state and close dialog
+      setVideoUpload({
+        tutorialId: '',
+        file: null,
+        uploadProgress: 0,
+        isUploading: false,
+        previewUrl: '',
+        dragActive: false
+      });
+      setIsUploadVideoOpen(false);
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your video. Please try again.",
+        variant: "destructive"
+      });
+      setVideoUpload({...videoUpload, isUploading: false});
     }
-
-    // Simulate successful upload
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    alert(`Video uploaded successfully for tutorial: ${mockTutorials.find(t => t.id === videoUpload.tutorialId)?.title}`);
-
-    // Reset upload state and close dialog
-    setVideoUpload({
-      tutorialId: '',
-      file: null,
-      uploadProgress: 0,
-      isUploading: false,
-      previewUrl: '',
-      dragActive: false
-    });
-    setIsUploadVideoOpen(false);
   };
 
   const getCategoryIcon = (category: TutorialCategory) => {
