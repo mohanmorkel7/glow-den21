@@ -25,7 +25,8 @@ import {
   Eye,
   Edit,
   Trash2,
-  Filter
+  Filter,
+  FileText
 } from 'lucide-react';
 import {
   AreaChart,
