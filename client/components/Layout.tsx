@@ -158,7 +158,7 @@ export default function Layout({ children }: LayoutProps) {
   const NavContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-3 p-6 border-b">
+      <div className="flex items-center gap-3 px-4 py-3 border-b">
         <img
           src="https://cdn.builder.io/api/v1/image/assets%2F9f68bdced9274939b0bcd49e09efd146%2F195ccef20b1d4ea9abad63edcc7a7f8b?format=webp&width=800"
           alt="Company Logo"
