@@ -2680,7 +2680,7 @@ export default function FileProcess() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-blue-600" />
                               <span className="font-medium">
-                                {request.uploadedFile.name}
+                                {request.outputFile?.name || "No file attached"}
                               </span>
                             </div>
                             <div className="text-sm text-blue-600">
