@@ -3177,7 +3177,8 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-blue-600">
-                  {mockHistoricalProcesses
+                  {fileProcesses
+                    .filter((p) => p.status === "completed")
                     .reduce((sum, p) => sum + p.processedRows, 0)
                     .toLocaleString()}
                 </div>
