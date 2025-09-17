@@ -48,57 +48,58 @@ class ApiClient {
         throw new Error("Authentication required");
       }
 
-      // Simplified response handling - try to read response safely
-      let data: ApiResponse<T>;
-
+      // Read body as text first (works for empty/no-body responses too)
+      let text = "";
       try {
-        // Try to read response as JSON directly
-        if (!response.bodyUsed) {
-          data = await response.json();
-        } else {
-          console.warn(`Response body already consumed for ${endpoint}`);
-          throw new Error("Response body already consumed");
-        }
-      } catch (error) {
-        console.error(`Response reading failed for ${endpoint}:`, error);
+        text = await response.text();
+      } catch (err) {
+        console.warn(`Failed to read response text for ${endpoint}:`, err);
+        text = "";
+      }
 
-        // Create appropriate error response based on status
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        } else {
-          // If response was OK but we couldn't read it, return success
-          data = { success: true, data: null as T, error: null };
+      // Try to parse JSON if any
+      let parsed: any = null;
+      if (text) {
+        try {
+          parsed = JSON.parse(text);
+        } catch (err) {
+          // Not JSON, keep text
+          parsed = text;
         }
       }
 
+      // If response is not ok, surface server message if present
       if (!response.ok) {
-        throw new Error(
-          data.error?.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+        const serverMessage =
+          (parsed && parsed.error && parsed.error.message) ||
+          (parsed && parsed.message) ||
+          (typeof parsed === "string" && parsed) ||
+          response.statusText ||
+          `HTTP ${response.status}`;
+
+        throw new Error(String(serverMessage));
       }
 
-      return data.data as T;
+      // If no body (204), return null
+      if (!text) {
+        return null as unknown as T;
+      }
+
+      // If server returned ApiResponse wrapper
+      if (parsed && typeof parsed === "object" && Object.prototype.hasOwnProperty.call(parsed, "data")) {
+        return parsed.data as T;
+      }
+
+      // Otherwise return parsed value (could be plain array/object)
+      return parsed as T;
     } catch (error) {
       // Handle specific network errors
-      if (
-        error instanceof TypeError &&
-        error.message.includes("body stream already read")
-      ) {
-        console.error(`Body stream error for ${endpoint}:`, error);
-        throw new Error(
-          `Network error: Request failed due to stream issue. Please try again.`,
-        );
-      }
-
       if (
         error instanceof TypeError &&
         error.message.includes("Failed to fetch")
       ) {
         console.error(`Network error for ${endpoint}:`, error);
-        throw new Error(
-          `Network error: Unable to connect to server. Please check your connection.`,
-        );
+        throw new Error(`Network error: Unable to connect to server. Please check your connection.`);
       }
 
       console.error(`API request failed for ${endpoint}:`, error);
