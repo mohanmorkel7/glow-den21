@@ -949,7 +949,7 @@ export default function FileProcess() {
     return `/downloads/${fileName}`;
   };
 
-  const handleApproveRequest = (
+  const handleApproveRequest = async (
     requestId: string,
     processId: string,
     assignedCount: number,
