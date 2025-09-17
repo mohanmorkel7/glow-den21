@@ -283,13 +283,23 @@ export default function RequestFiles() {
     }
   };
 
-  const handleDownload = (requestId: string) => {
+  const handleDownload = async (requestId: string) => {
     const request = fileRequests.find((r) => r.id === requestId);
-    if (!request || !request.downloadLink) return;
+    if (!request) return;
 
     // Generate and download the CSV file
+    const nameFromLink = request.downloadLink?.split("/").pop();
+    const safe = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_\-]/g, "");
+    const baseUser = safe(currentUser?.name || request.userName || "user");
+    const baseProc = safe(request.fileProcessName || "file");
+    const start = request.startRow ?? 1;
+    const end = request.endRow ?? request.requestedCount;
     const fileName =
-      request.downloadLink.split("/").pop() || "assigned_file.csv";
+      nameFromLink || `${baseUser}_${baseProc}_${start}_${end}.csv`;
 
     // Generate sample CSV content based on the assigned row range
     const headers = [
@@ -305,8 +315,11 @@ export default function RequestFiles() {
     let csvContent = headers.join(",") + "\n";
 
     // Generate rows with realistic data for the assigned range
-    if (request.startRow && request.endRow) {
-      for (let i = request.startRow; i <= request.endRow; i++) {
+    const startRowCalc = request.startRow ?? 1;
+    const endRowCalc =
+      request.endRow ?? request.assignedCount ?? request.requestedCount ?? 0;
+    if (endRowCalc >= startRowCalc && endRowCalc - startRowCalc < 100000) {
+      for (let i = startRowCalc; i <= endRowCalc; i++) {
         const row = [
           i,
           `User ${i}`,
@@ -332,7 +345,15 @@ export default function RequestFiles() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    // Update status to 'in_progress' after download
+    // Persist status to 'in_progress' after download
+    try {
+      await apiClient.updateFileRequest(requestId, {
+        status: "in_progress",
+      } as any);
+    } catch (e) {
+      console.error("Failed to persist in_progress status", e);
+    }
+
     setFileRequests(
       fileRequests.map((req) =>
         req.id === requestId && req.status === "assigned"
@@ -723,29 +744,48 @@ export default function RequestFiles() {
                             >
                               {request.status.replace("_", " ").toUpperCase()}
                             </Badge>
-                            {request.status === "assigned" &&
-                              request.downloadLink && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleDownload(request.id)}
-                                >
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Download & Start
-                                </Button>
-                              )}
-                            {request.status === "in_progress" &&
-                              request.downloadLink && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDownload(request.id)}
-                                  className="mr-2"
-                                >
-                                  <Download className="h-4 w-4 mr-2" />
-                                  {request.downloadLink.split("/").pop() ||
-                                    "Download File"}
-                                </Button>
-                              )}
+                            {request.status === "assigned" && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleDownload(request.id)}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download & Start
+                              </Button>
+                            )}
+                            {request.status === "in_progress" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownload(request.id)}
+                                className="mr-2"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                {(() => {
+                                  const nameFromLink = request.downloadLink
+                                    ?.split("/")
+                                    .pop();
+                                  if (nameFromLink) return nameFromLink;
+                                  const safe = (s: string) =>
+                                    s
+                                      .toLowerCase()
+                                      .replace(/\s+/g, "_")
+                                      .replace(/[^a-z0-9_\-]/g, "");
+                                  const baseUser = safe(
+                                    currentUser?.name ||
+                                      request.userName ||
+                                      "user",
+                                  );
+                                  const baseProc = safe(
+                                    request.fileProcessName || "file",
+                                  );
+                                  const start = request.startRow ?? 1;
+                                  const end =
+                                    request.endRow ?? request.requestedCount;
+                                  return `${baseUser}_${baseProc}_${start}_${end}.csv`;
+                                })()}
+                              </Button>
+                            )}
                             {request.status === "in_progress" && (
                               <Select
                                 value={request.status}
