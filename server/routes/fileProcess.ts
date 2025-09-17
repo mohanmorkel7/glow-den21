@@ -329,23 +329,11 @@ export const approveFileRequest: RequestHandler = async (req, res) => {
         ],
       );
 
-      // Build download link from user_name and process name
-      const reqRowRes = await client.query(
-        `SELECT user_name FROM file_requests WHERE id = $1`,
-        [id],
-      );
-      const userName: string = reqRowRes.rows[0]?.user_name || "user";
-      const safe = (s: string) =>
-        s
-          .toLowerCase()
-          .replace(/\s+/g, "_")
-          .replace(/[^a-z0-9_\-]/g, "");
-      const downloadFileName = `${safe(userName)}_${safe(proc.name)}_${startRow}_${endRow}.csv`;
-      const downloadLink = `/downloads/${downloadFileName}`;
-
+      // Set API download link that will stream exact rows
+      const apiDownloadLink = `/api/file-requests/${id}/download`;
       await client.query(
         `UPDATE file_requests SET download_link = $1 WHERE id = $2`,
-        [downloadLink, id],
+        [apiDownloadLink, id],
       );
 
       // Update file process counters
