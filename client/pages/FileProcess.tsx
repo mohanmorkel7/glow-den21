@@ -4034,45 +4034,32 @@ export default function FileProcess() {
                       <div className="flex items-center gap-2">
                         <FileText className="h-5 w-5 text-green-600" />
                         <span className="font-medium text-green-800">
-                          {selectedVerificationRequest.uploadedFile.name}
+                          {selectedVerificationRequest.uploadedFileName || "completed.zip"}
                         </span>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // Simulate file download
-                          const link = document.createElement("a");
-                          link.href = "#";
-                          link.download =
-                            selectedVerificationRequest.uploadedFile.name;
-                          link.click();
+                        onClick={async () => {
+                          try {
+                            const { blob, filename } =
+                              await apiClient.downloadUploadedRequestFile(
+                                selectedVerificationRequest.id,
+                              );
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = filename;
+                            link.click();
+                            URL.revokeObjectURL(url);
+                          } catch (e) {
+                            alert("Failed to download uploaded file");
+                          }
                         }}
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Download
                       </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-green-700">File Size:</span>
-                        <span className="ml-2 font-medium">
-                          {(
-                            selectedVerificationRequest.uploadedFile.size /
-                            1024 /
-                            1024
-                          ).toFixed(2)}{" "}
-                          MB
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-green-700">Upload Date:</span>
-                        <span className="ml-2 font-medium">
-                          {new Date(
-                            selectedVerificationRequest.uploadedFile.uploadDate,
-                          ).toLocaleString()}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </CardContent>
