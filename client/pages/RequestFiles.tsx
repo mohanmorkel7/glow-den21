@@ -283,7 +283,7 @@ export default function RequestFiles() {
     }
   };
 
-  const handleDownload = (requestId: string) => {
+  const handleDownload = async (requestId: string) => {
     const request = fileRequests.find((r) => r.id === requestId);
     if (!request || !request.downloadLink) return;
 
@@ -332,7 +332,13 @@ export default function RequestFiles() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    // Update status to 'in_progress' after download
+    // Persist status to 'in_progress' after download
+    try {
+      await apiClient.updateFileRequest(requestId, { status: "in_progress" } as any);
+    } catch (e) {
+      console.error("Failed to persist in_progress status", e);
+    }
+
     setFileRequests(
       fileRequests.map((req) =>
         req.id === requestId && req.status === "assigned"
