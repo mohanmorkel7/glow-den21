@@ -499,6 +499,14 @@ export default function FileProcess() {
         ? requests
         : (requests as any) || [];
       setFileRequests(reqList as any);
+      // Load active projects
+      try {
+        const projs = await apiClient.getProjects({ status: "active", limit: 200 });
+        const projList = (projs as any)?.data || (Array.isArray(projs) ? projs : []);
+        setProjects(projList as any);
+      } catch (e) {
+        console.warn("Failed to load projects", e);
+      }
     } catch (err: any) {
       console.error("Failed to load file process data", err);
       setError(String(err?.message || err));
