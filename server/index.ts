@@ -188,7 +188,6 @@ export function createServer() {
   // ===== FILE PROCESS ROUTES =====
   app.use("/api/file-processes", authenticateToken);
   // list, create, update, delete
-  const fileProcess = await import("./routes/fileProcess");
   app.get("/api/file-processes", fileProcess.listFileProcesses as any);
   app.get("/api/file-processes/:id", fileProcess.getFileProcess as any);
   app.post("/api/file-processes", fileProcess.createFileProcess as any);
