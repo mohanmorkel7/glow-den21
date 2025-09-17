@@ -199,21 +199,29 @@ export default function RequestFiles() {
           verificationNotes:
             r.verification_notes || r.verificationNotes || undefined,
         }));
-        const userList = normalized.filter((r: any) => r.userId === currentUser?.id);
+        const userList = normalized.filter(
+          (r: any) => r.userId === currentUser?.id,
+        );
         setFileRequests(userList);
 
         // Convert any newly assigned requests to in_progress (display + persist)
-        const justAssigned = userList.filter((r: any) => r.status === "assigned");
+        const justAssigned = userList.filter(
+          (r: any) => r.status === "assigned",
+        );
         if (justAssigned.length > 0) {
           // Update server in background; ignore failures
           Promise.allSettled(
             justAssigned.map((r: any) =>
-              apiClient.updateFileRequest(r.id, { status: "in_progress" } as any),
+              apiClient.updateFileRequest(r.id, {
+                status: "in_progress",
+              } as any),
             ),
           ).catch(() => undefined);
           // Update UI immediately
           setFileRequests((prev) =>
-            prev.map((r) => (r.status === "assigned" ? { ...r, status: "in_progress" } : r)),
+            prev.map((r) =>
+              r.status === "assigned" ? { ...r, status: "in_progress" } : r,
+            ),
           );
         }
       } catch (e) {
@@ -705,10 +713,15 @@ export default function RequestFiles() {
                           <div className="flex items-center gap-2">
                             <Badge
                               className={getStatusBadgeColor(
-                                request.status === "assigned" ? "in_progress" : request.status,
+                                request.status === "assigned"
+                                  ? "in_progress"
+                                  : request.status,
                               )}
                             >
-                              {(request.status === "assigned" ? "in_progress" : request.status)
+                              {(request.status === "assigned"
+                                ? "in_progress"
+                                : request.status
+                              )
                                 .replace("_", " ")
                                 .toUpperCase()}
                             </Badge>
