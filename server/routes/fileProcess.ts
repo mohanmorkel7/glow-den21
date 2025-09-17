@@ -251,14 +251,7 @@ export const approveFileRequest: RequestHandler = async (req, res) => {
              start_row = $4,
              end_row = $5
          WHERE id = $6`,
-        [
-          "assigned",
-          assignedCount,
-          assignedBy || null,
-          startRow,
-          endRow,
-          id,
-        ],
+        ["assigned", assignedCount, assignedBy || null, startRow, endRow, id],
       );
 
       // Build download link from user_name and process name

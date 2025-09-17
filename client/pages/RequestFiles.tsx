@@ -334,7 +334,9 @@ export default function RequestFiles() {
 
     // Persist status to 'in_progress' after download
     try {
-      await apiClient.updateFileRequest(requestId, { status: "in_progress" } as any);
+      await apiClient.updateFileRequest(requestId, {
+        status: "in_progress",
+      } as any);
     } catch (e) {
       console.error("Failed to persist in_progress status", e);
     }
