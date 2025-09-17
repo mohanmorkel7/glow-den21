@@ -1659,15 +1659,25 @@ export default function FileProcess() {
                                   const assignedCount =
                                     parseInt(countInput.value) ||
                                     request.requestedCount;
+                                  const chosenProcessId =
+                                    selectedProcessForRequest[request.id] ||
+                                    request.fileProcessId;
+                                  if (!chosenProcessId) return;
                                   handleApproveRequest(
                                     request.id,
-                                    request.fileProcessId,
+                                    chosenProcessId,
                                     assignedCount,
                                   );
                                 }}
-                                disabled={
-                                  !process || process.availableRows <= 0
-                                }
+                                disabled={(() => {
+                                  const chosenProcessId =
+                                    selectedProcessForRequest[request.id] ||
+                                    request.fileProcessId;
+                                  const chosenProcess = fileProcesses.find(
+                                    (p) => p.id === chosenProcessId,
+                                  );
+                                  return !chosenProcess || chosenProcess.availableRows <= 0;
+                                })()}
                               >
                                 Approve
                               </Button>
