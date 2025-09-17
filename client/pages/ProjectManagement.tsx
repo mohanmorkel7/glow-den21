@@ -1,21 +1,73 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Users, Calendar, Target, TrendingUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { apiClient } from '@/lib/api';
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Users,
+  Calendar,
+  Target,
+  TrendingUp,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { apiClient } from "@/lib/api";
 
 interface User {
   id: string;
@@ -28,9 +80,9 @@ interface Project {
   id: string;
   name: string;
   description?: string;
-  status: 'active' | 'inactive' | 'planning' | 'on_hold' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  type?: 'monthly' | 'weekly' | 'both';
+  status: "active" | "inactive" | "planning" | "on_hold" | "completed";
+  priority: "low" | "medium" | "high";
+  type?: "monthly" | "weekly" | "both";
   client?: string;
   customClient?: string;
   fileTargets?: any;
@@ -46,32 +98,34 @@ interface Project {
 export default function ProjectManagement() {
   const { user: currentUser } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [newProject, setNewProject] = useState({
-    name: '',
-    description: '',
-    status: 'active' as any,
-    priority: 'medium' as any,
-    type: 'both' as any,
-    client: 'mobius_dataservice',
-    customClient: '',
+    name: "",
+    description: "",
+    status: "active" as any,
+    priority: "medium" as any,
+    type: "both" as any,
+    client: "mobius_dataservice",
+    customClient: "",
     assignedUsers: [] as string[],
   });
 
-  const canManageProjects = currentUser?.role === 'super_admin' || currentUser?.role === 'project_manager';
+  const canManageProjects =
+    currentUser?.role === "super_admin" ||
+    currentUser?.role === "project_manager";
 
   const mapApiToProject = (p: any): Project => ({
     id: String(p.id),
-    name: p.name || '',
-    description: p.description || '',
-    status: (p.status as Project['status']) || 'active',
-    priority: (p.priority as Project['priority']) || 'medium',
+    name: p.name || "",
+    description: p.description || "",
+    status: (p.status as Project["status"]) || "active",
+    priority: (p.priority as Project["priority"]) || "medium",
     type: p.type,
     client: p.client,
     customClient: p.customClient,
@@ -80,8 +134,15 @@ export default function ProjectManagement() {
     rates: p.rates,
     targetCount: p.target_count ?? p.targetCount ?? 0,
     currentCount: p.current_count ?? p.currentCount ?? 0,
-    assignedUsers: p.assigned_users ? p.assigned_users.map((u: any) => String(u)) : (p.assignedUsers || []),
-    createdBy: p.created_by?.name || p.createdBy?.name || p.createdBy || p.created_by_name || '',
+    assignedUsers: p.assigned_users
+      ? p.assigned_users.map((u: any) => String(u))
+      : p.assignedUsers || [],
+    createdBy:
+      p.created_by?.name ||
+      p.createdBy?.name ||
+      p.createdBy ||
+      p.created_by_name ||
+      "",
     createdAt: p.created_at || p.createdAt,
   });
 
@@ -97,7 +158,7 @@ export default function ProjectManagement() {
       const mapped = list.map(mapApiToProject);
       setProjects(mapped);
     } catch (err: any) {
-      console.error('Failed to load projects:', err);
+      console.error("Failed to load projects:", err);
       setError(String(err.message || err));
     } finally {
       setIsLoading(false);
@@ -111,13 +172,13 @@ export default function ProjectManagement() {
 
   const resetNewProject = () => {
     setNewProject({
-      name: '',
-      description: '',
-      status: 'active',
-      priority: 'medium',
-      type: 'both',
-      client: 'mobius_dataservice',
-      customClient: '',
+      name: "",
+      description: "",
+      status: "active",
+      priority: "medium",
+      type: "both",
+      client: "mobius_dataservice",
+      customClient: "",
       assignedUsers: [] as string[],
     });
   };
@@ -134,12 +195,12 @@ export default function ProjectManagement() {
       };
       const created = await apiClient.createProject(payload);
       // createProject returns created project inside data
-      const createdProj = mapApiToProject((created as any));
+      const createdProj = mapApiToProject(created as any);
       setProjects((p) => [createdProj, ...p]);
       resetNewProject();
       setIsAddDialogOpen(false);
     } catch (err) {
-      console.error('Create project failed', err);
+      console.error("Create project failed", err);
       setError(String((err as any).message || err));
     } finally {
       setIsLoading(false);
@@ -149,13 +210,13 @@ export default function ProjectManagement() {
   const handleEditProject = (project: Project) => {
     setEditingProject(project);
     setNewProject({
-      name: project.name || '',
-      description: project.description || '',
-      status: project.status || 'active',
-      priority: project.priority || 'medium',
-      type: project.type || 'both',
-      client: project.client || 'mobius_dataservice',
-      customClient: project.customClient || '',
+      name: project.name || "",
+      description: project.description || "",
+      status: project.status || "active",
+      priority: project.priority || "medium",
+      type: project.type || "both",
+      client: project.client || "mobius_dataservice",
+      customClient: project.customClient || "",
       assignedUsers: project.assignedUsers || [],
     });
     setIsAddDialogOpen(true);
@@ -172,13 +233,13 @@ export default function ProjectManagement() {
         priority: newProject.priority,
       };
       const updated = await apiClient.updateProject(editingProject.id, payload);
-      const mapped = mapApiToProject((updated as any));
+      const mapped = mapApiToProject(updated as any);
       setProjects((ps) => ps.map((p) => (p.id === mapped.id ? mapped : p)));
       setEditingProject(null);
       resetNewProject();
       setIsAddDialogOpen(false);
     } catch (err) {
-      console.error('Update project failed', err);
+      console.error("Update project failed", err);
       setError(String((err as any).message || err));
     } finally {
       setIsLoading(false);
@@ -191,20 +252,28 @@ export default function ProjectManagement() {
       await apiClient.deleteProject(projectId);
       setProjects((p) => p.filter((x) => x.id !== projectId));
     } catch (err) {
-      console.error('Delete project failed', err);
+      console.error("Delete project failed", err);
       setError(String((err as any).message || err));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = (project.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (project.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'all' || project.status === selectedStatus;
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch =
+      (project.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.description || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      selectedStatus === "all" || project.status === selectedStatus;
 
-    if (currentUser?.role === 'user') {
-      return matchesSearch && matchesStatus && (project.assignedUsers || []).includes(currentUser.id);
+    if (currentUser?.role === "user") {
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        (project.assignedUsers || []).includes(currentUser.id)
+      );
     }
 
     return matchesSearch && matchesStatus;
@@ -214,8 +283,13 @@ export default function ProjectManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Project Management</h1>
-          <p className="text-muted-foreground mt-1">Create and manage file processing projects with rate tracking and daily targets.</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Project Management
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Create and manage file processing projects with rate tracking and
+            daily targets.
+          </p>
         </div>
         {canManageProjects && (
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -227,24 +301,50 @@ export default function ProjectManagement() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingProject ? 'Edit Project' : 'Add New Project'}</DialogTitle>
+                <DialogTitle>
+                  {editingProject ? "Edit Project" : "Add New Project"}
+                </DialogTitle>
                 <DialogDescription>Create or edit a project.</DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Project Name</Label>
-                  <Input id="name" value={newProject.name} onChange={(e) => setNewProject({ ...newProject, name: e.target.value })} placeholder="e.g., MO Project - Data Processing" />
+                  <Input
+                    id="name"
+                    value={newProject.name}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, name: e.target.value })
+                    }
+                    placeholder="e.g., MO Project - Data Processing"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea id="description" value={newProject.description} onChange={(e) => setNewProject({ ...newProject, description: e.target.value })} rows={3} />
+                  <Textarea
+                    id="description"
+                    value={newProject.description}
+                    onChange={(e) =>
+                      setNewProject({
+                        ...newProject,
+                        description: e.target.value,
+                      })
+                    }
+                    rows={3}
+                  />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type">Project Type</Label>
-                    <Select value={newProject.type} onValueChange={(value: any) => setNewProject({ ...newProject, type: value })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={newProject.type}
+                      onValueChange={(value: any) =>
+                        setNewProject({ ...newProject, type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="both">Both</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
@@ -254,8 +354,15 @@ export default function ProjectManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
-                    <Select value={newProject.status} onValueChange={(value: any) => setNewProject({ ...newProject, status: value })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={newProject.status}
+                      onValueChange={(value: any) =>
+                        setNewProject({ ...newProject, status: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="active">Active</SelectItem>
                         <SelectItem value="inactive">Inactive</SelectItem>
@@ -265,8 +372,15 @@ export default function ProjectManagement() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
-                    <Select value={newProject.priority} onValueChange={(value: any) => setNewProject({ ...newProject, priority: value })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Select
+                      value={newProject.priority}
+                      onValueChange={(value: any) =>
+                        setNewProject({ ...newProject, priority: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
@@ -278,9 +392,28 @@ export default function ProjectManagement() {
 
                 <DialogFooter>
                   <div className="flex gap-2 justify-end w-full">
-                    <Button variant="outline" onClick={() => { setIsAddDialogOpen(false); setEditingProject(null); resetNewProject(); }}>Cancel</Button>
-                    <Button onClick={() => { editingProject ? handleUpdateProject() : handleAddProject(); }}>
-                      {isLoading ? 'Saving...' : editingProject ? 'Update Project' : 'Create Project'}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddDialogOpen(false);
+                        setEditingProject(null);
+                        resetNewProject();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        editingProject
+                          ? handleUpdateProject()
+                          : handleAddProject();
+                      }}
+                    >
+                      {isLoading
+                        ? "Saving..."
+                        : editingProject
+                          ? "Update Project"
+                          : "Create Project"}
                     </Button>
                   </div>
                 </DialogFooter>
@@ -295,11 +428,17 @@ export default function ProjectManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Projects</CardTitle>
-          <CardDescription>Manage your projects and assignments.</CardDescription>
+          <CardDescription>
+            Manage your projects and assignments.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex items-center gap-2">
-            <Input placeholder="Search projects" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <Input
+              placeholder="Search projects"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
           <Table>
@@ -318,7 +457,9 @@ export default function ProjectManagement() {
                 <TableRow key={project.id}>
                   <TableCell>
                     <div className="font-medium">{project.name}</div>
-                    <div className="text-xs text-muted-foreground">{project.description}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {project.description}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge className="capitalize">{project.status}</Badge>
@@ -327,17 +468,36 @@ export default function ProjectManagement() {
                     <Badge className="capitalize">{project.priority}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Progress value={project.currentCount && project.targetCount ? Math.min((project.currentCount / Math.max(1, project.targetCount)) * 100, 100) : 0} />
+                    <Progress
+                      value={
+                        project.currentCount && project.targetCount
+                          ? Math.min(
+                              (project.currentCount /
+                                Math.max(1, project.targetCount)) *
+                                100,
+                              100,
+                            )
+                          : 0
+                      }
+                    />
                   </TableCell>
-                  <TableCell>{project.createdAt?.split('T')[0]}</TableCell>
+                  <TableCell>{project.createdAt?.split("T")[0]}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {canManageProjects && (
                         <>
-                          <Button variant="ghost" size="sm" onClick={() => handleEditProject(project)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditProject(project)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteProject(project.id)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteProject(project.id)}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </>
@@ -352,8 +512,14 @@ export default function ProjectManagement() {
             </TableBody>
           </Table>
 
-          {isLoading && <div className="mt-4 text-sm text-muted-foreground">Loading...</div>}
-          {!isLoading && filteredProjects.length === 0 && <div className="mt-4 text-sm text-muted-foreground">No projects found.</div>}
+          {isLoading && (
+            <div className="mt-4 text-sm text-muted-foreground">Loading...</div>
+          )}
+          {!isLoading && filteredProjects.length === 0 && (
+            <div className="mt-4 text-sm text-muted-foreground">
+              No projects found.
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
