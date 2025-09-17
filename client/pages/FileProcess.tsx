@@ -970,44 +970,22 @@ export default function FileProcess() {
       request.userName,
     );
 
-    // Update request with download link and assignment details
-    setFileRequests(
-      fileRequests.map((r) =>
-        r.id === requestId
-          ? {
-              ...r,
-              status: "assigned",
-              assignedBy: currentUser?.name,
-              assignedDate: new Date().toISOString(),
-              assignedCount,
-              startRow,
-              endRow,
-              downloadLink,
-              fileProcessId: processId,
-              fileProcessName: process.name,
-            }
-          : r,
-      ),
-    );
-
-    // Update file process
-    setFileProcesses(
-      fileProcesses.map((p) =>
-        p.id === processId
-          ? {
-              ...p,
-              processedRows: p.processedRows + assignedCount,
-              availableRows: p.availableRows - assignedCount,
-              activeUsers: p.activeUsers + 1,
-            }
-          : p,
-      ),
-    );
-
-    // Show success message
-    alert(
-      `File generated and assigned to ${request.userName}!\nRows ${startRow}-${endRow} (${assignedCount} files)\nDownload will be available in their Request Files page.`,
-    );
+    try {
+      await apiClient.approveFileRequest(requestId, {
+        assignedCount,
+        processId,
+        startRow,
+        endRow,
+        assignedBy: currentUser?.name,
+      });
+      await loadData();
+      alert(
+        `File generated and assigned to ${request.userName}!\nRows ${startRow}-${endRow} (${assignedCount} files)\nDownload will be available in their Request Files page.`,
+      );
+    } catch (e) {
+      console.error("Failed to approve request", e);
+      alert("Failed to approve request");
+    }
   };
 
   const getPendingRequests = () => {
