@@ -2683,14 +2683,15 @@ export default function FileProcess() {
                                 {request.outputFile?.name || "No file attached"}
                               </span>
                             </div>
-                            <div className="text-sm text-blue-600">
-                              {(
-                                request.uploadedFile.size /
-                                1024 /
-                                1024
-                              ).toFixed(2)}{" "}
-                              MB
-                            </div>
+                            {request.outputFile && (
+                              <div className="text-sm text-blue-600">
+                                {(
+                                  (request.outputFile.size || 0) /
+                                  1024 /
+                                  1024
+                                ).toFixed(2)} MB
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs text-blue-700 mt-1">
                             Uploaded:{" "}
