@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
+import { ensureFileProcessTables } from "./startup/migrateFileProcess";
 
 // Import authentication routes
 import {
@@ -71,8 +72,9 @@ export function createServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Trigger initial admin seeding (non-blocking)
+  // Trigger initial admin seeding and ensure file process tables (non-blocking)
   ensureInitialAdmin().catch((e) => console.error(e));
+  ensureFileProcessTables().catch((e) => console.error(e));
 
   // Health check
   app.get("/api/health", (_req, res) => {
@@ -181,6 +183,21 @@ export function createServer() {
   app.get("/api/dashboard/recent-alerts", getRecentAlerts);
   app.get("/api/dashboard/productivity-trend", getProductivityTrend);
   app.get("/api/dashboard/user", getUserDashboard);
+
+  // ===== FILE PROCESS ROUTES =====
+  app.use("/api/file-processes", authenticateToken);
+  // list, create, update, delete
+  const fileProcess = await import("./routes/fileProcess");
+  app.get("/api/file-processes", fileProcess.listFileProcesses as any);
+  app.get("/api/file-processes/:id", fileProcess.getFileProcess as any);
+  app.post("/api/file-processes", fileProcess.createFileProcess as any);
+  app.put("/api/file-processes/:id", fileProcess.updateFileProcess as any);
+  app.delete("/api/file-processes/:id", fileProcess.deleteFileProcess as any);
+
+  // file requests
+  app.get("/api/file-requests", fileProcess.listFileRequests as any);
+  app.post("/api/file-requests", fileProcess.createFileRequest as any);
+  app.post("/api/file-requests/:id/approve", fileProcess.approveFileRequest as any);
 
   // ===== EXPENSE MANAGEMENT ROUTES =====
   // All expense routes require authentication
