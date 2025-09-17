@@ -288,8 +288,13 @@ export default function RequestFiles() {
     if (!request || !request.downloadLink) return;
 
     // Generate and download the CSV file
-    const fileName =
-      request.downloadLink.split("/").pop() || "assigned_file.csv";
+    const nameFromLink = request.downloadLink?.split("/").pop();
+    const safe = (s: string) => s.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+    const baseUser = safe(currentUser?.name || request.userName || "user");
+    const baseProc = safe(request.fileProcessName || "file");
+    const start = request.startRow ?? 1;
+    const end = request.endRow ?? request.requestedCount;
+    const fileName = nameFromLink || `${baseUser}_${baseProc}_${start}_${end}.csv`;
 
     // Generate sample CSV content based on the assigned row range
     const headers = [
@@ -731,29 +736,35 @@ export default function RequestFiles() {
                             >
                               {request.status.replace("_", " ").toUpperCase()}
                             </Badge>
-                            {request.status === "assigned" &&
-                              request.downloadLink && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleDownload(request.id)}
-                                >
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Download & Start
-                                </Button>
-                              )}
-                            {request.status === "in_progress" &&
-                              request.downloadLink && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleDownload(request.id)}
-                                  className="mr-2"
-                                >
-                                  <Download className="h-4 w-4 mr-2" />
-                                  {request.downloadLink.split("/").pop() ||
-                                    "Download File"}
-                                </Button>
-                              )}
+                            {request.status === "assigned" && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleDownload(request.id)}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download & Start
+                              </Button>
+                            )}
+                            {request.status === "in_progress" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownload(request.id)}
+                                className="mr-2"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                {(() => {
+                                  const nameFromLink = request.downloadLink?.split("/").pop();
+                                  if (nameFromLink) return nameFromLink;
+                                  const safe = (s: string) => s.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+                                  const baseUser = safe(currentUser?.name || request.userName || "user");
+                                  const baseProc = safe(request.fileProcessName || "file");
+                                  const start = request.startRow ?? 1;
+                                  const end = request.endRow ?? request.requestedCount;
+                                  return `${baseUser}_${baseProc}_${start}_${end}.csv`;
+                                })()}
+                              </Button>
+                            )}
                             {request.status === "in_progress" && (
                               <Select
                                 value={request.status}
