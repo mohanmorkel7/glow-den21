@@ -487,7 +487,9 @@ class ApiClient {
     });
   }
 
-  async downloadFileRequest(id: string): Promise<{ blob: Blob; filename: string }> {
+  async downloadFileRequest(
+    id: string,
+  ): Promise<{ blob: Blob; filename: string }> {
     const headers = this.getAuthHeaders();
     const url = `${API_BASE_URL}/file-requests/${id}/download`;
     const resp = await fetch(url, { headers });

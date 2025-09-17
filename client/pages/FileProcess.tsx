@@ -1046,7 +1046,11 @@ export default function FileProcess() {
       } else {
         const created: any = await apiClient.createFileProcess(payload);
         const createdId = (created && (created.id || created.data?.id)) || null;
-        if (createdId && newProcess.type === "manual" && newProcess.uploadedFile) {
+        if (
+          createdId &&
+          newProcess.type === "manual" &&
+          newProcess.uploadedFile
+        ) {
           try {
             await apiClient.uploadFileProcessFile(
               createdId,
@@ -1055,7 +1059,9 @@ export default function FileProcess() {
             );
           } catch (e) {
             console.error("File upload failed", e);
-            alert("Process created but file upload failed. Please upload again.");
+            alert(
+              "Process created but file upload failed. Please upload again.",
+            );
           }
         }
       }
@@ -1404,7 +1410,9 @@ export default function FileProcess() {
                         className="cursor-pointer"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Note: Downloads slice the original file rows. CSV is supported for slicing. Excel files are accepted but must be converted to CSV for downloads.
+                        Note: Downloads slice the original file rows. CSV is
+                        supported for slicing. Excel files are accepted but must
+                        be converted to CSV for downloads.
                       </p>
                       {newProcess.uploadedFile && (
                         <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">

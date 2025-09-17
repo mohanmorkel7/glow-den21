@@ -457,7 +457,12 @@ export const uploadFileForProcess: RequestHandler = async (req, res) => {
         `UPDATE file_processes SET file_name = $1, upload_date = CURRENT_TIMESTAMP, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
         [safeName, id],
       );
-      res.json({ data: { path: destPath.replace(process.cwd() + path.sep, ""), fileName: safeName } });
+      res.json({
+        data: {
+          path: destPath.replace(process.cwd() + path.sep, ""),
+          fileName: safeName,
+        },
+      });
     });
 
     writeStream.on("error", (err) => {
@@ -469,7 +474,10 @@ export const uploadFileForProcess: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Upload file error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to upload file" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to upload file",
+      },
     });
   }
 };
@@ -494,17 +502,26 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     const r = reqRes.rows[0];
 
     // Authorization: only assigned user, PM, or admin
-    const isOwner = currentUser?.id && String(currentUser.id) === String(r.user_id);
-    const isManager = ["super_admin", "project_manager"].includes(currentUser?.role);
+    const isOwner =
+      currentUser?.id && String(currentUser.id) === String(r.user_id);
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
     if (!isOwner && !isManager) {
       return res.status(403).json({
-        error: { code: "AUTHORIZATION_FAILED", message: "Not allowed to download this file" },
+        error: {
+          code: "AUTHORIZATION_FAILED",
+          message: "Not allowed to download this file",
+        },
       });
     }
 
     if (!r.file_process_id || !r.file_name) {
       return res.status(400).json({
-        error: { code: "NO_SOURCE", message: "No source file associated with this process" },
+        error: {
+          code: "NO_SOURCE",
+          message: "No source file associated with this process",
+        },
       });
     }
 
@@ -513,7 +530,8 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
       return res.status(415).json({
         error: {
           code: "UNSUPPORTED_FORMAT",
-          message: "Only CSV source files are supported for slicing at this time",
+          message:
+            "Only CSV source files are supported for slicing at this time",
         },
       });
     }
@@ -522,7 +540,10 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     const srcPath = path.join(procDir, r.file_name);
     if (!fs.existsSync(srcPath)) {
       return res.status(404).json({
-        error: { code: "SOURCE_NOT_FOUND", message: "Source file not found on server" },
+        error: {
+          code: "SOURCE_NOT_FOUND",
+          message: "Source file not found on server",
+        },
       });
     }
 
@@ -531,7 +552,11 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     const headerRows = Number(r.header_rows || 0);
 
     // Prepare output filename
-    const safe = (s: string) => String(s || "").toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+    const safe = (s: string) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_\-]/g, "");
     const outName = `${safe(r.user_name || "user")}_${safe(r.file_process_id)}_${startRow}_${endRow}.csv`;
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
@@ -539,13 +564,18 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
 
     // Stream read the source and write selected rows
     const srcStream = fs.createReadStream(srcPath, { encoding: "utf8" });
-    const rl = readline.createInterface({ input: srcStream, crlfDelay: Infinity });
+    const rl = readline.createInterface({
+      input: srcStream,
+      crlfDelay: Infinity,
+    });
 
     let lineIndex = 0;
     let writtenHeader = false;
 
     const writeLine = (line: string) => {
-      res.write(line.endsWith("\n") || line.endsWith("\r") ? line : line + "\n");
+      res.write(
+        line.endsWith("\n") || line.endsWith("\r") ? line : line + "\n",
+      );
     };
 
     rl.on("line", (line) => {
@@ -590,7 +620,10 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Download slice error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to generate download" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to generate download",
+      },
     });
   }
 };
