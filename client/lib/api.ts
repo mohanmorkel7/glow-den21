@@ -8,12 +8,15 @@ interface RequestOptions extends RequestInit {
 
 const decodeJwtPayload = (token: string) => {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length < 2) return null;
     const payload = parts[1];
     // base64url -> base64
-    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    );
     const decoded = atob(padded);
     return JSON.parse(decoded);
   } catch (e) {
@@ -101,9 +104,9 @@ class ApiClient {
 
           let hint = "";
           if (token) {
-            hint = ` User role: ${role ?? 'unknown'}.`;
+            hint = ` User role: ${role ?? "unknown"}.`;
             if (permissions) {
-              hint += ` Permissions: ${Array.isArray(permissions) ? permissions.join(',') : JSON.stringify(permissions)}.`;
+              hint += ` Permissions: ${Array.isArray(permissions) ? permissions.join(",") : JSON.stringify(permissions)}.`;
             } else {
               hint += ` Token does not include permissions array.`;
             }
@@ -123,7 +126,11 @@ class ApiClient {
       }
 
       // If server returned ApiResponse wrapper
-      if (parsed && typeof parsed === "object" && Object.prototype.hasOwnProperty.call(parsed, "data")) {
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        Object.prototype.hasOwnProperty.call(parsed, "data")
+      ) {
         return parsed.data as T;
       }
 
@@ -136,7 +143,9 @@ class ApiClient {
         error.message.includes("Failed to fetch")
       ) {
         console.error(`Network error for ${endpoint}:`, error);
-        throw new Error(`Network error: Unable to connect to server. Please check your connection.`);
+        throw new Error(
+          `Network error: Unable to connect to server. Please check your connection.`,
+        );
       }
 
       console.error(`API request failed for ${endpoint}:`, error);

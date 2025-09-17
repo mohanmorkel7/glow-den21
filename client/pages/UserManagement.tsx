@@ -1,51 +1,93 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Trash2, 
-  Shield, 
+import React, { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Users,
+  Plus,
+  Search,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Shield,
   UserCheck,
   UserX,
   Mail,
   Phone,
-  Calendar
-} from 'lucide-react';
-import { apiClient } from '@/lib/api';
-import { User } from '@shared/types';
-import { toast } from 'sonner';
+  Calendar,
+} from "lucide-react";
+import { apiClient } from "@/lib/api";
+import { User } from "@shared/types";
+import { toast } from "sonner";
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [newUser, setNewUser] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    role: 'user' as 'super_admin' | 'project_manager' | 'user',
-    department: '',
-    jobTitle: '',
-    password: ''
+    name: "",
+    email: "",
+    phone: "",
+    role: "user" as "super_admin" | "project_manager" | "user",
+    department: "",
+    jobTitle: "",
+    password: "",
   });
 
   const loadUsers = async () => {
@@ -53,11 +95,11 @@ export default function UserManagement() {
       setLoading(true);
       const params: any = {};
       if (searchTerm.trim()) params.search = searchTerm.trim();
-      if (selectedRole !== 'all') params.role = selectedRole;
+      if (selectedRole !== "all") params.role = selectedRole;
       const res = await apiClient.getUsers(params);
       setUsers(res.data);
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to load users');
+      toast.error(e?.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -71,7 +113,11 @@ export default function UserManagement() {
   const filteredUsers = useMemo(() => {
     if (!searchTerm) return users;
     const term = searchTerm.toLowerCase();
-    return users.filter(u => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term));
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term),
+    );
   }, [users, searchTerm]);
 
   const handleAddUser = async () => {
@@ -87,12 +133,20 @@ export default function UserManagement() {
         jobTitle: newUser.jobTitle || undefined,
       };
       const created: User = await apiClient.createUser(payload);
-      setUsers(prev => [...prev, created]);
-      setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
+      setUsers((prev) => [...prev, created]);
+      setNewUser({
+        name: "",
+        email: "",
+        phone: "",
+        role: "user",
+        department: "",
+        jobTitle: "",
+        password: "",
+      });
       setIsAddDialogOpen(false);
-      toast.success('User created');
+      toast.success("User created");
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to create user');
+      toast.error(e?.message || "Failed to create user");
     } finally {
       setSubmitting(false);
     }
@@ -103,11 +157,11 @@ export default function UserManagement() {
     setNewUser({
       name: user.name,
       email: user.email,
-      phone: user.phone || '',
+      phone: user.phone || "",
       role: user.role,
-      department: user.department || '',
-      jobTitle: user.jobTitle || '',
-      password: ''
+      department: user.department || "",
+      jobTitle: user.jobTitle || "",
+      password: "",
     });
   };
 
@@ -122,13 +176,24 @@ export default function UserManagement() {
         department: newUser.department || undefined,
         jobTitle: newUser.jobTitle || undefined,
       };
-      const updated: User = await apiClient.updateUser(editingUser.id, updatePayload);
-      setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
+      const updated: User = await apiClient.updateUser(
+        editingUser.id,
+        updatePayload,
+      );
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
       setEditingUser(null);
-      setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
-      toast.success('User updated');
+      setNewUser({
+        name: "",
+        email: "",
+        phone: "",
+        role: "user",
+        department: "",
+        jobTitle: "",
+        password: "",
+      });
+      toast.success("User updated");
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to update user');
+      toast.error(e?.message || "Failed to update user");
     } finally {
       setSubmitting(false);
     }
@@ -137,39 +202,44 @@ export default function UserManagement() {
   const handleDeleteUser = async (userId: string) => {
     try {
       await apiClient.deleteUser(userId);
-      setUsers(prev => prev.filter(u => u.id !== userId));
-      toast.success('User deleted');
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      toast.success("User deleted");
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to delete user');
+      toast.error(e?.message || "Failed to delete user");
     }
   };
 
   const toggleUserStatus = async (userId: string) => {
-    const target = users.find(u => u.id === userId);
+    const target = users.find((u) => u.id === userId);
     if (!target) return;
-    const newStatus = target.status === 'active' ? 'inactive' : 'active';
+    const newStatus = target.status === "active" ? "inactive" : "active";
     try {
       const updated: User = await apiClient.updateUserStatus(userId, newStatus);
-      setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
-      toast.success('Status updated');
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+      toast.success("Status updated");
     } catch (e: any) {
-      toast.error(e?.message || 'Failed to update status');
+      toast.error(e?.message || "Failed to update status");
     }
   };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'super_admin': return 'bg-red-100 text-red-800';
-      case 'project_manager': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "super_admin":
+        return "bg-red-100 text-red-800";
+      case "project_manager":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusBadgeColor = (status: string) => {
-    return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
+    return status === "active"
+      ? "bg-green-100 text-green-800"
+      : "bg-gray-100 text-gray-800";
   };
 
-  if (currentUser?.role !== 'super_admin') {
+  if (currentUser?.role !== "super_admin") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-md text-center">
@@ -190,7 +260,9 @@ export default function UserManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">User Management</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            User Management
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage users, roles, and permissions for your organization.
           </p>
@@ -215,7 +287,9 @@ export default function UserManagement() {
                 <Input
                   id="name"
                   value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, name: e.target.value })
+                  }
                   placeholder="John Doe"
                 />
               </div>
@@ -225,7 +299,9 @@ export default function UserManagement() {
                   id="email"
                   type="email"
                   value={newUser.email}
-                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, email: e.target.value })
+                  }
                   placeholder="john.doe@websyntactic.com"
                 />
               </div>
@@ -234,7 +310,9 @@ export default function UserManagement() {
                 <Input
                   id="phone"
                   value={newUser.phone}
-                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, phone: e.target.value })
+                  }
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
@@ -243,7 +321,9 @@ export default function UserManagement() {
                 <Input
                   id="department"
                   value={newUser.department}
-                  onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, department: e.target.value })
+                  }
                   placeholder="e.g., Operations, Administration"
                 />
               </div>
@@ -252,19 +332,28 @@ export default function UserManagement() {
                 <Input
                   id="jobTitle"
                   value={newUser.jobTitle}
-                  onChange={(e) => setNewUser({ ...newUser, jobTitle: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, jobTitle: e.target.value })
+                  }
                   placeholder="e.g., Data Processor, Project Manager"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
+                <Select
+                  value={newUser.role}
+                  onValueChange={(value: any) =>
+                    setNewUser({ ...newUser, role: value })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="project_manager">Project Manager</SelectItem>
+                    <SelectItem value="project_manager">
+                      Project Manager
+                    </SelectItem>
                     <SelectItem value="super_admin">Super Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -275,16 +364,23 @@ export default function UserManagement() {
                   id="password"
                   type="password"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
                   placeholder="Enter password"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleAddUser} disabled={submitting}>{submitting ? 'Adding...' : 'Add User'}</Button>
+              <Button onClick={handleAddUser} disabled={submitting}>
+                {submitting ? "Adding..." : "Add User"}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -336,25 +432,35 @@ export default function UserManagement() {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.status === 'active').length}</div>
+            <div className="text-2xl font-bold">
+              {users.filter((u) => u.status === "active").length}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Project Managers</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Project Managers
+            </CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.role === 'project_manager').length}</div>
+            <div className="text-2xl font-bold">
+              {users.filter((u) => u.role === "project_manager").length}
+            </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive Users</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Inactive Users
+            </CardTitle>
             <UserX className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{users.filter(u => u.status === 'inactive').length}</div>
+            <div className="text-2xl font-bold">
+              {users.filter((u) => u.status === "inactive").length}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -369,7 +475,9 @@ export default function UserManagement() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-sm text-muted-foreground">Loading users...</div>
+            <div className="text-sm text-muted-foreground">
+              Loading users...
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -389,7 +497,10 @@ export default function UserManagement() {
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarFallback>
-                            {user.name.split(' ').map(n => n[0]).join('')}
+                            {user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -400,14 +511,14 @@ export default function UserManagement() {
                           </div>
                           <div className="text-sm text-muted-foreground flex items-center gap-1">
                             <Phone className="h-3 w-3" />
-                            {user.phone || '-'}
+                            {user.phone || "-"}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role.replace('_', ' ').toUpperCase()}
+                        {user.role.replace("_", " ").toUpperCase()}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -419,7 +530,7 @@ export default function UserManagement() {
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        {user.lastLogin ? user.lastLogin : 'Never'}
+                        {user.lastLogin ? user.lastLogin : "Never"}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -430,12 +541,16 @@ export default function UserManagement() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                          <DropdownMenuItem
+                            onClick={() => handleEditUser(user)}
+                          >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit User
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                            {user.status === 'active' ? (
+                          <DropdownMenuItem
+                            onClick={() => toggleUserStatus(user.id)}
+                          >
+                            {user.status === "active" ? (
                               <>
                                 <UserX className="mr-2 h-4 w-4" />
                                 Deactivate
@@ -450,21 +565,28 @@ export default function UserManagement() {
                           {user.id !== currentUser?.id && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <DropdownMenuItem
+                                  onSelect={(e) => e.preventDefault()}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete User
                                 </DropdownMenuItem>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    Delete User
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete {user.name}? This action cannot be undone.
+                                    Are you sure you want to delete {user.name}?
+                                    This action cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteUser(user.id)}
+                                  >
                                     Delete
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -497,7 +619,9 @@ export default function UserManagement() {
               <Input
                 id="edit-name"
                 value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, name: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -514,18 +638,27 @@ export default function UserManagement() {
               <Input
                 id="edit-phone"
                 value={newUser.phone}
-                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, phone: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-role">Role</Label>
-              <Select value={newUser.role} onValueChange={(value: any) => setNewUser({ ...newUser, role: value })}>
+              <Select
+                value={newUser.role}
+                onValueChange={(value: any) =>
+                  setNewUser({ ...newUser, role: value })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="project_manager">Project Manager</SelectItem>
+                  <SelectItem value="project_manager">
+                    Project Manager
+                  </SelectItem>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -535,7 +668,9 @@ export default function UserManagement() {
             <Button variant="outline" onClick={() => setEditingUser(null)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateUser} disabled={submitting}>{submitting ? 'Updating...' : 'Update User'}</Button>
+            <Button onClick={handleUpdateUser} disabled={submitting}>
+              {submitting ? "Updating..." : "Update User"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

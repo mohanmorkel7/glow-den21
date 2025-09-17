@@ -25,10 +25,14 @@ const mapRowToUser = (row: any): User => ({
   avatarUrl: row.avatar_url ?? undefined,
   theme: row.theme ?? undefined,
   language: row.language ?? undefined,
-  notificationsEnabled: typeof row.notifications_enabled === "boolean" ? row.notifications_enabled : undefined,
+  notificationsEnabled:
+    typeof row.notifications_enabled === "boolean"
+      ? row.notifications_enabled
+      : undefined,
   joinDate: row.join_date ?? new Date().toISOString().split("T")[0],
   lastLogin: row.last_login ?? undefined,
-  projectsCount: typeof row.projects_count === "number" ? row.projects_count : undefined,
+  projectsCount:
+    typeof row.projects_count === "number" ? row.projects_count : undefined,
   createdAt: row.created_at ?? new Date().toISOString(),
   updatedAt: row.updated_at ?? new Date().toISOString(),
 });
@@ -36,20 +40,20 @@ const mapRowToUser = (row: any): User => ({
 export const listUsers: RequestHandler = async (req, res) => {
   try {
     const queryParams: UserListQuery = req.query as any;
-    const {
-      search = "",
-      role,
-      status,
-      page = 1,
-      limit = 20,
-    } = queryParams;
+    const { search = "", role, status, page = 1, limit = 20 } = queryParams;
 
     const where: string[] = [];
     const params: any[] = [];
 
     if (search) {
       params.push(`%${String(search).toLowerCase()}%`);
-      where.push("(LOWER(name) LIKE $" + params.length + " OR LOWER(email) LIKE $" + params.length + ")");
+      where.push(
+        "(LOWER(name) LIKE $" +
+          params.length +
+          " OR LOWER(email) LIKE $" +
+          params.length +
+          ")",
+      );
     }
     if (role) {
       params.push(role);
@@ -89,7 +93,13 @@ export const listUsers: RequestHandler = async (req, res) => {
 
     const countQuery = `SELECT COUNT(*) FROM users ${whereSql}`;
 
-    const result = await paginatedQuery(baseQuery, countQuery, params, Number(page), Number(limit));
+    const result = await paginatedQuery(
+      baseQuery,
+      countQuery,
+      params,
+      Number(page),
+      Number(limit),
+    );
 
     const users: User[] = result.data.map(mapRowToUser);
 
@@ -385,13 +395,19 @@ export const updateUserStatus: RequestHandler = async (req, res) => {
 
     if (!["active", "inactive"].includes(String(status))) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "Status must be 'active' or 'inactive'" },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Status must be 'active' or 'inactive'",
+        },
       } as ApiResponse);
     }
 
     if (currentUser.id === id) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "You cannot deactivate your own account" },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "You cannot deactivate your own account",
+        },
       } as ApiResponse);
     }
 
@@ -433,7 +449,10 @@ export const deleteUser: RequestHandler = async (req, res) => {
 
     if (currentUser.id === id) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "You cannot delete your own account" },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "You cannot delete your own account",
+        },
       } as ApiResponse);
     }
 
@@ -462,7 +481,10 @@ export const changePassword: RequestHandler = async (req, res) => {
     const { currentPassword, newPassword }: ChangePasswordRequest = req.body;
     const currentUser: AuthUser = (req as any).user;
 
-    const userResult = await query("SELECT id, hashed_password FROM users WHERE id = $1", [id]);
+    const userResult = await query(
+      "SELECT id, hashed_password FROM users WHERE id = $1",
+      [id],
+    );
     if (userResult.rows.length === 0) {
       return res.status(404).json({
         error: { code: "USER_NOT_FOUND", message: "User not found" },
@@ -480,7 +502,10 @@ export const changePassword: RequestHandler = async (req, res) => {
 
     if (!newPassword) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "New password is required" },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "New password is required",
+        },
       } as ApiResponse);
     }
     if (newPassword.length < 8) {
@@ -496,7 +521,10 @@ export const changePassword: RequestHandler = async (req, res) => {
     if (currentUser.id === id) {
       if (!currentPassword) {
         return res.status(400).json({
-          error: { code: "VALIDATION_ERROR", message: "Current password is required" },
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Current password is required",
+          },
         } as ApiResponse);
       }
 
@@ -506,15 +534,23 @@ export const changePassword: RequestHandler = async (req, res) => {
       );
       if (!isValid) {
         return res.status(400).json({
-          error: { code: "VALIDATION_ERROR", message: "Current password is incorrect" },
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Current password is incorrect",
+          },
         } as ApiResponse);
       }
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await query("UPDATE users SET hashed_password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2", [hashed, id]);
+    await query(
+      "UPDATE users SET hashed_password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [hashed, id],
+    );
 
-    res.json({ data: { message: "Password changed successfully" } } as ApiResponse);
+    res.json({
+      data: { message: "Password changed successfully" },
+    } as ApiResponse);
   } catch (error) {
     console.error("Change password error:", error);
     res.status(500).json({
