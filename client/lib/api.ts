@@ -6,6 +6,21 @@ interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
 }
 
+const decodeJwtPayload = (token: string) => {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const payload = parts[1];
+    // base64url -> base64
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+    const decoded = atob(padded);
+    return JSON.parse(decoded);
+  } catch (e) {
+    return null;
+  }
+};
+
 class ApiClient {
   private getAuthToken(): string | null {
     return localStorage.getItem("authToken");
@@ -68,7 +83,7 @@ class ApiClient {
         }
       }
 
-      // If response is not ok, surface server message if present
+      // If response is not ok, surface server message if present and add helpful debug info for 403
       if (!response.ok) {
         const serverMessage =
           (parsed && parsed.error && parsed.error.message) ||
@@ -76,6 +91,28 @@ class ApiClient {
           (typeof parsed === "string" && parsed) ||
           response.statusText ||
           `HTTP ${response.status}`;
+
+        if (response.status === 403) {
+          // Try to decode JWT to give helpful hint to developer
+          const token = this.getAuthToken();
+          const decoded = token ? decodeJwtPayload(token) : null;
+          const permissions = decoded?.permissions || decoded?.perms || null;
+          const role = decoded?.role || null;
+
+          let hint = "";
+          if (token) {
+            hint = ` User role: ${role ?? 'unknown'}.`;
+            if (permissions) {
+              hint += ` Permissions: ${Array.isArray(permissions) ? permissions.join(',') : JSON.stringify(permissions)}.`;
+            } else {
+              hint += ` Token does not include permissions array.`;
+            }
+          } else {
+            hint = " No auth token found in localStorage.";
+          }
+
+          throw new Error(`${serverMessage}${hint} (403)`);
+        }
 
         throw new Error(String(serverMessage));
       }
@@ -109,43 +146,11 @@ class ApiClient {
 
   // Authentication endpoints
   async login(email: string, password: string) {
-    try {
-      return await this.request("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-        requiresAuth: false,
-      });
-    } catch (error) {
-      // If we get a 500 error (likely database connection issue), provide mock response for development
-      if (error instanceof Error && error.message.includes("HTTP 500")) {
-        console.warn(
-          "Database unavailable, using mock authentication for development",
-        );
-
-        // Mock authentication for development
-        const mockUser = {
-          id: "mock-admin-id",
-          name: "Admin User",
-          email: email,
-          phone: "+1-555-0123",
-          role: "super_admin" as const,
-          status: "active" as const,
-          department: "Administration",
-          jobTitle: "System Administrator",
-          joinDate: "2024-01-01",
-          lastLogin: new Date().toISOString(),
-          createdAt: "2024-01-01T00:00:00Z",
-          updatedAt: new Date().toISOString(),
-        };
-
-        return {
-          token: "mock-jwt-token-" + Date.now(),
-          refreshToken: "mock-refresh-token-" + Date.now(),
-          user: mockUser,
-        };
-      }
-      throw error;
-    }
+    return this.request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      requiresAuth: false,
+    });
   }
 
   async refreshToken(refreshToken: string) {
