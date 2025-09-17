@@ -3163,7 +3163,7 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-600">
-                  {mockHistoricalProcesses.length}
+                  {fileProcesses.filter((p) => p.status === "completed").length}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   All-time completed workflows
