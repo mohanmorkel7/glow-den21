@@ -285,7 +285,7 @@ export default function RequestFiles() {
 
   const handleDownload = async (requestId: string) => {
     const request = fileRequests.find((r) => r.id === requestId);
-    if (!request || !request.downloadLink) return;
+    if (!request) return;
 
     // Generate and download the CSV file
     const nameFromLink = request.downloadLink?.split("/").pop();
@@ -315,10 +315,10 @@ export default function RequestFiles() {
     let csvContent = headers.join(",") + "\n";
 
     // Generate rows with realistic data for the assigned range
-    const start = request.startRow ?? 1;
-    const end = request.endRow ?? request.assignedCount ?? request.requestedCount ?? 0;
-    if (end >= start && end - start < 100000) {
-      for (let i = start; i <= end; i++) {
+    const startRowCalc = request.startRow ?? 1;
+    const endRowCalc = request.endRow ?? request.assignedCount ?? request.requestedCount ?? 0;
+    if (endRowCalc >= startRowCalc && endRowCalc - startRowCalc < 100000) {
+      for (let i = startRowCalc; i <= endRowCalc; i++) {
         const row = [
           i,
           `User ${i}`,
