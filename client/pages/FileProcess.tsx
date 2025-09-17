@@ -1403,6 +1403,9 @@ export default function FileProcess() {
                         onChange={handleFileUpload}
                         className="cursor-pointer"
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Note: Downloads slice the original file rows. CSV is supported for slicing. Excel files are accepted but must be converted to CSV for downloads.
+                      </p>
                       {newProcess.uploadedFile && (
                         <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded">
                           <Upload className="h-4 w-4 text-green-600" />
