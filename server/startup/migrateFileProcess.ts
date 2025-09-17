@@ -55,6 +55,14 @@ export async function ensureFileProcessTables(): Promise<void> {
       )
     `);
 
+    // Non-breaking schema evolution for verification flow
+    await query("ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS uploaded_file_name TEXT");
+    await query("ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS uploaded_file_path TEXT");
+    await query("ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS verification_status TEXT");
+    await query("ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS verified_by TEXT");
+    await query("ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP WITH TIME ZONE");
+    await query("ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS rework_count INT DEFAULT 0");
+
     // Indexes for performance
     await query(
       "CREATE INDEX IF NOT EXISTS idx_file_processes_project_id ON file_processes(project_id)",
