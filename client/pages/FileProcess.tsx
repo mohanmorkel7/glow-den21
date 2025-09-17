@@ -1110,7 +1110,9 @@ export default function FileProcess() {
   };
 
   const getProcessRequests = (processId: string) => {
-    return fileRequests.filter((r) => r.fileProcessId === processId);
+    return fileRequests.filter(
+      (r) => r.fileProcessId === processId || r.status === "pending",
+    );
   };
 
   const getProcessStatusCounts = (processId: string) => {
