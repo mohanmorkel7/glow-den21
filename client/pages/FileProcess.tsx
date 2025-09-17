@@ -1140,7 +1140,10 @@ export default function FileProcess() {
           userName: r.user_name || r.userName || "",
           requestedCount: r.requested_count ?? r.requestedCount ?? 0,
           requestedDate:
-            r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+            r.requested_date ||
+            r.requestedDate ||
+            r.created_at ||
+            new Date().toISOString(),
           status: r.status || "pending",
           fileProcessId: r.file_process_id || r.fileProcessId || null,
           fileProcessName: r.file_process_name || r.fileProcessName || null,
@@ -2555,117 +2558,115 @@ export default function FileProcess() {
                         </TableHeader>
                         <TableBody>
                           {processRequests.map((request) => (
-                              <TableRow key={request.id}>
-                                <TableCell>
-                                  <div>
-                                    <div className="font-medium">
-                                      {request.userName}
-                                    </div>
-                                    {request.assignedBy && (
-                                      <div className="text-xs text-muted-foreground">
-                                        Assigned by: {request.assignedBy}
-                                      </div>
-                                    )}
+                            <TableRow key={request.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">
+                                    {request.userName}
                                   </div>
-                                </TableCell>
-                                <TableCell>
-                                  {(
-                                    request.assignedCount ||
-                                    request.requestedCount
-                                  ).toLocaleString()}
-                                </TableCell>
-                                <TableCell>
-                                  {request.startRow && request.endRow ? (
-                                    <span className="text-sm font-mono">
-                                      {request.startRow.toLocaleString()} -{" "}
-                                      {request.endRow.toLocaleString()}
-                                    </span>
-                                  ) : (
-                                    <span className="text-muted-foreground">
-                                      Pending
-                                    </span>
-                                  )}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="space-y-1">
-                                    <Badge
-                                      className={getRequestStatusBadgeColor(
-                                        request.status,
-                                      )}
-                                    >
-                                      {request.status
-                                        .replace("_", " ")
-                                        .toUpperCase()}
-                                    </Badge>
-                                    {request.status === "assigned" && (
-                                      <div className="text-xs text-blue-600">
-                                        File ready for download
-                                      </div>
-                                    )}
-                                    {request.status === "in_progress" && (
-                                      <div className="text-xs text-orange-600">
-                                        Currently working
-                                      </div>
-                                    )}
-                                    {request.status === "completed" && (
-                                      <div className="text-xs text-green-600">
-                                        Work completed
-                                      </div>
-                                    )}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="text-sm">
-                                    <div>
-                                      {new Date(
-                                        request.assignedDate ||
-                                          request.requestedDate,
-                                      ).toLocaleDateString()}
-                                    </div>
+                                  {request.assignedBy && (
                                     <div className="text-xs text-muted-foreground">
-                                      {new Date(
-                                        request.assignedDate ||
-                                          request.requestedDate,
-                                      ).toLocaleTimeString()}
+                                      Assigned by: {request.assignedBy}
                                     </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex gap-2">
-                                    {request.downloadLink && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const link =
-                                            document.createElement("a");
-                                          link.href =
-                                            request.downloadLink || "";
-                                          link.download =
-                                            request.downloadLink
-                                              ?.split("/")
-                                              .pop() || "file.csv";
-                                          link.click();
-                                        }}
-                                      >
-                                        <Download className="h-3 w-3 mr-1" />
-                                        View File
-                                      </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {(
+                                  request.assignedCount ||
+                                  request.requestedCount
+                                ).toLocaleString()}
+                              </TableCell>
+                              <TableCell>
+                                {request.startRow && request.endRow ? (
+                                  <span className="text-sm font-mono">
+                                    {request.startRow.toLocaleString()} -{" "}
+                                    {request.endRow.toLocaleString()}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground">
+                                    Pending
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <Badge
+                                    className={getRequestStatusBadgeColor(
+                                      request.status,
                                     )}
-                                    {request.status === "completed" && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        <CheckCircle className="h-3 w-3 mr-1" />
-                                        Done
-                                      </Badge>
-                                    )}
+                                  >
+                                    {request.status
+                                      .replace("_", " ")
+                                      .toUpperCase()}
+                                  </Badge>
+                                  {request.status === "assigned" && (
+                                    <div className="text-xs text-blue-600">
+                                      File ready for download
+                                    </div>
+                                  )}
+                                  {request.status === "in_progress" && (
+                                    <div className="text-xs text-orange-600">
+                                      Currently working
+                                    </div>
+                                  )}
+                                  {request.status === "completed" && (
+                                    <div className="text-xs text-green-600">
+                                      Work completed
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  <div>
+                                    {new Date(
+                                      request.assignedDate ||
+                                        request.requestedDate,
+                                    ).toLocaleDateString()}
                                   </div>
-                                </TableCell>
-                              </TableRow>
-                            ),
-                          )}
+                                  <div className="text-xs text-muted-foreground">
+                                    {new Date(
+                                      request.assignedDate ||
+                                        request.requestedDate,
+                                    ).toLocaleTimeString()}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-2">
+                                  {request.downloadLink && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const link =
+                                          document.createElement("a");
+                                        link.href = request.downloadLink || "";
+                                        link.download =
+                                          request.downloadLink
+                                            ?.split("/")
+                                            .pop() || "file.csv";
+                                        link.click();
+                                      }}
+                                    >
+                                      <Download className="h-3 w-3 mr-1" />
+                                      View File
+                                    </Button>
+                                  )}
+                                  {request.status === "completed" && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      <CheckCircle className="h-3 w-3 mr-1" />
+                                      Done
+                                    </Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
                         </TableBody>
                       </Table>
 

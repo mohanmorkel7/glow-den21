@@ -182,7 +182,10 @@ export const listFileRequests: RequestHandler = async (req, res) => {
 
     const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    const limitNum = Math.min(Math.max(parseInt(limit as string) || 200, 1), 1000);
+    const limitNum = Math.min(
+      Math.max(parseInt(limit as string) || 200, 1),
+      1000,
+    );
 
     const sql = `SELECT * FROM file_requests ${whereClause} ORDER BY requested_date DESC LIMIT $${values.length + 1}`;
     const result = await query(sql, [...values, limitNum]);
