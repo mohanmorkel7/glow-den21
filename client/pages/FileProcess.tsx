@@ -1622,7 +1622,15 @@ export default function FileProcess() {
                                 min="1"
                                 max={process?.availableRows || 0}
                               />
-                              <Select defaultValue={request.fileProcessId}>
+                              <Select
+                                value={selectedProcessForRequest[request.id] || request.fileProcessId || ""}
+                                onValueChange={(value) =>
+                                  setSelectedProcessForRequest((prev) => ({
+                                    ...prev,
+                                    [request.id]: value,
+                                  }))
+                                }
+                              >
                                 <SelectTrigger className="w-48">
                                   <SelectValue />
                                 </SelectTrigger>
