@@ -2584,18 +2584,12 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {verificationRequests.length > 0
-                    ? (
-                        verificationRequests.reduce(
-                          (sum, req) => sum + req.uploadedFile.size,
-                          0,
-                        ) /
-                        verificationRequests.length /
-                        1024 /
-                        1024
-                      ).toFixed(1)
-                    : "0"}{" "}
-                  MB
+                  {(() => {
+                    const files = fileRequests.filter((r: any) => r.outputFile?.size).map((r: any) => r.outputFile!.size);
+                    if (files.length === 0) return "0";
+                    const avg = files.reduce((a, b) => a + b, 0) / files.length / 1024 / 1024;
+                    return avg.toFixed(1);
+                  })()} MB
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Per uploaded file
