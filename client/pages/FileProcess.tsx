@@ -103,7 +103,14 @@ interface FileRequest {
   fileProcessId: string;
   requestedCount: number;
   requestedDate: string;
-  status: "pending" | "assigned" | "completed" | "in_progress" | "received";
+  status:
+    | "pending"
+    | "assigned"
+    | "completed"
+    | "in_progress"
+    | "received"
+    | "in_review"
+    | "rework";
   assignedBy?: string;
   assignedDate?: string;
   assignedCount?: number;
@@ -111,6 +118,15 @@ interface FileRequest {
   endRow?: number;
   downloadLink?: string;
   completedDate?: string;
+  // Optional fields populated from server/UI for verification flows
+  fileProcessName?: string | null;
+  userEmail?: string | null;
+  uploadedFileName?: string | null;
+  verifiedBy?: string | null;
+  verifiedDate?: string | null;
+  notes?: string | null;
+  submittedDate?: string | null;
+  outputFile?: { name: string; size: number; uploadDate: string } | null;
 }
 
 interface HistoricalFileProcess {
