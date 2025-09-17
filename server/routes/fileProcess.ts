@@ -12,14 +12,12 @@ export const listFileProcesses: RequestHandler = async (req, res) => {
     res.json({ data: result.rows });
   } catch (error) {
     console.error("List file processes error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to list file processes",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to list file processes",
+      },
+    });
   }
 };
 
@@ -30,22 +28,18 @@ export const getFileProcess: RequestHandler = async (req, res) => {
       id,
     ]);
     if (result.rows.length === 0)
-      return res
-        .status(404)
-        .json({
-          error: { code: "NOT_FOUND", message: "File process not found" },
-        });
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File process not found" },
+      });
     res.json({ data: result.rows[0] });
   } catch (error) {
     console.error("Get file process error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to get file process",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to get file process",
+      },
+    });
   }
 };
 
@@ -63,14 +57,12 @@ export const createFileProcess: RequestHandler = async (req, res) => {
     } = req.body;
 
     if (!name) {
-      return res
-        .status(400)
-        .json({
-          error: { code: "VALIDATION_ERROR", message: "Name is required" },
-        });
+      return res.status(400).json({
+        error: { code: "VALIDATION_ERROR", message: "Name is required" },
+      });
     }
 
-    const id = `fp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
+    const id = `fp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
     const insert = `INSERT INTO file_processes (id, name, project_id, project_name, file_name, total_rows, processed_rows, available_rows, status, created_by, active_users, type, daily_target, automation_config, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,0,$6,'active',NULL,0,$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) RETURNING *`;
 
@@ -90,14 +82,12 @@ export const createFileProcess: RequestHandler = async (req, res) => {
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
     console.error("Create file process error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create file process",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create file process",
+      },
+    });
   }
 };
 
@@ -131,28 +121,24 @@ export const updateFileProcess: RequestHandler = async (req, res) => {
       }
     }
     if (fields.length === 0)
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "No valid fields to update",
-          },
-        });
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "No valid fields to update",
+        },
+      });
     values.push(id);
     const sql = `UPDATE file_processes SET ${fields.join(",")} , updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING *`;
     const result = await query(sql, values);
     res.json({ data: result.rows[0] });
   } catch (error) {
     console.error("Update file process error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update file process",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update file process",
+      },
+    });
   }
 };
 
@@ -163,14 +149,12 @@ export const deleteFileProcess: RequestHandler = async (req, res) => {
     res.status(204).send();
   } catch (error) {
     console.error("Delete file process error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to delete file process",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to delete file process",
+      },
+    });
   }
 };
 
@@ -184,14 +168,12 @@ export const listFileRequests: RequestHandler = async (req, res) => {
     res.json({ data: result.rows });
   } catch (error) {
     console.error("List file requests error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to list file requests",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to list file requests",
+      },
+    });
   }
 };
 
@@ -213,14 +195,12 @@ export const createFileRequest: RequestHandler = async (req, res) => {
     res.status(201).json({ data: result.rows[0] });
   } catch (error) {
     console.error("Create file request error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create file request",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create file request",
+      },
+    });
   }
 };
 
@@ -256,13 +236,11 @@ export const approveFileRequest: RequestHandler = async (req, res) => {
     res.json({ data: result.rows[0] });
   } catch (error) {
     console.error("Approve file request error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to approve file request",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to approve file request",
+      },
+    });
   }
 };
