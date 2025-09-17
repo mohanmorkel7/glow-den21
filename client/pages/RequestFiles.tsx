@@ -168,8 +168,31 @@ export default function RequestFiles() {
       try {
         const all = await apiClient.getFileRequests({ page: 1, limit: 500 });
         const list = Array.isArray(all) ? all : (all as any)?.data || [];
+        const normalized = (list as any[]).map((r: any) => ({
+          id: r.id,
+          userId: r.user_id || r.userId || null,
+          userName: r.user_name || r.userName || "",
+          requestedCount: r.requested_count ?? r.requestedCount ?? 0,
+          requestedDate: r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+          status: r.status || "pending",
+          fileProcessId: r.file_process_id || r.fileProcessId || undefined,
+          fileProcessName: r.file_process_name || r.fileProcessName || undefined,
+          assignedBy: r.assigned_by || r.assignedBy || undefined,
+          assignedDate: r.assigned_date || r.assignedDate || undefined,
+          assignedCount: r.assigned_count ?? r.assignedCount ?? undefined,
+          downloadLink: r.download_link || r.downloadLink || undefined,
+          completedDate: r.completed_date || r.completedDate || undefined,
+          startRow: r.start_row ?? r.startRow ?? undefined,
+          endRow: r.end_row ?? r.endRow ?? undefined,
+          notes: r.notes || undefined,
+          outputFile: r.output_file || undefined,
+          verificationStatus: r.verification_status || r.verificationStatus || undefined,
+          verifiedBy: r.verified_by || r.verifiedBy || undefined,
+          verifiedDate: r.verified_date || r.verifiedDate || undefined,
+          verificationNotes: r.verification_notes || r.verificationNotes || undefined,
+        }));
         setFileRequests(
-          list.filter((r: any) => (r.user_id || r.userId) === currentUser?.id),
+          normalized.filter((r: any) => r.userId === currentUser?.id),
         );
       } catch (e) {
         console.error("Failed to load file requests", e);
