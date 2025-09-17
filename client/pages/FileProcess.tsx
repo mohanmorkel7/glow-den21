@@ -477,6 +477,7 @@ export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [fileProcesses, setFileProcesses] = useState<FileProcess[]>([]);
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
