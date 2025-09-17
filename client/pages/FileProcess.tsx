@@ -474,10 +474,34 @@ const mockVerificationRequests = [
 
 export default function FileProcess() {
   const { user: currentUser } = useAuth();
-  const [fileProcesses, setFileProcesses] =
-    useState<FileProcess[]>(mockFileProcesses);
-  const [fileRequests, setFileRequests] =
-    useState<FileRequest[]>(mockFileRequests);
+  const [fileProcesses, setFileProcesses] = useState<FileProcess[]>([]);
+  const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const processes = await apiClient.getFileProcesses({ page: 1, limit: 200 });
+      const list = Array.isArray(processes) ? processes : (processes as any) || [];
+      setFileProcesses(list as any);
+
+      const requests = await apiClient.getFileRequests({ page: 1, limit: 500 });
+      const reqList = Array.isArray(requests) ? requests : (requests as any) || [];
+      setFileRequests(reqList as any);
+    } catch (err: any) {
+      console.error('Failed to load file process data', err);
+      setError(String(err?.message || err));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [verificationRequests, setVerificationRequests] = useState(
     mockVerificationRequests,
   );
