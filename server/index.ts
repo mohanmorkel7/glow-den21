@@ -200,6 +200,7 @@ export function createServer() {
   app.delete("/api/file-processes/:id", fileProcess.deleteFileProcess as any);
 
   // file requests
+  app.use("/api/file-requests", authenticateToken);
   app.get("/api/file-requests", fileProcess.listFileRequests as any);
   app.post("/api/file-requests", fileProcess.createFileRequest as any);
   app.put("/api/file-requests/:id", fileProcess.updateFileRequest as any);
