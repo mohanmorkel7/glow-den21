@@ -184,7 +184,10 @@ export const listFileRequests: RequestHandler = async (req, res) => {
       // Try to build a heuristic pattern based on process name for download_link matching
       let clause = "";
       try {
-        const procRes = await query("SELECT name FROM file_processes WHERE id = $1", [requestedProcessId]);
+        const procRes = await query(
+          "SELECT name FROM file_processes WHERE id = $1",
+          [requestedProcessId],
+        );
         const name = procRes.rows[0]?.name as string | undefined;
         if (name) {
           const slug = name

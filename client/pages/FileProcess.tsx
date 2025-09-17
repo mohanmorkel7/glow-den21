@@ -1129,7 +1129,11 @@ export default function FileProcess() {
   const openProcessOverview = (process: FileProcess) => {
     setSelectedProcess(process);
     setIsOverviewDialogOpen(true);
-    const safe = (s: string) => s.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+    const safe = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_\-]/g, "");
     const processSlug = safe(process.name || "");
 
     // Fetch latest assignments for this process
@@ -1144,7 +1148,10 @@ export default function FileProcess() {
             userName: r.user_name || r.userName || "",
             requestedCount: r.requested_count ?? r.requestedCount ?? 0,
             requestedDate:
-              r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+              r.requested_date ||
+              r.requestedDate ||
+              r.created_at ||
+              new Date().toISOString(),
             status: r.status || "pending",
             fileProcessId: r.file_process_id || r.fileProcessId || null,
             fileProcessName: r.file_process_name || r.fileProcessName || null,
@@ -1163,7 +1170,9 @@ export default function FileProcess() {
         if (!normalized.length) {
           try {
             const all = await apiClient.getFileRequests({ limit: 1000 });
-            const allList = Array.isArray(all) ? all : ((all as any)?.data as any[]) || [];
+            const allList = Array.isArray(all)
+              ? all
+              : ((all as any)?.data as any[]) || [];
             normalized = normalize(
               allList.filter((r: any) => {
                 const dl: string = r.download_link || r.downloadLink || "";
@@ -1185,7 +1194,8 @@ export default function FileProcess() {
         // Fallback to local filter
         setProcessRequests(
           fileRequests.filter((r: any) => {
-            const dl: string = (r as any).downloadLink || (r as any).download_link || "";
+            const dl: string =
+              (r as any).downloadLink || (r as any).download_link || "";
             return (
               (r as any).fileProcessId === process.id ||
               (dl && dl.toLowerCase().includes(`_${processSlug}_`))

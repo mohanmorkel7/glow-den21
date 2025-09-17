@@ -326,7 +326,9 @@ export default function RequestFiles() {
       const countNum = Number(
         request.assignedCount ?? request.requestedCount ?? 0,
       );
-      endRowCalc = startRowCalc + Math.max(0, (Number.isFinite(countNum) ? countNum : 0) - 1);
+      endRowCalc =
+        startRowCalc +
+        Math.max(0, (Number.isFinite(countNum) ? countNum : 0) - 1);
     }
 
     // Generate rows for the full assigned/requested range
