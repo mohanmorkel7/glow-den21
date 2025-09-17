@@ -489,10 +489,31 @@ export default function FileProcess() {
         page: 1,
         limit: 200,
       });
-      const list = Array.isArray(processes)
-        ? processes
-        : (processes as any) || [];
-      setFileProcesses(list as any);
+      const list = Array.isArray(processes) ? processes : (processes as any) || [];
+
+      // Normalize file_processes fields from server (snake_case) to client camelCase
+      const normalizedProcesses = (list as any[]).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        projectId: p.project_id || p.projectId || null,
+        projectName: p.project_name || p.projectName || null,
+        fileName: p.file_name || p.fileName || null,
+        totalRows: p.total_rows ?? p.totalRows ?? 0,
+        headerRows: p.header_rows ?? p.headerRows ?? 0,
+        processedRows: p.processed_rows ?? p.processedRows ?? 0,
+        availableRows: p.available_rows ?? p.availableRows ?? (p.total_rows ?? p.totalRows ?? 0),
+        uploadDate: p.upload_date || p.uploadDate || null,
+        status: p.status || "pending",
+        createdBy: p.created_by || p.createdBy || null,
+        activeUsers: p.active_users ?? p.activeUsers ?? 0,
+        type: p.type || "manual",
+        dailyTarget: p.daily_target ?? p.dailyTarget ?? null,
+        automationConfig: p.automation_config || p.automationConfig || null,
+        createdAt: p.created_at || p.createdAt || null,
+        updatedAt: p.updated_at || p.updatedAt || null,
+      }));
+
+      setFileProcesses(normalizedProcesses as any);
 
       const requests = await apiClient.getFileRequests({ page: 1, limit: 500 });
       const reqList = Array.isArray(requests) ? requests : (requests as any) || [];
