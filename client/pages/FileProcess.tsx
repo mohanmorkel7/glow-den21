@@ -1889,18 +1889,57 @@ export default function FileProcess() {
                                           .replace("_", " ")}
                                     </Badge>
                                   )}
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openProcessOverview(process);
-                                    }}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    <Eye className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                                        <MoreHorizontal className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditingProcessId(process.id);
+                                          setIsCreateDialogOpen(true);
+                                          setNewProcess({
+                                            name: process.name,
+                                            projectId: process.projectId || "",
+                                            fileName: process.fileName || "",
+                                            totalRows: process.totalRows,
+                                            uploadedFile: null,
+                                            type: process.type,
+                                            dailyTarget: process.dailyTarget || 0,
+                                            automationToolName: process.automationConfig?.toolName || "",
+                                          });
+                                        }}
+                                      >
+                                        <Edit className="h-3 w-3 mr-2" /> Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          if (!confirm("Delete this file process?")) return;
+                                          try {
+                                            await apiClient.deleteFileProcess(process.id);
+                                            await loadData();
+                                          } catch (err) {
+                                            alert("Failed to delete process");
+                                            console.error(err);
+                                          }
+                                        }}
+                                      >
+                                        <Trash2 className="h-3 w-3 mr-2" /> Delete
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openProcessOverview(process);
+                                        }}
+                                      >
+                                        <Eye className="h-3 w-3 mr-2" /> View Details
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </>
                               ) : (
                                 <Button
