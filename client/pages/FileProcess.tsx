@@ -489,7 +489,9 @@ export default function FileProcess() {
         page: 1,
         limit: 200,
       });
-      const list = Array.isArray(processes) ? processes : (processes as any) || [];
+      const list = Array.isArray(processes)
+        ? processes
+        : (processes as any) || [];
 
       // Normalize file_processes fields from server (snake_case) to client camelCase
       const normalizedProcesses = (list as any[]).map((p: any) => ({
@@ -501,7 +503,12 @@ export default function FileProcess() {
         totalRows: p.total_rows ?? p.totalRows ?? 0,
         headerRows: p.header_rows ?? p.headerRows ?? 0,
         processedRows: p.processed_rows ?? p.processedRows ?? 0,
-        availableRows: p.available_rows ?? p.availableRows ?? (p.total_rows ?? p.totalRows ?? 0),
+        availableRows:
+          p.available_rows ??
+          p.availableRows ??
+          p.total_rows ??
+          p.totalRows ??
+          0,
         uploadDate: p.upload_date || p.uploadDate || null,
         status: p.status || "pending",
         createdBy: p.created_by || p.createdBy || null,
@@ -516,7 +523,9 @@ export default function FileProcess() {
       setFileProcesses(normalizedProcesses as any);
 
       const requests = await apiClient.getFileRequests({ page: 1, limit: 500 });
-      const reqList = Array.isArray(requests) ? requests : (requests as any) || [];
+      const reqList = Array.isArray(requests)
+        ? requests
+        : (requests as any) || [];
 
       // Normalize server field names (snake_case) to client camelCase and provide defaults
       const normalized = (reqList as any[]).map((r: any) => ({
@@ -524,7 +533,11 @@ export default function FileProcess() {
         userId: r.user_id || r.userId || null,
         userName: r.user_name || r.userName || "",
         requestedCount: r.requested_count ?? r.requestedCount ?? 0,
-        requestedDate: r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+        requestedDate:
+          r.requested_date ||
+          r.requestedDate ||
+          r.created_at ||
+          new Date().toISOString(),
         status: r.status || "pending",
         fileProcessId: r.file_process_id || r.fileProcessId || null,
         fileProcessName: r.file_process_name || r.fileProcessName || null,
@@ -535,7 +548,8 @@ export default function FileProcess() {
         startRow: r.start_row ?? r.startRow ?? null,
         endRow: r.end_row ?? r.endRow ?? null,
         notes: r.notes || null,
-        verificationStatus: r.verification_status || r.verificationStatus || null,
+        verificationStatus:
+          r.verification_status || r.verificationStatus || null,
         verifiedBy: r.verified_by || r.verifiedBy || null,
         verifiedDate: r.verified_date || r.verifiedDate || null,
         outputFile: r.output_file || r.outputFile || null,
