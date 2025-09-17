@@ -401,6 +401,60 @@ class ApiClient {
     return this.request("/dashboard/user");
   }
 
+  // File processes
+  async getFileProcesses(params?: { page?: number; limit?: number }) {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return this.request(`/file-processes${queryString}`);
+  }
+
+  async getFileProcess(id: string) {
+    return this.request(`/file-processes/${id}`);
+  }
+
+  async createFileProcess(data: any) {
+    return this.request(`/file-processes`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateFileProcess(id: string, data: any) {
+    return this.request(`/file-processes/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteFileProcess(id: string) {
+    return this.request(`/file-processes/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // File requests
+  async getFileRequests(params?: { page?: number; limit?: number }) {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return this.request(`/file-requests${queryString}`);
+  }
+
+  async createFileRequest(data: any) {
+    return this.request(`/file-requests`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async approveFileRequest(id: string, data: any) {
+    return this.request(`/file-requests/${id}/approve`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request("/health", { requiresAuth: false });

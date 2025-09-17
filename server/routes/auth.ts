@@ -34,20 +34,25 @@ export const login: RequestHandler = async (req, res) => {
       } as ApiResponse);
     }
 
-    // Find user by email with role permissions
-    const userQuery = `
-      SELECT u.*, r.name as role_name,
-             ARRAY_AGG(p.id) FILTER (WHERE p.id IS NOT NULL) as permissions
-      FROM users u
-      LEFT JOIN user_roles ur ON u.id = ur.user_id
-      LEFT JOIN roles r ON ur.role_id = r.id
-      LEFT JOIN role_permissions rp ON r.id = rp.role_id  
-      LEFT JOIN permissions p ON rp.permission_id = p.id
-      WHERE LOWER(u.email) = LOWER($1)
-      GROUP BY u.id, r.name
-    `;
-
-    const userResult = await query(userQuery, [email]);
+    // Find user by email. Try full join first; fallback to simple query if role tables are missing
+    let userResult;
+    try {
+      const userQuery = `
+        SELECT u.*, r.name as role_name,
+               ARRAY_AGG(p.id) FILTER (WHERE p.id IS NOT NULL) as permissions
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        LEFT JOIN role_permissions rp ON r.id = rp.role_id
+        LEFT JOIN permissions p ON rp.permission_id = p.id
+        WHERE LOWER(u.email) = LOWER($1)
+        GROUP BY u.id, r.name
+      `;
+      userResult = await query(userQuery, [email]);
+    } catch (e) {
+      const simpleQuery = `SELECT u.* FROM users u WHERE LOWER(u.email) = LOWER($1)`;
+      userResult = await query(simpleQuery, [email]);
+    }
 
     if (userResult.rows.length === 0) {
       return res.status(401).json({
@@ -90,7 +95,7 @@ export const login: RequestHandler = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || [],
+      permissions: Array.isArray(user.permissions) ? user.permissions : [],
     };
 
     const token = jwt.sign(authUser, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
@@ -166,20 +171,25 @@ export const refresh: RequestHandler = async (req, res) => {
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, JWT_SECRET) as { userId: string };
 
-    // Get user with permissions
-    const userQuery = `
-      SELECT u.*, r.name as role_name,
-             ARRAY_AGG(p.id) FILTER (WHERE p.id IS NOT NULL) as permissions
-      FROM users u
-      LEFT JOIN user_roles ur ON u.id = ur.user_id
-      LEFT JOIN roles r ON ur.role_id = r.id
-      LEFT JOIN role_permissions rp ON r.id = rp.role_id  
-      LEFT JOIN permissions p ON rp.permission_id = p.id
-      WHERE u.id = $1 AND u.status = 'active'
-      GROUP BY u.id, r.name
-    `;
-
-    const userResult = await query(userQuery, [decoded.userId]);
+    // Get user with permissions if available; fallback to simple users table
+    let userResult;
+    try {
+      const userQuery = `
+        SELECT u.*, r.name as role_name,
+               ARRAY_AGG(p.id) FILTER (WHERE p.id IS NOT NULL) as permissions
+        FROM users u
+        LEFT JOIN user_roles ur ON u.id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.id
+        LEFT JOIN role_permissions rp ON r.id = rp.role_id
+        LEFT JOIN permissions p ON rp.permission_id = p.id
+        WHERE u.id = $1 AND u.status = 'active'
+        GROUP BY u.id, r.name
+      `;
+      userResult = await query(userQuery, [decoded.userId]);
+    } catch (e) {
+      const simpleQuery = `SELECT u.* FROM users u WHERE u.id = $1 AND u.status = 'active'`;
+      userResult = await query(simpleQuery, [decoded.userId]);
+    }
 
     if (userResult.rows.length === 0) {
       refreshTokenStore.delete(refreshToken);
@@ -199,7 +209,7 @@ export const refresh: RequestHandler = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      permissions: user.permissions || [],
+      permissions: Array.isArray(user.permissions) ? user.permissions : [],
     };
 
     const newToken = jwt.sign(authUser, JWT_SECRET, {

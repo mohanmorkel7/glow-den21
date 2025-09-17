@@ -81,87 +81,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-
     try {
-      // First try real API login
-      try {
-        const response: LoginResponse = await apiClient.login(email, password);
-        if (response && response.token) {
-          localStorage.setItem("authToken", response.token);
-          localStorage.setItem("refreshToken", response.refreshToken);
-          localStorage.setItem("user", JSON.stringify(response.user));
-          setUser(response.user);
-          return true;
-        }
-      } catch (apiError) {
-        console.warn("API login failed:", apiError);
-        // continue to fallback to mock only in development
-        const isDev =
-          !process.env.NODE_ENV ||
-          process.env.NODE_ENV === "development" ||
-          window.location.hostname.includes("localhost");
-        if (!isDev) {
-          return false;
-        }
+      const response: LoginResponse = await apiClient.login(email, password);
+      if (response && response.token) {
+        localStorage.setItem("authToken", response.token);
+        localStorage.setItem("refreshToken", response.refreshToken);
+        localStorage.setItem("user", JSON.stringify(response.user));
+        setUser(response.user);
+        return true;
       }
-
-      // Fallback mock authentication for development
-      // Create mock user based on email domain and common test credentials
-      let role: "super_admin" | "project_manager" | "user" = "user";
-      let name = "Test User";
-      let department = "Operations";
-      let jobTitle = "Operator";
-
-      // Determine role based on email patterns
-      if (email.includes("admin")) {
-        role = "super_admin";
-        name = "Admin User";
-        department = "Administration";
-        jobTitle = "System Administrator";
-      } else if (
-        email.includes("manager") ||
-        email.includes("pm") ||
-        email.includes("project")
-      ) {
-        role = "project_manager";
-        name = "Project Manager";
-        department = "Project Management";
-        jobTitle = "Project Manager";
-      }
-
-      const mockUser = {
-        id: `mock-${role}-id`,
-        name: name,
-        email: email,
-        phone: "+1-555-0123",
-        role: role,
-        status: "active" as const,
-        department: department,
-        jobTitle: jobTitle,
-        joinDate: "2024-01-01",
-        lastLogin: new Date().toISOString(),
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: new Date().toISOString(),
-      };
-
-      const mockResponse = {
-        token: "mock-jwt-token-" + Date.now(),
-        refreshToken: "mock-refresh-token-" + Date.now(),
-        user: mockUser,
-      };
-
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Store tokens and user data
-      localStorage.setItem("authToken", mockResponse.token);
-      localStorage.setItem("refreshToken", mockResponse.refreshToken);
-      localStorage.setItem("user", JSON.stringify(mockResponse.user));
-
-      // Update state
-      setUser(mockResponse.user);
-
-      return true;
+      return false;
     } catch (error) {
       console.error("Login error:", error);
       return false;
