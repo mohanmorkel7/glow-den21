@@ -368,7 +368,7 @@ export const updateUser: RequestHandler = async (req, res) => {
       theme, language, notifications_enabled,
       TO_CHAR(join_date, 'YYYY-MM-DD') AS join_date,
       TO_CHAR(last_login AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_login,
-      COALESCE(projects_count, 0) AS projects_count,
+      COALESCE((SELECT COUNT(*) FROM user_projects up WHERE up.user_id = users.id), 0) AS projects_count,
       TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
       TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at`;
 
