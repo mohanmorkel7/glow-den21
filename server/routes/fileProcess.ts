@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { RequestHandler } from "express";
+import { v4 as uuidv4 } from "uuid";
 import { query, transaction } from "../db/connection";
 
 // List file processes (simple list)
@@ -240,6 +241,64 @@ export const approveFileRequest: RequestHandler = async (req, res) => {
       error: {
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to approve file request",
+      },
+    });
+  }
+};
+
+export const updateFileRequest: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const allowedFields = new Set([
+      "status",
+      "notes",
+      "download_link",
+      "assigned_by",
+      "assigned_count",
+      "start_row",
+      "end_row",
+      // allow setting completed_date explicitly if provided
+      "completed_date",
+    ]);
+
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    for (const [key, value] of Object.entries(req.body || {})) {
+      if (allowedFields.has(key)) {
+        fields.push(`${key} = $${idx}`);
+        values.push(value);
+        idx++;
+      }
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "No valid fields to update",
+        },
+      });
+    }
+
+    values.push(id);
+    const sql = `UPDATE file_requests SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING *`;
+    const result = await query(sql, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
+    }
+
+    res.json({ data: result.rows[0] });
+  } catch (error) {
+    console.error("Update file request error:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update file request",
       },
     });
   }

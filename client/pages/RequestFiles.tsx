@@ -51,6 +51,7 @@ import {
   X,
 } from "lucide-react";
 import { format } from "date-fns";
+import { apiClient } from "@/lib/api";
 
 interface FileRequest {
   id: string;
@@ -149,8 +150,7 @@ const mockDailyStats: DailyStats[] = [
 
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
-  const [fileRequests, setFileRequests] =
-    useState<FileRequest[]>(mockFileRequests);
+  const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>(mockDailyStats);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [requestCount, setRequestCount] = useState(500);
@@ -162,6 +162,22 @@ export default function RequestFiles() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadNotes, setUploadNotes] = useState<string>("");
   const [isDragOver, setIsDragOver] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const all = await apiClient.getFileRequests({ page: 1, limit: 500 });
+        const list = Array.isArray(all) ? all : (all as any)?.data || [];
+        setFileRequests(
+          list.filter((r: any) => (r.user_id || r.userId) === currentUser?.id),
+        );
+      } catch (e) {
+        console.error("Failed to load file requests", e);
+      }
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Only allow users to access this page
   if (currentUser?.role !== "user") {
@@ -188,7 +204,7 @@ export default function RequestFiles() {
     return todayStats || { date: today, completedCount: 0, totalAssigned: 0 };
   };
 
-  const handleFileRequest = () => {
+  const handleFileRequest = async () => {
     // Check if user has any pending or in-progress requests
     const hasActiveRequests = getCurrentUserRequests().some(
       (req) =>
@@ -204,18 +220,37 @@ export default function RequestFiles() {
       return;
     }
 
-    const newRequest: FileRequest = {
-      id: (fileRequests.length + 1).toString(),
-      userId: currentUser.id,
-      userName: currentUser.name,
-      requestedCount: requestCount,
-      requestedDate: new Date().toISOString(),
-      status: "pending",
-    };
-
-    setFileRequests([newRequest, ...fileRequests]);
-    setIsRequestDialogOpen(false);
-    setRequestCount(500);
+    try {
+      const created = await apiClient.createFileRequest({
+        userId: currentUser.id,
+        userName: currentUser.name,
+        requestedCount: requestCount,
+      });
+      const req: any = created as any;
+      const normalized: FileRequest = {
+        id: req.id,
+        userId: req.user_id || currentUser.id,
+        userName: req.user_name || currentUser.name,
+        requestedCount: req.requested_count || requestCount,
+        requestedDate: req.requested_date || new Date().toISOString(),
+        status: req.status || "pending",
+        fileProcessId: req.file_process_id || undefined,
+        fileProcessName: req.file_process_name || undefined,
+        assignedBy: req.assigned_by || undefined,
+        assignedDate: req.assigned_date || undefined,
+        downloadLink: req.download_link || undefined,
+        completedDate: req.completed_date || undefined,
+        startRow: req.start_row || undefined,
+        endRow: req.end_row || undefined,
+        notes: req.notes || undefined,
+      } as any;
+      setFileRequests([normalized, ...fileRequests]);
+      setIsRequestDialogOpen(false);
+      setRequestCount(500);
+    } catch (e) {
+      alert("Failed to submit request");
+      console.error(e);
+    }
   };
 
   const handleDownload = (requestId: string) => {
@@ -277,7 +312,7 @@ export default function RequestFiles() {
     );
   };
 
-  const handleStatusUpdate = (
+  const handleStatusUpdate = async (
     requestId: string,
     newStatus: "in_progress" | "completed",
   ) => {
@@ -288,7 +323,14 @@ export default function RequestFiles() {
       return;
     }
 
-    // For other status changes, proceed normally
+    // For other status changes, proceed normally and persist
+    try {
+      await apiClient.updateFileRequest(requestId, {
+        status: newStatus,
+      } as any);
+    } catch (e) {
+      console.error("Failed to update status", e);
+    }
     setFileRequests(
       fileRequests.map((request) =>
         request.id === requestId ? { ...request, status: newStatus } : request,
@@ -296,7 +338,7 @@ export default function RequestFiles() {
     );
   };
 
-  const handleFileUpload = () => {
+  const handleFileUpload = async () => {
     if (!uploadedFile || !selectedRequestForUpload) return;
 
     // Validate file type
@@ -305,7 +347,17 @@ export default function RequestFiles() {
       return;
     }
 
-    // Update request with uploaded file and set status to pending_verification
+    // Persist status to database
+    try {
+      await apiClient.updateFileRequest(selectedRequestForUpload, {
+        status: "pending_verification",
+        completed_date: new Date().toISOString(),
+        notes: uploadNotes.trim() || null,
+      } as any);
+    } catch (e) {
+      console.error("Failed to update file request", e);
+    }
+    // Update local state
     setFileRequests(
       fileRequests.map((request) =>
         request.id === selectedRequestForUpload
@@ -406,7 +458,7 @@ export default function RequestFiles() {
               Request Files
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[600px] max-h-[75vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Request File Allocation</DialogTitle>
               <DialogDescription>

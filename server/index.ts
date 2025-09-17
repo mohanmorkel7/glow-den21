@@ -197,6 +197,7 @@ export function createServer() {
   // file requests
   app.get("/api/file-requests", fileProcess.listFileRequests as any);
   app.post("/api/file-requests", fileProcess.createFileRequest as any);
+  app.put("/api/file-requests/:id", fileProcess.updateFileRequest as any);
   app.post(
     "/api/file-requests/:id/approve",
     fileProcess.approveFileRequest as any,

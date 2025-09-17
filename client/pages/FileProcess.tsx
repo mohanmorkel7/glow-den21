@@ -477,6 +477,7 @@ export default function FileProcess() {
   const { user: currentUser } = useAuth();
   const [fileProcesses, setFileProcesses] = useState<FileProcess[]>([]);
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -491,13 +492,82 @@ export default function FileProcess() {
       const list = Array.isArray(processes)
         ? processes
         : (processes as any) || [];
-      setFileProcesses(list as any);
+
+      // Normalize file_processes fields from server (snake_case) to client camelCase
+      const normalizedProcesses = (list as any[]).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        projectId: p.project_id || p.projectId || null,
+        projectName: p.project_name || p.projectName || null,
+        fileName: p.file_name || p.fileName || null,
+        totalRows: p.total_rows ?? p.totalRows ?? 0,
+        headerRows: p.header_rows ?? p.headerRows ?? 0,
+        processedRows: p.processed_rows ?? p.processedRows ?? 0,
+        availableRows:
+          p.available_rows ??
+          p.availableRows ??
+          p.total_rows ??
+          p.totalRows ??
+          0,
+        uploadDate: p.upload_date || p.uploadDate || null,
+        status: p.status || "pending",
+        createdBy: p.created_by || p.createdBy || null,
+        activeUsers: p.active_users ?? p.activeUsers ?? 0,
+        type: p.type || "manual",
+        dailyTarget: p.daily_target ?? p.dailyTarget ?? null,
+        automationConfig: p.automation_config || p.automationConfig || null,
+        createdAt: p.created_at || p.createdAt || null,
+        updatedAt: p.updated_at || p.updatedAt || null,
+      }));
+
+      setFileProcesses(normalizedProcesses as any);
 
       const requests = await apiClient.getFileRequests({ page: 1, limit: 500 });
       const reqList = Array.isArray(requests)
         ? requests
         : (requests as any) || [];
-      setFileRequests(reqList as any);
+
+      // Normalize server field names (snake_case) to client camelCase and provide defaults
+      const normalized = (reqList as any[]).map((r: any) => ({
+        id: r.id,
+        userId: r.user_id || r.userId || null,
+        userName: r.user_name || r.userName || "",
+        requestedCount: r.requested_count ?? r.requestedCount ?? 0,
+        requestedDate:
+          r.requested_date ||
+          r.requestedDate ||
+          r.created_at ||
+          new Date().toISOString(),
+        status: r.status || "pending",
+        fileProcessId: r.file_process_id || r.fileProcessId || null,
+        fileProcessName: r.file_process_name || r.fileProcessName || null,
+        assignedBy: r.assigned_by || r.assignedBy || null,
+        assignedDate: r.assigned_date || r.assignedDate || null,
+        downloadLink: r.download_link || r.downloadLink || null,
+        completedDate: r.completed_date || r.completedDate || null,
+        startRow: r.start_row ?? r.startRow ?? null,
+        endRow: r.end_row ?? r.endRow ?? null,
+        notes: r.notes || null,
+        verificationStatus:
+          r.verification_status || r.verificationStatus || null,
+        verifiedBy: r.verified_by || r.verifiedBy || null,
+        verifiedDate: r.verified_date || r.verifiedDate || null,
+        outputFile: r.output_file || r.outputFile || null,
+      }));
+
+      setFileRequests(normalized as any);
+      // Load active projects
+      try {
+        const projs = await apiClient.getProjects({
+          status: "active",
+          limit: 200,
+        });
+        const projList =
+          (projs as any)?.data || (Array.isArray(projs) ? projs : []);
+        setProjects(projList as any);
+      } catch (e) {
+        console.warn("Failed to load projects", e);
+      }
     } catch (err: any) {
       console.error("Failed to load file process data", err);
       setError(String(err?.message || err));
@@ -514,6 +584,10 @@ export default function FileProcess() {
     mockVerificationRequests,
   );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingProcessId, setEditingProcessId] = useState<string | null>(null);
+  const [selectedProcessForRequest, setSelectedProcessForRequest] = useState<
+    Record<string, string>
+  >({});
   const [selectedProcess, setSelectedProcess] = useState<FileProcess | null>(
     null,
   );
@@ -895,41 +969,41 @@ export default function FileProcess() {
     reader.readAsText(file, "UTF-8");
   };
 
-  const handleCreateProcess = () => {
-    const availableRows = newProcess.totalRows;
+  const handleCreateProcess = async () => {
+    try {
+      const project = projects.find((p: any) => p.id === newProcess.projectId);
+      const payload: any = {
+        name: newProcess.name,
+        projectId: newProcess.projectId || null,
+        projectName: project?.name || null,
+        fileName: newProcess.type === "manual" ? newProcess.fileName : null,
+        totalRows: newProcess.totalRows,
+        type: newProcess.type,
+        dailyTarget:
+          newProcess.type === "automation" ? newProcess.dailyTarget : null,
+        automationConfig:
+          newProcess.type === "automation"
+            ? {
+                toolName: newProcess.automationToolName,
+                lastUpdate: new Date().toISOString(),
+                dailyCompletions: [],
+              }
+            : null,
+      };
 
-    const process: FileProcess = {
-      id: `fp_${fileProcesses.length + 1}`,
-      name: newProcess.name,
-      projectId: newProcess.projectId,
-      projectName:
-        mockProjects.find((p) => p.id === newProcess.projectId)?.name ||
-        "Unknown Project",
-      fileName: newProcess.type === "manual" ? newProcess.fileName : undefined,
-      totalRows: newProcess.totalRows,
-      headerRows: 0,
-      processedRows: 0,
-      availableRows: availableRows,
-      uploadDate: new Date().toISOString(),
-      status: newProcess.type === "automation" ? "pending" : "active",
-      createdBy: currentUser?.name || "Unknown",
-      activeUsers: newProcess.type === "automation" ? 0 : 0,
-      type: newProcess.type,
-      dailyTarget:
-        newProcess.type === "automation" ? newProcess.dailyTarget : undefined,
-      automationConfig:
-        newProcess.type === "automation"
-          ? {
-              toolName: newProcess.automationToolName,
-              lastUpdate: new Date().toISOString(),
-              dailyCompletions: [],
-            }
-          : undefined,
-    };
-
-    setFileProcesses([process, ...fileProcesses]);
-    resetForm();
-    setIsCreateDialogOpen(false);
+      if (editingProcessId) {
+        await apiClient.updateFileProcess(editingProcessId, payload);
+      } else {
+        await apiClient.createFileProcess(payload);
+      }
+      await loadData();
+      resetForm();
+      setEditingProcessId(null);
+      setIsCreateDialogOpen(false);
+    } catch (e) {
+      alert("Failed to save file process");
+      console.error(e);
+    }
   };
 
   const generateDownloadLink = (
@@ -943,7 +1017,7 @@ export default function FileProcess() {
     return `/downloads/${fileName}`;
   };
 
-  const handleApproveRequest = (
+  const handleApproveRequest = async (
     requestId: string,
     processId: string,
     assignedCount: number,
@@ -964,44 +1038,22 @@ export default function FileProcess() {
       request.userName,
     );
 
-    // Update request with download link and assignment details
-    setFileRequests(
-      fileRequests.map((r) =>
-        r.id === requestId
-          ? {
-              ...r,
-              status: "assigned",
-              assignedBy: currentUser?.name,
-              assignedDate: new Date().toISOString(),
-              assignedCount,
-              startRow,
-              endRow,
-              downloadLink,
-              fileProcessId: processId,
-              fileProcessName: process.name,
-            }
-          : r,
-      ),
-    );
-
-    // Update file process
-    setFileProcesses(
-      fileProcesses.map((p) =>
-        p.id === processId
-          ? {
-              ...p,
-              processedRows: p.processedRows + assignedCount,
-              availableRows: p.availableRows - assignedCount,
-              activeUsers: p.activeUsers + 1,
-            }
-          : p,
-      ),
-    );
-
-    // Show success message
-    alert(
-      `File generated and assigned to ${request.userName}!\nRows ${startRow}-${endRow} (${assignedCount} files)\nDownload will be available in their Request Files page.`,
-    );
+    try {
+      await apiClient.approveFileRequest(requestId, {
+        assignedCount,
+        processId,
+        startRow,
+        endRow,
+        assignedBy: currentUser?.name,
+      });
+      await loadData();
+      alert(
+        `File generated and assigned to ${request.userName}!\nRows ${startRow}-${endRow} (${assignedCount} files)\nDownload will be available in their Request Files page.`,
+      );
+    } catch (e) {
+      console.error("Failed to approve request", e);
+      alert("Failed to approve request");
+    }
   };
 
   const getPendingRequests = () => {
@@ -1101,12 +1153,16 @@ export default function FileProcess() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button
+              onClick={() => {
+                setEditingProcessId(null);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create File Process
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[720px] max-h-[75vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New File Process</DialogTitle>
               <DialogDescription>
@@ -1137,18 +1193,18 @@ export default function FileProcess() {
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockProjects
-                      .filter((p) => p.status === "active")
-                      .map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          <div className="flex flex-col">
-                            <span>{project.name}</span>
+                    {projects.map((project: any) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex flex-col">
+                          <span>{project.name}</span>
+                          {project.description && (
                             <span className="text-xs text-muted-foreground">
-                              {project.client}
+                              {project.description}
                             </span>
-                          </div>
-                        </SelectItem>
-                      ))}
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

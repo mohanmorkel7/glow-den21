@@ -455,6 +455,13 @@ class ApiClient {
     });
   }
 
+  async updateFileRequest(id: string, data: any) {
+    return this.request(`/file-requests/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request("/health", { requiresAuth: false });
