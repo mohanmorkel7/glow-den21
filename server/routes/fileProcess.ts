@@ -161,10 +161,32 @@ export const deleteFileProcess: RequestHandler = async (req, res) => {
 // Requests
 export const listFileRequests: RequestHandler = async (req, res) => {
   try {
-    const result = await query(
-      "SELECT * FROM file_requests ORDER BY requested_date DESC LIMIT $1",
-      [200],
-    );
+    const { processId, file_process_id, status, userId, user_id, limit } =
+      req.query as any;
+
+    const where: string[] = [];
+    const values: any[] = [];
+
+    if (processId || file_process_id) {
+      values.push(processId || file_process_id);
+      where.push(`file_process_id = $${values.length}`);
+    }
+    if (status) {
+      values.push(status);
+      where.push(`status = $${values.length}`);
+    }
+    if (userId || user_id) {
+      values.push(userId || user_id);
+      where.push(`user_id = $${values.length}`);
+    }
+
+    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+    const limitNum = Math.min(Math.max(parseInt(limit as string) || 200, 1), 1000);
+
+    const sql = `SELECT * FROM file_requests ${whereClause} ORDER BY requested_date DESC LIMIT $${values.length + 1}`;
+    const result = await query(sql, [...values, limitNum]);
+
     res.json({ data: result.rows });
   } catch (error) {
     console.error("List file requests error:", error);
