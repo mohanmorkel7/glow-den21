@@ -69,7 +69,7 @@ export const createFileProcess: RequestHandler = async (req, res) => {
         });
     }
 
-    const id = `fp_${uuidv4()}`;
+    const id = `fp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
 
     const insert = `INSERT INTO file_processes (id, name, project_id, project_name, file_name, total_rows, processed_rows, available_rows, status, created_by, active_users, type, daily_target, automation_config, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,0,$6,'active',NULL,0,$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) RETURNING *`;
 
