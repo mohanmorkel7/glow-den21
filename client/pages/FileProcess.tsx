@@ -1148,18 +1148,18 @@ export default function FileProcess() {
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockProjects
-                      .filter((p) => p.status === "active")
-                      .map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          <div className="flex flex-col">
-                            <span>{project.name}</span>
+                    {projects.map((project: any) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        <div className="flex flex-col">
+                          <span>{project.name}</span>
+                          {project.description && (
                             <span className="text-xs text-muted-foreground">
-                              {project.client}
+                              {project.description}
                             </span>
-                          </div>
-                        </SelectItem>
-                      ))}
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
