@@ -199,9 +199,23 @@ export default function RequestFiles() {
           verificationNotes:
             r.verification_notes || r.verificationNotes || undefined,
         }));
-        setFileRequests(
-          normalized.filter((r: any) => r.userId === currentUser?.id),
-        );
+        const userList = normalized.filter((r: any) => r.userId === currentUser?.id);
+        setFileRequests(userList);
+
+        // Convert any newly assigned requests to in_progress (display + persist)
+        const justAssigned = userList.filter((r: any) => r.status === "assigned");
+        if (justAssigned.length > 0) {
+          // Update server in background; ignore failures
+          Promise.allSettled(
+            justAssigned.map((r: any) =>
+              apiClient.updateFileRequest(r.id, { status: "in_progress" } as any),
+            ),
+          ).catch(() => undefined);
+          // Update UI immediately
+          setFileRequests((prev) =>
+            prev.map((r) => (r.status === "assigned" ? { ...r, status: "in_progress" } : r)),
+          );
+        }
       } catch (e) {
         console.error("Failed to load file requests", e);
       }
