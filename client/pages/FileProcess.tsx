@@ -1129,41 +1129,68 @@ export default function FileProcess() {
   const openProcessOverview = (process: FileProcess) => {
     setSelectedProcess(process);
     setIsOverviewDialogOpen(true);
+    const safe = (s: string) => s.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+    const processSlug = safe(process.name || "");
+
     // Fetch latest assignments for this process
     apiClient
       .getFileRequests({ processId: process.id, limit: 500 })
-      .then((res: any) => {
+      .then(async (res: any) => {
         const list = Array.isArray(res) ? res : (res?.data as any[]) || [];
-        const normalized = (list as any[]).map((r: any) => ({
-          id: r.id,
-          userId: r.user_id || r.userId || null,
-          userName: r.user_name || r.userName || "",
-          requestedCount: r.requested_count ?? r.requestedCount ?? 0,
-          requestedDate:
-            r.requested_date ||
-            r.requestedDate ||
-            r.created_at ||
-            new Date().toISOString(),
-          status: r.status || "pending",
-          fileProcessId: r.file_process_id || r.fileProcessId || null,
-          fileProcessName: r.file_process_name || r.fileProcessName || null,
-          assignedBy: r.assigned_by || r.assignedBy || null,
-          assignedDate: r.assigned_date || r.assignedDate || null,
-          downloadLink: r.download_link || r.downloadLink || null,
-          completedDate: r.completed_date || r.completedDate || null,
-          startRow: r.start_row ?? r.startRow ?? null,
-          endRow: r.end_row ?? r.endRow ?? null,
-          assignedCount: r.assigned_count ?? r.assignedCount ?? null,
-        }));
+        const normalize = (arr: any[]) =>
+          (arr as any[]).map((r: any) => ({
+            id: r.id,
+            userId: r.user_id || r.userId || null,
+            userName: r.user_name || r.userName || "",
+            requestedCount: r.requested_count ?? r.requestedCount ?? 0,
+            requestedDate:
+              r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+            status: r.status || "pending",
+            fileProcessId: r.file_process_id || r.fileProcessId || null,
+            fileProcessName: r.file_process_name || r.fileProcessName || null,
+            assignedBy: r.assigned_by || r.assignedBy || null,
+            assignedDate: r.assigned_date || r.assignedDate || null,
+            downloadLink: r.download_link || r.downloadLink || null,
+            completedDate: r.completed_date || r.completedDate || null,
+            startRow: r.start_row ?? r.startRow ?? null,
+            endRow: r.end_row ?? r.endRow ?? null,
+            assignedCount: r.assigned_count ?? r.assignedCount ?? null,
+          }));
+
+        let normalized = normalize(list as any);
+
+        // If none found (possibly due to missing file_process_id), try a broad fetch and heuristic match
+        if (!normalized.length) {
+          try {
+            const all = await apiClient.getFileRequests({ limit: 1000 });
+            const allList = Array.isArray(all) ? all : ((all as any)?.data as any[]) || [];
+            normalized = normalize(
+              allList.filter((r: any) => {
+                const dl: string = r.download_link || r.downloadLink || "";
+                return (
+                  r.file_process_id === process.id ||
+                  (dl && dl.toLowerCase().includes(`_${processSlug}_`))
+                );
+              }),
+            ) as any;
+          } catch (e) {
+            console.warn("Heuristic fetch failed", e);
+          }
+        }
+
         setProcessRequests(normalized as any);
       })
       .catch((e) => {
         console.warn("Failed to load process requests", e);
-        // Fallback to local filter if API fails
+        // Fallback to local filter
         setProcessRequests(
-          fileRequests.filter(
-            (r: any) => (r.fileProcessId || r.file_process_id) === process.id,
-          ) as any,
+          fileRequests.filter((r: any) => {
+            const dl: string = (r as any).downloadLink || (r as any).download_link || "";
+            return (
+              (r as any).fileProcessId === process.id ||
+              (dl && dl.toLowerCase().includes(`_${processSlug}_`))
+            );
+          }) as any,
         );
       });
   };
