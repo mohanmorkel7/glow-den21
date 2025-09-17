@@ -16,15 +16,7 @@ type DbConfigOptions = {
   connectionTimeoutMillis?: number;
 };
 
-const isConfigured =
-  Boolean(process.env.DATABASE_URL) ||
-  Boolean(
-    process.env.DB_HOST &&
-      process.env.DB_PORT &&
-      process.env.DB_NAME &&
-      process.env.DB_USER &&
-      process.env.DB_PASSWORD,
-  );
+const isConfigured =true;
 
 const dbConfig: DbConfigOptions = process.env.DATABASE_URL
   ? {
@@ -41,11 +33,11 @@ const dbConfig: DbConfigOptions = process.env.DATABASE_URL
     }
   : isConfigured
     ? {
-        host: process.env.DB_HOST,
-        port: parseInt(process.env.DB_PORT as string, 10),
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
+        host: "10.30.11.95",
+        port: parseInt("2019"),
+        database: "dev_test",
+        user: "crmuser",
+        password: "myl@p@y-crm$102019",
         ssl:
           process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
         max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
