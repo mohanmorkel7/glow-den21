@@ -495,10 +495,32 @@ export default function FileProcess() {
       setFileProcesses(list as any);
 
       const requests = await apiClient.getFileRequests({ page: 1, limit: 500 });
-      const reqList = Array.isArray(requests)
-        ? requests
-        : (requests as any) || [];
-      setFileRequests(reqList as any);
+      const reqList = Array.isArray(requests) ? requests : (requests as any) || [];
+
+      // Normalize server field names (snake_case) to client camelCase and provide defaults
+      const normalized = (reqList as any[]).map((r: any) => ({
+        id: r.id,
+        userId: r.user_id || r.userId || null,
+        userName: r.user_name || r.userName || "",
+        requestedCount: r.requested_count ?? r.requestedCount ?? 0,
+        requestedDate: r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+        status: r.status || "pending",
+        fileProcessId: r.file_process_id || r.fileProcessId || null,
+        fileProcessName: r.file_process_name || r.fileProcessName || null,
+        assignedBy: r.assigned_by || r.assignedBy || null,
+        assignedDate: r.assigned_date || r.assignedDate || null,
+        downloadLink: r.download_link || r.downloadLink || null,
+        completedDate: r.completed_date || r.completedDate || null,
+        startRow: r.start_row ?? r.startRow ?? null,
+        endRow: r.end_row ?? r.endRow ?? null,
+        notes: r.notes || null,
+        verificationStatus: r.verification_status || r.verificationStatus || null,
+        verifiedBy: r.verified_by || r.verifiedBy || null,
+        verifiedDate: r.verified_date || r.verifiedDate || null,
+        outputFile: r.output_file || r.outputFile || null,
+      }));
+
+      setFileRequests(normalized as any);
       // Load active projects
       try {
         const projs = await apiClient.getProjects({
