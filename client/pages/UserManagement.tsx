@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,96 +25,19 @@ import {
   Phone,
   Calendar
 } from 'lucide-react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: 'super_admin' | 'project_manager' | 'user';
-  department: string;
-  jobTitle: string;
-  status: 'active' | 'inactive';
-  joinDate: string;
-  lastLogin: string;
-  projects: number;
-}
-
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Super Admin',
-    email: 'admin@websyntactic.com',
-    phone: '+1 (555) 123-4567',
-    role: 'super_admin',
-    department: 'Administration',
-    jobTitle: 'System Administrator',
-    status: 'active',
-    joinDate: '2024-01-01',
-    lastLogin: '2024-01-15 10:30',
-    projects: 0
-  },
-  {
-    id: '2',
-    name: 'John Smith',
-    email: 'john.smith@websyntactic.com',
-    phone: '+1 (555) 234-5678',
-    role: 'project_manager',
-    department: 'Project Management',
-    jobTitle: 'Senior Project Manager',
-    status: 'active',
-    joinDate: '2024-01-02',
-    lastLogin: '2024-01-15 09:15',
-    projects: 3
-  },
-  {
-    id: '3',
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@websyntactic.com',
-    phone: '+1 (555) 345-6789',
-    role: 'user',
-    department: 'Operations',
-    jobTitle: 'Data Processor',
-    status: 'active',
-    joinDate: '2024-01-05',
-    lastLogin: '2024-01-15 08:45',
-    projects: 2
-  },
-  {
-    id: '4',
-    name: 'Mike Davis',
-    email: 'mike.davis@websyntactic.com',
-    phone: '+1 (555) 456-7890',
-    role: 'user',
-    department: 'Operations',
-    jobTitle: 'Junior Data Analyst',
-    status: 'inactive',
-    joinDate: '2024-01-08',
-    lastLogin: '2024-01-12 16:20',
-    projects: 1
-  },
-  {
-    id: '5',
-    name: 'Emily Wilson',
-    email: 'emily.wilson@websyntactic.com',
-    phone: '+1 (555) 567-8901',
-    role: 'project_manager',
-    department: 'Project Management',
-    jobTitle: 'Project Manager',
-    status: 'active',
-    joinDate: '2024-01-10',
-    lastLogin: '2024-01-15 11:00',
-    projects: 2
-  }
-];
+import { apiClient } from '@/lib/api';
+import { User } from '@shared/types';
+import { toast } from 'sonner';
 
 export default function UserManagement() {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -125,25 +48,54 @@ export default function UserManagement() {
     password: ''
   });
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    return matchesSearch && matchesRole;
-  });
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+      if (searchTerm.trim()) params.search = searchTerm.trim();
+      if (selectedRole !== 'all') params.role = selectedRole;
+      const res = await apiClient.getUsers(params);
+      setUsers(res.data);
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleAddUser = () => {
-    const user: User = {
-      id: (users.length + 1).toString(),
-      ...newUser,
-      status: 'active',
-      joinDate: new Date().toISOString().split('T')[0],
-      lastLogin: 'Never',
-      projects: 0
-    };
-    setUsers([...users, user]);
-    setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
-    setIsAddDialogOpen(false);
+  useEffect(() => {
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRole]);
+
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    const term = searchTerm.toLowerCase();
+    return users.filter(u => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term));
+  }, [users, searchTerm]);
+
+  const handleAddUser = async () => {
+    try {
+      setSubmitting(true);
+      const payload = {
+        name: newUser.name,
+        email: newUser.email,
+        phone: newUser.phone || undefined,
+        role: newUser.role,
+        password: newUser.password,
+        department: newUser.department || undefined,
+        jobTitle: newUser.jobTitle || undefined,
+      };
+      const created: User = await apiClient.createUser(payload);
+      setUsers(prev => [...prev, created]);
+      setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
+      setIsAddDialogOpen(false);
+      toast.success('User created');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to create user');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEditUser = (user: User) => {
@@ -151,36 +103,58 @@ export default function UserManagement() {
     setNewUser({
       name: user.name,
       email: user.email,
-      phone: user.phone,
+      phone: user.phone || '',
       role: user.role,
-      department: user.department,
-      jobTitle: user.jobTitle,
+      department: user.department || '',
+      jobTitle: user.jobTitle || '',
       password: ''
     });
   };
 
-  const handleUpdateUser = () => {
+  const handleUpdateUser = async () => {
     if (!editingUser) return;
-    
-    setUsers(users.map(u => 
-      u.id === editingUser.id 
-        ? { ...u, ...newUser }
-        : u
-    ));
-    setEditingUser(null);
-    setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
+    try {
+      setSubmitting(true);
+      const updatePayload: any = {
+        name: newUser.name,
+        phone: newUser.phone || undefined,
+        role: newUser.role,
+        department: newUser.department || undefined,
+        jobTitle: newUser.jobTitle || undefined,
+      };
+      const updated: User = await apiClient.updateUser(editingUser.id, updatePayload);
+      setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
+      setEditingUser(null);
+      setNewUser({ name: '', email: '', phone: '', role: 'user', department: '', jobTitle: '', password: '' });
+      toast.success('User updated');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update user');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter(u => u.id !== userId));
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await apiClient.deleteUser(userId);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      toast.success('User deleted');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete user');
+    }
   };
 
-  const toggleUserStatus = (userId: string) => {
-    setUsers(users.map(u => 
-      u.id === userId 
-        ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' }
-        : u
-    ));
+  const toggleUserStatus = async (userId: string) => {
+    const target = users.find(u => u.id === userId);
+    if (!target) return;
+    const newStatus = target.status === 'active' ? 'inactive' : 'active';
+    try {
+      const updated: User = await apiClient.updateUserStatus(userId, newStatus);
+      setUsers(prev => prev.map(u => (u.id === updated.id ? updated : u)));
+      toast.success('Status updated');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to update status');
+    }
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -310,11 +284,40 @@ export default function UserManagement() {
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAddUser}>Add User</Button>
+              <Button onClick={handleAddUser} disabled={submitting}>{submitting ? 'Adding...' : 'Add User'}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onBlur={loadUsers}
+                className="pl-10"
+              />
+            </div>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filter by role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="super_admin">Super Admin</SelectItem>
+                <SelectItem value="project_manager">Project Manager</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -356,34 +359,6 @@ export default function UserManagement() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-                <SelectItem value="project_manager">Project Manager</SelectItem>
-                <SelectItem value="user">User</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Users Table */}
       <Card>
         <CardHeader>
@@ -393,113 +368,117 @@ export default function UserManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Projects</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {user.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {user.email}
-                        </div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {user.phone}
+          {loading ? (
+            <div className="text-sm text-muted-foreground">Loading users...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Projects</TableHead>
+                  <TableHead>Last Login</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback>
+                            {user.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
+                            {user.email}
+                          </div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {user.phone || '-'}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getRoleBadgeColor(user.role)}>
-                      {user.role.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusBadgeColor(user.status)}>
-                      {user.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{user.projects}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      {user.lastLogin}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit User
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                          {user.status === 'active' ? (
-                            <>
-                              <UserX className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Activate
-                            </>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getRoleBadgeColor(user.role)}>
+                        {user.role.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatusBadgeColor(user.status)}>
+                        {user.status.toUpperCase()}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{user.projectsCount ?? 0}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        {user.lastLogin ? user.lastLogin : 'Never'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
+                            {user.status === 'active' ? (
+                              <>
+                                <UserX className="mr-2 h-4 w-4" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Activate
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          {user.id !== currentUser?.id && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete User
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete {user.name}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
-                        </DropdownMenuItem>
-                        {user.id !== currentUser?.id && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete User
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete User</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete {user.name}? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteUser(user.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -527,7 +506,7 @@ export default function UserManagement() {
                 id="edit-email"
                 type="email"
                 value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                disabled
               />
             </div>
             <div className="space-y-2">
@@ -556,7 +535,7 @@ export default function UserManagement() {
             <Button variant="outline" onClick={() => setEditingUser(null)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateUser}>Update User</Button>
+            <Button onClick={handleUpdateUser} disabled={submitting}>{submitting ? 'Updating...' : 'Update User'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
