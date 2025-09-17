@@ -173,10 +173,15 @@ export default function RequestFiles() {
           userId: r.user_id || r.userId || null,
           userName: r.user_name || r.userName || "",
           requestedCount: r.requested_count ?? r.requestedCount ?? 0,
-          requestedDate: r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+          requestedDate:
+            r.requested_date ||
+            r.requestedDate ||
+            r.created_at ||
+            new Date().toISOString(),
           status: r.status || "pending",
           fileProcessId: r.file_process_id || r.fileProcessId || undefined,
-          fileProcessName: r.file_process_name || r.fileProcessName || undefined,
+          fileProcessName:
+            r.file_process_name || r.fileProcessName || undefined,
           assignedBy: r.assigned_by || r.assignedBy || undefined,
           assignedDate: r.assigned_date || r.assignedDate || undefined,
           assignedCount: r.assigned_count ?? r.assignedCount ?? undefined,
@@ -186,10 +191,12 @@ export default function RequestFiles() {
           endRow: r.end_row ?? r.endRow ?? undefined,
           notes: r.notes || undefined,
           outputFile: r.output_file || undefined,
-          verificationStatus: r.verification_status || r.verificationStatus || undefined,
+          verificationStatus:
+            r.verification_status || r.verificationStatus || undefined,
           verifiedBy: r.verified_by || r.verifiedBy || undefined,
           verifiedDate: r.verified_date || r.verifiedDate || undefined,
-          verificationNotes: r.verification_notes || r.verificationNotes || undefined,
+          verificationNotes:
+            r.verification_notes || r.verificationNotes || undefined,
         }));
         setFileRequests(
           normalized.filter((r: any) => r.userId === currentUser?.id),

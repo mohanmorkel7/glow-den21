@@ -40,20 +40,21 @@ const dbConfig: DbConfigOptions = process.env.DATABASE_URL
       ),
     }
   : isConfigured
-  ? {
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT as string, 10),
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
-      max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
-      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
-      connectionTimeoutMillis: parseInt(
-        process.env.DB_CONNECTION_TIMEOUT || "2000",
-      ),
-    }
-  : {};
+    ? {
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT as string, 10),
+        database: process.env.DB_NAME,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        ssl:
+          process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+        max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
+        idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
+        connectionTimeoutMillis: parseInt(
+          process.env.DB_CONNECTION_TIMEOUT || "2000",
+        ),
+      }
+    : {};
 
 let pool: Pool | null = null;
 

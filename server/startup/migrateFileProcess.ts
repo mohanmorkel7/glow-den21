@@ -3,7 +3,9 @@ import { query, isDbConfigured } from "../db/connection";
 export async function ensureFileProcessTables(): Promise<void> {
   try {
     if (!isDbConfigured()) {
-      console.warn("Database not configured. Skipping file process migrations.");
+      console.warn(
+        "Database not configured. Skipping file process migrations.",
+      );
       return;
     }
 
