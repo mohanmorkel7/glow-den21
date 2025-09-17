@@ -1816,10 +1816,13 @@ export default function FileProcess() {
                               )}
                           </div>
                           <div className="flex items-center gap-1">
-                            <Badge className={getStatusBadgeColor(process.status)}>
+                            <Badge
+                              className={getStatusBadgeColor(process.status)}
+                            >
                               {process.status.toUpperCase().replace("_", " ")}
                             </Badge>
-                            {(currentUser?.role === "super_admin" || currentUser?.role === "project_manager") && (
+                            {(currentUser?.role === "super_admin" ||
+                              currentUser?.role === "project_manager") && (
                               <>
                                 <Button
                                   size="sm"
@@ -1839,7 +1842,8 @@ export default function FileProcess() {
                                       type: process.type,
                                       dailyTarget: process.dailyTarget || 0,
                                       automationToolName:
-                                        process.automationConfig?.toolName || "",
+                                        process.automationConfig?.toolName ||
+                                        "",
                                     });
                                   }}
                                 >
@@ -1852,9 +1856,12 @@ export default function FileProcess() {
                                   title="Delete"
                                   onClick={async (e) => {
                                     e.stopPropagation();
-                                    if (!confirm("Delete this file process?")) return;
+                                    if (!confirm("Delete this file process?"))
+                                      return;
                                     try {
-                                      await apiClient.deleteFileProcess(process.id);
+                                      await apiClient.deleteFileProcess(
+                                        process.id,
+                                      );
                                       await loadData();
                                     } catch (err) {
                                       alert("Failed to delete process");
