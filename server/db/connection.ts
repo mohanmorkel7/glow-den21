@@ -5,11 +5,11 @@ dotenv.config();
 
 // Database connection configuration
 const dbConfig = {
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT || "5432"),
-  database: process.env.DB_NAME || "bpo_management",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "password",
+  host: process.env.DB_HOST || "10.30.11.95",
+  port: parseInt(process.env.DB_PORT || "2019"),
+  database: process.env.DB_NAME || "dev_test",
+  user: process.env.DB_USER || "crmuser",
+  password: process.env.DB_PASSWORD || "myl@p@y-crm$102019",
   ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
   max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
   idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
