@@ -1,6 +1,5 @@
 import { RequestHandler } from "express";
 import { query, transaction } from "../db/connection";
-import { v4 as uuidv4 } from "uuid";
 
 // List file processes (simple list)
 export const listFileProcesses: RequestHandler = async (req, res) => {
