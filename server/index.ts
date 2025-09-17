@@ -198,6 +198,13 @@ export function createServer() {
   app.post("/api/file-processes", fileProcess.createFileProcess as any);
   app.put("/api/file-processes/:id", fileProcess.updateFileProcess as any);
   app.delete("/api/file-processes/:id", fileProcess.deleteFileProcess as any);
+  // upload source file (raw bytes)
+  app.post(
+    "/api/file-processes/:id/upload",
+    requireRole(["super_admin", "project_manager"]),
+    express.raw({ type: "application/octet-stream", limit: "200mb" }),
+    fileProcess.uploadFileForProcess as any,
+  );
 
   // file requests
   app.use("/api/file-requests", authenticateToken);
@@ -207,6 +214,11 @@ export function createServer() {
   app.post(
     "/api/file-requests/:id/approve",
     fileProcess.approveFileRequest as any,
+  );
+  // download assigned slice
+  app.get(
+    "/api/file-requests/:id/download",
+    fileProcess.downloadAssignedSlice as any,
   );
 
   // ===== EXPENSE MANAGEMENT ROUTES =====
