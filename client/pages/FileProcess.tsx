@@ -501,8 +501,12 @@ export default function FileProcess() {
       setFileRequests(reqList as any);
       // Load active projects
       try {
-        const projs = await apiClient.getProjects({ status: "active", limit: 200 });
-        const projList = (projs as any)?.data || (Array.isArray(projs) ? projs : []);
+        const projs = await apiClient.getProjects({
+          status: "active",
+          limit: 200,
+        });
+        const projList =
+          (projs as any)?.data || (Array.isArray(projs) ? projs : []);
         setProjects(projList as any);
       } catch (e) {
         console.warn("Failed to load projects", e);
@@ -524,7 +528,9 @@ export default function FileProcess() {
   );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProcessId, setEditingProcessId] = useState<string | null>(null);
-  const [selectedProcessForRequest, setSelectedProcessForRequest] = useState<Record<string, string>>({});
+  const [selectedProcessForRequest, setSelectedProcessForRequest] = useState<
+    Record<string, string>
+  >({});
   const [selectedProcess, setSelectedProcess] = useState<FileProcess | null>(
     null,
   );
@@ -916,10 +922,15 @@ export default function FileProcess() {
         fileName: newProcess.type === "manual" ? newProcess.fileName : null,
         totalRows: newProcess.totalRows,
         type: newProcess.type,
-        dailyTarget: newProcess.type === "automation" ? newProcess.dailyTarget : null,
+        dailyTarget:
+          newProcess.type === "automation" ? newProcess.dailyTarget : null,
         automationConfig:
           newProcess.type === "automation"
-            ? { toolName: newProcess.automationToolName, lastUpdate: new Date().toISOString(), dailyCompletions: [] }
+            ? {
+                toolName: newProcess.automationToolName,
+                lastUpdate: new Date().toISOString(),
+                dailyCompletions: [],
+              }
             : null,
       };
 
@@ -1085,7 +1096,11 @@ export default function FileProcess() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingProcessId(null); }}>
+            <Button
+              onClick={() => {
+                setEditingProcessId(null);
+              }}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create File Process
             </Button>

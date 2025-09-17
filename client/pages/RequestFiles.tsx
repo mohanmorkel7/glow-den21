@@ -168,7 +168,9 @@ export default function RequestFiles() {
       try {
         const all = await apiClient.getFileRequests({ page: 1, limit: 500 });
         const list = Array.isArray(all) ? all : (all as any)?.data || [];
-        setFileRequests(list.filter((r: any) => (r.user_id || r.userId) === currentUser?.id));
+        setFileRequests(
+          list.filter((r: any) => (r.user_id || r.userId) === currentUser?.id),
+        );
       } catch (e) {
         console.error("Failed to load file requests", e);
       }
@@ -323,7 +325,9 @@ export default function RequestFiles() {
 
     // For other status changes, proceed normally and persist
     try {
-      await apiClient.updateFileRequest(requestId, { status: newStatus } as any);
+      await apiClient.updateFileRequest(requestId, {
+        status: newStatus,
+      } as any);
     } catch (e) {
       console.error("Failed to update status", e);
     }
