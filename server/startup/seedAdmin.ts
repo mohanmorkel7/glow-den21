@@ -4,12 +4,14 @@ import { query } from "../db/connection";
 export async function ensureInitialAdmin(): Promise<void> {
   try {
     // Check if users table exists
-    const tableCheck = await query("SELECT to_regclass('public.users') AS exists");
+    const tableCheck = await query(
+      "SELECT to_regclass('public.users') AS exists",
+    );
     const tableExists = Boolean(tableCheck.rows[0]?.exists);
 
     if (!tableExists) {
       console.warn(
-        "Users table not found. Skipping admin seeding. Please ensure the database schema is created."
+        "Users table not found. Skipping admin seeding. Please ensure the database schema is created.",
       );
       return;
     }
@@ -30,9 +32,11 @@ export async function ensureInitialAdmin(): Promise<void> {
 
     // Discover available columns on users table to avoid inserting into missing columns
     const colsRes = await query(
-      "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='users'"
+      "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='users'",
     );
-    const availableCols = (colsRes.rows || []).map((r: any) => String(r.column_name));
+    const availableCols = (colsRes.rows || []).map((r: any) =>
+      String(r.column_name),
+    );
 
     // Candidate columns and values
     const candidates: { name: string; value?: any; expr?: string }[] = [
@@ -71,7 +75,9 @@ export async function ensureInitialAdmin(): Promise<void> {
     }
 
     if (colsToInsert.length === 0) {
-      console.warn("No writable columns found on users table. Skipping seeding.");
+      console.warn(
+        "No writable columns found on users table. Skipping seeding.",
+      );
       return;
     }
 
@@ -79,7 +85,9 @@ export async function ensureInitialAdmin(): Promise<void> {
     const result = await query(insertSql, params);
     const id = result.rows[0]?.id;
 
-    console.log(`✅ Seeded initial admin user (id=${id}) -> ${email} / ${plainPassword}`);
+    console.log(
+      `✅ Seeded initial admin user (id=${id}) -> ${email} / ${plainPassword}`,
+    );
   } catch (err) {
     console.error("❌ Failed to seed initial admin:", err);
   }
