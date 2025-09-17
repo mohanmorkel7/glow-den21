@@ -370,23 +370,25 @@ export default function RequestFiles() {
       return;
     }
 
-    // Persist status to database
     try {
-      await apiClient.updateFileRequest(selectedRequestForUpload, {
-        status: "pending_verification",
-        completed_date: new Date().toISOString(),
-        notes: uploadNotes.trim() || null,
-      } as any);
+      await apiClient.uploadCompletedRequestFile(
+        selectedRequestForUpload,
+        uploadedFile,
+        uploadedFile.name,
+      );
     } catch (e) {
-      console.error("Failed to update file request", e);
+      console.error("Failed to upload completed file", e);
+      alert((e as any)?.message || "Upload failed");
+      return;
     }
+
     // Update local state
     setFileRequests(
       fileRequests.map((request) =>
         request.id === selectedRequestForUpload
           ? {
               ...request,
-              status: "pending_verification",
+              status: "in_review",
               completedDate: new Date().toISOString(),
               outputFile: {
                 name: uploadedFile.name,
@@ -428,6 +430,10 @@ export default function RequestFiles() {
         return "bg-green-100 text-green-800";
       case "pending_verification":
         return "bg-cyan-100 text-cyan-800";
+      case "in_review":
+        return "bg-cyan-100 text-cyan-800";
+      case "rework":
+        return "bg-red-100 text-red-800";
       case "verified":
         return "bg-emerald-100 text-emerald-800";
       default:
@@ -437,17 +443,26 @@ export default function RequestFiles() {
 
   const currentRequests = getCurrentUserRequests();
   const pendingRequests = currentRequests.filter((r) =>
-    ["pending", "assigned", "in_progress", "pending_verification"].includes(
-      r.status,
-    ),
+    [
+      "pending",
+      "assigned",
+      "in_progress",
+      "pending_verification",
+      "in_review",
+    ].includes(r.status),
   );
   const completedRequests = currentRequests.filter((r) =>
     ["completed", "verified"].includes(r.status),
   );
   const allHistoryRequests = currentRequests.filter((r) =>
-    ["completed", "verified", "in_progress", "pending_verification"].includes(
-      r.status,
-    ),
+    [
+      "completed",
+      "verified",
+      "in_progress",
+      "pending_verification",
+      "in_review",
+      "rework",
+    ].includes(r.status),
   );
   const assignedRequests = currentRequests.filter(
     (r) => r.status === "assigned",
@@ -474,7 +489,8 @@ export default function RequestFiles() {
                 (req) =>
                   req.status === "pending" ||
                   req.status === "in_progress" ||
-                  req.status === "pending_verification",
+                  req.status === "pending_verification" ||
+                  req.status === "in_review",
               )}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -944,7 +960,7 @@ export default function RequestFiles() {
                           <Badge
                             className={getStatusBadgeColor(request.status)}
                           >
-                            {request.status === "pending_verification" && (
+                            {(request.status === "pending_verification" || request.status === "in_review") && (
                               <Clock className="h-3 w-3 mr-1" />
                             )}
                             {request.status === "verified" && (
