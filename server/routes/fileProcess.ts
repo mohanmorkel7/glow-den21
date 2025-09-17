@@ -207,25 +207,85 @@ export const createFileRequest: RequestHandler = async (req, res) => {
 export const approveFileRequest: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { assignedCount, processId, startRow, endRow, assignedBy } = req.body;
+    const { assignedCount: rawAssignedCount, processId, assignedBy } = req.body;
 
-    // Update request record
+    // Validate process
+    const procRes = await query(
+      "SELECT id, name, total_rows, processed_rows FROM file_processes WHERE id = $1",
+      [processId],
+    );
+    if (procRes.rows.length === 0) {
+      return res.status(400).json({
+        error: { code: "INVALID_PROCESS", message: "File process not found" },
+      });
+    }
+    const proc = procRes.rows[0];
+    const processedRows = Number(proc.processed_rows || 0);
+    const totalRows = Number(proc.total_rows || 0);
+    const remaining = Math.max(0, totalRows - processedRows);
+
+    let assignedCount = Math.max(0, Number(rawAssignedCount || 0));
+    if (assignedCount > remaining) {
+      assignedCount = remaining;
+    }
+    if (assignedCount <= 0) {
+      return res.status(400).json({
+        error: {
+          code: "NO_CAPACITY",
+          message: "No remaining rows available to assign",
+        },
+      });
+    }
+
+    const startRow = processedRows + 1;
+    const endRow = processedRows + assignedCount;
+
     await transaction(async (client) => {
+      // Update request with allocation
       await client.query(
-        `UPDATE file_requests SET status = $1, assigned_count = $2, assigned_date = CURRENT_TIMESTAMP, assigned_by = $3, start_row = $4, end_row = $5 WHERE id = $6`,
+        `UPDATE file_requests
+         SET status = $1,
+             assigned_count = $2,
+             assigned_date = CURRENT_TIMESTAMP,
+             assigned_by = $3,
+             start_row = $4,
+             end_row = $5
+         WHERE id = $6`,
         [
           "assigned",
           assignedCount,
           assignedBy || null,
-          startRow || null,
-          endRow || null,
+          startRow,
+          endRow,
           id,
         ],
       );
 
-      // Update file_processes processed_rows and available_rows
+      // Build download link from user_name and process name
+      const reqRowRes = await client.query(
+        `SELECT user_name FROM file_requests WHERE id = $1`,
+        [id],
+      );
+      const userName: string = reqRowRes.rows[0]?.user_name || "user";
+      const safe = (s: string) =>
+        s
+          .toLowerCase()
+          .replace(/\s+/g, "_")
+          .replace(/[^a-z0-9_\-]/g, "");
+      const downloadFileName = `${safe(userName)}_${safe(proc.name)}_${startRow}_${endRow}.csv`;
+      const downloadLink = `/downloads/${downloadFileName}`;
+
       await client.query(
-        `UPDATE file_processes SET processed_rows = processed_rows + $1, available_rows = GREATEST(total_rows - (processed_rows + $1), 0) WHERE id = $2`,
+        `UPDATE file_requests SET download_link = $1 WHERE id = $2`,
+        [downloadLink, id],
+      );
+
+      // Update file process counters
+      await client.query(
+        `UPDATE file_processes
+           SET processed_rows = processed_rows + $1,
+               available_rows = GREATEST(total_rows - (processed_rows + $1), 0)
+         WHERE id = $2`,
         [assignedCount, processId],
       );
     });
