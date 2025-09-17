@@ -1,8 +1,13 @@
 import bcrypt from "bcrypt";
-import { query } from "../db/connection";
+import { query, isDbConfigured } from "../db/connection";
 
 export async function ensureInitialAdmin(): Promise<void> {
   try {
+    if (!isDbConfigured()) {
+      console.warn("Database not configured. Skipping admin seeding.");
+      return;
+    }
+
     // Check if users table exists
     const tableCheck = await query(
       "SELECT to_regclass('public.users') AS exists",

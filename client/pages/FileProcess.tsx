@@ -580,9 +580,7 @@ export default function FileProcess() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [verificationRequests, setVerificationRequests] = useState(
-    mockVerificationRequests,
-  );
+  // Use live data from API for verification requests
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProcessId, setEditingProcessId] = useState<string | null>(null);
   const [selectedProcessForRequest, setSelectedProcessForRequest] = useState<
@@ -786,50 +784,108 @@ export default function FileProcess() {
 
   const automationStats = getAutomationStats();
 
-  // Get current month's completed processes
+  // Build history from real data
   const getCurrentMonthCompletedProcesses = () => {
-    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
-    return mockHistoricalProcesses.filter((process) => {
-      const processMonth = process.completedDate.substring(0, 7);
-      return processMonth === currentMonth;
-    });
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    return fileProcesses
+      .filter((p: any) => p.status === "completed")
+      .filter(
+        (p: any) =>
+          (p.updatedAt || p.uploadDate || "").substring(0, 7) === currentMonth,
+      )
+      .map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        projectName: p.projectName,
+        fileName: p.fileName || "",
+        totalRows: p.totalRows,
+        processedRows: p.processedRows,
+        createdDate: p.uploadDate || p.createdAt || new Date().toISOString(),
+        completedDate: p.updatedAt || new Date().toISOString(),
+        createdBy: p.createdBy || "",
+        duration: "",
+        totalUsers: p.activeUsers || 0,
+        avgProcessingRate: 0,
+      }));
   };
 
-  // Get processes grouped by month
   const getProcessesByMonth = () => {
-    const processMap = new Map<string, typeof mockHistoricalProcesses>();
-
-    mockHistoricalProcesses.forEach((process) => {
-      const month = process.completedDate.substring(0, 7);
-      if (!processMap.has(month)) {
-        processMap.set(month, []);
-      }
-      processMap.get(month)!.push(process);
+    const completed = fileProcesses.filter(
+      (p: any) => p.status === "completed",
+    );
+    const map = new Map<string, any[]>();
+    completed.forEach((p: any) => {
+      const month =
+        (p.updatedAt || p.uploadDate || "").substring(0, 7) || "unknown";
+      const item = {
+        id: p.id,
+        name: p.name,
+        projectName: p.projectName,
+        fileName: p.fileName || "",
+        totalRows: p.totalRows,
+        processedRows: p.processedRows,
+        createdDate: p.uploadDate || p.createdAt || new Date().toISOString(),
+        completedDate: p.updatedAt || new Date().toISOString(),
+        createdBy: p.createdBy || "",
+        duration: "",
+        totalUsers: p.activeUsers || 0,
+        avgProcessingRate: 0,
+      };
+      map.set(month, [...(map.get(month) || []), item]);
     });
-
-    // Convert to array and sort by month (newest first)
-    return Array.from(processMap.entries())
+    return Array.from(map.entries())
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([month, processes]) => ({
         month,
-        monthName: new Date(month + "-01").toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-        }),
+        monthName: new Date((month || "1970-01") + "-01").toLocaleDateString(
+          "en-US",
+          { year: "numeric", month: "long" },
+        ),
         processes,
       }));
   };
 
-  // Get assignments grouped by month
   const getAssignmentsByMonth = () => {
-    if (selectedMonth === "all") {
-      return mockHistoricalAssignments;
-    }
-
-    return mockHistoricalAssignments.filter((assignment) => {
-      const assignmentMonth = assignment.completedDate.substring(0, 7);
-      return assignmentMonth === selectedMonth;
+    const enrich = (r: any) => ({
+      id: r.id,
+      processName:
+        r.file_process_name ||
+        r.fileProcessName ||
+        fileProcesses.find(
+          (p) => p.id === (r.file_process_id || r.fileProcessId),
+        )?.name ||
+        "",
+      userName: r.user_name || r.userName || "",
+      assignedCount:
+        r.assigned_count || r.requested_count || r.requestedCount || 0,
+      completedCount:
+        r.status === "verified" || r.status === "completed"
+          ? r.assigned_count || r.requested_count || r.requestedCount || 0
+          : 0,
+      assignedDate:
+        r.assigned_date ||
+        r.requested_date ||
+        r.requestedDate ||
+        new Date().toISOString(),
+      completedDate:
+        r.completed_date || r.updated_at || new Date().toISOString(),
+      processingTime: "",
+      efficiency: 100,
     });
+    const history = fileRequests
+      .filter((r: any) =>
+        [
+          "completed",
+          "verified",
+          "pending_verification",
+          "in_progress",
+        ].includes(r.status),
+      )
+      .map(enrich);
+    if (selectedMonth === "all") return history;
+    return history.filter(
+      (h: any) => (h.completedDate || "").substring(0, 7) === selectedMonth,
+    );
   };
 
   const currentMonthProcesses = getCurrentMonthCompletedProcesses();
@@ -847,40 +903,33 @@ export default function FileProcess() {
     setIsVerificationDialogOpen(true);
   };
 
-  const handleVerificationApproval = (
+  const handleVerificationApproval = async (
     requestId: string,
     action: "approve" | "reject",
   ) => {
-    setVerificationRequests((prev) =>
-      prev.map((request) =>
-        request.id === requestId
-          ? {
-              ...request,
-              status: action === "approve" ? "verified" : "rejected",
-              verifiedDate: new Date().toISOString(),
-              verifiedBy: currentUser?.name || "Project Manager",
-              verificationNotes: verificationNotes,
-            }
-          : request,
-      ),
-    );
+    try {
+      await apiClient.updateFileRequest(requestId, {
+        status: action === "approve" ? "verified" : "rejected",
+        notes: verificationNotes || undefined,
+      } as any);
+      await loadData();
+    } catch (e) {
+      console.error("Failed to update verification status", e);
+      alert("Failed to update verification status");
+    }
 
     setIsVerificationDialogOpen(false);
     setSelectedVerificationRequest(null);
     setVerificationNotes("");
   };
 
-  const getPendingVerifications = () => {
-    return verificationRequests.filter(
-      (req) => req.status === "pending_verification",
-    );
-  };
+  const getPendingVerifications = () =>
+    fileRequests.filter((req: any) => req.status === "pending_verification");
 
-  const getVerifiedFiles = () => {
-    return verificationRequests.filter(
-      (req) => req.status === "verified" || req.status === "rejected",
+  const getVerifiedFiles = () =>
+    fileRequests.filter(
+      (req: any) => req.status === "verified" || req.status === "rejected",
     );
-  };
 
   const handleStatusChange = (processId: string, newStatus: string) => {
     const updatedProcesses = fileProcesses.map((p) => {
@@ -1631,7 +1680,19 @@ export default function FileProcess() {
                                 min="1"
                                 max={process?.availableRows || 0}
                               />
-                              <Select defaultValue={request.fileProcessId}>
+                              <Select
+                                value={
+                                  selectedProcessForRequest[request.id] ||
+                                  request.fileProcessId ||
+                                  ""
+                                }
+                                onValueChange={(value) =>
+                                  setSelectedProcessForRequest((prev) => ({
+                                    ...prev,
+                                    [request.id]: value,
+                                  }))
+                                }
+                              >
                                 <SelectTrigger className="w-48">
                                   <SelectValue />
                                 </SelectTrigger>
@@ -1660,15 +1721,28 @@ export default function FileProcess() {
                                   const assignedCount =
                                     parseInt(countInput.value) ||
                                     request.requestedCount;
+                                  const chosenProcessId =
+                                    selectedProcessForRequest[request.id] ||
+                                    request.fileProcessId;
+                                  if (!chosenProcessId) return;
                                   handleApproveRequest(
                                     request.id,
-                                    request.fileProcessId,
+                                    chosenProcessId,
                                     assignedCount,
                                   );
                                 }}
-                                disabled={
-                                  !process || process.availableRows <= 0
-                                }
+                                disabled={(() => {
+                                  const chosenProcessId =
+                                    selectedProcessForRequest[request.id] ||
+                                    request.fileProcessId;
+                                  const chosenProcess = fileProcesses.find(
+                                    (p) => p.id === chosenProcessId,
+                                  );
+                                  return (
+                                    !chosenProcess ||
+                                    chosenProcess.availableRows <= 0
+                                  );
+                                })()}
                               >
                                 Approve
                               </Button>
@@ -1880,18 +1954,73 @@ export default function FileProcess() {
                                           .replace("_", " ")}
                                     </Badge>
                                   )}
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openProcessOverview(process);
-                                    }}
-                                    className="h-6 px-2 text-xs"
-                                  >
-                                    <Eye className="h-3 w-3 mr-1" />
-                                    View
-                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        <MoreHorizontal className="h-3 w-3" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditingProcessId(process.id);
+                                          setIsCreateDialogOpen(true);
+                                          setNewProcess({
+                                            name: process.name,
+                                            projectId: process.projectId || "",
+                                            fileName: process.fileName || "",
+                                            totalRows: process.totalRows,
+                                            uploadedFile: null,
+                                            type: process.type,
+                                            dailyTarget:
+                                              process.dailyTarget || 0,
+                                            automationToolName:
+                                              process.automationConfig
+                                                ?.toolName || "",
+                                          });
+                                        }}
+                                      >
+                                        <Edit className="h-3 w-3 mr-2" /> Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          if (
+                                            !confirm(
+                                              "Delete this file process?",
+                                            )
+                                          )
+                                            return;
+                                          try {
+                                            await apiClient.deleteFileProcess(
+                                              process.id,
+                                            );
+                                            await loadData();
+                                          } catch (err) {
+                                            alert("Failed to delete process");
+                                            console.error(err);
+                                          }
+                                        }}
+                                      >
+                                        <Trash2 className="h-3 w-3 mr-2" />{" "}
+                                        Delete
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openProcessOverview(process);
+                                        }}
+                                      >
+                                        <Eye className="h-3 w-3 mr-2" /> View
+                                        Details
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </>
                               ) : (
                                 <Button
@@ -2536,17 +2665,18 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {verificationRequests.length > 0
-                    ? (
-                        verificationRequests.reduce(
-                          (sum, req) => sum + req.uploadedFile.size,
-                          0,
-                        ) /
-                        verificationRequests.length /
-                        1024 /
-                        1024
-                      ).toFixed(1)
-                    : "0"}{" "}
+                  {(() => {
+                    const files = fileRequests
+                      .filter((r: any) => r.outputFile?.size)
+                      .map((r: any) => r.outputFile!.size);
+                    if (files.length === 0) return "0";
+                    const avg =
+                      files.reduce((a, b) => a + b, 0) /
+                      files.length /
+                      1024 /
+                      1024;
+                    return avg.toFixed(1);
+                  })()}{" "}
                   MB
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -2632,24 +2762,28 @@ export default function FileProcess() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-blue-600" />
                               <span className="font-medium">
-                                {request.uploadedFile.name}
+                                {request.outputFile?.name || "No file attached"}
                               </span>
                             </div>
-                            <div className="text-sm text-blue-600">
-                              {(
-                                request.uploadedFile.size /
-                                1024 /
-                                1024
-                              ).toFixed(2)}{" "}
-                              MB
-                            </div>
+                            {request.outputFile && (
+                              <div className="text-sm text-blue-600">
+                                {(
+                                  (request.outputFile.size || 0) /
+                                  1024 /
+                                  1024
+                                ).toFixed(2)}{" "}
+                                MB
+                              </div>
+                            )}
                           </div>
-                          <p className="text-xs text-blue-700 mt-1">
-                            Uploaded:{" "}
-                            {new Date(
-                              request.uploadedFile.uploadDate,
-                            ).toLocaleString()}
-                          </p>
+                          {request.outputFile?.uploadDate && (
+                            <p className="text-xs text-blue-700 mt-1">
+                              Uploaded:{" "}
+                              {new Date(
+                                request.outputFile.uploadDate,
+                              ).toLocaleString()}
+                            </p>
+                          )}
                         </div>
 
                         {/* User Notes */}
@@ -2666,21 +2800,22 @@ export default function FileProcess() {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              // Simulate file download
-                              const link = document.createElement("a");
-                              link.href = "#";
-                              link.download = request.uploadedFile.name;
-                              link.click();
-                            }}
-                            className="mr-2"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download File
-                          </Button>
+                          {request.outputFile && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const link = document.createElement("a");
+                                link.href = "#";
+                                link.download = request.outputFile!.name;
+                                link.click();
+                              }}
+                              className="mr-2"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download File
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             onClick={() => handleVerificationReview(request)}
@@ -3094,7 +3229,7 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-green-600">
-                  {mockHistoricalProcesses.length}
+                  {fileProcesses.filter((p) => p.status === "completed").length}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   All-time completed workflows
@@ -3108,7 +3243,8 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-blue-600">
-                  {mockHistoricalProcesses
+                  {fileProcesses
+                    .filter((p) => p.status === "completed")
                     .reduce((sum, p) => sum + p.processedRows, 0)
                     .toLocaleString()}
                 </div>
@@ -3124,12 +3260,16 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-purple-600">
-                  {(
-                    mockHistoricalAssignments.reduce(
-                      (sum, a) => sum + a.efficiency,
-                      0,
-                    ) / mockHistoricalAssignments.length
-                  ).toFixed(1)}
+                  {(() => {
+                    const items = filteredAssignments;
+                    if (items.length === 0) return "0.0";
+                    const avg =
+                      items.reduce(
+                        (sum: number, a: any) => sum + (a.efficiency || 100),
+                        0,
+                      ) / items.length;
+                    return avg.toFixed(1);
+                  })()}
                   %
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
