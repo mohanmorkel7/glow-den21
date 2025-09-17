@@ -5,13 +5,13 @@ export async function ensureInitialAdmin(): Promise<void> {
   try {
     // Check if users table exists
     const tableCheck = await query(
-      "SELECT to_regclass('public.users') AS exists"
+      "SELECT to_regclass('public.users') AS exists",
     );
     const tableExists = Boolean(tableCheck.rows[0]?.exists);
 
     if (!tableExists) {
       console.warn(
-        "Users table not found. Skipping admin seeding. Please ensure the database schema is created."
+        "Users table not found. Skipping admin seeding. Please ensure the database schema is created.",
       );
       return;
     }
@@ -47,7 +47,7 @@ export async function ensureInitialAdmin(): Promise<void> {
     const id = result.rows[0]?.id;
 
     console.log(
-      `✅ Seeded initial admin user (id=${id}) -> ${email} / ${plainPassword}`
+      `✅ Seeded initial admin user (id=${id}) -> ${email} / ${plainPassword}`,
     );
   } catch (err) {
     console.error("❌ Failed to seed initial admin:", err);
