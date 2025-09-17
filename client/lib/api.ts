@@ -433,6 +433,25 @@ class ApiClient {
     });
   }
 
+  async uploadFileProcessFile(id: string, file: Blob, fileName?: string) {
+    const headers: Record<string, string> = {
+      ...(this.getAuthHeaders() as any),
+      "x-file-name": fileName || (file as any).name || "upload.csv",
+    };
+    const url = `${API_BASE_URL}/file-processes/${id}/upload`;
+    const resp = await fetch(url, {
+      method: "POST",
+      headers,
+      body: file,
+    });
+    if (!resp.ok) {
+      const msg = await resp.text().catch(() => resp.statusText);
+      throw new Error(msg || `Upload failed (${resp.status})`);
+    }
+    const json = await resp.json().catch(() => ({}));
+    return json?.data ?? json;
+  }
+
   // File requests
   async getFileRequests(params?: {
     page?: number;
@@ -466,6 +485,21 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify(data),
     });
+  }
+
+  async downloadFileRequest(id: string): Promise<{ blob: Blob; filename: string }> {
+    const headers = this.getAuthHeaders();
+    const url = `${API_BASE_URL}/file-requests/${id}/download`;
+    const resp = await fetch(url, { headers });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => resp.statusText);
+      throw new Error(text || `Download failed (${resp.status})`);
+    }
+    const cd = resp.headers.get("Content-Disposition") || "";
+    const match = cd.match(/filename="?([^";]+)"?/i);
+    const filename = match ? match[1] : `request_${id}.csv`;
+    const blob = await resp.blob();
+    return { blob, filename };
   }
 
   // Health check
