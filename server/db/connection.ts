@@ -3,86 +3,99 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Database connection configuration
-const dbConfig = {
-  host: process.env.DB_HOST || "10.30.11.95",
-  port: parseInt(process.env.DB_PORT || "2019"),
-  database: process.env.DB_NAME || "dev_test",
-  user: process.env.DB_USER || "crmuser",
-  password: process.env.DB_PASSWORD || "myl@p@y-crm$102019",
-  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
-  max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
-  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
-  connectionTimeoutMillis: parseInt(
-    process.env.DB_CONNECTION_TIMEOUT || "2000",
-  ),
+type DbConfigOptions = {
+  connectionString?: string;
+  host?: string;
+  port?: number;
+  database?: string;
+  user?: string;
+  password?: string;
+  ssl?: false | { rejectUnauthorized: boolean };
+  max?: number;
+  idleTimeoutMillis?: number;
+  connectionTimeoutMillis?: number;
 };
 
-// Create connection pool
-const pool = new Pool(dbConfig);
+const isConfigured =
+  Boolean(process.env.DATABASE_URL) ||
+  Boolean(
+    process.env.DB_HOST &&
+      process.env.DB_PORT &&
+      process.env.DB_NAME &&
+      process.env.DB_USER &&
+      process.env.DB_PASSWORD,
+  );
 
-// Handle pool errors
-pool.on("error", (err: Error) => {
-  console.error("Unexpected error on idle client", err);
-  process.exit(-1);
-});
-
-// Test database connection
-pool.connect(
-  (err: Error | undefined, client: PoolClient | undefined, release: any) => {
-    if (err) {
-      console.error("Error acquiring client", err.stack);
-      return;
+const dbConfig: DbConfigOptions = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl:
+        process.env.DB_SSL === "true" || process.env.DATABASE_SSL === "true"
+          ? { rejectUnauthorized: false }
+          : false,
+      max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
+      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
+      connectionTimeoutMillis: parseInt(
+        process.env.DB_CONNECTION_TIMEOUT || "2000",
+      ),
     }
-
-    if (!client) {
-      console.error("No client returned from pool");
-      return;
+  : isConfigured
+  ? {
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT as string, 10),
+      database: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+      max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
+      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
+      connectionTimeoutMillis: parseInt(
+        process.env.DB_CONNECTION_TIMEOUT || "2000",
+      ),
     }
+  : {};
 
-    client.query("SELECT NOW()", (err: Error | null, result: QueryResult) => {
-      release();
-      if (err) {
-        console.error("Error executing query", err.stack);
-        return;
-      }
-      console.log("✅ Database connected successfully");
-      console.log(
-        `📊 Database: ${dbConfig.database} on ${dbConfig.host}:${dbConfig.port}`,
-      );
-    });
-  },
-);
+let pool: Pool | null = null;
 
-// Query helper function
+if (isConfigured) {
+  pool = new Pool(dbConfig as any);
+
+  pool.on("error", (err: Error) => {
+    console.error("Unexpected error on idle client", err);
+  });
+}
+
+export const isDbConfigured = (): boolean => isConfigured;
+
+const notConfiguredError = () =>
+  new Error(
+    "Database not configured. Set DATABASE_URL or DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD environment variables.",
+  );
+
 export const query = async (
   text: string,
   params?: any[],
 ): Promise<QueryResult> => {
+  if (!pool) throw notConfiguredError();
   const start = Date.now();
-  try {
-    const res = await pool.query(text, params);
-    const duration = Date.now() - start;
+  const res = await pool.query(text, params);
+  const duration = Date.now() - start;
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("🔍 Query executed:", {
-        text: text.substring(0, 100) + "...",
-        duration,
-        rows: res.rowCount,
-      });
-    }
-
-    return res;
-  } catch (error) {
-    console.error("❌ Database query error:", error);
-    throw error;
+  if (process.env.NODE_ENV === "development") {
+    console.log("🔍 Query executed:", {
+      text: text.substring(0, 100) + "...",
+      duration,
+      rows: res.rowCount,
+    });
   }
+
+  return res;
 };
 
-// Transaction helper function
 export const transaction = async <T>(
   callback: (client: PoolClient) => Promise<T>,
 ): Promise<T> => {
+  if (!pool) throw notConfiguredError();
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -97,7 +110,6 @@ export const transaction = async <T>(
   }
 };
 
-// Helper function for paginated queries
 export const paginatedQuery = async (
   baseQuery: string,
   countQuery: string,
@@ -107,11 +119,9 @@ export const paginatedQuery = async (
 ) => {
   const offset = (page - 1) * limit;
 
-  // Get total count
   const countResult = await query(countQuery, params);
   const total = parseInt(countResult.rows[0].count);
 
-  // Get paginated data
   const dataQuery = `${baseQuery} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
   const dataResult = await query(dataQuery, [...params, limit, offset]);
 
@@ -126,17 +136,17 @@ export const paginatedQuery = async (
   };
 };
 
-// Cleanup function for graceful shutdown
 export const cleanup = async (): Promise<void> => {
   try {
-    await pool.end();
-    console.log("🔌 Database connection pool closed");
+    if (pool) {
+      await pool.end();
+      console.log("🔌 Database connection pool closed");
+    }
   } catch (error) {
     console.error("❌ Error closing database pool:", error);
   }
 };
 
-// Handle process termination
 process.on("SIGINT", cleanup);
 process.on("SIGTERM", cleanup);
 
