@@ -523,6 +523,8 @@ export default function FileProcess() {
     mockVerificationRequests,
   );
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingProcessId, setEditingProcessId] = useState<string | null>(null);
+  const [selectedProcessForRequest, setSelectedProcessForRequest] = useState<Record<string, string>>({});
   const [selectedProcess, setSelectedProcess] = useState<FileProcess | null>(
     null,
   );
