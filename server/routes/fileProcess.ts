@@ -180,8 +180,31 @@ export const listFileRequests: RequestHandler = async (req, res) => {
     const values: any[] = [];
 
     if (processId || file_process_id) {
-      values.push(processId || file_process_id);
-      where.push(`file_process_id = $${values.length}`);
+      const requestedProcessId = processId || file_process_id;
+      // Try to build a heuristic pattern based on process name for download_link matching
+      let clause = "";
+      try {
+        const procRes = await query("SELECT name FROM file_processes WHERE id = $1", [requestedProcessId]);
+        const name = procRes.rows[0]?.name as string | undefined;
+        if (name) {
+          const slug = name
+            .toLowerCase()
+            .replace(/\s+/g, "_")
+            .replace(/[^a-z0-9_\-]/g, "");
+          values.push(requestedProcessId);
+          values.push(`%_${slug}_%`);
+          clause = `((file_process_id = $${values.length - 1}) OR (download_link ILIKE $${values.length}))`;
+        }
+      } catch {
+        // ignore and fallback to strict filter
+      }
+
+      if (!clause) {
+        values.push(requestedProcessId);
+        clause = `file_process_id = $${values.length}`;
+      }
+
+      where.push(clause);
     }
     if (status) {
       values.push(status);
