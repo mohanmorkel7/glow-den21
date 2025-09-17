@@ -504,6 +504,47 @@ class ApiClient {
     return { blob, filename };
   }
 
+  // Upload completed ZIP for a request
+  async uploadCompletedRequestFile(id: string, file: Blob, fileName?: string) {
+    const headers: Record<string, string> = {
+      ...(this.getAuthHeaders() as any),
+      "x-file-name": fileName || (file as any).name || "completed.zip",
+    };
+    const url = `${API_BASE_URL}/file-requests/${id}/upload-completed`;
+    const resp = await fetch(url, { method: "POST", headers, body: file });
+    if (!resp.ok) {
+      const msg = await resp.text().catch(() => resp.statusText);
+      throw new Error(msg || `Upload failed (${resp.status})`);
+    }
+    return (await resp.json().catch(() => ({}))) as any;
+  }
+
+  // Download uploaded ZIP
+  async downloadUploadedRequestFile(
+    id: string,
+  ): Promise<{ blob: Blob; filename: string }> {
+    const headers = this.getAuthHeaders();
+    const url = `${API_BASE_URL}/file-requests/${id}/uploaded`;
+    const resp = await fetch(url, { headers });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => resp.statusText);
+      throw new Error(text || `Download failed (${resp.status})`);
+    }
+    const cd = resp.headers.get("Content-Disposition") || "";
+    const match = cd.match(/filename="?([^";]+)"?/i);
+    const filename = match ? match[1] : `completed_${id}.zip`;
+    const blob = await resp.blob();
+    return { blob, filename };
+  }
+
+  // Verify uploaded work (approve/reject)
+  async verifyCompletedRequest(id: string, action: "approve" | "reject", notes?: string) {
+    return this.request(`/file-requests/${id}/verify`, {
+      method: "POST",
+      body: JSON.stringify({ action, notes }),
+    });
+  }
+
   // Health check
   async healthCheck() {
     return this.request("/health", { requiresAuth: false });
