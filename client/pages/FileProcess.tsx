@@ -580,9 +580,7 @@ export default function FileProcess() {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const [verificationRequests, setVerificationRequests] = useState(
-    mockVerificationRequests,
-  );
+  // Use live data from API for verification requests
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingProcessId, setEditingProcessId] = useState<string | null>(null);
   const [selectedProcessForRequest, setSelectedProcessForRequest] = useState<
