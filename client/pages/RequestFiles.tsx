@@ -285,94 +285,32 @@ export default function RequestFiles() {
   };
 
   const handleDownload = async (requestId: string) => {
-    const request = fileRequests.find((r) => r.id === requestId);
-    if (!request) return;
-
-    // Generate and download the CSV file
-    const nameFromLink = request.downloadLink?.split("/").pop();
-    const safe = (s: string) =>
-      s
-        .toLowerCase()
-        .replace(/\s+/g, "_")
-        .replace(/[^a-z0-9_\-]/g, "");
-    const baseUser = safe(currentUser?.name || request.userName || "user");
-    const baseProc = safe(request.fileProcessName || "file");
-    const start = request.startRow ?? 1;
-    const end = request.endRow ?? request.requestedCount;
-    const fileName =
-      nameFromLink || `${baseUser}_${baseProc}_${start}_${end}.csv`;
-
-    // Generate sample CSV content based on the assigned row range
-    const headers = [
-      "ID",
-      "Name",
-      "Email",
-      "Phone",
-      "Address",
-      "City",
-      "Country",
-      "Status",
-    ];
-    let csvContent = headers.join(",") + "\n";
-
-    // Generate rows with realistic data for the assigned range
-    let startRowCalc = Number(request.startRow ?? 1);
-    let endRowCalc = Number(
-      request.endRow ?? request.assignedCount ?? request.requestedCount ?? 0,
-    );
-
-    // Fallback if range is invalid
-    if (!Number.isFinite(endRowCalc) || endRowCalc < startRowCalc) {
-      const countNum = Number(
-        request.assignedCount ?? request.requestedCount ?? 0,
-      );
-      endRowCalc =
-        startRowCalc +
-        Math.max(0, (Number.isFinite(countNum) ? countNum : 0) - 1);
-    }
-
-    // Generate rows for the full assigned/requested range
-    for (let i = startRowCalc; i <= endRowCalc; i++) {
-      const row = [
-        i,
-        `User ${i}`,
-        `user${i}@example.com`,
-        `+1234567${String(i).toString().padStart(4, "0")}`,
-        `${i} Main Street`,
-        `City ${Math.floor(i / 100) + 1}`,
-        "USA",
-        i % 2 === 0 ? "Active" : "Pending",
-      ];
-      csvContent += row.join(",") + "\n";
-    }
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    // Persist status to 'in_progress' after download
     try {
-      await apiClient.updateFileRequest(requestId, {
-        status: "in_progress",
-      } as any);
-    } catch (e) {
-      console.error("Failed to persist in_progress status", e);
-    }
+      const { blob, filename } = await apiClient.downloadFileRequest(requestId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-    setFileRequests(
-      fileRequests.map((req) =>
-        req.id === requestId && req.status === "assigned"
-          ? { ...req, status: "in_progress" }
-          : req,
-      ),
-    );
+      // Optimistically reflect in UI; server also updates status
+      setFileRequests((prev) =>
+        prev.map((req) =>
+          req.id === requestId && req.status === "assigned"
+            ? { ...req, status: "in_progress" }
+            : req,
+        ),
+      );
+    } catch (e) {
+      console.error("Download failed", e);
+      alert(
+        (e as any)?.message ||
+          "Download failed. Ensure a CSV was uploaded for this process.",
+      );
+    }
   };
 
   const handleStatusUpdate = async (
