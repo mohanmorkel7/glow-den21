@@ -64,6 +64,7 @@ import {
 import expenseRoutes from "./routes/expenses";
 import { ensureInitialAdmin } from "./startup/seedAdmin";
 import * as fileProcess from "./routes/fileProcess";
+import { isDbConfigured } from "./db/connection";
 
 export function createServer() {
   const app = express();
@@ -74,8 +75,12 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true }));
 
   // Trigger initial admin seeding and ensure file process tables (non-blocking)
-  ensureInitialAdmin().catch((e) => console.error(e));
-  ensureFileProcessTables().catch((e) => console.error(e));
+  if (isDbConfigured()) {
+    ensureInitialAdmin().catch((e) => console.error(e));
+    ensureFileProcessTables().catch((e) => console.error(e));
+  } else {
+    console.warn("Database not configured. Skipping startup DB tasks.");
+  }
 
   // Health check
   app.get("/api/health", (_req, res) => {
