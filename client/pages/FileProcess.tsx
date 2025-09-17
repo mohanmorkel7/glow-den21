@@ -1815,11 +1815,58 @@ export default function FileProcess() {
                                 </p>
                               )}
                           </div>
-                          <Badge
-                            className={getStatusBadgeColor(process.status)}
-                          >
-                            {process.status.toUpperCase().replace("_", " ")}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge className={getStatusBadgeColor(process.status)}>
+                              {process.status.toUpperCase().replace("_", " ")}
+                            </Badge>
+                            {(currentUser?.role === "super_admin" || currentUser?.role === "project_manager") && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0"
+                                  title="Edit"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingProcessId(process.id);
+                                    setIsCreateDialogOpen(true);
+                                    setNewProcess({
+                                      name: process.name,
+                                      projectId: process.projectId || "",
+                                      fileName: process.fileName || "",
+                                      totalRows: process.totalRows,
+                                      uploadedFile: null,
+                                      type: process.type,
+                                      dailyTarget: process.dailyTarget || 0,
+                                      automationToolName:
+                                        process.automationConfig?.toolName || "",
+                                    });
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                  title="Delete"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (!confirm("Delete this file process?")) return;
+                                    try {
+                                      await apiClient.deleteFileProcess(process.id);
+                                      await loadData();
+                                    } catch (err) {
+                                      alert("Failed to delete process");
+                                      console.error(err);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </div>
 
                         <div className="space-y-3">
