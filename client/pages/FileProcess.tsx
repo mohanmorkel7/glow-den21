@@ -877,8 +877,7 @@ export default function FileProcess() {
       .filter((r: any) =>
         [
           "completed",
-          "verified",
-          "pending_verification",
+          "in_review",
           "in_progress",
         ].includes(r.status),
       )
@@ -1181,6 +1180,9 @@ export default function FileProcess() {
             startRow: r.start_row ?? r.startRow ?? null,
             endRow: r.end_row ?? r.endRow ?? null,
             assignedCount: r.assigned_count ?? r.assignedCount ?? null,
+            uploadedFileName: r.uploaded_file_name || null,
+            verifiedBy: r.verified_by || null,
+            verifiedDate: r.verified_at || null,
           }));
 
         let normalized = normalize(list as any);
@@ -2914,28 +2916,35 @@ export default function FileProcess() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-blue-600" />
                               <span className="font-medium">
-                                {request.outputFile?.name || "No file attached"}
+                                {request.uploadedFileName || request.outputFile?.name || "No file attached"}
                               </span>
                             </div>
-                            {request.outputFile && (
-                              <div className="text-sm text-blue-600">
-                                {(
-                                  (request.outputFile.size || 0) /
-                                  1024 /
-                                  1024
-                                ).toFixed(2)}{" "}
-                                MB
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    const { blob, filename } =
+                                      await apiClient.downloadUploadedRequestFile(
+                                        request.id,
+                                      );
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.download = filename;
+                                    link.click();
+                                    URL.revokeObjectURL(url);
+                                  } catch (e) {
+                                    alert("Failed to download uploaded file");
+                                  }
+                                }}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </Button>
+                            </div>
                           </div>
-                          {request.outputFile?.uploadDate && (
-                            <p className="text-xs text-blue-700 mt-1">
-                              Uploaded:{" "}
-                              {new Date(
-                                request.outputFile.uploadDate,
-                              ).toLocaleString()}
-                            </p>
-                          )}
                         </div>
 
                         {/* User Notes */}
@@ -3034,14 +3043,14 @@ export default function FileProcess() {
                         <div className="text-right">
                           <Badge
                             className={
-                              request.status === "verified"
+                              request.status === "completed"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                             }
                           >
-                            {request.status === "verified"
+                            {request.status === "completed"
                               ? "Approved"
-                              : "Rejected"}
+                              : "Rework"}
                           </Badge>
                           <p className="text-xs text-muted-foreground mt-1">
                             {request.verifiedBy} •{" "}
