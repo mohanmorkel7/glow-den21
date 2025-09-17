@@ -590,6 +590,7 @@ export default function FileProcess() {
     null,
   );
   const [isOverviewDialogOpen, setIsOverviewDialogOpen] = useState(false);
+  const [processRequests, setProcessRequests] = useState<FileRequest[]>([]);
   const [newProcess, setNewProcess] = useState({
     name: "",
     projectId: "",
@@ -1128,6 +1129,40 @@ export default function FileProcess() {
   const openProcessOverview = (process: FileProcess) => {
     setSelectedProcess(process);
     setIsOverviewDialogOpen(true);
+    // Fetch latest assignments for this process
+    apiClient
+      .getFileRequests({ processId: process.id, limit: 500 })
+      .then((res: any) => {
+        const list = Array.isArray(res) ? res : (res?.data as any[]) || [];
+        const normalized = (list as any[]).map((r: any) => ({
+          id: r.id,
+          userId: r.user_id || r.userId || null,
+          userName: r.user_name || r.userName || "",
+          requestedCount: r.requested_count ?? r.requestedCount ?? 0,
+          requestedDate:
+            r.requested_date || r.requestedDate || r.created_at || new Date().toISOString(),
+          status: r.status || "pending",
+          fileProcessId: r.file_process_id || r.fileProcessId || null,
+          fileProcessName: r.file_process_name || r.fileProcessName || null,
+          assignedBy: r.assigned_by || r.assignedBy || null,
+          assignedDate: r.assigned_date || r.assignedDate || null,
+          downloadLink: r.download_link || r.downloadLink || null,
+          completedDate: r.completed_date || r.completedDate || null,
+          startRow: r.start_row ?? r.startRow ?? null,
+          endRow: r.end_row ?? r.endRow ?? null,
+          assignedCount: r.assigned_count ?? r.assignedCount ?? null,
+        }));
+        setProcessRequests(normalized as any);
+      })
+      .catch((e) => {
+        console.warn("Failed to load process requests", e);
+        // Fallback to local filter if API fails
+        setProcessRequests(
+          fileRequests.filter(
+            (r: any) => (r.fileProcessId || r.file_process_id) === process.id,
+          ) as any,
+        );
+      });
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -2519,8 +2554,7 @@ export default function FileProcess() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {getProcessRequests(selectedProcess.id).map(
-                            (request) => (
+                          {processRequests.map((request) => (
                               <TableRow key={request.id}>
                                 <TableCell>
                                   <div>
@@ -2635,7 +2669,7 @@ export default function FileProcess() {
                         </TableBody>
                       </Table>
 
-                      {getProcessRequests(selectedProcess.id).length === 0 && (
+                      {processRequests.length === 0 && (
                         <div className="text-center py-4 text-muted-foreground">
                           No requests for this process yet.
                         </div>
