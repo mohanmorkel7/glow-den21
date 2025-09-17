@@ -483,15 +483,22 @@ export default function FileProcess() {
     setIsLoading(true);
     setError(null);
     try {
-      const processes = await apiClient.getFileProcesses({ page: 1, limit: 200 });
-      const list = Array.isArray(processes) ? processes : (processes as any) || [];
+      const processes = await apiClient.getFileProcesses({
+        page: 1,
+        limit: 200,
+      });
+      const list = Array.isArray(processes)
+        ? processes
+        : (processes as any) || [];
       setFileProcesses(list as any);
 
       const requests = await apiClient.getFileRequests({ page: 1, limit: 500 });
-      const reqList = Array.isArray(requests) ? requests : (requests as any) || [];
+      const reqList = Array.isArray(requests)
+        ? requests
+        : (requests as any) || [];
       setFileRequests(reqList as any);
     } catch (err: any) {
-      console.error('Failed to load file process data', err);
+      console.error("Failed to load file process data", err);
       setError(String(err?.message || err));
     } finally {
       setIsLoading(false);

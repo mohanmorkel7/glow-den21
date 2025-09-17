@@ -49,8 +49,12 @@ export async function ensureFileProcessTables(): Promise<void> {
     `);
 
     // Indexes for performance
-    await query("CREATE INDEX IF NOT EXISTS idx_file_processes_project_id ON file_processes(project_id)");
-    await query("CREATE INDEX IF NOT EXISTS idx_file_requests_file_process_id ON file_requests(file_process_id)");
+    await query(
+      "CREATE INDEX IF NOT EXISTS idx_file_processes_project_id ON file_processes(project_id)",
+    );
+    await query(
+      "CREATE INDEX IF NOT EXISTS idx_file_requests_file_process_id ON file_requests(file_process_id)",
+    );
 
     console.log("✅ File process tables ready");
   } catch (err) {

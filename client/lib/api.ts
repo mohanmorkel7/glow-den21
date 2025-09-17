@@ -403,7 +403,9 @@ class ApiClient {
 
   // File processes
   async getFileProcesses(params?: { page?: number; limit?: number }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/file-processes${queryString}`);
   }
 
@@ -433,7 +435,9 @@ class ApiClient {
 
   // File requests
   async getFileRequests(params?: { page?: number; limit?: number }) {
-    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/file-requests${queryString}`);
   }
 
