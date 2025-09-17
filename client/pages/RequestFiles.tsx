@@ -704,19 +704,15 @@ export default function RequestFiles() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge
-                              className={getStatusBadgeColor(request.status)}
+                              className={getStatusBadgeColor(
+                                request.status === "assigned" ? "in_progress" : request.status,
+                              )}
                             >
-                              {request.status.replace("_", " ").toUpperCase()}
+                              {(request.status === "assigned" ? "in_progress" : request.status)
+                                .replace("_", " ")
+                                .toUpperCase()}
                             </Badge>
-                            {request.status === "assigned" && (
-                              <Button
-                                size="sm"
-                                onClick={() => handleDownload(request.id)}
-                              >
-                                <Download className="h-4 w-4 mr-2" />
-                                Download & Start
-                              </Button>
-                            )}
+                            {/* For 'assigned', do not show the download button; show only In-Progress as requested */}
                             {request.status === "in_progress" && (
                               <Button
                                 size="sm"
