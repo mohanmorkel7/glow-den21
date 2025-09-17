@@ -1,7 +1,12 @@
-import { query } from "../db/connection";
+import { query, isDbConfigured } from "../db/connection";
 
 export async function ensureFileProcessTables(): Promise<void> {
   try {
+    if (!isDbConfigured()) {
+      console.warn("Database not configured. Skipping file process migrations.");
+      return;
+    }
+
     // Create file_processes table
     await query(`
       CREATE TABLE IF NOT EXISTS file_processes (
