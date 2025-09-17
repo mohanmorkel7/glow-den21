@@ -1,206 +1,121 @@
 import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
-import { 
-  User, 
-  CreateUserRequest, 
-  UpdateUserRequest, 
+import { query, paginatedQuery } from "../db/connection";
+import {
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
   ChangePasswordRequest,
   UserListQuery,
   ApiResponse,
   PaginatedResponse,
-  AuthUser
+  AuthUser,
 } from "@shared/types";
 
-// Mock database - in production, replace with actual database queries
-let mockUsers = [
-  {
-    id: "1",
-    name: "Super Admin",
-    email: "admin@websyntactic.com",
-    phone: "+1 (555) 123-4567",
-    hashedPassword: "$2b$10$K9p1qGQqXYZ5Z9Z9Z9Z9Zu",
-    role: "super_admin" as const,
-    status: "active" as const,
-    department: "Administration",
-    jobTitle: "System Administrator",
-    avatarUrl: null,
-    theme: "system" as const,
-    language: "English",
-    notificationsEnabled: true,
-    joinDate: "2024-01-01",
-    lastLogin: "2024-01-15T10:30:00Z",
-    projectsCount: 0,
-    createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: "2",
-    name: "John Smith", 
-    email: "john.smith@websyntactic.com",
-    phone: "+1 (555) 234-5678",
-    hashedPassword: "$2b$10$K9p1qGQqXYZ5Z9Z9Z9Z9Zu",
-    role: "project_manager" as const,
-    status: "active" as const,
-    department: "Operations",
-    jobTitle: "Project Manager",
-    avatarUrl: null,
-    theme: "light" as const,
-    language: "English",
-    notificationsEnabled: true,
-    joinDate: "2024-01-02",
-    lastLogin: "2024-01-15T09:15:00Z",
-    projectsCount: 3,
-    createdAt: "2024-01-02T00:00:00Z",
-    updatedAt: "2024-01-15T09:15:00Z"
-  },
-  {
-    id: "3",
-    name: "Sarah Johnson",
-    email: "sarah.johnson@websyntactic.com",
-    phone: "+1 (555) 345-6789",
-    hashedPassword: "$2b$10$K9p1qGQqXYZ5Z9Z9Z9Z9Zu",
-    role: "user" as const,
-    status: "active" as const,
-    department: "Data Entry",
-    jobTitle: "Data Specialist",
-    avatarUrl: null,
-    theme: "dark" as const,
-    language: "English",
-    notificationsEnabled: true,
-    joinDate: "2024-01-05",
-    lastLogin: "2024-01-15T08:45:00Z",
-    projectsCount: 2,
-    createdAt: "2024-01-05T00:00:00Z",
-    updatedAt: "2024-01-15T08:45:00Z"
-  },
-  {
-    id: "4",
-    name: "Mike Davis",
-    email: "mike.davis@websyntactic.com",
-    phone: "+1 (555) 456-7890",
-    hashedPassword: "$2b$10$K9p1qGQqXYZ5Z9Z9Z9Z9Zu",
-    role: "user" as const,
-    status: "inactive" as const,
-    department: "Data Entry",
-    jobTitle: "Data Specialist",
-    avatarUrl: null,
-    theme: "system" as const,
-    language: "English",
-    notificationsEnabled: false,
-    joinDate: "2024-01-08",
-    lastLogin: "2024-01-12T16:20:00Z",
-    projectsCount: 1,
-    createdAt: "2024-01-08T00:00:00Z",
-    updatedAt: "2024-01-12T16:20:00Z"
-  },
-  {
-    id: "5",
-    name: "Emily Wilson",
-    email: "emily.wilson@websyntactic.com",
-    phone: "+1 (555) 567-8901",
-    hashedPassword: "$2b$10$K9p1qGQqXYZ5Z9Z9Z9Z9Zu",
-    role: "project_manager" as const,
-    status: "active" as const,
-    department: "Quality Assurance",
-    jobTitle: "QA Manager",
-    avatarUrl: null,
-    theme: "light" as const,
-    language: "English",
-    notificationsEnabled: true,
-    joinDate: "2024-01-10",
-    lastLogin: "2024-01-15T11:00:00Z",
-    projectsCount: 2,
-    createdAt: "2024-01-10T00:00:00Z",
-    updatedAt: "2024-01-15T11:00:00Z"
-  }
-];
-
-// Helper function to convert internal user to API user
-const toApiUser = (user: typeof mockUsers[0]): User => ({
-  id: user.id,
-  name: user.name,
-  email: user.email,
-  phone: user.phone,
-  role: user.role,
-  status: user.status,
-  department: user.department,
-  jobTitle: user.jobTitle,
-  avatarUrl: user.avatarUrl,
-  theme: user.theme,
-  language: user.language,
-  notificationsEnabled: user.notificationsEnabled,
-  joinDate: user.joinDate,
-  lastLogin: user.lastLogin,
-  projectsCount: user.projectsCount,
-  createdAt: user.createdAt,
-  updatedAt: user.updatedAt
+// Map DB row to API User type
+const mapRowToUser = (row: any): User => ({
+  id: String(row.id),
+  name: row.name,
+  email: row.email,
+  phone: row.phone ?? undefined,
+  role: row.role,
+  status: row.status,
+  department: row.department ?? undefined,
+  jobTitle: row.job_title ?? undefined,
+  avatarUrl: row.avatar_url ?? undefined,
+  theme: row.theme ?? undefined,
+  language: row.language ?? undefined,
+  notificationsEnabled:
+    typeof row.notifications_enabled === "boolean"
+      ? row.notifications_enabled
+      : undefined,
+  joinDate: row.join_date ?? new Date().toISOString().split("T")[0],
+  lastLogin: row.last_login ?? undefined,
+  projectsCount:
+    typeof row.projects_count === "number" ? row.projects_count : undefined,
+  createdAt: row.created_at ?? new Date().toISOString(),
+  updatedAt: row.updated_at ?? new Date().toISOString(),
 });
 
 export const listUsers: RequestHandler = async (req, res) => {
   try {
-    const currentUser: AuthUser = (req as any).user;
-    const query: UserListQuery = req.query;
+    const queryParams: UserListQuery = req.query as any;
+    const { search = "", role, status, page = 1, limit = 20 } = queryParams;
 
-    // Extract query parameters
-    const {
-      search = "",
-      role,
-      status,
-      page = 1,
-      limit = 20
-    } = query;
+    const where: string[] = [];
+    const params: any[] = [];
 
-    const pageNum = Math.max(1, Number(page));
-    const limitNum = Math.min(100, Math.max(1, Number(limit)));
+    if (search) {
+      params.push(`%${String(search).toLowerCase()}%`);
+      where.push(
+        "(LOWER(name) LIKE $" +
+          params.length +
+          " OR LOWER(email) LIKE $" +
+          params.length +
+          ")",
+      );
+    }
+    if (role) {
+      params.push(role);
+      where.push("role = $" + params.length);
+    }
+    if (status) {
+      params.push(status);
+      where.push("status = $" + params.length);
+    }
 
-    // Filter users
-    let filteredUsers = mockUsers.filter(user => {
-      // Search filter
-      const matchesSearch = !search || 
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase());
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-      // Role filter
-      const matchesRole = !role || user.role === role;
+    // Note: selecting raw timestamps; client expects strings. We cast to text for safety.
+    const baseQuery = `
+      SELECT 
+        id,
+        name,
+        email,
+        phone,
+        role,
+        status,
+        department,
+        job_title,
+        avatar_url,
+        theme,
+        language,
+        notifications_enabled,
+        TO_CHAR(join_date, 'YYYY-MM-DD') AS join_date,
+        TO_CHAR(COALESCE(last_login, NOW()) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_login,
+        COALESCE(projects_count, 0) AS projects_count,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at
+      FROM users
+      ${whereSql}
+      ORDER BY created_at DESC
+    `;
 
-      // Status filter
-      const matchesStatus = !status || user.status === status;
+    const countQuery = `SELECT COUNT(*) FROM users ${whereSql}`;
 
-      return matchesSearch && matchesRole && matchesStatus;
-    });
+    const result = await paginatedQuery(
+      baseQuery,
+      countQuery,
+      params,
+      Number(page),
+      Number(limit),
+    );
 
-    // Calculate pagination
-    const total = filteredUsers.length;
-    const totalPages = Math.ceil(total / limitNum);
-    const offset = (pageNum - 1) * limitNum;
-
-    // Apply pagination
-    const paginatedUsers = filteredUsers.slice(offset, offset + limitNum);
-
-    // Convert to API format
-    const users = paginatedUsers.map(toApiUser);
+    const users: User[] = result.data.map(mapRowToUser);
 
     const response: PaginatedResponse<User> = {
       data: users,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        totalPages
-      }
+      pagination: result.pagination,
     };
 
-    res.json({
-      data: response
-    } as ApiResponse<PaginatedResponse<User>>);
-
+    res.json({ data: response } as ApiResponse<PaginatedResponse<User>>);
   } catch (error) {
     console.error("List users error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching users"
-      }
+        message: "An error occurred while fetching users",
+      },
     } as ApiResponse);
   }
 };
@@ -210,37 +125,58 @@ export const getUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const currentUser: AuthUser = (req as any).user;
 
-    const user = mockUsers.find(u => u.id === id);
-    if (!user) {
+    const userResult = await query(
+      `SELECT 
+        id,
+        name,
+        email,
+        phone,
+        role,
+        status,
+        department,
+        job_title,
+        avatar_url,
+        theme,
+        language,
+        notifications_enabled,
+        TO_CHAR(join_date, 'YYYY-MM-DD') AS join_date,
+        TO_CHAR(last_login AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_login,
+        COALESCE(projects_count, 0) AS projects_count,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at
+      FROM users WHERE id = $1`,
+      [id],
+    );
+
+    if (userResult.rows.length === 0) {
       return res.status(404).json({
-        error: {
-          code: "USER_NOT_FOUND",
-          message: "User not found"
-        }
+        error: { code: "USER_NOT_FOUND", message: "User not found" },
       } as ApiResponse);
     }
 
-    // Users can only view their own profile unless they have user_read permission
-    if (currentUser.id !== id && !currentUser.permissions.includes("user_read") && !currentUser.permissions.includes("all")) {
+    // Users can only view their own profile unless they have permission
+    if (
+      currentUser.id !== id &&
+      !currentUser.permissions.includes("user_read") &&
+      !currentUser.permissions.includes("all")
+    ) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You can only view your own profile"
-        }
+          message: "You can only view your own profile",
+        },
       } as ApiResponse);
     }
 
-    res.json({
-      data: toApiUser(user)
-    } as ApiResponse<User>);
-
+    const user = mapRowToUser(userResult.rows[0]);
+    res.json({ data: user } as ApiResponse<User>);
   } catch (error) {
     console.error("Get user error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching user"
-      }
+        message: "An error occurred while fetching user",
+      },
     } as ApiResponse);
   }
 };
@@ -248,11 +184,10 @@ export const getUser: RequestHandler = async (req, res) => {
 export const createUser: RequestHandler = async (req, res) => {
   try {
     const userRequest: CreateUserRequest = req.body;
-    const currentUser: AuthUser = (req as any).user;
 
-    // Validate required fields
-    const { name, email, password, role = "user" } = userRequest;
-    
+    const { name, email, password } = userRequest;
+    const role = userRequest.role || ("user" as const);
+
     if (!name || !email || !password) {
       return res.status(400).json({
         error: {
@@ -261,85 +196,87 @@ export const createUser: RequestHandler = async (req, res) => {
           details: [
             !name && { field: "name", message: "Name is required" },
             !email && { field: "email", message: "Email is required" },
-            !password && { field: "password", message: "Password is required" }
-          ].filter(Boolean)
-        }
+            !password && { field: "password", message: "Password is required" },
+          ].filter(Boolean),
+        },
       } as ApiResponse);
     }
 
-    // Check if email already exists
-    const existingUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
-      return res.status(409).json({
-        error: {
-          code: "EMAIL_ALREADY_EXISTS",
-          message: "A user with this email already exists"
-        }
-      } as ApiResponse);
-    }
-
-    // Validate email format
+    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid email format"
-        }
+        error: { code: "VALIDATION_ERROR", message: "Invalid email format" },
       } as ApiResponse);
     }
 
-    // Validate password strength
+    // Password strength
     if (password.length < 8) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Password must be at least 8 characters long"
-        }
+          message: "Password must be at least 8 characters long",
+        },
       } as ApiResponse);
     }
 
-    // Hash password (mock - use bcrypt in production)
-    const hashedPassword = "$2b$10$K9p1qGQqXYZ5Z9Z9Z9Z9Zu"; // Mock hash
+    // Check uniqueness
+    const exists = await query(
+      "SELECT 1 FROM users WHERE LOWER(email) = LOWER($1)",
+      [email],
+    );
+    if (exists.rows.length > 0) {
+      return res.status(409).json({
+        error: {
+          code: "EMAIL_ALREADY_EXISTS",
+          message: "A user with this email already exists",
+        },
+      } as ApiResponse);
+    }
 
-    // Generate new user ID
-    const newId = (mockUsers.length + 1).toString();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
-    const newUser = {
-      id: newId,
+    const insertQuery = `
+      INSERT INTO users (
+        name, email, phone, hashed_password, role, status, department, job_title,
+        avatar_url, theme, language, notifications_enabled, join_date, last_login,
+        projects_count, created_at, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, 'active', $6, $7,
+        NULL, 'system', 'English', TRUE, CURRENT_DATE, NULL,
+        0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+      )
+      RETURNING 
+        id, name, email, phone, role, status, department, job_title, avatar_url,
+        theme, language, notifications_enabled,
+        TO_CHAR(join_date, 'YYYY-MM-DD') AS join_date,
+        TO_CHAR(last_login AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_login,
+        COALESCE(projects_count, 0) AS projects_count,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at
+    `;
+
+    const values = [
       name,
       email,
-      phone: userRequest.phone || null,
+      userRequest.phone || null,
       hashedPassword,
       role,
-      status: "active" as const,
-      department: userRequest.department || null,
-      jobTitle: userRequest.jobTitle || null,
-      avatarUrl: null,
-      theme: "system" as const,
-      language: "English",
-      notificationsEnabled: true,
-      joinDate: new Date().toISOString().split('T')[0],
-      lastLogin: null,
-      projectsCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      userRequest.department || null,
+      userRequest.jobTitle || null,
+    ];
 
-    mockUsers.push(newUser);
+    const result = await query(insertQuery, values);
 
-    res.status(201).json({
-      data: toApiUser(newUser)
-    } as ApiResponse<User>);
-
+    const newUser = mapRowToUser(result.rows[0]);
+    res.status(201).json({ data: newUser } as ApiResponse<User>);
   } catch (error) {
     console.error("Create user error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while creating user"
-      }
+        message: "An error occurred while creating user",
+      },
     } as ApiResponse);
   }
 };
@@ -350,77 +287,102 @@ export const updateUser: RequestHandler = async (req, res) => {
     const userRequest: UpdateUserRequest = req.body;
     const currentUser: AuthUser = (req as any).user;
 
-    const userIndex = mockUsers.findIndex(u => u.id === id);
-    if (userIndex === -1) {
+    // Fetch existing user
+    const existing = await query("SELECT * FROM users WHERE id = $1", [id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({
-        error: {
-          code: "USER_NOT_FOUND",
-          message: "User not found"
-        }
+        error: { code: "USER_NOT_FOUND", message: "User not found" },
       } as ApiResponse);
     }
 
-    const user = mockUsers[userIndex];
-
-    // Users can only update their own profile (for personal fields) unless they have user_update permission
     const isOwnProfile = currentUser.id === id;
-    const canUpdateUsers = currentUser.permissions.includes("user_update") || currentUser.permissions.includes("all");
+    const canUpdateUsers =
+      currentUser.permissions.includes("user_update") ||
+      currentUser.permissions.includes("all") ||
+      currentUser.role === "super_admin";
 
     if (!isOwnProfile && !canUpdateUsers) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You can only update your own profile"
-        }
+          message: "You can only update your own profile",
+        },
       } as ApiResponse);
     }
 
-    // Role changes require user_update permission
-    if (userRequest.role && userRequest.role !== user.role && !canUpdateUsers) {
+    // If trying to change role without permission
+    if (userRequest.role && !canUpdateUsers) {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You cannot change user roles"
-        }
+          message: "You cannot change user roles",
+        },
       } as ApiResponse);
     }
 
-    // Validate email if provided
-    if (userRequest.name && userRequest.name.trim().length === 0) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Name cannot be empty"
-        }
-      } as ApiResponse);
+    // Build dynamic update
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (userRequest.name !== undefined) {
+      if (userRequest.name.trim().length === 0) {
+        return res.status(400).json({
+          error: { code: "VALIDATION_ERROR", message: "Name cannot be empty" },
+        } as ApiResponse);
+      }
+      values.push(userRequest.name);
+      fields.push(`name = $${values.length}`);
+    }
+    if (userRequest.phone !== undefined) {
+      values.push(userRequest.phone || null);
+      fields.push(`phone = $${values.length}`);
+    }
+    if (userRequest.role !== undefined) {
+      values.push(userRequest.role);
+      fields.push(`role = $${values.length}`);
+    }
+    if (userRequest.department !== undefined) {
+      values.push(userRequest.department || null);
+      fields.push(`department = $${values.length}`);
+    }
+    if (userRequest.jobTitle !== undefined) {
+      values.push(userRequest.jobTitle || null);
+      fields.push(`job_title = $${values.length}`);
+    }
+    if (userRequest.theme !== undefined) {
+      values.push(userRequest.theme);
+      fields.push(`theme = $${values.length}`);
+    }
+    if (userRequest.language !== undefined) {
+      values.push(userRequest.language);
+      fields.push(`language = $${values.length}`);
+    }
+    if (userRequest.notificationsEnabled !== undefined) {
+      values.push(Boolean(userRequest.notificationsEnabled));
+      fields.push(`notifications_enabled = $${values.length}`);
     }
 
-    // Update user fields
-    const updatedUser = {
-      ...user,
-      ...userRequest,
-      updatedAt: new Date().toISOString()
-    };
+    values.push(id);
+    const sql = `UPDATE users SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${values.length} RETURNING 
+      id, name, email, phone, role, status, department, job_title, avatar_url,
+      theme, language, notifications_enabled,
+      TO_CHAR(join_date, 'YYYY-MM-DD') AS join_date,
+      TO_CHAR(last_login AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_login,
+      COALESCE(projects_count, 0) AS projects_count,
+      TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+      TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at`;
 
-    // Prevent updating certain fields
-    delete (updatedUser as any).id;
-    delete (updatedUser as any).email; // Email changes should be separate endpoint
-    delete (updatedUser as any).hashedPassword;
-    delete (updatedUser as any).createdAt;
+    const result = await query(sql, values);
+    const updated = mapRowToUser(result.rows[0]);
 
-    mockUsers[userIndex] = updatedUser;
-
-    res.json({
-      data: toApiUser(updatedUser)
-    } as ApiResponse<User>);
-
+    res.json({ data: updated } as ApiResponse<User>);
   } catch (error) {
     console.error("Update user error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while updating user"
-      }
+        message: "An error occurred while updating user",
+      },
     } as ApiResponse);
   }
 };
@@ -428,53 +390,54 @@ export const updateUser: RequestHandler = async (req, res) => {
 export const updateUserStatus: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status } = req.body as { status: "active" | "inactive" };
     const currentUser: AuthUser = (req as any).user;
 
-    if (!["active", "inactive"].includes(status)) {
+    if (!["active", "inactive"].includes(String(status))) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "Status must be 'active' or 'inactive'"
-        }
+          message: "Status must be 'active' or 'inactive'",
+        },
       } as ApiResponse);
     }
 
-    const userIndex = mockUsers.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({
-        error: {
-          code: "USER_NOT_FOUND",
-          message: "User not found"
-        }
-      } as ApiResponse);
-    }
-
-    // Prevent user from deactivating themselves
     if (currentUser.id === id) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "You cannot deactivate your own account"
-        }
+          message: "You cannot deactivate your own account",
+        },
       } as ApiResponse);
     }
 
-    const user = mockUsers[userIndex];
-    user.status = status;
-    user.updatedAt = new Date().toISOString();
+    const result = await query(
+      `UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING 
+        id, name, email, phone, role, status, department, job_title, avatar_url,
+        theme, language, notifications_enabled,
+        TO_CHAR(join_date, 'YYYY-MM-DD') AS join_date,
+        TO_CHAR(last_login AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_login,
+        COALESCE(projects_count, 0) AS projects_count,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at`,
+      [status, id],
+    );
 
-    res.json({
-      data: toApiUser(user)
-    } as ApiResponse<User>);
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "USER_NOT_FOUND", message: "User not found" },
+      } as ApiResponse);
+    }
 
+    const user = mapRowToUser(result.rows[0]);
+    res.json({ data: user } as ApiResponse<User>);
   } catch (error) {
     console.error("Update user status error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while updating user status"
-      }
+        message: "An error occurred while updating user status",
+      },
     } as ApiResponse);
   }
 };
@@ -484,38 +447,30 @@ export const deleteUser: RequestHandler = async (req, res) => {
     const { id } = req.params;
     const currentUser: AuthUser = (req as any).user;
 
-    const userIndex = mockUsers.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({
-        error: {
-          code: "USER_NOT_FOUND",
-          message: "User not found"
-        }
-      } as ApiResponse);
-    }
-
-    // Prevent user from deleting themselves
     if (currentUser.id === id) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "You cannot delete your own account"
-        }
+          message: "You cannot delete your own account",
+        },
       } as ApiResponse);
     }
 
-    // In production, perform soft delete or check for dependencies
-    mockUsers.splice(userIndex, 1);
+    const result = await query("DELETE FROM users WHERE id = $1", [id]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        error: { code: "USER_NOT_FOUND", message: "User not found" },
+      } as ApiResponse);
+    }
 
     res.status(204).send();
-
   } catch (error) {
     console.error("Delete user error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while deleting user"
-      }
+        message: "An error occurred while deleting user",
+      },
     } as ApiResponse);
   }
 };
@@ -526,13 +481,22 @@ export const changePassword: RequestHandler = async (req, res) => {
     const { currentPassword, newPassword }: ChangePasswordRequest = req.body;
     const currentUser: AuthUser = (req as any).user;
 
-    // Users can only change their own password unless they're super admin
+    const userResult = await query(
+      "SELECT id, hashed_password FROM users WHERE id = $1",
+      [id],
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "USER_NOT_FOUND", message: "User not found" },
+      } as ApiResponse);
+    }
+
     if (currentUser.id !== id && currentUser.role !== "super_admin") {
       return res.status(403).json({
         error: {
           code: "AUTHORIZATION_FAILED",
-          message: "You can only change your own password"
-        }
+          message: "You can only change your own password",
+        },
       } as ApiResponse);
     }
 
@@ -540,122 +504,75 @@ export const changePassword: RequestHandler = async (req, res) => {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "New password is required"
-        }
+          message: "New password is required",
+        },
       } as ApiResponse);
     }
-
-    // Validate new password strength
     if (newPassword.length < 8) {
       return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
-          message: "New password must be at least 8 characters long"
-        }
+          message: "New password must be at least 8 characters long",
+        },
       } as ApiResponse);
     }
 
-    const userIndex = mockUsers.findIndex(u => u.id === id);
-    if (userIndex === -1) {
-      return res.status(404).json({
-        error: {
-          code: "USER_NOT_FOUND",
-          message: "User not found"
-        }
-      } as ApiResponse);
-    }
-
-    const user = mockUsers[userIndex];
-
-    // If changing own password, verify current password
+    // Verify current password if changing own password
     if (currentUser.id === id) {
       if (!currentPassword) {
         return res.status(400).json({
           error: {
             code: "VALIDATION_ERROR",
-            message: "Current password is required"
-          }
+            message: "Current password is required",
+          },
         } as ApiResponse);
       }
 
-      // Mock password verification - use bcrypt.compare in production
-      const isValidPassword = currentPassword === "admin123";
-      if (!isValidPassword) {
+      const isValid = await bcrypt.compare(
+        currentPassword,
+        userResult.rows[0].hashed_password,
+      );
+      if (!isValid) {
         return res.status(400).json({
           error: {
             code: "VALIDATION_ERROR",
-            message: "Current password is incorrect"
-          }
+            message: "Current password is incorrect",
+          },
         } as ApiResponse);
       }
     }
 
-    // Hash new password (mock - use bcrypt in production)
-    user.hashedPassword = "$2b$10$NewHashedPassword";
-    user.updatedAt = new Date().toISOString();
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await query(
+      "UPDATE users SET hashed_password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [hashed, id],
+    );
 
     res.json({
-      data: { message: "Password changed successfully" }
+      data: { message: "Password changed successfully" },
     } as ApiResponse);
-
   } catch (error) {
     console.error("Change password error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while changing password"
-      }
+        message: "An error occurred while changing password",
+      },
     } as ApiResponse);
   }
 };
 
-export const getUserProjects: RequestHandler = async (req, res) => {
+export const getUserProjects: RequestHandler = async (_req, res) => {
   try {
-    const { id } = req.params;
-    const currentUser: AuthUser = (req as any).user;
-
-    const user = mockUsers.find(u => u.id === id);
-    if (!user) {
-      return res.status(404).json({
-        error: {
-          code: "USER_NOT_FOUND",
-          message: "User not found"
-        }
-      } as ApiResponse);
-    }
-
-    // Users can only view their own projects unless they have user_read permission
-    if (currentUser.id !== id && !currentUser.permissions.includes("user_read") && !currentUser.permissions.includes("all")) {
-      return res.status(403).json({
-        error: {
-          code: "AUTHORIZATION_FAILED",
-          message: "You can only view your own projects"
-        }
-      } as ApiResponse);
-    }
-
-    // Mock projects data - in production, query from user_projects table
-    const mockProjects = [
-      {
-        id: "1",
-        name: "Data Entry Project Alpha",
-        status: "active",
-        role: "member",
-        assignedAt: "2024-01-01T00:00:00Z"
-      }
-    ];
-
-    res.json({
-      data: mockProjects
-    } as ApiResponse);
-
+    // Implement project listing per user when schema is available
+    res.json({ data: [] } as ApiResponse);
   } catch (error) {
     console.error("Get user projects error:", error);
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching user projects"
-      }
+        message: "An error occurred while fetching user projects",
+      },
     } as ApiResponse);
   }
 };
