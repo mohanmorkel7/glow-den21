@@ -289,12 +289,17 @@ export default function RequestFiles() {
 
     // Generate and download the CSV file
     const nameFromLink = request.downloadLink?.split("/").pop();
-    const safe = (s: string) => s.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+    const safe = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_\-]/g, "");
     const baseUser = safe(currentUser?.name || request.userName || "user");
     const baseProc = safe(request.fileProcessName || "file");
     const start = request.startRow ?? 1;
     const end = request.endRow ?? request.requestedCount;
-    const fileName = nameFromLink || `${baseUser}_${baseProc}_${start}_${end}.csv`;
+    const fileName =
+      nameFromLink || `${baseUser}_${baseProc}_${start}_${end}.csv`;
 
     // Generate sample CSV content based on the assigned row range
     const headers = [
@@ -754,13 +759,26 @@ export default function RequestFiles() {
                               >
                                 <Download className="h-4 w-4 mr-2" />
                                 {(() => {
-                                  const nameFromLink = request.downloadLink?.split("/").pop();
+                                  const nameFromLink = request.downloadLink
+                                    ?.split("/")
+                                    .pop();
                                   if (nameFromLink) return nameFromLink;
-                                  const safe = (s: string) => s.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
-                                  const baseUser = safe(currentUser?.name || request.userName || "user");
-                                  const baseProc = safe(request.fileProcessName || "file");
+                                  const safe = (s: string) =>
+                                    s
+                                      .toLowerCase()
+                                      .replace(/\s+/g, "_")
+                                      .replace(/[^a-z0-9_\-]/g, "");
+                                  const baseUser = safe(
+                                    currentUser?.name ||
+                                      request.userName ||
+                                      "user",
+                                  );
+                                  const baseProc = safe(
+                                    request.fileProcessName || "file",
+                                  );
                                   const start = request.startRow ?? 1;
-                                  const end = request.endRow ?? request.requestedCount;
+                                  const end =
+                                    request.endRow ?? request.requestedCount;
                                   return `${baseUser}_${baseProc}_${start}_${end}.csv`;
                                 })()}
                               </Button>
