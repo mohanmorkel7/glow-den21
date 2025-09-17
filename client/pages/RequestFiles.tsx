@@ -71,6 +71,7 @@ interface FileRequest {
   fileProcessName?: string;
   assignedBy?: string;
   assignedDate?: string;
+  assignedCount?: number;
   downloadLink?: string;
   completedDate?: string;
   startRow?: number;
@@ -315,23 +316,34 @@ export default function RequestFiles() {
     let csvContent = headers.join(",") + "\n";
 
     // Generate rows with realistic data for the assigned range
-    const startRowCalc = request.startRow ?? 1;
-    const endRowCalc =
-      request.endRow ?? request.assignedCount ?? request.requestedCount ?? 0;
-    if (endRowCalc >= startRowCalc && endRowCalc - startRowCalc < 100000) {
-      for (let i = startRowCalc; i <= endRowCalc; i++) {
-        const row = [
-          i,
-          `User ${i}`,
-          `user${i}@example.com`,
-          `+1234567${String(i).padStart(4, "0")}`,
-          `${i} Main Street`,
-          `City ${Math.floor(i / 100) + 1}`,
-          "USA",
-          i % 2 === 0 ? "Active" : "Pending",
-        ];
-        csvContent += row.join(",") + "\n";
-      }
+    let startRowCalc = Number(request.startRow ?? 1);
+    let endRowCalc = Number(
+      request.endRow ?? request.assignedCount ?? request.requestedCount ?? 0,
+    );
+
+    // Fallback if range is invalid
+    if (!Number.isFinite(endRowCalc) || endRowCalc < startRowCalc) {
+      const countNum = Number(
+        request.assignedCount ?? request.requestedCount ?? 0,
+      );
+      endRowCalc =
+        startRowCalc +
+        Math.max(0, (Number.isFinite(countNum) ? countNum : 0) - 1);
+    }
+
+    // Generate rows for the full assigned/requested range
+    for (let i = startRowCalc; i <= endRowCalc; i++) {
+      const row = [
+        i,
+        `User ${i}`,
+        `user${i}@example.com`,
+        `+1234567${String(i).toString().padStart(4, "0")}`,
+        `${i} Main Street`,
+        `City ${Math.floor(i / 100) + 1}`,
+        "USA",
+        i % 2 === 0 ? "Active" : "Pending",
+      ];
+      csvContent += row.join(",") + "\n";
     }
 
     // Create and download file
