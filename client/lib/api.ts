@@ -434,7 +434,7 @@ class ApiClient {
   }
 
   // File requests
-  async getFileRequests(params?: { page?: number; limit?: number }) {
+  async getFileRequests(params?: { page?: number; limit?: number; processId?: string; status?: string; userId?: string }) {
     const queryString = params
       ? `?${new URLSearchParams(params as any).toString()}`
       : "";
