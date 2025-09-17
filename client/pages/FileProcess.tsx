@@ -1044,7 +1044,20 @@ export default function FileProcess() {
       if (editingProcessId) {
         await apiClient.updateFileProcess(editingProcessId, payload);
       } else {
-        await apiClient.createFileProcess(payload);
+        const created: any = await apiClient.createFileProcess(payload);
+        const createdId = (created && (created.id || created.data?.id)) || null;
+        if (createdId && newProcess.type === "manual" && newProcess.uploadedFile) {
+          try {
+            await apiClient.uploadFileProcessFile(
+              createdId,
+              newProcess.uploadedFile,
+              newProcess.fileName || (newProcess.uploadedFile as any).name,
+            );
+          } catch (e) {
+            console.error("File upload failed", e);
+            alert("Process created but file upload failed. Please upload again.");
+          }
+        }
       }
       await loadData();
       resetForm();
