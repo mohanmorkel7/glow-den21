@@ -3194,12 +3194,12 @@ export default function FileProcess() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-purple-600">
-                  {(
-                    mockHistoricalAssignments.reduce(
-                      (sum, a) => sum + a.efficiency,
-                      0,
-                    ) / mockHistoricalAssignments.length
-                  ).toFixed(1)}
+                  {(() => {
+                    const items = filteredAssignments;
+                    if (items.length === 0) return "0.0";
+                    const avg = items.reduce((sum: number, a: any) => sum + (a.efficiency || 100), 0) / items.length;
+                    return avg.toFixed(1);
+                  })()}
                   %
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
