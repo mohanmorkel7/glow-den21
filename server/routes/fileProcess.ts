@@ -6,7 +6,19 @@ import { query, transaction } from "../db/connection";
 export const listFileProcesses: RequestHandler = async (req, res) => {
   try {
     const result = await query(
-      `SELECT * FROM file_processes ORDER BY created_at DESC LIMIT $1`,
+      `SELECT
+         p.*,
+         COALESCE(
+           (
+             SELECT COUNT(DISTINCT fr.user_id)
+             FROM file_requests fr
+             WHERE fr.file_process_id = p.id
+               AND fr.status IN ('assigned','in_progress','pending_verification')
+           ), 0
+         ) AS active_users
+       FROM file_processes p
+       ORDER BY p.created_at DESC
+       LIMIT $1`,
       [100],
     );
     res.json({ data: result.rows });
@@ -274,9 +286,18 @@ export const approveFileRequest: RequestHandler = async (req, res) => {
              assigned_date = CURRENT_TIMESTAMP,
              assigned_by = $3,
              start_row = $4,
-             end_row = $5
-         WHERE id = $6`,
-        ["assigned", assignedCount, assignedBy || null, startRow, endRow, id],
+             end_row = $5,
+             file_process_id = $6
+         WHERE id = $7`,
+        [
+          "assigned",
+          assignedCount,
+          assignedBy || null,
+          startRow,
+          endRow,
+          processId,
+          id,
+        ],
       );
 
       // Build download link from user_name and process name
