@@ -845,40 +845,33 @@ export default function FileProcess() {
     setIsVerificationDialogOpen(true);
   };
 
-  const handleVerificationApproval = (
+  const handleVerificationApproval = async (
     requestId: string,
     action: "approve" | "reject",
   ) => {
-    setVerificationRequests((prev) =>
-      prev.map((request) =>
-        request.id === requestId
-          ? {
-              ...request,
-              status: action === "approve" ? "verified" : "rejected",
-              verifiedDate: new Date().toISOString(),
-              verifiedBy: currentUser?.name || "Project Manager",
-              verificationNotes: verificationNotes,
-            }
-          : request,
-      ),
-    );
+    try {
+      await apiClient.updateFileRequest(requestId, {
+        status: action === "approve" ? "verified" : "rejected",
+        notes: verificationNotes || undefined,
+      } as any);
+      await loadData();
+    } catch (e) {
+      console.error("Failed to update verification status", e);
+      alert("Failed to update verification status");
+    }
 
     setIsVerificationDialogOpen(false);
     setSelectedVerificationRequest(null);
     setVerificationNotes("");
   };
 
-  const getPendingVerifications = () => {
-    return verificationRequests.filter(
-      (req) => req.status === "pending_verification",
-    );
-  };
+  const getPendingVerifications = () =>
+    fileRequests.filter((req: any) => req.status === "pending_verification");
 
-  const getVerifiedFiles = () => {
-    return verificationRequests.filter(
-      (req) => req.status === "verified" || req.status === "rejected",
+  const getVerifiedFiles = () =>
+    fileRequests.filter(
+      (req: any) => req.status === "verified" || req.status === "rejected",
     );
-  };
 
   const handleStatusChange = (processId: string, newStatus: string) => {
     const updatedProcesses = fileProcesses.map((p) => {
