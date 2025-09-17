@@ -61,6 +61,7 @@ import {
 
 // Import expense management routes
 import expenseRoutes from "./routes/expenses";
+import { ensureInitialAdmin } from "./startup/seedAdmin";
 
 export function createServer() {
   const app = express();
@@ -69,6 +70,9 @@ export function createServer() {
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+
+  // Trigger initial admin seeding (non-blocking)
+  ensureInitialAdmin().catch((e) => console.error(e));
 
   // Health check
   app.get("/api/health", (_req, res) => {
