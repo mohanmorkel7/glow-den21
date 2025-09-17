@@ -629,7 +629,11 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
 };
 
 // Storage for uploaded completed work (per request)
-const REQUEST_UPLOAD_ROOT = path.join(process.cwd(), "storage", "file-requests");
+const REQUEST_UPLOAD_ROOT = path.join(
+  process.cwd(),
+  "storage",
+  "file-requests",
+);
 
 // User uploads completed ZIP for a request -> set status to in_review
 export const uploadCompletedForRequest: RequestHandler = async (req, res) => {
@@ -649,25 +653,36 @@ export const uploadCompletedForRequest: RequestHandler = async (req, res) => {
     }
     const r = reqRes.rows[0];
 
-    const isOwner = currentUser?.id && String(currentUser.id) === String(r.user_id);
-    const isManager = ["super_admin", "project_manager"].includes(currentUser?.role);
+    const isOwner =
+      currentUser?.id && String(currentUser.id) === String(r.user_id);
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
     if (!isOwner && !isManager) {
       return res.status(403).json({
-        error: { code: "AUTHORIZATION_FAILED", message: "Not allowed to upload for this request" },
+        error: {
+          code: "AUTHORIZATION_FAILED",
+          message: "Not allowed to upload for this request",
+        },
       });
     }
 
-    const originalName = (req.headers["x-file-name"] as string) || "completed.zip";
+    const originalName =
+      (req.headers["x-file-name"] as string) || "completed.zip";
     const safeName = originalName.replace(/[^a-zA-Z0-9_.\-]/g, "_");
     const lower = safeName.toLowerCase();
     if (!lower.endsWith(".zip")) {
       return res.status(415).json({
-        error: { code: "UNSUPPORTED_FORMAT", message: "Only ZIP uploads are allowed" },
+        error: {
+          code: "UNSUPPORTED_FORMAT",
+          message: "Only ZIP uploads are allowed",
+        },
       });
     }
 
     // Write to disk
-    if (!fs.existsSync(REQUEST_UPLOAD_ROOT)) fs.mkdirSync(REQUEST_UPLOAD_ROOT, { recursive: true });
+    if (!fs.existsSync(REQUEST_UPLOAD_ROOT))
+      fs.mkdirSync(REQUEST_UPLOAD_ROOT, { recursive: true });
     const reqDir = path.join(REQUEST_UPLOAD_ROOT, id);
     if (!fs.existsSync(reqDir)) fs.mkdirSync(reqDir, { recursive: true });
     const destPath = path.join(reqDir, safeName);
@@ -700,7 +715,10 @@ export const uploadCompletedForRequest: RequestHandler = async (req, res) => {
   } catch (error) {
     console.error("Upload completed file error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to upload completed file" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to upload completed file",
+      },
     });
   }
 };
@@ -716,17 +734,32 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
       [id],
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: { code: "NOT_FOUND", message: "File request not found" } });
+      return res
+        .status(404)
+        .json({
+          error: { code: "NOT_FOUND", message: "File request not found" },
+        });
     }
     const r = result.rows[0];
-    const isOwner = currentUser?.id && String(currentUser.id) === String(r.user_id);
-    const isManager = ["super_admin", "project_manager"].includes(currentUser?.role);
+    const isOwner =
+      currentUser?.id && String(currentUser.id) === String(r.user_id);
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
     if (!isOwner && !isManager) {
-      return res.status(403).json({ error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" } });
+      return res
+        .status(403)
+        .json({
+          error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" },
+        });
     }
 
     if (!r.uploaded_file_path || !fs.existsSync(r.uploaded_file_path)) {
-      return res.status(404).json({ error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" } });
+      return res
+        .status(404)
+        .json({
+          error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" },
+        });
     }
 
     const fileName = r.uploaded_file_name || `completed_${id}.zip`;
@@ -735,7 +768,14 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
     fs.createReadStream(r.uploaded_file_path).pipe(res);
   } catch (error) {
     console.error("Download completed file error:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to download file" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to download file",
+        },
+      });
   }
 };
 
@@ -743,20 +783,31 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
 export const verifyCompletedRequest: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const { action, notes } = req.body as { action: "approve" | "reject"; notes?: string };
+    const { action, notes } = req.body as {
+      action: "approve" | "reject";
+      notes?: string;
+    };
     const currentUser: any = (req as any).user;
 
     if (!action || !["approve", "reject"].includes(action)) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "action must be 'approve' or 'reject'" },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "action must be 'approve' or 'reject'",
+        },
       });
     }
 
     // Only PM/Admin can verify
-    const isManager = ["super_admin", "project_manager"].includes(currentUser?.role);
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
     if (!isManager) {
       return res.status(403).json({
-        error: { code: "AUTHORIZATION_FAILED", message: "Only managers can verify" },
+        error: {
+          code: "AUTHORIZATION_FAILED",
+          message: "Only managers can verify",
+        },
       });
     }
 
@@ -766,7 +817,11 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
       [id],
     );
     if (reqRes.rows.length === 0) {
-      return res.status(404).json({ error: { code: "NOT_FOUND", message: "File request not found" } });
+      return res
+        .status(404)
+        .json({
+          error: { code: "NOT_FOUND", message: "File request not found" },
+        });
     }
     const r = reqRes.rows[0];
 
@@ -797,13 +852,24 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
           const dc = existing.rows[0];
           await client.query(
             `UPDATE daily_counts SET submitted_count = $1, status = 'approved', approved_by_user_id = $2, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $3`,
-            [Number(dc.submitted_count || 0) + Number(r.assigned_count || 0), currentUser?.id || null, dc.id],
+            [
+              Number(dc.submitted_count || 0) + Number(r.assigned_count || 0),
+              currentUser?.id || null,
+              dc.id,
+            ],
           );
         } else {
           await client.query(
             `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id, approved_at)
              VALUES ($1,$2,$3,0,$4,'approved',$5,CURRENT_TIMESTAMP,$6,CURRENT_TIMESTAMP)`,
-            [r.user_id, r.project_id, dateStr, Number(r.assigned_count || 0), notes || null, currentUser?.id || null],
+            [
+              r.user_id,
+              r.project_id,
+              dateStr,
+              Number(r.assigned_count || 0),
+              notes || null,
+              currentUser?.id || null,
+            ],
           );
         }
       });
@@ -828,16 +894,32 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
           await client.query(
             `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id)
              VALUES ($1,$2,$3,0,$4,'rejected',$5,CURRENT_TIMESTAMP,$6)`,
-            [r.user_id, r.project_id, dateStr, Number(r.assigned_count || 0), notes || 'Rework required', currentUser?.id || null],
+            [
+              r.user_id,
+              r.project_id,
+              dateStr,
+              Number(r.assigned_count || 0),
+              notes || "Rework required",
+              currentUser?.id || null,
+            ],
           );
         }
       });
     }
 
-    const updated = await query(`SELECT * FROM file_requests WHERE id = $1`, [id]);
+    const updated = await query(`SELECT * FROM file_requests WHERE id = $1`, [
+      id,
+    ]);
     res.json({ data: updated.rows[0] });
   } catch (error) {
     console.error("Verify completed request error:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to verify request" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to verify request",
+        },
+      });
   }
 };

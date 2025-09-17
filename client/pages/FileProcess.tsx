@@ -891,11 +891,7 @@ export default function FileProcess() {
     });
     const history = fileRequests
       .filter((r: any) =>
-        [
-          "completed",
-          "in_review",
-          "in_progress",
-        ].includes(r.status),
+        ["completed", "in_review", "in_progress"].includes(r.status),
       )
       .map(enrich);
     if (selectedMonth === "all") return history;
@@ -942,7 +938,8 @@ export default function FileProcess() {
 
   const getPendingVerifications = () =>
     fileRequests.filter(
-      (req: any) => req.status === "in_review" || req.status === "pending_verification",
+      (req: any) =>
+        req.status === "in_review" || req.status === "pending_verification",
     );
 
   const getVerifiedFiles = () =>
@@ -2939,7 +2936,9 @@ export default function FileProcess() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-blue-600" />
                               <span className="font-medium">
-                                {request.uploadedFileName || request.outputFile?.name || "No file attached"}
+                                {request.uploadedFileName ||
+                                  request.outputFile?.name ||
+                                  "No file attached"}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -4057,7 +4056,8 @@ export default function FileProcess() {
                       <div className="flex items-center gap-2">
                         <FileText className="h-5 w-5 text-green-600" />
                         <span className="font-medium text-green-800">
-                          {selectedVerificationRequest.uploadedFileName || "completed.zip"}
+                          {selectedVerificationRequest.uploadedFileName ||
+                            "completed.zip"}
                         </span>
                       </div>
                       <Button

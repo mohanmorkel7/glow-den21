@@ -960,7 +960,8 @@ export default function RequestFiles() {
                           <Badge
                             className={getStatusBadgeColor(request.status)}
                           >
-                            {(request.status === "pending_verification" || request.status === "in_review") && (
+                            {(request.status === "pending_verification" ||
+                              request.status === "in_review") && (
                               <Clock className="h-3 w-3 mr-1" />
                             )}
                             {request.status === "verified" && (

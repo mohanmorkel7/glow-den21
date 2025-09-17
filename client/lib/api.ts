@@ -538,7 +538,11 @@ class ApiClient {
   }
 
   // Verify uploaded work (approve/reject)
-  async verifyCompletedRequest(id: string, action: "approve" | "reject", notes?: string) {
+  async verifyCompletedRequest(
+    id: string,
+    action: "approve" | "reject",
+    notes?: string,
+  ) {
     return this.request(`/file-requests/${id}/verify`, {
       method: "POST",
       body: JSON.stringify({ action, notes }),
