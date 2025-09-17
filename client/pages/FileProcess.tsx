@@ -1112,12 +1112,12 @@ export default function FileProcess() {
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => { setEditingProcessId(null); }}>
               <Plus className="h-4 w-4 mr-2" />
               Create File Process
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[720px] max-h-[75vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New File Process</DialogTitle>
               <DialogDescription>
