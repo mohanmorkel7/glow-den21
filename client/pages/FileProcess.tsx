@@ -860,7 +860,7 @@ export default function FileProcess() {
       assignedCount:
         r.assigned_count || r.requested_count || r.requestedCount || 0,
       completedCount:
-        r.status === "verified" || r.status === "completed"
+        r.status === "completed"
           ? r.assigned_count || r.requested_count || r.requestedCount || 0
           : 0,
       assignedDate:
@@ -908,10 +908,11 @@ export default function FileProcess() {
     action: "approve" | "reject",
   ) => {
     try {
-      await apiClient.updateFileRequest(requestId, {
-        status: action === "approve" ? "verified" : "rejected",
-        notes: verificationNotes || undefined,
-      } as any);
+      await apiClient.verifyCompletedRequest(
+        requestId,
+        action,
+        verificationNotes || undefined,
+      );
       await loadData();
     } catch (e) {
       console.error("Failed to update verification status", e);
@@ -924,11 +925,13 @@ export default function FileProcess() {
   };
 
   const getPendingVerifications = () =>
-    fileRequests.filter((req: any) => req.status === "pending_verification");
+    fileRequests.filter(
+      (req: any) => req.status === "in_review" || req.status === "pending_verification",
+    );
 
   const getVerifiedFiles = () =>
     fileRequests.filter(
-      (req: any) => req.status === "verified" || req.status === "rejected",
+      (req: any) => req.status === "completed" || req.status === "rework",
     );
 
   const handleStatusChange = (processId: string, newStatus: string) => {
