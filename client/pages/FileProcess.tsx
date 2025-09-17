@@ -2693,12 +2693,11 @@ export default function FileProcess() {
                               </div>
                             )}
                           </div>
-                          <p className="text-xs text-blue-700 mt-1">
-                            Uploaded:{" "}
-                            {new Date(
-                              request.uploadedFile.uploadDate,
-                            ).toLocaleString()}
-                          </p>
+                          {request.outputFile?.uploadDate && (
+                            <p className="text-xs text-blue-700 mt-1">
+                              Uploaded: {new Date(request.outputFile.uploadDate).toLocaleString()}
+                            </p>
+                          )}
                         </div>
 
                         {/* User Notes */}
