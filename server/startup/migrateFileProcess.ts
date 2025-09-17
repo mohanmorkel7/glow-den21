@@ -74,6 +74,9 @@ export async function ensureFileProcessTables(): Promise<void> {
     await query(
       "ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS rework_count INT DEFAULT 0",
     );
+    await query(
+      "ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP",
+    );
 
     // Indexes for performance
     await query(
