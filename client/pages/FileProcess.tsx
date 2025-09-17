@@ -784,50 +784,76 @@ export default function FileProcess() {
 
   const automationStats = getAutomationStats();
 
-  // Get current month's completed processes
+  // Build history from real data
   const getCurrentMonthCompletedProcesses = () => {
-    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
-    return mockHistoricalProcesses.filter((process) => {
-      const processMonth = process.completedDate.substring(0, 7);
-      return processMonth === currentMonth;
-    });
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    return fileProcesses
+      .filter((p: any) => p.status === "completed")
+      .filter((p: any) => (p.updatedAt || p.uploadDate || "").substring(0, 7) === currentMonth)
+      .map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        projectName: p.projectName,
+        fileName: p.fileName || "",
+        totalRows: p.totalRows,
+        processedRows: p.processedRows,
+        createdDate: p.uploadDate || p.createdAt || new Date().toISOString(),
+        completedDate: p.updatedAt || new Date().toISOString(),
+        createdBy: p.createdBy || "",
+        duration: "",
+        totalUsers: p.activeUsers || 0,
+        avgProcessingRate: 0,
+      }));
   };
 
-  // Get processes grouped by month
   const getProcessesByMonth = () => {
-    const processMap = new Map<string, typeof mockHistoricalProcesses>();
-
-    mockHistoricalProcesses.forEach((process) => {
-      const month = process.completedDate.substring(0, 7);
-      if (!processMap.has(month)) {
-        processMap.set(month, []);
-      }
-      processMap.get(month)!.push(process);
+    const completed = fileProcesses.filter((p: any) => p.status === "completed");
+    const map = new Map<string, any[]>();
+    completed.forEach((p: any) => {
+      const month = (p.updatedAt || p.uploadDate || "").substring(0, 7) || "unknown";
+      const item = {
+        id: p.id,
+        name: p.name,
+        projectName: p.projectName,
+        fileName: p.fileName || "",
+        totalRows: p.totalRows,
+        processedRows: p.processedRows,
+        createdDate: p.uploadDate || p.createdAt || new Date().toISOString(),
+        completedDate: p.updatedAt || new Date().toISOString(),
+        createdBy: p.createdBy || "",
+        duration: "",
+        totalUsers: p.activeUsers || 0,
+        avgProcessingRate: 0,
+      };
+      map.set(month, [...(map.get(month) || []), item]);
     });
-
-    // Convert to array and sort by month (newest first)
-    return Array.from(processMap.entries())
+    return Array.from(map.entries())
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([month, processes]) => ({
         month,
-        monthName: new Date(month + "-01").toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-        }),
+        monthName: new Date((month || "1970-01") + "-01").toLocaleDateString("en-US", { year: "numeric", month: "long" }),
         processes,
       }));
   };
 
-  // Get assignments grouped by month
   const getAssignmentsByMonth = () => {
-    if (selectedMonth === "all") {
-      return mockHistoricalAssignments;
-    }
-
-    return mockHistoricalAssignments.filter((assignment) => {
-      const assignmentMonth = assignment.completedDate.substring(0, 7);
-      return assignmentMonth === selectedMonth;
+    const enrich = (r: any) => ({
+      id: r.id,
+      processName:
+        r.file_process_name || r.fileProcessName ||
+        fileProcesses.find((p) => p.id === (r.file_process_id || r.fileProcessId))?.name ||
+        "",
+      userName: r.user_name || r.userName || "",
+      assignedCount: r.assigned_count || r.requested_count || r.requestedCount || 0,
+      completedCount: r.status === "verified" || r.status === "completed" ? (r.assigned_count || r.requested_count || r.requestedCount || 0) : 0,
+      assignedDate: r.assigned_date || r.requested_date || r.requestedDate || new Date().toISOString(),
+      completedDate: r.completed_date || r.updated_at || new Date().toISOString(),
+      processingTime: "",
+      efficiency: 100,
     });
+    const history = fileRequests.filter((r: any) => ["completed", "verified", "pending_verification", "in_progress"].includes(r.status)).map(enrich);
+    if (selectedMonth === "all") return history;
+    return history.filter((h: any) => (h.completedDate || "").substring(0, 7) === selectedMonth);
   };
 
   const currentMonthProcesses = getCurrentMonthCompletedProcesses();
