@@ -71,6 +71,7 @@ interface FileRequest {
   fileProcessName?: string;
   assignedBy?: string;
   assignedDate?: string;
+  assignedCount?: number;
   downloadLink?: string;
   completedDate?: string;
   startRow?: number;
