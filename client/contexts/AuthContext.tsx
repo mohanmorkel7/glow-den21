@@ -83,12 +83,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
 
     try {
-      // Check if we're in development mode and database is unavailable
-      // Use mock authentication to bypass API issues
-      console.warn(
-        "Using mock authentication for development (database unavailable)",
-      );
+      // First try real API login
+      try {
+        const response: LoginResponse = await apiClient.login(email, password);
+        if (response && response.token) {
+          localStorage.setItem("authToken", response.token);
+          localStorage.setItem("refreshToken", response.refreshToken);
+          localStorage.setItem("user", JSON.stringify(response.user));
+          setUser(response.user);
+          return true;
+        }
+      } catch (apiError) {
+        console.warn("API login failed:", apiError);
+        // continue to fallback to mock only in development
+        const isDev =
+          !process.env.NODE_ENV ||
+          process.env.NODE_ENV === "development" ||
+          window.location.hostname.includes("localhost");
+        if (!isDev) {
+          return false;
+        }
+      }
 
+      // Fallback mock authentication for development
       // Create mock user based on email domain and common test credentials
       let role: "super_admin" | "project_manager" | "user" = "user";
       let name = "Test User";
