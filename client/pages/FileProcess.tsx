@@ -906,41 +906,36 @@ export default function FileProcess() {
     reader.readAsText(file, "UTF-8");
   };
 
-  const handleCreateProcess = () => {
-    const availableRows = newProcess.totalRows;
+  const handleCreateProcess = async () => {
+    try {
+      const project = projects.find((p: any) => p.id === newProcess.projectId);
+      const payload: any = {
+        name: newProcess.name,
+        projectId: newProcess.projectId || null,
+        projectName: project?.name || null,
+        fileName: newProcess.type === "manual" ? newProcess.fileName : null,
+        totalRows: newProcess.totalRows,
+        type: newProcess.type,
+        dailyTarget: newProcess.type === "automation" ? newProcess.dailyTarget : null,
+        automationConfig:
+          newProcess.type === "automation"
+            ? { toolName: newProcess.automationToolName, lastUpdate: new Date().toISOString(), dailyCompletions: [] }
+            : null,
+      };
 
-    const process: FileProcess = {
-      id: `fp_${fileProcesses.length + 1}`,
-      name: newProcess.name,
-      projectId: newProcess.projectId,
-      projectName:
-        mockProjects.find((p) => p.id === newProcess.projectId)?.name ||
-        "Unknown Project",
-      fileName: newProcess.type === "manual" ? newProcess.fileName : undefined,
-      totalRows: newProcess.totalRows,
-      headerRows: 0,
-      processedRows: 0,
-      availableRows: availableRows,
-      uploadDate: new Date().toISOString(),
-      status: newProcess.type === "automation" ? "pending" : "active",
-      createdBy: currentUser?.name || "Unknown",
-      activeUsers: newProcess.type === "automation" ? 0 : 0,
-      type: newProcess.type,
-      dailyTarget:
-        newProcess.type === "automation" ? newProcess.dailyTarget : undefined,
-      automationConfig:
-        newProcess.type === "automation"
-          ? {
-              toolName: newProcess.automationToolName,
-              lastUpdate: new Date().toISOString(),
-              dailyCompletions: [],
-            }
-          : undefined,
-    };
-
-    setFileProcesses([process, ...fileProcesses]);
-    resetForm();
-    setIsCreateDialogOpen(false);
+      if (editingProcessId) {
+        await apiClient.updateFileProcess(editingProcessId, payload);
+      } else {
+        await apiClient.createFileProcess(payload);
+      }
+      await loadData();
+      resetForm();
+      setEditingProcessId(null);
+      setIsCreateDialogOpen(false);
+    } catch (e) {
+      alert("Failed to save file process");
+      console.error(e);
+    }
   };
 
   const generateDownloadLink = (
