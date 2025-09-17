@@ -2714,21 +2714,22 @@ export default function FileProcess() {
 
                         {/* Action Buttons */}
                         <div className="flex items-center gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              // Simulate file download
-                              const link = document.createElement("a");
-                              link.href = "#";
-                              link.download = request.uploadedFile.name;
-                              link.click();
-                            }}
-                            className="mr-2"
-                          >
-                            <Download className="h-4 w-4 mr-2" />
-                            Download File
-                          </Button>
+                          {request.outputFile && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const link = document.createElement("a");
+                                link.href = "#";
+                                link.download = request.outputFile!.name;
+                                link.click();
+                              }}
+                              className="mr-2"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download File
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             onClick={() => handleVerificationReview(request)}
