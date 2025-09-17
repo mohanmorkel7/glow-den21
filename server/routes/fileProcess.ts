@@ -418,3 +418,179 @@ export const updateFileRequest: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Storage helpers
+const STORAGE_ROOT = path.join(process.cwd(), "storage", "file-processes");
+const ensureDir = (dir: string) => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+};
+
+// Upload the source file for a file process. Accepts raw bytes (application/octet-stream)
+export const uploadFileForProcess: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Validate process exists
+    const procRes = await query("SELECT * FROM file_processes WHERE id = $1", [
+      id,
+    ]);
+    if (procRes.rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File process not found" },
+      });
+    }
+
+    const originalName = (req.headers["x-file-name"] as string) || "upload.csv";
+    const safeName = originalName.replace(/[^a-zA-Z0-9_.\-]/g, "_");
+
+    ensureDir(STORAGE_ROOT);
+    const procDir = path.join(STORAGE_ROOT, id);
+    ensureDir(procDir);
+
+    const destPath = path.join(procDir, safeName);
+
+    // Pipe request stream to file
+    const writeStream = fs.createWriteStream(destPath);
+    req.pipe(writeStream);
+
+    writeStream.on("finish", async () => {
+      await query(
+        `UPDATE file_processes SET file_name = $1, upload_date = CURRENT_TIMESTAMP, status = 'active', updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [safeName, id],
+      );
+      res.json({ data: { path: destPath.replace(process.cwd() + path.sep, ""), fileName: safeName } });
+    });
+
+    writeStream.on("error", (err) => {
+      console.error("Upload write error:", err);
+      res.status(500).json({
+        error: { code: "WRITE_ERROR", message: "Failed to save uploaded file" },
+      });
+    });
+  } catch (error) {
+    console.error("Upload file error:", error);
+    res.status(500).json({
+      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to upload file" },
+    });
+  }
+};
+
+// Download assigned slice for a file request as CSV, and set status to in_progress on first access
+export const downloadAssignedSlice: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUser: any = (req as any).user;
+
+    // Load request and process
+    const reqRes = await query(
+      `SELECT fr.*, fp.file_name, fp.header_rows FROM file_requests fr LEFT JOIN file_processes fp ON fr.file_process_id = fp.id WHERE fr.id = $1`,
+      [id],
+    );
+    if (reqRes.rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
+    }
+
+    const r = reqRes.rows[0];
+
+    // Authorization: only assigned user, PM, or admin
+    const isOwner = currentUser?.id && String(currentUser.id) === String(r.user_id);
+    const isManager = ["super_admin", "project_manager"].includes(currentUser?.role);
+    if (!isOwner && !isManager) {
+      return res.status(403).json({
+        error: { code: "AUTHORIZATION_FAILED", message: "Not allowed to download this file" },
+      });
+    }
+
+    if (!r.file_process_id || !r.file_name) {
+      return res.status(400).json({
+        error: { code: "NO_SOURCE", message: "No source file associated with this process" },
+      });
+    }
+
+    const ext = String(r.file_name).toLowerCase();
+    if (!ext.endsWith(".csv")) {
+      return res.status(415).json({
+        error: {
+          code: "UNSUPPORTED_FORMAT",
+          message: "Only CSV source files are supported for slicing at this time",
+        },
+      });
+    }
+
+    const procDir = path.join(STORAGE_ROOT, r.file_process_id);
+    const srcPath = path.join(procDir, r.file_name);
+    if (!fs.existsSync(srcPath)) {
+      return res.status(404).json({
+        error: { code: "SOURCE_NOT_FOUND", message: "Source file not found on server" },
+      });
+    }
+
+    const startRow = Number(r.start_row || 0);
+    const endRow = Number(r.end_row || 0);
+    const headerRows = Number(r.header_rows || 0);
+
+    // Prepare output filename
+    const safe = (s: string) => String(s || "").toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_\-]/g, "");
+    const outName = `${safe(r.user_name || "user")}_${safe(r.file_process_id)}_${startRow}_${endRow}.csv`;
+
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${outName}"`);
+
+    // Stream read the source and write selected rows
+    const srcStream = fs.createReadStream(srcPath, { encoding: "utf8" });
+    const rl = readline.createInterface({ input: srcStream, crlfDelay: Infinity });
+
+    let lineIndex = 0;
+    let writtenHeader = false;
+
+    const writeLine = (line: string) => {
+      res.write(line.endsWith("\n") || line.endsWith("\r") ? line : line + "\n");
+    };
+
+    rl.on("line", (line) => {
+      lineIndex++;
+      // Capture header from first line(s)
+      if (headerRows > 0 && lineIndex <= headerRows) {
+        if (!writtenHeader) {
+          writeLine(line);
+          writtenHeader = true;
+        }
+        return;
+      }
+      const dataRowIndex = lineIndex - headerRows; // 1-based
+      if (dataRowIndex >= startRow && dataRowIndex <= endRow) {
+        if (!writtenHeader && headerRows === 0 && dataRowIndex === startRow) {
+          // No explicit header known; do not fabricate a header
+        }
+        writeLine(line);
+      }
+    });
+
+    rl.on("close", async () => {
+      // On first download, set status to in_progress if assigned
+      if (r.status === "assigned") {
+        try {
+          await query(
+            `UPDATE file_requests SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [id],
+          );
+        } catch (e) {
+          console.warn("Failed to set in_progress on download:", e);
+        }
+      }
+      res.end();
+    });
+
+    rl.on("error", (err) => {
+      console.error("Readline error:", err);
+      if (!res.headersSent) res.status(500);
+      res.end();
+    });
+  } catch (error) {
+    console.error("Download slice error:", error);
+    res.status(500).json({
+      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to generate download" },
+    });
+  }
+};
