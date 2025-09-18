@@ -600,6 +600,49 @@ export default function Salary() {
                   Configure individual monthly salaries for each project
                   manager. Changes allow for increments/decrements.
                 </p>
+
+                <div className="mt-3 p-3 border rounded-lg">
+                  <h5 className="font-medium">Add Project Manager</h5>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <Input
+                      placeholder="Full name"
+                      value={newPMName}
+                      onChange={(e) => setNewPMName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Monthly salary"
+                      type="number"
+                      value={newPMSalary as any}
+                      onChange={(e) => setNewPMSalary(e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        if (!newPMName || !newPMSalary) {
+                          alert("Please provide name and salary");
+                          return;
+                        }
+                        try {
+                          const resp: any = await apiClient.createPMSalary({
+                            name: newPMName,
+                            monthlySalary: Number(newPMSalary),
+                          });
+                          // Refresh PMs and clear inputs
+                          await refreshPMs();
+                          setNewPMName("");
+                          setNewPMSalary("");
+                        } catch (err) {
+                          console.error(err);
+                          alert("Failed to add project manager");
+                        }
+                      }}
+                    >
+                      Add PM
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
