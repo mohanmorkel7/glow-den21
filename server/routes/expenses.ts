@@ -649,7 +649,11 @@ router.get("/salary/users", async (req: Request, res: Response) => {
     const cfgRes = await query(
       `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
     );
-    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
     const firstTierRate = Number(cfg.first_tier_rate || 0);
     const secondTierRate = Number(cfg.second_tier_rate || 0);
     const firstTierLimit = Number(cfg.first_tier_limit || 0);
@@ -695,10 +699,22 @@ router.get("/salary/users", async (req: Request, res: Response) => {
     });
 
     const summary = {
-      totalMonthlyEarnings: users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0),
-      averageMonthlyEarnings: users.length ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) / users.length : 0,
-      totalTodayFiles: users.reduce((s: number, u: any) => s + (u.todayFiles || 0), 0),
-      totalMonthlyFiles: users.reduce((s: number, u: any) => s + (u.monthlyFiles || 0), 0),
+      totalMonthlyEarnings: users.reduce(
+        (s: number, u: any) => s + (u.monthlyEarnings || 0),
+        0,
+      ),
+      averageMonthlyEarnings: users.length
+        ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) /
+          users.length
+        : 0,
+      totalTodayFiles: users.reduce(
+        (s: number, u: any) => s + (u.todayFiles || 0),
+        0,
+      ),
+      totalMonthlyFiles: users.reduce(
+        (s: number, u: any) => s + (u.monthlyFiles || 0),
+        0,
+      ),
       activeUsers: users.length,
     };
 
@@ -769,14 +785,12 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
   try {
     const { name, email, monthlySalary } = req.body as any;
     if (!name || !monthlySalary) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "name and monthlySalary are required",
-          },
-        });
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "name and monthlySalary are required",
+        },
+      });
     }
 
     // Try to find user by email, otherwise by name
@@ -810,25 +824,21 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
     const pmRes = await query(insertPm, [userId, monthlySalary]);
     const pmRow = pmRes.rows[0];
 
-    res
-      .status(201)
-      .json({
-        data: {
-          id: pmRow.id,
-          userId: pmRow.user_id,
-          monthlySalary: Number(pmRow.monthly_salary),
-        },
-      });
+    res.status(201).json({
+      data: {
+        id: pmRow.id,
+        userId: pmRow.user_id,
+        monthlySalary: Number(pmRow.monthly_salary),
+      },
+    });
   } catch (error) {
     console.error("Error creating PM salary:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create PM salary",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create PM salary",
+      },
+    });
   }
 });
 
