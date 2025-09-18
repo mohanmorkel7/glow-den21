@@ -270,6 +270,63 @@ export const createFileRequest: RequestHandler = async (req, res) => {
   }
 };
 
+export const syncCompletedRequests: RequestHandler = async (req, res) => {
+  try {
+    const currentUser: any = (req as any).user;
+    const { userId } = req.body || {};
+
+    const targetUserId =
+      userId && (currentUser?.role === "super_admin" || currentUser?.role === "project_manager")
+        ? userId
+        : currentUser?.id;
+
+    if (!targetUserId) {
+      return res.status(400).json({ error: { code: "INVALID_REQUEST", message: "Missing userId" } });
+    }
+
+    const sql = `
+      SELECT COALESCE(fr.project_id, NULL) as project_id, DATE(fr.completed_date) as date, SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)) as submitted_count
+      FROM file_requests fr
+      WHERE fr.user_id = $1 AND fr.status = 'completed' AND fr.completed_date IS NOT NULL
+      GROUP BY COALESCE(fr.project_id, NULL), DATE(fr.completed_date)
+    `;
+
+    const result = await query(sql, [targetUserId]);
+
+    for (const row of result.rows) {
+      const projectId = row.project_id || null;
+      const dateStr = row.date;
+      const submitted = Number(row.submitted_count || 0);
+
+      const existingQuery = projectId
+        ? `SELECT id FROM daily_counts WHERE user_id = $1 AND project_id = $2 AND date = $3`
+        : `SELECT id FROM daily_counts WHERE user_id = $1 AND project_id IS NULL AND date = $2`;
+
+      const existingParams = projectId ? [targetUserId, projectId, dateStr] : [targetUserId, dateStr];
+      const existing = await query(existingQuery, existingParams);
+
+      if (existing.rows.length) {
+        const id = existing.rows[0].id;
+        await query(
+          `UPDATE daily_counts SET submitted_count = $1, status = 'approved', approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [submitted, id],
+        );
+      } else {
+        await query(
+          `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_at)
+           VALUES ($1, $2, $3, 0, $4, 'approved', $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [targetUserId, projectId, dateStr, submitted, 'Synced from file_requests'],
+        );
+      }
+    }
+
+    res.json({ data: { synced: result.rows.length } });
+  } catch (error) {
+    console.error('Sync completed requests error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to sync completed requests' } });
+  }
+};
+
 export const approveFileRequest: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
