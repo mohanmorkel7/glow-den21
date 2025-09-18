@@ -435,9 +435,13 @@ export default function Salary() {
 
   const handleConfigSave = async () => {
     try {
-      await apiClient.updateSalaryConfig(tempConfig);
-      setSalaryConfig(tempConfig);
+      const resp: any = await apiClient.updateSalaryConfig(tempConfig);
+      const data = (resp && resp.data) || resp || tempConfig;
+      setSalaryConfig((prev) => ({ ...prev, ...data } as SalaryConfig));
+      setTempConfig((t) => ({ ...t, ...(data as any) }));
       setIsConfigDialogOpen(false);
+      // Refresh PM list to reflect updated salaries
+      await refreshPMs();
     } catch (err) {
       console.error("Failed to save salary config", err);
       alert("Failed to save salary configuration");
