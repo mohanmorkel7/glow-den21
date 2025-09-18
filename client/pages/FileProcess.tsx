@@ -635,6 +635,43 @@ export default function FileProcess() {
   const [selectedVerificationRequest, setSelectedVerificationRequest] =
     useState<any>(null);
   const [verificationNotes, setVerificationNotes] = useState("");
+  const [monthlyUserCounts, setMonthlyUserCounts] = useState<
+    { userId: string; userName: string; total: number }[]
+  >([]);
+
+  useEffect(() => {
+    const loadMonthly = async () => {
+      try {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+        const monthStartStr = `${yyyy}-${mm}-01`;
+        const resp = await apiClient.getDailyCounts({
+          from: monthStartStr,
+          to: todayStr,
+          status: "approved",
+          page: 1,
+          limit: 10000,
+        });
+        const list: any[] = (resp as any)?.data?.dailyCounts ?? (resp as any)?.data ?? (Array.isArray(resp) ? (resp as any) : []);
+        const map = new Map<string, { userId: string; userName: string; total: number }>();
+        for (const dc of list) {
+          const userId = String(dc.userId ?? dc.user_id ?? "");
+          const userName = dc.userName ?? dc.user_name ?? "Unknown";
+          const submitted = Number(dc.submittedCount ?? dc.submitted_count ?? 0);
+          if (!map.has(userId)) map.set(userId, { userId, userName, total: 0 });
+          map.get(userId)!.total += submitted;
+        }
+        const arr = Array.from(map.values()).sort((a, b) => b.total - a.total);
+        setMonthlyUserCounts(arr);
+      } catch (e) {
+        console.warn("Failed to load monthly user counts", e);
+      }
+    };
+    loadMonthly();
+  }, []);
 
   // Only allow admin/project_manager to access this page
   if (
