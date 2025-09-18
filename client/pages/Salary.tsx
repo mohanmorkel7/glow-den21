@@ -147,6 +147,39 @@ export default function Salary() {
     ProjectManagerSalaryData[]
   >([]);
 
+  // Local state for adding a PM
+  const [newPMName, setNewPMName] = useState("");
+  const [newPMSalary, setNewPMSalary] = useState<number | string>("");
+
+  const refreshPMs = async () => {
+    try {
+      const pmResp: any = await apiClient.getSalaryProjectManagers();
+      const pms = (pmResp && pmResp.data) || pmResp || [];
+      setProjectManagerSalaryData(
+        pms.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          role: p.role,
+          monthlySalary: p.monthlySalary,
+          attendanceRate: p.attendanceRate || 0,
+          lastActive: p.lastActive || null,
+        })),
+      );
+
+      // Update tempConfig map for any new PMs
+      setTempConfig((prev) => {
+        const next = { ...prev };
+        next.projectManagers = next.projectManagers || {};
+        pms.forEach((p: any) => {
+          if (!(p.id in next.projectManagers)) next.projectManagers[p.id] = p.monthlySalary || 0;
+        });
+        return next;
+      });
+    } catch (err) {
+      console.warn("Failed to refresh PMs", err);
+    }
+  };
+
   useEffect(() => {
     const loadSalaryData = async () => {
       try {
