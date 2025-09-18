@@ -3161,9 +3161,12 @@ export default function FileProcess() {
                             <p className="text-sm text-muted-foreground">
                               {request.fileProcessName}
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                              Requested: {new Date(request.requestedDate).toLocaleString()} • Count: {request.requestedCount?.toLocaleString()}
+                            </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-2">
                           <Badge
                             className={
                               request.status === "completed"
@@ -3175,12 +3178,32 @@ export default function FileProcess() {
                               ? "Approved"
                               : "Rework"}
                           </Badge>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {request.verifiedBy} •{" "}
-                            {new Date(
-                              request.verifiedDate,
-                            ).toLocaleDateString()}
+                          <p className="text-xs text-muted-foreground">
+                            Completed: {request.completedDate ? new Date(request.completedDate).toLocaleString() : "-"}
                           </p>
+                          <p className="text-xs text-muted-foreground">
+                            Duration: {formatDuration(request.requestedDate, request.completedDate)}
+                          </p>
+                          {currentUser && (currentUser.role === "project_manager" || currentUser.role === "super_admin") && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                onClick={async () => {
+                                  if (!confirm('Mark this request as Rework?')) return;
+                                  try {
+                                    await apiClient.verifyCompletedRequest(request.id, 'reject', 'Re-check requested');
+                                    await loadData();
+                                  } catch (e) {
+                                    console.error(e);
+                                    alert('Failed to set Rework');
+                                  }
+                                }}
+                              >
+                                Re-check
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
