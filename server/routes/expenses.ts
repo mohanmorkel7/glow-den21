@@ -635,7 +635,7 @@ router.put("/salary/config", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/expenses/salary/users - Get user salary data
+// GET /api/expenses/salary/users - Get user salary data from file_requests (completed)
 router.get("/salary/users", async (req: Request, res: Response) => {
   try {
     const { month } = req.query as any;
@@ -645,35 +645,88 @@ router.get("/salary/users", async (req: Request, res: Response) => {
     nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
     const nextMonth = nextMonthDate.toISOString().substring(0, 10);
 
-    // Aggregate monthly data and earnings per user (today, weekly, monthly)
+    // Load salary configuration for tiered calculation
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
+    const firstTierRate = Number(cfg.first_tier_rate || 0);
+    const secondTierRate = Number(cfg.second_tier_rate || 0);
+    const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+    // Aggregate files from file_requests with status completed in the month range
     const sql = `
       SELECT u.id as user_id, u.name as user_name,
-             SUM(ust.files_processed) as monthly_files,
-             COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.files_processed ELSE 0 END),0) as today_files,
-             COALESCE(SUM(CASE WHEN ust.date >= (CURRENT_DATE - INTERVAL '6 day') THEN ust.files_processed ELSE 0 END),0) as weekly_files,
-             COALESCE(SUM(ust.total_earnings),0) as monthly_earnings,
-             COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.total_earnings ELSE 0 END),0) as today_earnings,
-             COALESCE(SUM(CASE WHEN ust.date >= (CURRENT_DATE - INTERVAL '6 day') THEN ust.total_earnings ELSE 0 END),0) as weekly_earnings
-      FROM user_salary_tracking ust
-      JOIN users u ON ust.user_id = u.id
-      WHERE ust.date >= $1 AND ust.date < $2
+             COALESCE(SUM(CASE WHEN DATE(fr.completed_date) = CURRENT_DATE THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END),0) as today_files,
+             COALESCE(SUM(CASE WHEN DATE(fr.completed_date) >= (CURRENT_DATE - INTERVAL '6 day') THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END),0) as weekly_files,
+             COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) as monthly_files
+      FROM file_requests fr
+      JOIN users u ON u.id::text = fr.user_id
+      WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
       GROUP BY u.id, u.name
       ORDER BY u.name
     `;
+
     const result = await query(sql, [monthStart, nextMonth]);
-    const users = result.rows.map((r: any) => ({
-      id: r.user_id,
-      name: r.user_name,
-      role: "user",
-      todayFiles: Number(r.today_files || 0),
-      weeklyFiles: Number(r.weekly_files || 0),
-      monthlyFiles: Number(r.monthly_files || 0),
-      todayEarnings: Number(r.today_earnings || 0),
-      weeklyEarnings: Number(r.weekly_earnings || 0),
-      monthlyEarnings: Number(r.monthly_earnings || 0),
-      attendanceRate: 0,
-      lastActive: null,
-    }));
+
+    const calc = (files: number) => {
+      const tier1 = Math.min(files, firstTierLimit);
+      const tier2 = Math.max(0, files - firstTierLimit);
+      return tier1 * firstTierRate + tier2 * secondTierRate;
+    };
+
+    // Fetch per-user performance from daily_counts (today), based on targets of tagged projects
+    const users = [] as any[];
+    for (const r of result.rows) {
+      const userId = r.user_id;
+      const todayFiles = Number(r.today_files || 0);
+      const weeklyFiles = Number(r.weekly_files || 0);
+      const monthlyFiles = Number(r.monthly_files || 0);
+
+      // Sum target and submitted counts for today across all tagged projects
+      const perfRes = await query(
+        `SELECT
+           COALESCE(SUM(dc.target_count),0) AS target_today,
+           COALESCE(SUM(dc.submitted_count),0) AS submitted_today
+         FROM daily_counts dc
+         WHERE dc.date = CURRENT_DATE AND dc.user_id::text = $1`,
+        [String(userId)],
+      );
+      const pr = perfRes.rows[0] || { target_today: 0, submitted_today: 0 };
+      const targetToday = Number(pr.target_today || 0);
+      const submittedToday = Number(pr.submitted_today || 0);
+      let performancePct = 0;
+      if (targetToday > 0) {
+        performancePct = Math.max(
+          0,
+          Math.min(100, Math.round((submittedToday / targetToday) * 100)),
+        );
+      } else if (firstTierLimit > 0) {
+        // Fallback: compare to first tier limit if no explicit target is set
+        performancePct = Math.max(
+          0,
+          Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)),
+        );
+      }
+
+      users.push({
+        id: userId,
+        name: r.user_name,
+        role: "user",
+        todayFiles,
+        weeklyFiles,
+        monthlyFiles,
+        todayEarnings: calc(todayFiles),
+        weeklyEarnings: calc(weeklyFiles),
+        monthlyEarnings: calc(monthlyFiles),
+        attendanceRate: performancePct,
+        lastActive: null,
+      });
+    }
 
     const summary = {
       totalMonthlyEarnings: users.reduce(
@@ -718,7 +771,7 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
     const sql = `
       SELECT ps.id, ps.user_id, ps.monthly_salary, u.name
       FROM pm_salaries ps
-      JOIN users u ON ps.user_id = u.id
+      JOIN users u ON u.id::text = ps.user_id
       WHERE ps.is_active = true AND ps.effective_from <= $1
       ORDER BY u.name
     `;
@@ -762,14 +815,12 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
   try {
     const { name, email, monthlySalary } = req.body as any;
     if (!name || !monthlySalary) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "name and monthlySalary are required",
-          },
-        });
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "name and monthlySalary are required",
+        },
+      });
     }
 
     // Try to find user by email, otherwise by name
@@ -803,25 +854,21 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
     const pmRes = await query(insertPm, [userId, monthlySalary]);
     const pmRow = pmRes.rows[0];
 
-    res
-      .status(201)
-      .json({
-        data: {
-          id: pmRow.id,
-          userId: pmRow.user_id,
-          monthlySalary: Number(pmRow.monthly_salary),
-        },
-      });
+    res.status(201).json({
+      data: {
+        id: pmRow.id,
+        userId: pmRow.user_id,
+        monthlySalary: Number(pmRow.monthly_salary),
+      },
+    });
   } catch (error) {
     console.error("Error creating PM salary:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create PM salary",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create PM salary",
+      },
+    });
   }
 });
 
