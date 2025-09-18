@@ -635,7 +635,7 @@ router.put("/salary/config", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/expenses/salary/users - Get user salary data
+// GET /api/expenses/salary/users - Get user salary data from file_requests (completed)
 router.get("/salary/users", async (req: Request, res: Response) => {
   try {
     const { month } = req.query as any;
@@ -645,53 +645,60 @@ router.get("/salary/users", async (req: Request, res: Response) => {
     nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
     const nextMonth = nextMonthDate.toISOString().substring(0, 10);
 
-    // Aggregate monthly data and earnings per user (today, weekly, monthly)
+    // Load salary configuration for tiered calculation
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const firstTierRate = Number(cfg.first_tier_rate || 0);
+    const secondTierRate = Number(cfg.second_tier_rate || 0);
+    const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+    // Aggregate files from file_requests with status completed in the month range
     const sql = `
       SELECT u.id as user_id, u.name as user_name,
-             SUM(ust.files_processed) as monthly_files,
-             COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.files_processed ELSE 0 END),0) as today_files,
-             COALESCE(SUM(CASE WHEN ust.date >= (CURRENT_DATE - INTERVAL '6 day') THEN ust.files_processed ELSE 0 END),0) as weekly_files,
-             COALESCE(SUM(ust.total_earnings),0) as monthly_earnings,
-             COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.total_earnings ELSE 0 END),0) as today_earnings,
-             COALESCE(SUM(CASE WHEN ust.date >= (CURRENT_DATE - INTERVAL '6 day') THEN ust.total_earnings ELSE 0 END),0) as weekly_earnings
-      FROM user_salary_tracking ust
-      JOIN users u ON ust.user_id = u.id
-      WHERE ust.date >= $1 AND ust.date < $2
+             COALESCE(SUM(CASE WHEN DATE(fr.completed_date) = CURRENT_DATE THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END),0) as today_files,
+             COALESCE(SUM(CASE WHEN DATE(fr.completed_date) >= (CURRENT_DATE - INTERVAL '6 day') THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END),0) as weekly_files,
+             COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) as monthly_files
+      FROM file_requests fr
+      JOIN users u ON fr.user_id = u.id
+      WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
       GROUP BY u.id, u.name
       ORDER BY u.name
     `;
+
     const result = await query(sql, [monthStart, nextMonth]);
-    const users = result.rows.map((r: any) => ({
-      id: r.user_id,
-      name: r.user_name,
-      role: "user",
-      todayFiles: Number(r.today_files || 0),
-      weeklyFiles: Number(r.weekly_files || 0),
-      monthlyFiles: Number(r.monthly_files || 0),
-      todayEarnings: Number(r.today_earnings || 0),
-      weeklyEarnings: Number(r.weekly_earnings || 0),
-      monthlyEarnings: Number(r.monthly_earnings || 0),
-      attendanceRate: 0,
-      lastActive: null,
-    }));
+
+    const calc = (files: number) => {
+      const tier1 = Math.min(files, firstTierLimit);
+      const tier2 = Math.max(0, files - firstTierLimit);
+      return tier1 * firstTierRate + tier2 * secondTierRate;
+    };
+
+    const users = result.rows.map((r: any) => {
+      const todayFiles = Number(r.today_files || 0);
+      const weeklyFiles = Number(r.weekly_files || 0);
+      const monthlyFiles = Number(r.monthly_files || 0);
+      return {
+        id: r.user_id,
+        name: r.user_name,
+        role: "user",
+        todayFiles,
+        weeklyFiles,
+        monthlyFiles,
+        todayEarnings: calc(todayFiles),
+        weeklyEarnings: calc(weeklyFiles),
+        monthlyEarnings: calc(monthlyFiles),
+        attendanceRate: 0,
+        lastActive: null,
+      };
+    });
 
     const summary = {
-      totalMonthlyEarnings: users.reduce(
-        (s: number, u: any) => s + (u.monthlyEarnings || 0),
-        0,
-      ),
-      averageMonthlyEarnings: users.length
-        ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) /
-          users.length
-        : 0,
-      totalTodayFiles: users.reduce(
-        (s: number, u: any) => s + (u.todayFiles || 0),
-        0,
-      ),
-      totalMonthlyFiles: users.reduce(
-        (s: number, u: any) => s + (u.monthlyFiles || 0),
-        0,
-      ),
+      totalMonthlyEarnings: users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0),
+      averageMonthlyEarnings: users.length ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) / users.length : 0,
+      totalTodayFiles: users.reduce((s: number, u: any) => s + (u.todayFiles || 0), 0),
+      totalMonthlyFiles: users.reduce((s: number, u: any) => s + (u.monthlyFiles || 0), 0),
       activeUsers: users.length,
     };
 
