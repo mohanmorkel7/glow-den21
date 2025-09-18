@@ -821,7 +821,9 @@ export default function RequestFiles() {
                             )}
                             {request.status === "rework" && (
                               <div className="flex items-center gap-2">
-                                <Badge className="bg-red-100 text-red-800">Rework</Badge>
+                                <Badge className="bg-red-100 text-red-800">
+                                  Rework
+                                </Badge>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -975,7 +977,9 @@ export default function RequestFiles() {
                           </Select>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <Badge className={getStatusBadgeColor(request.status)}>
+                            <Badge
+                              className={getStatusBadgeColor(request.status)}
+                            >
                               {(request.status === "pending_verification" ||
                                 request.status === "in_review") && (
                                 <Clock className="h-3 w-3 mr-1" />
