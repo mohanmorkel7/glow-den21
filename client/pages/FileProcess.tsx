@@ -4254,6 +4254,27 @@ export default function FileProcess() {
                   This action will notify the user of your decision via email.
                 </div>
                 <div className="flex gap-3">
+                  {currentUser && (currentUser.role === "project_manager" || currentUser.role === "super_admin") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        if (!confirm('Mark this request as Rework?')) return;
+                        try {
+                          await apiClient.verifyCompletedRequest(selectedVerificationRequest.id, 'reject', 'Re-check requested by PM');
+                          await loadData();
+                          setIsVerificationDialogOpen(false);
+                        } catch (e) {
+                          console.error(e);
+                          alert('Failed to mark Rework');
+                        }
+                      }}
+                      className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    >
+                      Re-check
+                    </Button>
+                  )}
+
                   <Button
                     variant="outline"
                     onClick={() => {
