@@ -486,7 +486,11 @@ router.get("/salary/config", async (req: Request, res: Response) => {
     if (!row) {
       return res.json({
         data: {
-          users: { firstTierRate: 0.5, secondTierRate: 0.6, firstTierLimit: 500 },
+          users: {
+            firstTierRate: 0.5,
+            secondTierRate: 0.6,
+            firstTierLimit: 500,
+          },
           projectManagers: {},
           currency: "INR",
         },
@@ -548,7 +552,14 @@ router.put("/salary/config", async (req: Request, res: Response) => {
     }
 
     if (updateFields.length === 0) {
-      return res.status(400).json({ error: { code: "NO_CHANGES", message: "No configuration fields provided" } });
+      return res
+        .status(400)
+        .json({
+          error: {
+            code: "NO_CHANGES",
+            message: "No configuration fields provided",
+          },
+        });
     }
 
     // set updated_by and updated_at
@@ -564,7 +575,9 @@ router.put("/salary/config", async (req: Request, res: Response) => {
     // Build response
     let updatedBy = null;
     if (row.updated_by_user_id) {
-      const u = await query(`SELECT id, name FROM users WHERE id = $1`, [row.updated_by_user_id]);
+      const u = await query(`SELECT id, name FROM users WHERE id = $1`, [
+        row.updated_by_user_id,
+      ]);
       if (u.rows[0]) updatedBy = { id: u.rows[0].id, name: u.rows[0].name };
     }
 
@@ -640,10 +653,22 @@ router.get("/salary/users", async (req: Request, res: Response) => {
     }));
 
     const summary = {
-      totalMonthlyEarnings: users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0),
-      averageMonthlyEarnings: users.length ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) / users.length : 0,
-      totalTodayFiles: users.reduce((s: number, u: any) => s + (u.todayFiles || 0), 0),
-      totalMonthlyFiles: users.reduce((s: number, u: any) => s + (u.monthlyFiles || 0), 0),
+      totalMonthlyEarnings: users.reduce(
+        (s: number, u: any) => s + (u.monthlyEarnings || 0),
+        0,
+      ),
+      averageMonthlyEarnings: users.length
+        ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) /
+          users.length
+        : 0,
+      totalTodayFiles: users.reduce(
+        (s: number, u: any) => s + (u.todayFiles || 0),
+        0,
+      ),
+      totalMonthlyFiles: users.reduce(
+        (s: number, u: any) => s + (u.monthlyFiles || 0),
+        0,
+      ),
       activeUsers: users.length,
     };
 
@@ -686,8 +711,14 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
     }));
 
     const summary = {
-      totalMonthlySalaries: pms.reduce((s: number, p: any) => s + (p.monthlySalary || 0), 0),
-      averageMonthlySalary: pms.length ? pms.reduce((s: number, p: any) => s + (p.monthlySalary || 0), 0) / pms.length : 0,
+      totalMonthlySalaries: pms.reduce(
+        (s: number, p: any) => s + (p.monthlySalary || 0),
+        0,
+      ),
+      averageMonthlySalary: pms.length
+        ? pms.reduce((s: number, p: any) => s + (p.monthlySalary || 0), 0) /
+          pms.length
+        : 0,
       activePMs: pms.length,
     };
 
