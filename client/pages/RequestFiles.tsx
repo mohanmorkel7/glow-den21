@@ -974,21 +974,34 @@ export default function RequestFiles() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge
-                            className={getStatusBadgeColor(request.status)}
-                          >
-                            {(request.status === "pending_verification" ||
-                              request.status === "in_review") && (
-                              <Clock className="h-3 w-3 mr-1" />
+                          <div className="flex items-center gap-2">
+                            <Badge className={getStatusBadgeColor(request.status)}>
+                              {(request.status === "pending_verification" ||
+                                request.status === "in_review") && (
+                                <Clock className="h-3 w-3 mr-1" />
+                              )}
+                              {request.status === "verified" && (
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                              )}
+                              {request.status === "completed" && (
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                              )}
+                              {request.status.replace("_", " ").toUpperCase()}
+                            </Badge>
+                            {request.status === "rework" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedRequestForUpload(request.id);
+                                  setIsUploadDialogOpen(true);
+                                }}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Re-upload
+                              </Button>
                             )}
-                            {request.status === "verified" && (
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                            )}
-                            {request.status === "completed" && (
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                            )}
-                            {request.status.replace("_", " ").toUpperCase()}
-                          </Badge>
+                          </div>
                         )}
                         {request.outputFile && (
                           <div className="mt-1">
