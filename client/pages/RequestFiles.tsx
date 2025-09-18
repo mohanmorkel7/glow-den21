@@ -153,6 +153,8 @@ export default function RequestFiles() {
   const { user: currentUser } = useAuth();
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>(mockDailyStats);
+  const [todayCompleted, setTodayCompleted] = useState<number>(0);
+  const [monthCompleted, setMonthCompleted] = useState<number>(0);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [requestCount, setRequestCount] = useState(500);
   const [activeTab, setActiveTab] = useState("current");
