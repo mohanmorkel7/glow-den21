@@ -88,6 +88,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.setItem("refreshToken", response.refreshToken);
         localStorage.setItem("user", JSON.stringify(response.user));
         setUser(response.user);
+        // Sync completed requests into daily counts for this user
+        try {
+          await apiClient.syncCompletedRequests();
+        } catch (syncErr) {
+          console.warn('Sync completed requests failed:', syncErr);
+        }
         return true;
       }
       return false;
