@@ -627,3 +627,299 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     });
   }
 };
+
+// Storage for uploaded completed work (per request)
+const REQUEST_UPLOAD_ROOT = path.join(
+  process.cwd(),
+  "storage",
+  "file-requests",
+);
+
+// User uploads completed ZIP for a request -> set status to in_review
+export const uploadCompletedForRequest: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUser: any = (req as any).user;
+
+    // Load request to verify ownership and fetch related info
+    const reqRes = await query(
+      `SELECT fr.*, fp.project_id FROM file_requests fr LEFT JOIN file_processes fp ON fr.file_process_id = fp.id WHERE fr.id = $1`,
+      [id],
+    );
+    if (reqRes.rows.length === 0) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
+    }
+    const r = reqRes.rows[0];
+
+    const isOwner =
+      currentUser?.id && String(currentUser.id) === String(r.user_id);
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
+    if (!isOwner && !isManager) {
+      return res.status(403).json({
+        error: {
+          code: "AUTHORIZATION_FAILED",
+          message: "Not allowed to upload for this request",
+        },
+      });
+    }
+
+    const originalName =
+      (req.headers["x-file-name"] as string) || "completed.zip";
+    const safeName = originalName.replace(/[^a-zA-Z0-9_.\-]/g, "_");
+    const lower = safeName.toLowerCase();
+    if (!lower.endsWith(".zip")) {
+      return res.status(415).json({
+        error: {
+          code: "UNSUPPORTED_FORMAT",
+          message: "Only ZIP uploads are allowed",
+        },
+      });
+    }
+
+    // Write to disk
+    if (!fs.existsSync(REQUEST_UPLOAD_ROOT))
+      fs.mkdirSync(REQUEST_UPLOAD_ROOT, { recursive: true });
+    const reqDir = path.join(REQUEST_UPLOAD_ROOT, id);
+    if (!fs.existsSync(reqDir)) fs.mkdirSync(reqDir, { recursive: true });
+    const destPath = path.join(reqDir, safeName);
+
+    const writeStream = fs.createWriteStream(destPath);
+    req.pipe(writeStream);
+
+    writeStream.on("finish", async () => {
+      // Persist request status -> in_review and set metadata
+      await query(
+        `UPDATE file_requests
+         SET uploaded_file_name = $1,
+             uploaded_file_path = $2,
+             status = 'in_review',
+             verification_status = 'pending',
+             completed_date = COALESCE(completed_date, CURRENT_TIMESTAMP),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [safeName, destPath.replace(process.cwd() + path.sep, ""), id],
+      );
+      res.json({ data: { fileName: safeName } });
+    });
+
+    writeStream.on("error", (err) => {
+      console.error("Completed upload write error:", err);
+      res.status(500).json({
+        error: { code: "WRITE_ERROR", message: "Failed to save uploaded file" },
+      });
+    });
+  } catch (error) {
+    console.error("Upload completed file error:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to upload completed file",
+      },
+    });
+  }
+};
+
+// Download the uploaded completed ZIP (PM/Admin or owner)
+export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUser: any = (req as any).user;
+
+    const result = await query(
+      `SELECT uploaded_file_name, uploaded_file_path, user_id FROM file_requests WHERE id = $1`,
+      [id],
+    );
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({
+          error: { code: "NOT_FOUND", message: "File request not found" },
+        });
+    }
+    const r = result.rows[0];
+    const isOwner =
+      currentUser?.id && String(currentUser.id) === String(r.user_id);
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
+    if (!isOwner && !isManager) {
+      return res
+        .status(403)
+        .json({
+          error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" },
+        });
+    }
+
+    if (!r.uploaded_file_path || !fs.existsSync(r.uploaded_file_path)) {
+      return res
+        .status(404)
+        .json({
+          error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" },
+        });
+    }
+
+    const fileName = r.uploaded_file_name || `completed_${id}.zip`;
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    fs.createReadStream(r.uploaded_file_path).pipe(res);
+  } catch (error) {
+    console.error("Download completed file error:", error);
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to download file",
+        },
+      });
+  }
+};
+
+// Approve or reject uploaded work; updates status and daily performance counts
+export const verifyCompletedRequest: RequestHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, notes } = req.body as {
+      action: "approve" | "reject";
+      notes?: string;
+    };
+    const currentUser: any = (req as any).user;
+
+    if (!action || !["approve", "reject"].includes(action)) {
+      return res.status(400).json({
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "action must be 'approve' or 'reject'",
+        },
+      });
+    }
+
+    // Only PM/Admin can verify
+    const isManager = ["super_admin", "project_manager"].includes(
+      currentUser?.role,
+    );
+    if (!isManager) {
+      return res.status(403).json({
+        error: {
+          code: "AUTHORIZATION_FAILED",
+          message: "Only managers can verify",
+        },
+      });
+    }
+
+    // Load request with process for project id
+    const reqRes = await query(
+      `SELECT fr.*, fp.project_id FROM file_requests fr LEFT JOIN file_processes fp ON fr.file_process_id = fp.id WHERE fr.id = $1`,
+      [id],
+    );
+    if (reqRes.rows.length === 0) {
+      return res
+        .status(404)
+        .json({
+          error: { code: "NOT_FOUND", message: "File request not found" },
+        });
+    }
+    const r = reqRes.rows[0];
+
+    const now = new Date().toISOString();
+
+    if (action === "approve") {
+      await transaction(async (client) => {
+        // Update request status to completed and mark verification
+        await client.query(
+          `UPDATE file_requests
+             SET status = 'completed',
+                 verification_status = 'approved',
+                 verified_by = $1,
+                 verified_at = CURRENT_TIMESTAMP,
+                 notes = COALESCE($2, notes),
+                 updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3`,
+          [currentUser?.name || currentUser?.id || null, notes || null, id],
+        );
+
+        // Upsert daily count for user/project for today
+        const dateStr = now.substring(0, 10);
+        const existing = await client.query(
+          `SELECT id, submitted_count, status FROM daily_counts WHERE user_id = $1 AND project_id = $2 AND date = $3`,
+          [r.user_id, r.project_id, dateStr],
+        );
+        if (existing.rows.length) {
+          const dc = existing.rows[0];
+          await client.query(
+            `UPDATE daily_counts SET submitted_count = $1, status = 'approved', approved_by_user_id = $2, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $3`,
+            [
+              Number(dc.submitted_count || 0) + Number(r.assigned_count || 0),
+              currentUser?.id || null,
+              dc.id,
+            ],
+          );
+        } else {
+          await client.query(
+            `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id, approved_at)
+             VALUES ($1,$2,$3,0,$4,'approved',$5,CURRENT_TIMESTAMP,$6,CURRENT_TIMESTAMP)`,
+            [
+              r.user_id,
+              r.project_id,
+              dateStr,
+              Number(r.assigned_count || 0),
+              notes || null,
+              currentUser?.id || null,
+            ],
+          );
+        }
+      });
+    } else {
+      // reject -> set to rework and increment rework_count; also record a rejected daily count entry
+      await transaction(async (client) => {
+        await client.query(
+          `UPDATE file_requests
+             SET status = 'rework',
+                 verification_status = 'rejected',
+                 verified_by = $1,
+                 verified_at = CURRENT_TIMESTAMP,
+                 notes = COALESCE($2, notes),
+                 rework_count = COALESCE(rework_count, 0) + 1,
+                 updated_at = CURRENT_TIMESTAMP
+           WHERE id = $3`,
+          [currentUser?.name || currentUser?.id || null, notes || null, id],
+        );
+
+        const dateStr = now.substring(0, 10);
+        if (r.project_id) {
+          await client.query(
+            `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id)
+             VALUES ($1,$2,$3,0,$4,'rejected',$5,CURRENT_TIMESTAMP,$6)`,
+            [
+              r.user_id,
+              r.project_id,
+              dateStr,
+              Number(r.assigned_count || 0),
+              notes || "Rework required",
+              currentUser?.id || null,
+            ],
+          );
+        }
+      });
+    }
+
+    const updated = await query(`SELECT * FROM file_requests WHERE id = $1`, [
+      id,
+    ]);
+    res.json({ data: updated.rows[0] });
+  } catch (error) {
+    console.error("Verify completed request error:", error);
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to verify request",
+        },
+      });
+  }
+};

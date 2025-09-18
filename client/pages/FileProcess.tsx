@@ -103,7 +103,14 @@ interface FileRequest {
   fileProcessId: string;
   requestedCount: number;
   requestedDate: string;
-  status: "pending" | "assigned" | "completed" | "in_progress" | "received";
+  status:
+    | "pending"
+    | "assigned"
+    | "completed"
+    | "in_progress"
+    | "received"
+    | "in_review"
+    | "rework";
   assignedBy?: string;
   assignedDate?: string;
   assignedCount?: number;
@@ -111,6 +118,15 @@ interface FileRequest {
   endRow?: number;
   downloadLink?: string;
   completedDate?: string;
+  // Optional fields populated from server/UI for verification flows
+  fileProcessName?: string | null;
+  userEmail?: string | null;
+  uploadedFileName?: string | null;
+  verifiedBy?: string | null;
+  verifiedDate?: string | null;
+  notes?: string | null;
+  submittedDate?: string | null;
+  outputFile?: { name: string; size: number; uploadDate: string } | null;
 }
 
 interface HistoricalFileProcess {
@@ -860,7 +876,7 @@ export default function FileProcess() {
       assignedCount:
         r.assigned_count || r.requested_count || r.requestedCount || 0,
       completedCount:
-        r.status === "verified" || r.status === "completed"
+        r.status === "completed"
           ? r.assigned_count || r.requested_count || r.requestedCount || 0
           : 0,
       assignedDate:
@@ -875,12 +891,7 @@ export default function FileProcess() {
     });
     const history = fileRequests
       .filter((r: any) =>
-        [
-          "completed",
-          "verified",
-          "pending_verification",
-          "in_progress",
-        ].includes(r.status),
+        ["completed", "in_review", "in_progress"].includes(r.status),
       )
       .map(enrich);
     if (selectedMonth === "all") return history;
@@ -909,10 +920,11 @@ export default function FileProcess() {
     action: "approve" | "reject",
   ) => {
     try {
-      await apiClient.updateFileRequest(requestId, {
-        status: action === "approve" ? "verified" : "rejected",
-        notes: verificationNotes || undefined,
-      } as any);
+      await apiClient.verifyCompletedRequest(
+        requestId,
+        action,
+        verificationNotes || undefined,
+      );
       await loadData();
     } catch (e) {
       console.error("Failed to update verification status", e);
@@ -925,11 +937,14 @@ export default function FileProcess() {
   };
 
   const getPendingVerifications = () =>
-    fileRequests.filter((req: any) => req.status === "pending_verification");
+    fileRequests.filter(
+      (req: any) =>
+        req.status === "in_review" || req.status === "pending_verification",
+    );
 
   const getVerifiedFiles = () =>
     fileRequests.filter(
-      (req: any) => req.status === "verified" || req.status === "rejected",
+      (req: any) => req.status === "completed" || req.status === "rework",
     );
 
   const handleStatusChange = (processId: string, newStatus: string) => {
@@ -1181,6 +1196,9 @@ export default function FileProcess() {
             startRow: r.start_row ?? r.startRow ?? null,
             endRow: r.end_row ?? r.endRow ?? null,
             assignedCount: r.assigned_count ?? r.assignedCount ?? null,
+            uploadedFileName: r.uploaded_file_name || null,
+            verifiedBy: r.verified_by || null,
+            verifiedDate: r.verified_at || null,
           }));
 
         let normalized = normalize(list as any);
@@ -1276,6 +1294,10 @@ export default function FileProcess() {
         return "bg-yellow-100 text-yellow-800";
       case "assigned":
         return "bg-blue-100 text-blue-800";
+      case "in_review":
+        return "bg-cyan-100 text-cyan-800";
+      case "rework":
+        return "bg-red-100 text-red-800";
       case "completed":
         return "bg-green-100 text-green-800";
       default:
@@ -2914,28 +2936,37 @@ export default function FileProcess() {
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4 text-blue-600" />
                               <span className="font-medium">
-                                {request.outputFile?.name || "No file attached"}
+                                {request.uploadedFileName ||
+                                  request.outputFile?.name ||
+                                  "No file attached"}
                               </span>
                             </div>
-                            {request.outputFile && (
-                              <div className="text-sm text-blue-600">
-                                {(
-                                  (request.outputFile.size || 0) /
-                                  1024 /
-                                  1024
-                                ).toFixed(2)}{" "}
-                                MB
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    const { blob, filename } =
+                                      await apiClient.downloadUploadedRequestFile(
+                                        request.id,
+                                      );
+                                    const url = URL.createObjectURL(blob);
+                                    const link = document.createElement("a");
+                                    link.href = url;
+                                    link.download = filename;
+                                    link.click();
+                                    URL.revokeObjectURL(url);
+                                  } catch (e) {
+                                    alert("Failed to download uploaded file");
+                                  }
+                                }}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Download
+                              </Button>
+                            </div>
                           </div>
-                          {request.outputFile?.uploadDate && (
-                            <p className="text-xs text-blue-700 mt-1">
-                              Uploaded:{" "}
-                              {new Date(
-                                request.outputFile.uploadDate,
-                              ).toLocaleString()}
-                            </p>
-                          )}
                         </div>
 
                         {/* User Notes */}
@@ -3019,7 +3050,7 @@ export default function FileProcess() {
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-2 h-2 rounded-full ${
-                              request.status === "verified"
+                              request.status === "completed"
                                 ? "bg-green-500"
                                 : "bg-red-500"
                             }`}
@@ -3034,14 +3065,14 @@ export default function FileProcess() {
                         <div className="text-right">
                           <Badge
                             className={
-                              request.status === "verified"
+                              request.status === "completed"
                                 ? "bg-green-100 text-green-800"
                                 : "bg-red-100 text-red-800"
                             }
                           >
-                            {request.status === "verified"
+                            {request.status === "completed"
                               ? "Approved"
-                              : "Rejected"}
+                              : "Rework"}
                           </Badge>
                           <p className="text-xs text-muted-foreground mt-1">
                             {request.verifiedBy} •{" "}
@@ -4025,45 +4056,33 @@ export default function FileProcess() {
                       <div className="flex items-center gap-2">
                         <FileText className="h-5 w-5 text-green-600" />
                         <span className="font-medium text-green-800">
-                          {selectedVerificationRequest.uploadedFile.name}
+                          {selectedVerificationRequest.uploadedFileName ||
+                            "completed.zip"}
                         </span>
                       </div>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // Simulate file download
-                          const link = document.createElement("a");
-                          link.href = "#";
-                          link.download =
-                            selectedVerificationRequest.uploadedFile.name;
-                          link.click();
+                        onClick={async () => {
+                          try {
+                            const { blob, filename } =
+                              await apiClient.downloadUploadedRequestFile(
+                                selectedVerificationRequest.id,
+                              );
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = filename;
+                            link.click();
+                            URL.revokeObjectURL(url);
+                          } catch (e) {
+                            alert("Failed to download uploaded file");
+                          }
                         }}
                       >
                         <Download className="h-4 w-4 mr-1" />
                         Download
                       </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-green-700">File Size:</span>
-                        <span className="ml-2 font-medium">
-                          {(
-                            selectedVerificationRequest.uploadedFile.size /
-                            1024 /
-                            1024
-                          ).toFixed(2)}{" "}
-                          MB
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-green-700">Upload Date:</span>
-                        <span className="ml-2 font-medium">
-                          {new Date(
-                            selectedVerificationRequest.uploadedFile.uploadDate,
-                          ).toLocaleString()}
-                        </span>
-                      </div>
                     </div>
                   </div>
                 </CardContent>

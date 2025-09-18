@@ -220,6 +220,24 @@ export function createServer() {
     "/api/file-requests/:id/download",
     fileProcess.downloadAssignedSlice as any,
   );
+  // upload completed ZIP (raw bytes)
+  app.post(
+    "/api/file-requests/:id/upload-completed",
+    requireRole(["user", "project_manager", "super_admin"]),
+    express.raw({ type: "application/octet-stream", limit: "500mb" }),
+    fileProcess.uploadCompletedForRequest as any,
+  );
+  // download uploaded ZIP
+  app.get(
+    "/api/file-requests/:id/uploaded",
+    fileProcess.downloadCompletedForRequest as any,
+  );
+  // verify uploaded work (approve/reject)
+  app.post(
+    "/api/file-requests/:id/verify",
+    requireRole(["project_manager", "super_admin"]),
+    fileProcess.verifyCompletedRequest as any,
+  );
 
   // ===== EXPENSE MANAGEMENT ROUTES =====
   // All expense routes require authentication
