@@ -150,6 +150,7 @@ export default function Salary() {
   // Local state for adding a PM
   const [newPMName, setNewPMName] = useState("");
   const [newPMSalary, setNewPMSalary] = useState<number | string>("");
+  const [draftPMs, setDraftPMs] = useState<{ name: string; monthlySalary: number }[]>([]);
 
   const refreshPMs = async () => {
     try {
@@ -436,13 +437,21 @@ export default function Salary() {
 
   const handleConfigSave = async () => {
     try {
+      if (draftPMs.length) {
+        await Promise.all(
+          draftPMs.map((pm) =>
+            apiClient.createPMSalary({ name: pm.name, monthlySalary: pm.monthlySalary })
+          ),
+        );
+        setDraftPMs([]);
+      }
+
       const resp: any = await apiClient.updateSalaryConfig(tempConfig);
       const data = (resp && resp.data) || resp || tempConfig;
       setSalaryConfig((prev) => ({ ...prev, ...data }) as SalaryConfig);
       setTempConfig((t) => ({ ...t, ...(data as any) }));
-      setIsConfigDialogOpen(false);
-      // Refresh PM list to reflect updated salaries
       await refreshPMs();
+      setIsConfigDialogOpen(false);
     } catch (err) {
       console.error("Failed to save salary config", err);
       alert("Failed to save salary configuration");
@@ -624,29 +633,54 @@ export default function Salary() {
                   <div className="mt-3 flex justify-end">
                     <Button
                       size="sm"
-                      onClick={async () => {
+                      onClick={() => {
                         if (!newPMName || !newPMSalary) {
                           alert("Please provide name and salary");
                           return;
                         }
-                        try {
-                          const resp: any = await apiClient.createPMSalary({
-                            name: newPMName,
-                            monthlySalary: Number(newPMSalary),
-                          });
-                          // Refresh PMs and clear inputs
-                          await refreshPMs();
-                          setNewPMName("");
-                          setNewPMSalary("");
-                        } catch (err) {
-                          console.error(err);
-                          alert("Failed to add project manager");
+                        const salaryNum = Number(newPMSalary);
+                        if (!Number.isFinite(salaryNum) || salaryNum <= 0) {
+                          alert("Enter a valid monthly salary");
+                          return;
                         }
+                        setDraftPMs((prev) => [
+                          ...prev,
+                          { name: newPMName.trim(), monthlySalary: salaryNum },
+                        ]);
+                        setNewPMName("");
+                        setNewPMSalary("");
                       }}
                     >
                       Add PM
                     </Button>
                   </div>
+                  {draftPMs.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <h6 className="font-medium">New Project Managers (to be saved)</h6>
+                      {draftPMs.map((pm, idx) => (
+                        <div
+                          key={`${pm.name}-${idx}`}
+                          className="flex items-center justify-between p-2 border rounded"
+                        >
+                          <div>
+                            <div className="font-medium">{pm.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Monthly Salary: {formatCurrency(pm.monthlySalary)}
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setDraftPMs((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
