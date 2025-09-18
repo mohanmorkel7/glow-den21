@@ -270,6 +270,135 @@ export const createFileRequest: RequestHandler = async (req, res) => {
   }
 };
 
+export const syncCompletedRequests: RequestHandler = async (req, res) => {
+  try {
+    const currentUser: any = (req as any).user;
+    const { userId } = req.body || {};
+
+    const targetUserId =
+      userId &&
+      (currentUser?.role === "super_admin" ||
+        currentUser?.role === "project_manager")
+        ? userId
+        : currentUser?.id;
+
+    if (!targetUserId) {
+      return res.status(400).json({
+        error: { code: "INVALID_REQUEST", message: "Missing userId" },
+      });
+    }
+
+    const sql = `
+      SELECT COALESCE(fr.project_id, NULL) as project_id, DATE(fr.completed_date) as date, SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)) as submitted_count
+      FROM file_requests fr
+      WHERE fr.user_id = $1 AND fr.status = 'completed' AND fr.completed_date IS NOT NULL
+      GROUP BY COALESCE(fr.project_id, NULL), DATE(fr.completed_date)
+    `;
+
+    const result = await query(sql, [targetUserId]);
+
+    // Fetch salary config once
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
+
+    for (const row of result.rows) {
+      const projectId = row.project_id || null;
+      const dateStr = row.date;
+      const submitted = Number(row.submitted_count || 0);
+
+      // Upsert daily_counts
+      const existingQuery = projectId
+        ? `SELECT id FROM daily_counts WHERE user_id = $1 AND project_id = $2 AND date = $3`
+        : `SELECT id FROM daily_counts WHERE user_id = $1 AND project_id IS NULL AND date = $2`;
+
+      const existingParams = projectId
+        ? [targetUserId, projectId, dateStr]
+        : [targetUserId, dateStr];
+      const existing = await query(existingQuery, existingParams);
+
+      if (existing.rows.length) {
+        const id = existing.rows[0].id;
+        await query(
+          `UPDATE daily_counts SET submitted_count = $1, status = 'approved', approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [submitted, id],
+        );
+      } else {
+        await query(
+          `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_at)
+           VALUES ($1, $2, $3, 0, $4, 'approved', $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            targetUserId,
+            projectId,
+            dateStr,
+            submitted,
+            "Synced from file_requests",
+          ],
+        );
+      }
+
+      // Also upsert into user_salary_tracking for salary calculations
+      const firstTierRate = Number(cfg.first_tier_rate || 0);
+      const secondTierRate = Number(cfg.second_tier_rate || 0);
+      const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+      const tier1Files = Math.min(submitted, firstTierLimit);
+      const tier2Files = Math.max(0, submitted - firstTierLimit);
+      const tier1Earnings = tier1Files * firstTierRate;
+      const tier2Earnings = tier2Files * secondTierRate;
+      const totalEarnings = tier1Earnings + tier2Earnings;
+
+      const existingUST = await query(
+        `SELECT id FROM user_salary_tracking WHERE user_id = $1 AND date = $2`,
+        [targetUserId, dateStr],
+      );
+      if (existingUST.rows.length) {
+        await query(
+          `UPDATE user_salary_tracking SET files_processed = $1, tier1_files = $2, tier1_earnings = $3, tier2_files = $4, tier2_earnings = $5, total_earnings = $6, last_updated = CURRENT_TIMESTAMP WHERE id = $7`,
+          [
+            submitted,
+            tier1Files,
+            tier1Earnings,
+            tier2Files,
+            tier2Earnings,
+            totalEarnings,
+            existingUST.rows[0].id,
+          ],
+        );
+      } else {
+        await query(
+          `INSERT INTO user_salary_tracking (user_id, date, files_processed, tier1_files, tier1_earnings, tier2_files, tier2_earnings, total_earnings, last_updated) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_TIMESTAMP)`,
+          [
+            targetUserId,
+            dateStr,
+            submitted,
+            tier1Files,
+            tier1Earnings,
+            tier2Files,
+            tier2Earnings,
+            totalEarnings,
+          ],
+        );
+      }
+    }
+
+    res.json({ data: { synced: result.rows.length } });
+  } catch (error) {
+    console.error("Sync completed requests error:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to sync completed requests",
+      },
+    });
+  }
+};
+
 export const approveFileRequest: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -734,11 +863,9 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
       [id],
     );
     if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "NOT_FOUND", message: "File request not found" },
-        });
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
     }
     const r = result.rows[0];
     const isOwner =
@@ -747,19 +874,15 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
       currentUser?.role,
     );
     if (!isOwner && !isManager) {
-      return res
-        .status(403)
-        .json({
-          error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" },
-        });
+      return res.status(403).json({
+        error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" },
+      });
     }
 
     if (!r.uploaded_file_path || !fs.existsSync(r.uploaded_file_path)) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" },
-        });
+      return res.status(404).json({
+        error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" },
+      });
     }
 
     const fileName = r.uploaded_file_name || `completed_${id}.zip`;
@@ -768,14 +891,12 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
     fs.createReadStream(r.uploaded_file_path).pipe(res);
   } catch (error) {
     console.error("Download completed file error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to download file",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to download file",
+      },
+    });
   }
 };
 
@@ -817,11 +938,9 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
       [id],
     );
     if (reqRes.rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "NOT_FOUND", message: "File request not found" },
-        });
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
     }
     const r = reqRes.rows[0];
 
@@ -913,13 +1032,11 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
     res.json({ data: updated.rows[0] });
   } catch (error) {
     console.error("Verify completed request error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to verify request",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to verify request",
+      },
+    });
   }
 };

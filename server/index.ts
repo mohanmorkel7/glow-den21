@@ -215,6 +215,8 @@ export function createServer() {
     "/api/file-requests/:id/approve",
     fileProcess.approveFileRequest as any,
   );
+  // Sync completed requests into daily counts (used post-login to ensure daily_counts exist)
+  app.post("/api/file-requests/sync", fileProcess.syncCompletedRequests as any);
   // download assigned slice
   app.get(
     "/api/file-requests/:id/download",
