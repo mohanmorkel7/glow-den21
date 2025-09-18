@@ -264,8 +264,26 @@ export default function RequestFiles() {
               0,
             );
 
-          setTodayCompleted(sumSubmitted(extract(todayResp)));
-          setMonthCompleted(sumSubmitted(extract(monthResp)));
+          const todaySum = sumSubmitted(extract(todayResp));
+          const monthSum = sumSubmitted(extract(monthResp));
+
+          // Fallback: if daily_counts empty, compute from fileRequests completion dates
+          const fallbackSum = (fromDate: string, toDate: string) => {
+            const from = new Date(fromDate + "T00:00:00Z");
+            const to = new Date(toDate + "T23:59:59Z");
+            return userList.reduce((sum: number, r: any) => {
+              if (r.status === "completed" || r.status === "verified") {
+                const d = r.completedDate ? new Date(r.completedDate) : null;
+                if (d && d >= from && d <= to) {
+                  return sum + Number(r.assignedCount || r.requestedCount || 0);
+                }
+              }
+              return sum;
+            }, 0);
+          };
+
+          setTodayCompleted(todaySum || fallbackSum(todayStr, todayStr));
+          setMonthCompleted(monthSum || fallbackSum(monthStartStr, todayStr));
         } catch (err) {
           console.warn("Failed to load daily count stats", err);
         }
