@@ -153,6 +153,8 @@ export default function RequestFiles() {
   const { user: currentUser } = useAuth();
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
   const [dailyStats, setDailyStats] = useState<DailyStats[]>(mockDailyStats);
+  const [todayCompleted, setTodayCompleted] = useState<number>(0);
+  const [monthCompleted, setMonthCompleted] = useState<number>(0);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [requestCount, setRequestCount] = useState(500);
   const [activeTab, setActiveTab] = useState("current");
@@ -223,6 +225,49 @@ export default function RequestFiles() {
               r.status === "assigned" ? { ...r, status: "in_progress" } : r,
             ),
           );
+        }
+
+        // Fetch today's and monthly approved counts for current user
+        try {
+          const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = String(today.getMonth() + 1).padStart(2, "0");
+          const dd = String(today.getDate()).padStart(2, "0");
+          const todayStr = `${yyyy}-${mm}-${dd}`;
+          const monthStartStr = `${yyyy}-${mm}-01`;
+
+          const [todayResp, monthResp] = await Promise.all([
+            apiClient.getDailyCounts({
+              from: todayStr,
+              to: todayStr,
+              status: "approved",
+              page: 1,
+              limit: 1000,
+            }),
+            apiClient.getDailyCounts({
+              from: monthStartStr,
+              to: todayStr,
+              status: "approved",
+              page: 1,
+              limit: 5000,
+            }),
+          ]);
+
+          const extract = (resp: any) =>
+            resp?.data?.dailyCounts ??
+            resp?.data ??
+            (Array.isArray(resp) ? resp : []);
+          const sumSubmitted = (arr: any[]) =>
+            arr.reduce(
+              (sum, dc) =>
+                sum + Number(dc.submittedCount ?? dc.submitted_count ?? 0),
+              0,
+            );
+
+          setTodayCompleted(sumSubmitted(extract(todayResp)));
+          setMonthCompleted(sumSubmitted(extract(monthResp)));
+        } catch (err) {
+          console.warn("Failed to load daily count stats", err);
         }
       } catch (e) {
         console.error("Failed to load file requests", e);
@@ -449,6 +494,7 @@ export default function RequestFiles() {
       "in_progress",
       "pending_verification",
       "in_review",
+      "rework",
     ].includes(r.status),
   );
   const completedRequests = currentRequests.filter((r) =>
@@ -620,10 +666,10 @@ export default function RequestFiles() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-green-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {todayStats.completedCount.toLocaleString()}
+                {todayCompleted.toLocaleString()}
               </div>
               <div className="text-sm text-green-700">
                 Files Completed Today
@@ -642,6 +688,14 @@ export default function RequestFiles() {
                 {pendingRequests.length}
               </div>
               <div className="text-sm text-purple-700">Active Requests</div>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">
+                {monthCompleted.toLocaleString()}
+              </div>
+              <div className="text-sm text-yellow-700">
+                This Month Completed
+              </div>
             </div>
           </div>
         </CardContent>
@@ -818,6 +872,24 @@ export default function RequestFiles() {
                                 )}
                               </div>
                             )}
+                            {request.status === "rework" && (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-red-100 text-red-800">
+                                  Rework
+                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedRequestForUpload(request.id);
+                                    setIsUploadDialogOpen(true);
+                                  }}
+                                >
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Re-upload
+                                </Button>
+                              </div>
+                            )}
                             {request.status === "verified" && (
                               <div className="flex items-center gap-2">
                                 <Badge className="bg-emerald-100 text-emerald-800">
@@ -957,21 +1029,36 @@ export default function RequestFiles() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <Badge
-                            className={getStatusBadgeColor(request.status)}
-                          >
-                            {(request.status === "pending_verification" ||
-                              request.status === "in_review") && (
-                              <Clock className="h-3 w-3 mr-1" />
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              className={getStatusBadgeColor(request.status)}
+                            >
+                              {(request.status === "pending_verification" ||
+                                request.status === "in_review") && (
+                                <Clock className="h-3 w-3 mr-1" />
+                              )}
+                              {request.status === "verified" && (
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                              )}
+                              {request.status === "completed" && (
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                              )}
+                              {request.status.replace("_", " ").toUpperCase()}
+                            </Badge>
+                            {request.status === "rework" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedRequestForUpload(request.id);
+                                  setIsUploadDialogOpen(true);
+                                }}
+                              >
+                                <Upload className="h-4 w-4 mr-2" />
+                                Re-upload
+                              </Button>
                             )}
-                            {request.status === "verified" && (
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                            )}
-                            {request.status === "completed" && (
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                            )}
-                            {request.status.replace("_", " ").toUpperCase()}
-                          </Badge>
+                          </div>
                         )}
                         {request.outputFile && (
                           <div className="mt-1">
