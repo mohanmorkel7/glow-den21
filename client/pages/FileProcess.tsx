@@ -655,12 +655,20 @@ export default function FileProcess() {
           page: 1,
           limit: 10000,
         });
-        const list: any[] = (resp as any)?.data?.dailyCounts ?? (resp as any)?.data ?? (Array.isArray(resp) ? (resp as any) : []);
-        const map = new Map<string, { userId: string; userName: string; total: number }>();
+        const list: any[] =
+          (resp as any)?.data?.dailyCounts ??
+          (resp as any)?.data ??
+          (Array.isArray(resp) ? (resp as any) : []);
+        const map = new Map<
+          string,
+          { userId: string; userName: string; total: number }
+        >();
         for (const dc of list) {
           const userId = String(dc.userId ?? dc.user_id ?? "");
           const userName = dc.userName ?? dc.user_name ?? "Unknown";
-          const submitted = Number(dc.submittedCount ?? dc.submitted_count ?? 0);
+          const submitted = Number(
+            dc.submittedCount ?? dc.submitted_count ?? 0,
+          );
           if (!map.has(userId)) map.set(userId, { userId, userName, total: 0 });
           map.get(userId)!.total += submitted;
         }
@@ -2900,12 +2908,18 @@ export default function FileProcess() {
           {/* Monthly User Counts (Approved this month) */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle className="text-sm font-medium">User Monthly Completed Counts</CardTitle>
-              <CardDescription>Sum of approved submissions per user for the current month</CardDescription>
+              <CardTitle className="text-sm font-medium">
+                User Monthly Completed Counts
+              </CardTitle>
+              <CardDescription>
+                Sum of approved submissions per user for the current month
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {monthlyUserCounts.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No approved counts this month.</div>
+                <div className="text-sm text-muted-foreground">
+                  No approved counts this month.
+                </div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -2918,7 +2932,9 @@ export default function FileProcess() {
                     {monthlyUserCounts.map((u) => (
                       <TableRow key={u.userId}>
                         <TableCell>{u.userName}</TableCell>
-                        <TableCell className="text-right font-medium">{u.total.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          {u.total.toLocaleString()}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

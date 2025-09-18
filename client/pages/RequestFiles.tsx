@@ -237,12 +237,32 @@ export default function RequestFiles() {
           const monthStartStr = `${yyyy}-${mm}-01`;
 
           const [todayResp, monthResp] = await Promise.all([
-            apiClient.getDailyCounts({ from: todayStr, to: todayStr, status: "approved", page: 1, limit: 1000 }),
-            apiClient.getDailyCounts({ from: monthStartStr, to: todayStr, status: "approved", page: 1, limit: 5000 }),
+            apiClient.getDailyCounts({
+              from: todayStr,
+              to: todayStr,
+              status: "approved",
+              page: 1,
+              limit: 1000,
+            }),
+            apiClient.getDailyCounts({
+              from: monthStartStr,
+              to: todayStr,
+              status: "approved",
+              page: 1,
+              limit: 5000,
+            }),
           ]);
 
-          const extract = (resp: any) => (resp?.data?.dailyCounts ?? resp?.data ?? (Array.isArray(resp) ? resp : []));
-          const sumSubmitted = (arr: any[]) => arr.reduce((sum, dc) => sum + Number(dc.submittedCount ?? dc.submitted_count ?? 0), 0);
+          const extract = (resp: any) =>
+            resp?.data?.dailyCounts ??
+            resp?.data ??
+            (Array.isArray(resp) ? resp : []);
+          const sumSubmitted = (arr: any[]) =>
+            arr.reduce(
+              (sum, dc) =>
+                sum + Number(dc.submittedCount ?? dc.submitted_count ?? 0),
+              0,
+            );
 
           setTodayCompleted(sumSubmitted(extract(todayResp)));
           setMonthCompleted(sumSubmitted(extract(monthResp)));
@@ -673,7 +693,9 @@ export default function RequestFiles() {
               <div className="text-2xl font-bold text-yellow-600">
                 {monthCompleted.toLocaleString()}
               </div>
-              <div className="text-sm text-yellow-700">This Month Completed</div>
+              <div className="text-sm text-yellow-700">
+                This Month Completed
+              </div>
             </div>
           </div>
         </CardContent>
