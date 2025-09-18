@@ -771,7 +771,7 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
     const sql = `
       SELECT ps.id, ps.user_id, ps.monthly_salary, u.name
       FROM pm_salaries ps
-      JOIN users u ON ps.user_id = u.id
+      JOIN users u ON u.id::text = ps.user_id
       WHERE ps.is_active = true AND ps.effective_from <= $1
       ORDER BY u.name
     `;
