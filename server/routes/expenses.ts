@@ -473,28 +473,46 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 // ===== SALARY MANAGEMENT ENDPOINTS =====
 
+import { query, transaction } from "../db/connection";
+
 // GET /api/expenses/salary/config - Get salary configuration
 router.get("/salary/config", async (req: Request, res: Response) => {
   try {
-    const mockConfig = {
-      users: {
-        firstTierRate: 0.5,
-        secondTierRate: 0.6,
-        firstTierLimit: 500,
-      },
-      projectManagers: {
-        pm_1: 30000,
-        pm_2: 20000,
-      },
-      currency: "INR",
-      updatedAt: "2024-01-15T10:00:00Z",
-      updatedBy: {
-        id: "admin-id",
-        name: "Admin User",
-      },
-    };
+    const result = await query(
+      `SELECT id, first_tier_rate, second_tier_rate, first_tier_limit, currency, updated_at, updated_by_user_id FROM salary_config WHERE id = 1`,
+    );
+    const row = result.rows[0] || null;
+    if (!row) {
+      return res.json({
+        data: {
+          users: { firstTierRate: 0.5, secondTierRate: 0.6, firstTierLimit: 500 },
+          projectManagers: {},
+          currency: "INR",
+        },
+      });
+    }
 
-    res.json({ data: mockConfig });
+    // Fetch updated by user name if present
+    let updatedBy = null;
+    if (row.updated_by_user_id) {
+      const u = await query(`SELECT id, name FROM users WHERE id = $1`, [
+        row.updated_by_user_id,
+      ]);
+      if (u.rows[0]) updatedBy = { id: u.rows[0].id, name: u.rows[0].name };
+    }
+
+    const data = {
+      users: {
+        firstTierRate: Number(row.first_tier_rate),
+        secondTierRate: Number(row.second_tier_rate),
+        firstTierLimit: Number(row.first_tier_limit),
+      },
+      projectManagers: {},
+      currency: row.currency,
+      updatedAt: row.updated_at,
+      updatedBy,
+    };
+    res.json({ data });
   } catch (error) {
     console.error("Error fetching salary config:", error);
     res.status(500).json({
@@ -510,27 +528,58 @@ router.get("/salary/config", async (req: Request, res: Response) => {
 router.put("/salary/config", async (req: Request, res: Response) => {
   try {
     const configData = updateSalaryConfigSchema.parse(req.body);
+    const currentUser: any = (req as any).user;
 
-    // Mock update
-    const updatedConfig = {
+    const updateFields: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
+    if (configData.users?.firstTierRate !== undefined) {
+      updateFields.push(`first_tier_rate = $${idx++}`);
+      params.push(configData.users.firstTierRate);
+    }
+    if (configData.users?.secondTierRate !== undefined) {
+      updateFields.push(`second_tier_rate = $${idx++}`);
+      params.push(configData.users.secondTierRate);
+    }
+    if (configData.users?.firstTierLimit !== undefined) {
+      updateFields.push(`first_tier_limit = $${idx++}`);
+      params.push(configData.users.firstTierLimit);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: { code: "NO_CHANGES", message: "No configuration fields provided" } });
+    }
+
+    // set updated_by and updated_at
+    updateFields.push(`updated_by_user_id = $${idx++}`);
+    params.push(currentUser?.id || null);
+
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    const sql = `UPDATE salary_config SET ${updateFields.join(", ")} WHERE id = 1 RETURNING *`;
+    const result = await query(sql, params);
+    const row = result.rows[0];
+
+    // Build response
+    let updatedBy = null;
+    if (row.updated_by_user_id) {
+      const u = await query(`SELECT id, name FROM users WHERE id = $1`, [row.updated_by_user_id]);
+      if (u.rows[0]) updatedBy = { id: u.rows[0].id, name: u.rows[0].name };
+    }
+
+    const data = {
       users: {
-        firstTierRate: configData.users?.firstTierRate || 0.5,
-        secondTierRate: configData.users?.secondTierRate || 0.6,
-        firstTierLimit: configData.users?.firstTierLimit || 500,
+        firstTierRate: Number(row.first_tier_rate),
+        secondTierRate: Number(row.second_tier_rate),
+        firstTierLimit: Number(row.first_tier_limit),
       },
-      projectManagers: configData.projectManagers || {
-        pm_1: 30000,
-        pm_2: 20000,
-      },
-      currency: "INR",
-      updatedAt: new Date().toISOString(),
-      updatedBy: {
-        id: "current-user-id",
-        name: "Current User",
-      },
+      projectManagers: {},
+      currency: row.currency,
+      updatedAt: row.updated_at,
+      updatedBy,
     };
 
-    res.json({ data: updatedConfig });
+    res.json({ data });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({
@@ -555,88 +604,49 @@ router.put("/salary/config", async (req: Request, res: Response) => {
 // GET /api/expenses/salary/users - Get user salary data
 router.get("/salary/users", async (req: Request, res: Response) => {
   try {
-    const { month = "2024-01" } = req.query;
+    const { month } = req.query as any;
+    const targetMonth = month || new Date().toISOString().substring(0, 7);
+    const monthStart = `${targetMonth}-01`;
+    const nextMonthDate = new Date(monthStart);
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    const nextMonth = nextMonthDate.toISOString().substring(0, 10);
 
-    // Mock user salary data
-    const mockUserSalaries = [
-      {
-        id: "1",
-        name: "Sarah Johnson",
-        role: "user",
-        todayFiles: 750,
-        weeklyFiles: 4200,
-        monthlyFiles: 15200,
-        todayEarnings: 400.0,
-        weeklyEarnings: 2320.0,
-        monthlyEarnings: 8320.0,
-        attendanceRate: 95.2,
-        lastActive: "2024-01-21T14:30:00Z",
-      },
-      {
-        id: "2",
-        name: "Mike Davis",
-        role: "user",
-        todayFiles: 420,
-        weeklyFiles: 2800,
-        monthlyFiles: 9800,
-        todayEarnings: 210.0,
-        weeklyEarnings: 1530.0,
-        monthlyEarnings: 5630.0,
-        attendanceRate: 98.1,
-        lastActive: "2024-01-21T15:15:00Z",
-      },
-      {
-        id: "3",
-        name: "David Chen",
-        role: "user",
-        todayFiles: 680,
-        weeklyFiles: 3900,
-        monthlyFiles: 14500,
-        todayEarnings: 358.0,
-        weeklyEarnings: 2090.0,
-        monthlyEarnings: 7900.0,
-        attendanceRate: 92.8,
-        lastActive: "2024-01-21T13:45:00Z",
-      },
-      {
-        id: "4",
-        name: "Lisa Chen",
-        role: "user",
-        todayFiles: 850,
-        weeklyFiles: 5100,
-        monthlyFiles: 18600,
-        todayEarnings: 460.0,
-        weeklyEarnings: 2760.0,
-        monthlyEarnings: 10110.0,
-        attendanceRate: 96.7,
-        lastActive: "2024-01-21T16:00:00Z",
-      },
-    ];
+    // Aggregate monthly and today data per user
+    const sql = `
+      SELECT u.id as user_id, u.name as user_name,
+             SUM(ust.files_processed) as monthly_files,
+             COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.files_processed ELSE 0 END),0) as today_files,
+             SUM(ust.total_earnings) as monthly_earnings
+      FROM user_salary_tracking ust
+      JOIN users u ON ust.user_id = u.id
+      WHERE ust.date >= $1 AND ust.date < $2
+      GROUP BY u.id, u.name
+      ORDER BY u.name
+    `;
+    const result = await query(sql, [monthStart, nextMonth]);
+    const users = result.rows.map((r: any) => ({
+      id: r.user_id,
+      name: r.user_name,
+      role: "user",
+      todayFiles: Number(r.today_files || 0),
+      weeklyFiles: 0,
+      monthlyFiles: Number(r.monthly_files || 0),
+      todayEarnings: 0,
+      weeklyEarnings: 0,
+      monthlyEarnings: Number(r.monthly_earnings || 0),
+      attendanceRate: 0,
+      lastActive: null,
+    }));
 
     const summary = {
-      totalMonthlyEarnings: mockUserSalaries.reduce(
-        (sum, user) => sum + user.monthlyEarnings,
-        0,
-      ),
-      averageMonthlyEarnings:
-        mockUserSalaries.reduce((sum, user) => sum + user.monthlyEarnings, 0) /
-        mockUserSalaries.length,
-      totalTodayFiles: mockUserSalaries.reduce(
-        (sum, user) => sum + user.todayFiles,
-        0,
-      ),
-      totalMonthlyFiles: mockUserSalaries.reduce(
-        (sum, user) => sum + user.monthlyFiles,
-        0,
-      ),
-      activeUsers: mockUserSalaries.length,
+      totalMonthlyEarnings: users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0),
+      averageMonthlyEarnings: users.length ? users.reduce((s: number, u: any) => s + (u.monthlyEarnings || 0), 0) / users.length : 0,
+      totalTodayFiles: users.reduce((s: number, u: any) => s + (u.todayFiles || 0), 0),
+      totalMonthlyFiles: users.reduce((s: number, u: any) => s + (u.monthlyFiles || 0), 0),
+      activeUsers: users.length,
     };
 
-    res.json({
-      data: mockUserSalaries,
-      summary,
-      month,
-    });
+    res.json({ data: users, summary, month: targetMonth });
   } catch (error) {
     console.error("Error fetching user salary data:", error);
     res.status(500).json({
@@ -651,42 +661,36 @@ router.get("/salary/users", async (req: Request, res: Response) => {
 // GET /api/expenses/salary/project-managers - Get PM salary data
 router.get("/salary/project-managers", async (req: Request, res: Response) => {
   try {
-    const mockPMSalaries = [
-      {
-        id: "pm_1",
-        name: "Emily Wilson",
-        role: "project_manager",
-        monthlySalary: 30000,
-        attendanceRate: 98.5,
-        lastActive: "2024-01-21T17:30:00Z",
-        department: "Operations",
-      },
-      {
-        id: "pm_2",
-        name: "John Smith",
-        role: "project_manager",
-        monthlySalary: 20000,
-        attendanceRate: 94.2,
-        lastActive: "2024-01-21T16:45:00Z",
-        department: "Operations",
-      },
-    ];
+    const { month } = req.query as any;
+    const targetMonth = month || new Date().toISOString().substring(0, 7);
+    const monthStart = `${targetMonth}-01`;
+
+    // Get active PM salaries effective on or before target month
+    const sql = `
+      SELECT ps.id, ps.user_id, ps.monthly_salary, u.name
+      FROM pm_salaries ps
+      JOIN users u ON ps.user_id = u.id
+      WHERE ps.is_active = true AND ps.effective_from <= $1
+      ORDER BY u.name
+    `;
+    const result = await query(sql, [monthStart]);
+    const pms = result.rows.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      role: "project_manager",
+      monthlySalary: Number(r.monthly_salary || 0),
+      attendanceRate: 0,
+      lastActive: null,
+      department: null,
+    }));
 
     const summary = {
-      totalMonthlySalaries: mockPMSalaries.reduce(
-        (sum, pm) => sum + pm.monthlySalary,
-        0,
-      ),
-      averageMonthlySalary:
-        mockPMSalaries.reduce((sum, pm) => sum + pm.monthlySalary, 0) /
-        mockPMSalaries.length,
-      activePMs: mockPMSalaries.length,
+      totalMonthlySalaries: pms.reduce((s: number, p: any) => s + (p.monthlySalary || 0), 0),
+      averageMonthlySalary: pms.length ? pms.reduce((s: number, p: any) => s + (p.monthlySalary || 0), 0) / pms.length : 0,
+      activePMs: pms.length,
     };
 
-    res.json({
-      data: mockPMSalaries,
-      summary,
-    });
+    res.json({ data: pms, summary });
   } catch (error) {
     console.error("Error fetching PM salary data:", error);
     res.status(500).json({
