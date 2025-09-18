@@ -283,11 +283,9 @@ export const syncCompletedRequests: RequestHandler = async (req, res) => {
         : currentUser?.id;
 
     if (!targetUserId) {
-      return res
-        .status(400)
-        .json({
-          error: { code: "INVALID_REQUEST", message: "Missing userId" },
-        });
+      return res.status(400).json({
+        error: { code: "INVALID_REQUEST", message: "Missing userId" },
+      });
     }
 
     const sql = `
@@ -300,8 +298,14 @@ export const syncCompletedRequests: RequestHandler = async (req, res) => {
     const result = await query(sql, [targetUserId]);
 
     // Fetch salary config once
-    const cfgRes = await query(`SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`);
-    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
 
     for (const row of result.rows) {
       const projectId = row.project_id || null;
@@ -349,42 +353,49 @@ export const syncCompletedRequests: RequestHandler = async (req, res) => {
       const tier2Earnings = tier2Files * secondTierRate;
       const totalEarnings = tier1Earnings + tier2Earnings;
 
-      const existingUST = await query(`SELECT id FROM user_salary_tracking WHERE user_id = $1 AND date = $2`, [targetUserId, dateStr]);
+      const existingUST = await query(
+        `SELECT id FROM user_salary_tracking WHERE user_id = $1 AND date = $2`,
+        [targetUserId, dateStr],
+      );
       if (existingUST.rows.length) {
-        await query(`UPDATE user_salary_tracking SET files_processed = $1, tier1_files = $2, tier1_earnings = $3, tier2_files = $4, tier2_earnings = $5, total_earnings = $6, last_updated = CURRENT_TIMESTAMP WHERE id = $7`, [
-          submitted,
-          tier1Files,
-          tier1Earnings,
-          tier2Files,
-          tier2Earnings,
-          totalEarnings,
-          existingUST.rows[0].id,
-        ]);
+        await query(
+          `UPDATE user_salary_tracking SET files_processed = $1, tier1_files = $2, tier1_earnings = $3, tier2_files = $4, tier2_earnings = $5, total_earnings = $6, last_updated = CURRENT_TIMESTAMP WHERE id = $7`,
+          [
+            submitted,
+            tier1Files,
+            tier1Earnings,
+            tier2Files,
+            tier2Earnings,
+            totalEarnings,
+            existingUST.rows[0].id,
+          ],
+        );
       } else {
-        await query(`INSERT INTO user_salary_tracking (user_id, date, files_processed, tier1_files, tier1_earnings, tier2_files, tier2_earnings, total_earnings, last_updated) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_TIMESTAMP)`, [
-          targetUserId,
-          dateStr,
-          submitted,
-          tier1Files,
-          tier1Earnings,
-          tier2Files,
-          tier2Earnings,
-          totalEarnings,
-        ]);
+        await query(
+          `INSERT INTO user_salary_tracking (user_id, date, files_processed, tier1_files, tier1_earnings, tier2_files, tier2_earnings, total_earnings, last_updated) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_TIMESTAMP)`,
+          [
+            targetUserId,
+            dateStr,
+            submitted,
+            tier1Files,
+            tier1Earnings,
+            tier2Files,
+            tier2Earnings,
+            totalEarnings,
+          ],
+        );
       }
     }
 
     res.json({ data: { synced: result.rows.length } });
   } catch (error) {
     console.error("Sync completed requests error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to sync completed requests",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to sync completed requests",
+      },
+    });
   }
 };
 

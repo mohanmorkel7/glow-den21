@@ -475,8 +475,6 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 // ===== SALARY MANAGEMENT ENDPOINTS =====
 
-
-
 // GET /api/expenses/salary/config - Get salary configuration
 router.get("/salary/config", async (req: Request, res: Response) => {
   try {
@@ -553,14 +551,12 @@ router.put("/salary/config", async (req: Request, res: Response) => {
     }
 
     if (updateFields.length === 0) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "NO_CHANGES",
-            message: "No configuration fields provided",
-          },
-        });
+      return res.status(400).json({
+        error: {
+          code: "NO_CHANGES",
+          message: "No configuration fields provided",
+        },
+      });
     }
 
     // set updated_by and updated_at
@@ -577,10 +573,10 @@ router.put("/salary/config", async (req: Request, res: Response) => {
     if (configData.projectManagers) {
       for (const [pmId, salary] of Object.entries(configData.projectManagers)) {
         try {
-          await query(`UPDATE pm_salaries SET monthly_salary = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [
-            salary,
-            pmId,
-          ]);
+          await query(
+            `UPDATE pm_salaries SET monthly_salary = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+            [salary, pmId],
+          );
         } catch (err) {
           console.warn(`Failed to update pm_salaries for id ${pmId}:`, err);
         }
@@ -599,7 +595,9 @@ router.put("/salary/config", async (req: Request, res: Response) => {
     // Fetch refreshed PM salaries mapping
     const pmMap: Record<string, number> = {};
     try {
-      const pmRes = await query(`SELECT id, monthly_salary FROM pm_salaries WHERE is_active = true`);
+      const pmRes = await query(
+        `SELECT id, monthly_salary FROM pm_salaries WHERE is_active = true`,
+      );
       for (const r of pmRes.rows) pmMap[r.id] = Number(r.monthly_salary || 0);
     } catch (_) {}
 
@@ -764,7 +762,14 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
   try {
     const { name, email, monthlySalary } = req.body as any;
     if (!name || !monthlySalary) {
-      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "name and monthlySalary are required" } });
+      return res
+        .status(400)
+        .json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "name and monthlySalary are required",
+          },
+        });
     }
 
     // Try to find user by email, otherwise by name
@@ -780,7 +785,8 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
 
     // If user not found, create a lightweight project_manager user
     if (!userId) {
-      const genEmail = (nameStr: string) => `${nameStr.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@example.local`;
+      const genEmail = (nameStr: string) =>
+        `${nameStr.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@example.local`;
       const newEmail = email || genEmail(name + Date.now());
 
       // generate random password hash
@@ -797,10 +803,25 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
     const pmRes = await query(insertPm, [userId, monthlySalary]);
     const pmRow = pmRes.rows[0];
 
-    res.status(201).json({ data: { id: pmRow.id, userId: pmRow.user_id, monthlySalary: Number(pmRow.monthly_salary) } });
+    res
+      .status(201)
+      .json({
+        data: {
+          id: pmRow.id,
+          userId: pmRow.user_id,
+          monthlySalary: Number(pmRow.monthly_salary),
+        },
+      });
   } catch (error) {
     console.error("Error creating PM salary:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to create PM salary" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create PM salary",
+        },
+      });
   }
 });
 

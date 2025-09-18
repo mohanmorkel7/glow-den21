@@ -171,7 +171,8 @@ export default function Salary() {
         const next = { ...prev };
         next.projectManagers = next.projectManagers || {};
         pms.forEach((p: any) => {
-          if (!(p.id in next.projectManagers)) next.projectManagers[p.id] = p.monthlySalary || 0;
+          if (!(p.id in next.projectManagers))
+            next.projectManagers[p.id] = p.monthlySalary || 0;
         });
         return next;
       });
@@ -437,7 +438,7 @@ export default function Salary() {
     try {
       const resp: any = await apiClient.updateSalaryConfig(tempConfig);
       const data = (resp && resp.data) || resp || tempConfig;
-      setSalaryConfig((prev) => ({ ...prev, ...data } as SalaryConfig));
+      setSalaryConfig((prev) => ({ ...prev, ...data }) as SalaryConfig);
       setTempConfig((t) => ({ ...t, ...(data as any) }));
       setIsConfigDialogOpen(false);
       // Refresh PM list to reflect updated salaries

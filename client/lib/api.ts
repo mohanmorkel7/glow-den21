@@ -578,7 +578,11 @@ class ApiClient {
     return this.request(`/expenses/salary/project-managers`);
   }
 
-  async createPMSalary(payload: { name: string; email?: string; monthlySalary: number }) {
+  async createPMSalary(payload: {
+    name: string;
+    email?: string;
+    monthlySalary: number;
+  }) {
     return this.request(`/expenses/salary/project-managers`, {
       method: "POST",
       body: JSON.stringify(payload),
