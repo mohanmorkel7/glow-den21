@@ -573,6 +573,20 @@ router.put("/salary/config", async (req: Request, res: Response) => {
     const result = await query(sql, params);
     const row = result.rows[0];
 
+    // If project manager salaries provided, update pm_salaries rows
+    if (configData.projectManagers) {
+      for (const [pmId, salary] of Object.entries(configData.projectManagers)) {
+        try {
+          await query(`UPDATE pm_salaries SET monthly_salary = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [
+            salary,
+            pmId,
+          ]);
+        } catch (err) {
+          console.warn(`Failed to update pm_salaries for id ${pmId}:`, err);
+        }
+      }
+    }
+
     // Build response
     let updatedBy = null;
     if (row.updated_by_user_id) {
@@ -582,13 +596,20 @@ router.put("/salary/config", async (req: Request, res: Response) => {
       if (u.rows[0]) updatedBy = { id: u.rows[0].id, name: u.rows[0].name };
     }
 
+    // Fetch refreshed PM salaries mapping
+    const pmMap: Record<string, number> = {};
+    try {
+      const pmRes = await query(`SELECT id, monthly_salary FROM pm_salaries WHERE is_active = true`);
+      for (const r of pmRes.rows) pmMap[r.id] = Number(r.monthly_salary || 0);
+    } catch (_) {}
+
     const data = {
       users: {
         firstTierRate: Number(row.first_tier_rate),
         secondTierRate: Number(row.second_tier_rate),
         firstTierLimit: Number(row.first_tier_limit),
       },
-      projectManagers: {},
+      projectManagers: pmMap,
       currency: row.currency,
       updatedAt: row.updated_at,
       updatedBy,
