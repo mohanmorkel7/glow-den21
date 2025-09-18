@@ -549,6 +549,35 @@ class ApiClient {
     });
   }
 
+  // Sync completed requests into daily_counts for the current user (or specified user if caller is admin)
+  async syncCompletedRequests(userId?: string) {
+    return this.request(`/file-requests/sync`, {
+      method: "POST",
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  // Expense / Salary endpoints
+  async getSalaryConfig() {
+    return this.request(`/expenses/salary/config`);
+  }
+
+  async updateSalaryConfig(config: any) {
+    return this.request(`/expenses/salary/config`, {
+      method: "PUT",
+      body: JSON.stringify(config),
+    });
+  }
+
+  async getSalaryUsers(month?: string) {
+    const qs = month ? `?month=${encodeURIComponent(month)}` : "";
+    return this.request(`/expenses/salary/users${qs}`);
+  }
+
+  async getSalaryProjectManagers() {
+    return this.request(`/expenses/salary/project-managers`);
+  }
+
   // Health check
   async healthCheck() {
     return this.request("/health", { requiresAuth: false });
