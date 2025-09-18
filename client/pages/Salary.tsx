@@ -110,81 +110,54 @@ export default function Salary() {
   const [selectedUser, setSelectedUser] = useState<UserSalaryData | null>(null);
   const [breakdownPeriod, setBreakdownPeriod] = useState<BreakdownPeriod>('daily');
 
-  // Mock user salary data - daily resets each day
-  const userSalaryData: UserSalaryData[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      role: 'user',
-      todayFiles: 750,        // Today's current count (resets daily)
-      weeklyFiles: 4200,      // This week's total
-      monthlyFiles: 15200,    // This month's total
-      todayEarnings: calculateUserDailyEarnings(750, salaryConfig),
-      weeklyEarnings: calculateUserDailyEarnings(4200, salaryConfig),
-      monthlyEarnings: calculateUserMonthlyEarnings(15200, salaryConfig),
-      attendanceRate: 95.2,
-      lastActive: '2024-01-21T14:30:00Z'
-    },
-    {
-      id: '2',
-      name: 'Mike Davis',
-      role: 'user',
-      todayFiles: 420,        // Today's current count (under 500)
-      weeklyFiles: 2800,      // This week's total
-      monthlyFiles: 9800,     // This month's total
-      todayEarnings: calculateUserDailyEarnings(420, salaryConfig),
-      weeklyEarnings: calculateUserDailyEarnings(2800, salaryConfig),
-      monthlyEarnings: calculateUserMonthlyEarnings(9800, salaryConfig),
-      attendanceRate: 98.1,
-      lastActive: '2024-01-21T15:15:00Z'
-    },
-    {
-      id: '3',
-      name: 'David Chen',
-      role: 'user',
-      todayFiles: 680,        // Today's current count
-      weeklyFiles: 3900,      // This week's total
-      monthlyFiles: 14500,    // This month's total
-      todayEarnings: calculateUserDailyEarnings(680, salaryConfig),
-      weeklyEarnings: calculateUserDailyEarnings(3900, salaryConfig),
-      monthlyEarnings: calculateUserMonthlyEarnings(14500, salaryConfig),
-      attendanceRate: 92.8,
-      lastActive: '2024-01-21T13:45:00Z'
-    },
-    {
-      id: '4',
-      name: 'Lisa Chen',
-      role: 'user',
-      todayFiles: 850,        // Today's current count
-      weeklyFiles: 5100,      // This week's total
-      monthlyFiles: 18600,    // This month's total
-      todayEarnings: calculateUserDailyEarnings(850, salaryConfig),
-      weeklyEarnings: calculateUserDailyEarnings(5100, salaryConfig),
-      monthlyEarnings: calculateUserMonthlyEarnings(18600, salaryConfig),
-      attendanceRate: 96.7,
-      lastActive: '2024-01-21T16:00:00Z'
-    }
-  ];
+  // Salary data loaded from backend
+  const [userSalaryData, setUserSalaryData] = useState<UserSalaryData[]>([]);
+  const [projectManagerSalaryData, setProjectManagerSalaryData] = useState<ProjectManagerSalaryData[]>([]);
 
-  // Mock project manager salary data
-  const projectManagerSalaryData: ProjectManagerSalaryData[] = [
-    {
-      id: 'pm_1',
-      name: 'Emily Wilson',
-      role: 'project_manager',
-      monthlySalary: salaryConfig.projectManagers['pm_1'] || 30000,
-      attendanceRate: 98.5,
-      lastActive: '2024-01-21T17:30:00Z'
-    },
-    {
-      id: 'pm_2',
-      name: 'John Smith',
-      role: 'project_manager',
-      monthlySalary: salaryConfig.projectManagers['pm_2'] || 20000,
-      attendanceRate: 94.2,
-      lastActive: '2024-01-21T16:45:00Z'
-    }
-  ];
+  useEffect(() => {
+    const loadSalaryData = async () => {
+      try {
+        const cfgResp: any = await apiClient.getSalaryConfig();
+        if (cfgResp && cfgResp.data) {
+          setSalaryConfig((prev) => ({ ...prev, ...cfgResp.data }));
+          setTempConfig((t) => ({ ...t, ...cfgResp.data }));
+        }
+
+        const usersResp: any = await apiClient.getSalaryUsers();
+        const users = (usersResp && usersResp.data) || usersResp || [];
+        setUserSalaryData(
+          users.map((u: any) => ({
+            id: u.id,
+            name: u.name,
+            role: u.role,
+            todayFiles: u.todayFiles || 0,
+            weeklyFiles: u.weeklyFiles || 0,
+            monthlyFiles: u.monthlyFiles || 0,
+            todayEarnings: u.todayEarnings || 0,
+            weeklyEarnings: u.weeklyEarnings || 0,
+            monthlyEarnings: u.monthlyEarnings || 0,
+            attendanceRate: u.attendanceRate || 0,
+            lastActive: u.lastActive || null,
+          }))
+        );
+
+        const pmResp: any = await apiClient.getSalaryProjectManagers();
+        const pms = (pmResp && pmResp.data) || pmResp || [];
+        setProjectManagerSalaryData(pms.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          role: p.role,
+          monthlySalary: p.monthlySalary,
+          attendanceRate: p.attendanceRate || 0,
+          lastActive: p.lastActive || null,
+        })));
+      } catch (err) {
+        console.warn('Failed to load salary data', err);
+      }
+    };
+
+    loadSalaryData();
+  }, []);
 
   // Calculate user daily earnings based on file count and tiered rates
   function calculateUserDailyEarnings(fileCount: number, config: SalaryConfig): number {
@@ -368,11 +341,15 @@ export default function Salary() {
   const totalMonthlySalaries = totalUserSalaries + totalPMSalaries;
   const avgUserEarnings = totalUserSalaries / userSalaryData.length;
 
-  const handleConfigSave = () => {
-    setSalaryConfig(tempConfig);
-    setIsConfigDialogOpen(false);
-    // Here you would typically save to backend
-    console.log('Salary configuration updated:', tempConfig);
+  const handleConfigSave = async () => {
+    try {
+      await apiClient.updateSalaryConfig(tempConfig);
+      setSalaryConfig(tempConfig);
+      setIsConfigDialogOpen(false);
+    } catch (err) {
+      console.error('Failed to save salary config', err);
+      alert('Failed to save salary configuration');
+    }
   };
 
   const formatCurrency = (amount: number) => {
