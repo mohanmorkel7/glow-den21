@@ -185,9 +185,9 @@ export default function Salary() {
     const loadSalaryData = async () => {
       try {
         const cfgResp: any = await apiClient.getSalaryConfig();
-        if (cfgResp && cfgResp.data) {
-          setSalaryConfig((prev) => ({ ...prev, ...cfgResp.data }));
-          setTempConfig((t) => ({ ...t, ...cfgResp.data }));
+        if (cfgResp) {
+          setSalaryConfig((prev) => ({ ...prev, ...(cfgResp as any) }));
+          setTempConfig((t) => ({ ...t, ...(cfgResp as any) }));
         }
 
         const usersResp: any = await apiClient.getSalaryUsers();
