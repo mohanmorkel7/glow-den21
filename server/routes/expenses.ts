@@ -665,7 +665,7 @@ router.get("/salary/users", async (req: Request, res: Response) => {
              COALESCE(SUM(CASE WHEN DATE(fr.completed_date) >= (CURRENT_DATE - INTERVAL '6 day') THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END),0) as weekly_files,
              COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) as monthly_files
       FROM file_requests fr
-      JOIN users u ON fr.user_id = u.id
+      JOIN users u ON u.id::text = fr.user_id
       WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
       GROUP BY u.id, u.name
       ORDER BY u.name
