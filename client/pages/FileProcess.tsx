@@ -954,6 +954,24 @@ export default function FileProcess() {
     setIsBreakdownDialogOpen(true);
   };
 
+  const formatDuration = (start?: string | null, end?: string | null) => {
+    if (!start || !end) return "-";
+    try {
+      const s = new Date(start).getTime();
+      const e = new Date(end).getTime();
+      if (isNaN(s) || isNaN(e) || e < s) return "-";
+      const diff = e - s;
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const parts = [] as string[];
+      if (hrs) parts.push(`${hrs} hr${hrs > 1 ? "s" : ""}`);
+      parts.push(`${mins} min`);
+      return parts.join(" ");
+    } catch (err) {
+      return "-";
+    }
+  };
+
   const handleVerificationReview = (request: any) => {
     setSelectedVerificationRequest(request);
     setVerificationNotes(request.verificationNotes || "");
