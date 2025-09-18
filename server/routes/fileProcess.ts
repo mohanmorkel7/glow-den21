@@ -276,12 +276,18 @@ export const syncCompletedRequests: RequestHandler = async (req, res) => {
     const { userId } = req.body || {};
 
     const targetUserId =
-      userId && (currentUser?.role === "super_admin" || currentUser?.role === "project_manager")
+      userId &&
+      (currentUser?.role === "super_admin" ||
+        currentUser?.role === "project_manager")
         ? userId
         : currentUser?.id;
 
     if (!targetUserId) {
-      return res.status(400).json({ error: { code: "INVALID_REQUEST", message: "Missing userId" } });
+      return res
+        .status(400)
+        .json({
+          error: { code: "INVALID_REQUEST", message: "Missing userId" },
+        });
     }
 
     const sql = `
@@ -302,7 +308,9 @@ export const syncCompletedRequests: RequestHandler = async (req, res) => {
         ? `SELECT id FROM daily_counts WHERE user_id = $1 AND project_id = $2 AND date = $3`
         : `SELECT id FROM daily_counts WHERE user_id = $1 AND project_id IS NULL AND date = $2`;
 
-      const existingParams = projectId ? [targetUserId, projectId, dateStr] : [targetUserId, dateStr];
+      const existingParams = projectId
+        ? [targetUserId, projectId, dateStr]
+        : [targetUserId, dateStr];
       const existing = await query(existingQuery, existingParams);
 
       if (existing.rows.length) {
@@ -315,15 +323,28 @@ export const syncCompletedRequests: RequestHandler = async (req, res) => {
         await query(
           `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_at)
            VALUES ($1, $2, $3, 0, $4, 'approved', $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-          [targetUserId, projectId, dateStr, submitted, 'Synced from file_requests'],
+          [
+            targetUserId,
+            projectId,
+            dateStr,
+            submitted,
+            "Synced from file_requests",
+          ],
         );
       }
     }
 
     res.json({ data: { synced: result.rows.length } });
   } catch (error) {
-    console.error('Sync completed requests error:', error);
-    res.status(500).json({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to sync completed requests' } });
+    console.error("Sync completed requests error:", error);
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to sync completed requests",
+        },
+      });
   }
 };
 
@@ -791,11 +812,9 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
       [id],
     );
     if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "NOT_FOUND", message: "File request not found" },
-        });
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
     }
     const r = result.rows[0];
     const isOwner =
@@ -804,19 +823,15 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
       currentUser?.role,
     );
     if (!isOwner && !isManager) {
-      return res
-        .status(403)
-        .json({
-          error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" },
-        });
+      return res.status(403).json({
+        error: { code: "AUTHORIZATION_FAILED", message: "Not allowed" },
+      });
     }
 
     if (!r.uploaded_file_path || !fs.existsSync(r.uploaded_file_path)) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" },
-        });
+      return res.status(404).json({
+        error: { code: "FILE_NOT_FOUND", message: "No uploaded file found" },
+      });
     }
 
     const fileName = r.uploaded_file_name || `completed_${id}.zip`;
@@ -825,14 +840,12 @@ export const downloadCompletedForRequest: RequestHandler = async (req, res) => {
     fs.createReadStream(r.uploaded_file_path).pipe(res);
   } catch (error) {
     console.error("Download completed file error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to download file",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to download file",
+      },
+    });
   }
 };
 
@@ -874,11 +887,9 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
       [id],
     );
     if (reqRes.rows.length === 0) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "NOT_FOUND", message: "File request not found" },
-        });
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "File request not found" },
+      });
     }
     const r = reqRes.rows[0];
 
@@ -970,13 +981,11 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
     res.json({ data: updated.rows[0] });
   } catch (error) {
     console.error("Verify completed request error:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to verify request",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to verify request",
+      },
+    });
   }
 };

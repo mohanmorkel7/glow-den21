@@ -3162,7 +3162,10 @@ export default function FileProcess() {
                               {request.fileProcessName}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Requested: {new Date(request.requestedDate).toLocaleString()} • Count: {request.requestedCount?.toLocaleString()}
+                              Requested:{" "}
+                              {new Date(request.requestedDate).toLocaleString()}{" "}
+                              • Count:{" "}
+                              {request.requestedCount?.toLocaleString()}
                             </p>
                           </div>
                         </div>
@@ -3179,31 +3182,47 @@ export default function FileProcess() {
                               : "Rework"}
                           </Badge>
                           <p className="text-xs text-muted-foreground">
-                            Completed: {request.completedDate ? new Date(request.completedDate).toLocaleString() : "-"}
+                            Completed:{" "}
+                            {request.completedDate
+                              ? new Date(request.completedDate).toLocaleString()
+                              : "-"}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Duration: {formatDuration(request.requestedDate, request.completedDate)}
+                            Duration:{" "}
+                            {formatDuration(
+                              request.requestedDate,
+                              request.completedDate,
+                            )}
                           </p>
-                          {currentUser && (currentUser.role === "project_manager" || currentUser.role === "super_admin") && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Button
-                                size="xs"
-                                variant="outline"
-                                onClick={async () => {
-                                  if (!confirm('Mark this request as Rework?')) return;
-                                  try {
-                                    await apiClient.verifyCompletedRequest(request.id, 'reject', 'Re-check requested');
-                                    await loadData();
-                                  } catch (e) {
-                                    console.error(e);
-                                    alert('Failed to set Rework');
-                                  }
-                                }}
-                              >
-                                Re-check
-                              </Button>
-                            </div>
-                          )}
+                          {currentUser &&
+                            (currentUser.role === "project_manager" ||
+                              currentUser.role === "super_admin") && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <Button
+                                  size="xs"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    if (
+                                      !confirm("Mark this request as Rework?")
+                                    )
+                                      return;
+                                    try {
+                                      await apiClient.verifyCompletedRequest(
+                                        request.id,
+                                        "reject",
+                                        "Re-check requested",
+                                      );
+                                      await loadData();
+                                    } catch (e) {
+                                      console.error(e);
+                                      alert("Failed to set Rework");
+                                    }
+                                  }}
+                                >
+                                  Re-check
+                                </Button>
+                              </div>
+                            )}
                         </div>
                       </div>
                     ))}
@@ -4254,26 +4273,32 @@ export default function FileProcess() {
                   This action will notify the user of your decision via email.
                 </div>
                 <div className="flex gap-3">
-                  {currentUser && (currentUser.role === "project_manager" || currentUser.role === "super_admin") && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        if (!confirm('Mark this request as Rework?')) return;
-                        try {
-                          await apiClient.verifyCompletedRequest(selectedVerificationRequest.id, 'reject', 'Re-check requested by PM');
-                          await loadData();
-                          setIsVerificationDialogOpen(false);
-                        } catch (e) {
-                          console.error(e);
-                          alert('Failed to mark Rework');
-                        }
-                      }}
-                      className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
-                    >
-                      Re-check
-                    </Button>
-                  )}
+                  {currentUser &&
+                    (currentUser.role === "project_manager" ||
+                      currentUser.role === "super_admin") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          if (!confirm("Mark this request as Rework?")) return;
+                          try {
+                            await apiClient.verifyCompletedRequest(
+                              selectedVerificationRequest.id,
+                              "reject",
+                              "Re-check requested by PM",
+                            );
+                            await loadData();
+                            setIsVerificationDialogOpen(false);
+                          } catch (e) {
+                            console.error(e);
+                            alert("Failed to mark Rework");
+                          }
+                        }}
+                        className="border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        Re-check
+                      </Button>
+                    )}
 
                   <Button
                     variant="outline"

@@ -92,7 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await apiClient.syncCompletedRequests();
         } catch (syncErr) {
-          console.warn('Sync completed requests failed:', syncErr);
+          console.warn("Sync completed requests failed:", syncErr);
         }
         return true;
       }
