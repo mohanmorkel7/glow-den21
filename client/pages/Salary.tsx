@@ -150,7 +150,9 @@ export default function Salary() {
   // Local state for adding a PM
   const [newPMName, setNewPMName] = useState("");
   const [newPMSalary, setNewPMSalary] = useState<number | string>("");
-  const [draftPMs, setDraftPMs] = useState<{ name: string; monthlySalary: number }[]>([]);
+  const [draftPMs, setDraftPMs] = useState<
+    { name: string; monthlySalary: number }[]
+  >([]);
 
   const refreshPMs = async () => {
     try {
@@ -440,7 +442,10 @@ export default function Salary() {
       if (draftPMs.length) {
         await Promise.all(
           draftPMs.map((pm) =>
-            apiClient.createPMSalary({ name: pm.name, monthlySalary: pm.monthlySalary })
+            apiClient.createPMSalary({
+              name: pm.name,
+              monthlySalary: pm.monthlySalary,
+            }),
           ),
         );
         setDraftPMs([]);
@@ -656,7 +661,9 @@ export default function Salary() {
                   </div>
                   {draftPMs.length > 0 && (
                     <div className="mt-3 space-y-2">
-                      <h6 className="font-medium">New Project Managers (to be saved)</h6>
+                      <h6 className="font-medium">
+                        New Project Managers (to be saved)
+                      </h6>
                       {draftPMs.map((pm, idx) => (
                         <div
                           key={`${pm.name}-${idx}`}
@@ -672,7 +679,9 @@ export default function Salary() {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              setDraftPMs((prev) => prev.filter((_, i) => i !== idx))
+                              setDraftPMs((prev) =>
+                                prev.filter((_, i) => i !== idx),
+                              )
                             }
                           >
                             Remove
