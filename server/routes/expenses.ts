@@ -701,10 +701,16 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       const submittedToday = Number(pr.submitted_today || 0);
       let performancePct = 0;
       if (targetToday > 0) {
-        performancePct = Math.max(0, Math.min(100, Math.round((submittedToday / targetToday) * 100)));
+        performancePct = Math.max(
+          0,
+          Math.min(100, Math.round((submittedToday / targetToday) * 100)),
+        );
       } else if (firstTierLimit > 0) {
         // Fallback: compare to first tier limit if no explicit target is set
-        performancePct = Math.max(0, Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)));
+        performancePct = Math.max(
+          0,
+          Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)),
+        );
       }
 
       users.push({

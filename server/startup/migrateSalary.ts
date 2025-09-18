@@ -18,7 +18,7 @@ export async function ensureSalaryTables(): Promise<void> {
     await query(
       `INSERT INTO salary_config (id, first_tier_rate, second_tier_rate, first_tier_limit, currency)
        VALUES (1, 0.5, 0.6, 500, 'INR')
-       ON CONFLICT (id) DO NOTHING`
+       ON CONFLICT (id) DO NOTHING`,
     );
 
     // pm_salaries table
@@ -35,7 +35,7 @@ export async function ensureSalaryTables(): Promise<void> {
     `);
 
     await query(
-      `CREATE INDEX IF NOT EXISTS idx_pm_salaries_user_id ON pm_salaries(user_id)`
+      `CREATE INDEX IF NOT EXISTS idx_pm_salaries_user_id ON pm_salaries(user_id)`,
     );
 
     console.log("✅ Salary tables ready");
