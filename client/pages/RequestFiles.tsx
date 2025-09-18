@@ -226,6 +226,29 @@ export default function RequestFiles() {
             ),
           );
         }
+
+        // Fetch today's and monthly approved counts for current user
+        try {
+          const today = new Date();
+          const yyyy = today.getFullYear();
+          const mm = String(today.getMonth() + 1).padStart(2, "0");
+          const dd = String(today.getDate()).padStart(2, "0");
+          const todayStr = `${yyyy}-${mm}-${dd}`;
+          const monthStartStr = `${yyyy}-${mm}-01`;
+
+          const [todayResp, monthResp] = await Promise.all([
+            apiClient.getDailyCounts({ from: todayStr, to: todayStr, status: "approved", page: 1, limit: 1000 }),
+            apiClient.getDailyCounts({ from: monthStartStr, to: todayStr, status: "approved", page: 1, limit: 5000 }),
+          ]);
+
+          const extract = (resp: any) => (resp?.data?.dailyCounts ?? resp?.data ?? (Array.isArray(resp) ? resp : []));
+          const sumSubmitted = (arr: any[]) => arr.reduce((sum, dc) => sum + Number(dc.submittedCount ?? dc.submitted_count ?? 0), 0);
+
+          setTodayCompleted(sumSubmitted(extract(todayResp)));
+          setMonthCompleted(sumSubmitted(extract(monthResp)));
+        } catch (err) {
+          console.warn("Failed to load daily count stats", err);
+        }
       } catch (e) {
         console.error("Failed to load file requests", e);
       }
