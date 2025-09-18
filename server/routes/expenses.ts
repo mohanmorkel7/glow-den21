@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { query, transaction } from "../db/connection";
+import bcrypt from "bcrypt";
 
 const router = Router();
 
