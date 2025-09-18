@@ -678,7 +678,7 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
 
     const startRow = Number(r.start_row || 0);
     const endRow = Number(r.end_row || 0);
-    const headerRows = Number(r.header_rows || 0);
+    const headerCount = Number(r.header_rows ?? 0) || 1; // Default to 1 header row if not specified
 
     // Prepare output filename
     const safe = (s: string) =>
@@ -699,7 +699,6 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     });
 
     let lineIndex = 0;
-    let writtenHeader = false;
 
     const writeLine = (line: string) => {
       res.write(
@@ -709,19 +708,13 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
 
     rl.on("line", (line) => {
       lineIndex++;
-      // Capture header from first line(s)
-      if (headerRows > 0 && lineIndex <= headerRows) {
-        if (!writtenHeader) {
-          writeLine(line);
-          writtenHeader = true;
-        }
+      // Always include header lines for each download
+      if (lineIndex <= headerCount) {
+        writeLine(line);
         return;
       }
-      const dataRowIndex = lineIndex - headerRows; // 1-based
+      const dataRowIndex = lineIndex - headerCount; // 1-based index for data rows
       if (dataRowIndex >= startRow && dataRowIndex <= endRow) {
-        if (!writtenHeader && headerRows === 0 && dataRowIndex === startRow) {
-          // No explicit header known; do not fabricate a header
-        }
         writeLine(line);
       }
     });
