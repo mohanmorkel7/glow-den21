@@ -449,6 +449,7 @@ export default function RequestFiles() {
       "in_progress",
       "pending_verification",
       "in_review",
+      "rework",
     ].includes(r.status),
   );
   const completedRequests = currentRequests.filter((r) =>
