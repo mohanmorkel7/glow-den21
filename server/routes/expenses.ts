@@ -625,12 +625,15 @@ router.get("/salary/users", async (req: Request, res: Response) => {
     nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
     const nextMonth = nextMonthDate.toISOString().substring(0, 10);
 
-    // Aggregate monthly and today data per user
+    // Aggregate monthly data and earnings per user (today, weekly, monthly)
     const sql = `
       SELECT u.id as user_id, u.name as user_name,
              SUM(ust.files_processed) as monthly_files,
              COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.files_processed ELSE 0 END),0) as today_files,
-             SUM(ust.total_earnings) as monthly_earnings
+             COALESCE(SUM(CASE WHEN ust.date >= (CURRENT_DATE - INTERVAL '6 day') THEN ust.files_processed ELSE 0 END),0) as weekly_files,
+             COALESCE(SUM(ust.total_earnings),0) as monthly_earnings,
+             COALESCE(SUM(CASE WHEN ust.date = CURRENT_DATE THEN ust.total_earnings ELSE 0 END),0) as today_earnings,
+             COALESCE(SUM(CASE WHEN ust.date >= (CURRENT_DATE - INTERVAL '6 day') THEN ust.total_earnings ELSE 0 END),0) as weekly_earnings
       FROM user_salary_tracking ust
       JOIN users u ON ust.user_id = u.id
       WHERE ust.date >= $1 AND ust.date < $2
@@ -643,10 +646,10 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       name: r.user_name,
       role: "user",
       todayFiles: Number(r.today_files || 0),
-      weeklyFiles: 0,
+      weeklyFiles: Number(r.weekly_files || 0),
       monthlyFiles: Number(r.monthly_files || 0),
-      todayEarnings: 0,
-      weeklyEarnings: 0,
+      todayEarnings: Number(r.today_earnings || 0),
+      weeklyEarnings: Number(r.weekly_earnings || 0),
       monthlyEarnings: Number(r.monthly_earnings || 0),
       attendanceRate: 0,
       lastActive: null,
