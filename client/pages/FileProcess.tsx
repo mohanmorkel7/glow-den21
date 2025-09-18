@@ -2897,6 +2897,36 @@ export default function FileProcess() {
             </Card>
           </div>
 
+          {/* Monthly User Counts (Approved this month) */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">User Monthly Completed Counts</CardTitle>
+              <CardDescription>Sum of approved submissions per user for the current month</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {monthlyUserCounts.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No approved counts this month.</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead className="text-right">Completed</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {monthlyUserCounts.map((u) => (
+                      <TableRow key={u.userId}>
+                        <TableCell>{u.userName}</TableCell>
+                        <TableCell className="text-right font-medium">{u.total.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Pending Verifications */}
           {getPendingVerifications().length > 0 && (
             <Card>
