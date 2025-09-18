@@ -646,10 +646,10 @@ export default function RequestFiles() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-green-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-green-600">
-                {todayStats.completedCount.toLocaleString()}
+                {todayCompleted.toLocaleString()}
               </div>
               <div className="text-sm text-green-700">
                 Files Completed Today
@@ -668,6 +668,12 @@ export default function RequestFiles() {
                 {pendingRequests.length}
               </div>
               <div className="text-sm text-purple-700">Active Requests</div>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">
+                {monthCompleted.toLocaleString()}
+              </div>
+              <div className="text-sm text-yellow-700">This Month Completed</div>
             </div>
           </div>
         </CardContent>
