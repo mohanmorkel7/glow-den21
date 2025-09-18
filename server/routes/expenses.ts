@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { query, transaction } from "../db/connection";
+
 import bcrypt from "bcrypt";
 
 const router = Router();
@@ -475,7 +475,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 
 // ===== SALARY MANAGEMENT ENDPOINTS =====
 
-import { query, transaction } from "../db/connection";
+
 
 // GET /api/expenses/salary/config - Get salary configuration
 router.get("/salary/config", async (req: Request, res: Response) => {
