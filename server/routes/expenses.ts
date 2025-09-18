@@ -738,6 +738,51 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/expenses/salary/project-managers - Create or update PM salary by name/email
+router.post("/salary/project-managers", async (req: Request, res: Response) => {
+  try {
+    const { name, email, monthlySalary } = req.body as any;
+    if (!name || !monthlySalary) {
+      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "name and monthlySalary are required" } });
+    }
+
+    // Try to find user by email, otherwise by name
+    let userId: string | null = null;
+    if (email) {
+      const u = await query(`SELECT id FROM users WHERE email = $1`, [email]);
+      if (u.rows[0]) userId = u.rows[0].id;
+    }
+    if (!userId) {
+      const u2 = await query(`SELECT id FROM users WHERE name = $1`, [name]);
+      if (u2.rows[0]) userId = u2.rows[0].id;
+    }
+
+    // If user not found, create a lightweight project_manager user
+    if (!userId) {
+      const genEmail = (nameStr: string) => `${nameStr.toLowerCase().replace(/[^a-z0-9]+/g, ".")}@example.local`;
+      const newEmail = email || genEmail(name + Date.now());
+
+      // generate random password hash
+      const randomPwd = Math.random().toString(36).slice(2);
+      const hashed = await bcrypt.hash(randomPwd, 10);
+
+      const insertUser = `INSERT INTO users (name,email,hashed_password,role,created_at,updated_at) VALUES ($1,$2,$3,'project_manager',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) RETURNING id`;
+      const created = await query(insertUser, [name, newEmail, hashed]);
+      userId = created.rows[0].id;
+    }
+
+    // Insert pm_salaries row
+    const insertPm = `INSERT INTO pm_salaries (user_id, monthly_salary, effective_from, is_active, created_at, updated_at) VALUES ($1,$2,CURRENT_DATE,true,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP) RETURNING *`;
+    const pmRes = await query(insertPm, [userId, monthlySalary]);
+    const pmRow = pmRes.rows[0];
+
+    res.status(201).json({ data: { id: pmRow.id, userId: pmRow.user_id, monthlySalary: Number(pmRow.monthly_salary) } });
+  } catch (error) {
+    console.error("Error creating PM salary:", error);
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to create PM salary" } });
+  }
+});
+
 // ===== FINANCIAL ANALYTICS ENDPOINTS =====
 
 // GET /api/expenses/analytics/dashboard - Get expense dashboard data
