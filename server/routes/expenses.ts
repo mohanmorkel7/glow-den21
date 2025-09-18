@@ -679,12 +679,36 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       return tier1 * firstTierRate + tier2 * secondTierRate;
     };
 
-    const users = result.rows.map((r: any) => {
+    // Fetch per-user performance from daily_counts (today), based on targets of tagged projects
+    const users = [] as any[];
+    for (const r of result.rows) {
+      const userId = r.user_id;
       const todayFiles = Number(r.today_files || 0);
       const weeklyFiles = Number(r.weekly_files || 0);
       const monthlyFiles = Number(r.monthly_files || 0);
-      return {
-        id: r.user_id,
+
+      // Sum target and submitted counts for today across all tagged projects
+      const perfRes = await query(
+        `SELECT
+           COALESCE(SUM(dc.target_count),0) AS target_today,
+           COALESCE(SUM(dc.submitted_count),0) AS submitted_today
+         FROM daily_counts dc
+         WHERE dc.date = CURRENT_DATE AND dc.user_id::text = $1`,
+        [String(userId)],
+      );
+      const pr = perfRes.rows[0] || { target_today: 0, submitted_today: 0 };
+      const targetToday = Number(pr.target_today || 0);
+      const submittedToday = Number(pr.submitted_today || 0);
+      let performancePct = 0;
+      if (targetToday > 0) {
+        performancePct = Math.max(0, Math.min(100, Math.round((submittedToday / targetToday) * 100)));
+      } else if (firstTierLimit > 0) {
+        // Fallback: compare to first tier limit if no explicit target is set
+        performancePct = Math.max(0, Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)));
+      }
+
+      users.push({
+        id: userId,
         name: r.user_name,
         role: "user",
         todayFiles,
@@ -693,10 +717,10 @@ router.get("/salary/users", async (req: Request, res: Response) => {
         todayEarnings: calc(todayFiles),
         weeklyEarnings: calc(weeklyFiles),
         monthlyEarnings: calc(monthlyFiles),
-        attendanceRate: 0,
+        attendanceRate: performancePct,
         lastActive: null,
-      };
-    });
+      });
+    }
 
     const summary = {
       totalMonthlyEarnings: users.reduce(
