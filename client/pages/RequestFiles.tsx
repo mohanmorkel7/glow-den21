@@ -819,6 +819,22 @@ export default function RequestFiles() {
                                 )}
                               </div>
                             )}
+                            {request.status === "rework" && (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-red-100 text-red-800">Rework</Badge>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedRequestForUpload(request.id);
+                                    setIsUploadDialogOpen(true);
+                                  }}
+                                >
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  Re-upload
+                                </Button>
+                              </div>
+                            )}
                             {request.status === "verified" && (
                               <div className="flex items-center gap-2">
                                 <Badge className="bg-emerald-100 text-emerald-800">
