@@ -929,7 +929,7 @@ export default function Salary() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(user.lastActive).toLocaleString()}
+                          {user.lastActive ? new Date(user.lastActive).toLocaleString() : "-"}
                         </div>
                       </TableCell>
                     </TableRow>
