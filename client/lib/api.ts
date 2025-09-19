@@ -571,9 +571,16 @@ class ApiClient {
     return this.request(`/expenses/billing/summary${qs}`);
   }
 
-  async exportBilling(format: "csv" | "excel" | "pdf", month?: string) {
+  async exportBilling(
+    format: "csv" | "excel" | "pdf",
+    month?: string,
+    rate?: number,
+    months?: number,
+  ) {
     const params = new URLSearchParams();
     if (month) params.set("month", month);
+    if (months) params.set("months", String(months));
+    if (rate && isFinite(rate)) params.set("rate", String(rate));
     params.set("format", format);
     const url = `${API_BASE_URL}/expenses/billing/export?${params.toString()}`;
     const headers = this.getAuthHeaders();
