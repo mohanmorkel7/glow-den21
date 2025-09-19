@@ -1,19 +1,31 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Settings as SettingsIcon, 
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Settings as SettingsIcon,
   User,
   Building2,
   Shield,
@@ -37,8 +49,8 @@ import {
   Zap,
   DollarSign,
   Clock,
-  AlertTriangle
-} from 'lucide-react';
+  AlertTriangle,
+} from "lucide-react";
 
 interface CompanySettings {
   name: string;
@@ -79,7 +91,7 @@ interface SecuritySettings {
   maxLoginAttempts: number;
   lockoutDuration: number;
   twoFactorEnabled: boolean;
-  sessionSecurity: 'basic' | 'enhanced' | 'strict';
+  sessionSecurity: "basic" | "enhanced" | "strict";
 }
 
 interface UserProfile {
@@ -88,7 +100,7 @@ interface UserProfile {
   phone: string;
   department: string;
   jobTitle: string;
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   language: string;
   notifications: boolean;
 }
@@ -105,33 +117,33 @@ interface DailyUpdateSettings {
 }
 
 const mockCompanySettings: CompanySettings = {
-  name: 'Web Syntactic Solutions',
-  address: '123 Business Ave, Suite 100, Tech City, TC 12345',
-  phone: '+1 (555) 123-4567',
-  email: 'contact@websyntactic.com',
-  website: 'https://websyntactic.com',
-  timezone: 'America/New_York',
-  currency: 'USD',
-  dateFormat: 'MM/DD/YYYY',
+  name: "Web Syntactic Solutions",
+  address: "123 Business Ave, Suite 100, Tech City, TC 12345",
+  phone: "+1 (555) 123-4567",
+  email: "contact@websyntactic.com",
+  website: "https://websyntactic.com",
+  timezone: "America/New_York",
+  currency: "USD",
+  dateFormat: "MM/DD/YYYY",
   workingHours: {
-    start: '09:00',
-    end: '17:00'
+    start: "09:00",
+    end: "17:00",
   },
-  dailyUpdateTime: '20:00',
-  dailyUpdateTimezone: 'Asia/Kolkata',
+  dailyUpdateTime: "20:00",
+  dailyUpdateTimezone: "Asia/Kolkata",
   autoUpdateEnabled: true,
-  usdToInrRate: 83.00
+  usdToInrRate: 83.0,
 };
 
 const mockSystemSettings: SystemSettings = {
   maxFileSize: 50,
   sessionTimeout: 30,
-  backupFrequency: 'daily',
+  backupFrequency: "daily",
   maintenanceMode: false,
   debugMode: false,
   apiRateLimit: 1000,
   allowRegistration: true,
-  requireEmailVerification: true
+  requireEmailVerification: true,
 };
 
 const mockSecuritySettings: SecuritySettings = {
@@ -142,103 +154,112 @@ const mockSecuritySettings: SecuritySettings = {
   maxLoginAttempts: 5,
   lockoutDuration: 15,
   twoFactorEnabled: false,
-  sessionSecurity: 'enhanced'
+  sessionSecurity: "enhanced",
 };
 
 const mockDailyUpdateSettings: DailyUpdateSettings = {
   autoUpdateEnabled: true,
-  updateTime: '20:00',
-  timezone: 'Asia/Kolkata',
-  usdToInrRate: 83.00,
+  updateTime: "20:00",
+  timezone: "Asia/Kolkata",
+  usdToInrRate: 83.0,
   reminderEnabled: true,
   reminderMinutes: 30,
   notifyBeforeUpdate: true,
-  allowManualOverride: true
+  allowManualOverride: true,
 };
 
 export default function Settings() {
   const { user: currentUser } = useAuth();
 
   // Only allow super admin to access settings
-  if (currentUser?.role !== 'super_admin') {
+  if (currentUser?.role !== "super_admin") {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-red-600">Access Denied</h3>
-          <p className="text-sm text-muted-foreground">This page is only accessible to administrators.</p>
+          <p className="text-sm text-muted-foreground">
+            This page is only accessible to administrators.
+          </p>
         </div>
       </div>
     );
   }
 
-  const [companySettings, setCompanySettings] = useState<CompanySettings>(mockCompanySettings);
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>(mockSystemSettings);
-  const [securitySettings, setSecuritySettings] = useState<SecuritySettings>(mockSecuritySettings);
-  const [dailyUpdateSettings, setDailyUpdateSettings] = useState<DailyUpdateSettings>(mockDailyUpdateSettings);
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings>(mockCompanySettings);
+  const [systemSettings, setSystemSettings] =
+    useState<SystemSettings>(mockSystemSettings);
+  const [securitySettings, setSecuritySettings] =
+    useState<SecuritySettings>(mockSecuritySettings);
+  const [dailyUpdateSettings, setDailyUpdateSettings] =
+    useState<DailyUpdateSettings>(mockDailyUpdateSettings);
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: currentUser?.name || '',
-    email: currentUser?.email || '',
-    phone: '',
-    department: 'Operations',
-    jobTitle: 'Administrator',
-    theme: 'system',
-    language: 'English',
-    notifications: true
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
+    phone: "",
+    department: "Operations",
+    jobTitle: "Administrator",
+    theme: "system",
+    language: "English",
+    notifications: true,
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const canManageSystem = currentUser?.role === 'super_admin';
-  const canManageCompany = currentUser?.role === 'super_admin';
+  const canManageSystem = currentUser?.role === "super_admin";
+  const canManageCompany = currentUser?.role === "super_admin";
 
   const handleSaveCompanySettings = () => {
-    console.log('Saving company settings:', companySettings);
+    console.log("Saving company settings:", companySettings);
   };
 
   const handleSaveSystemSettings = () => {
-    console.log('Saving system settings:', systemSettings);
+    console.log("Saving system settings:", systemSettings);
   };
 
   const handleSaveSecuritySettings = () => {
-    console.log('Saving security settings:', securitySettings);
+    console.log("Saving security settings:", securitySettings);
   };
 
   const handleSaveDailyUpdateSettings = () => {
-    localStorage.setItem('usdToInrRate', String(dailyUpdateSettings.usdToInrRate));
-    console.log('Saving daily update settings:', dailyUpdateSettings);
-    alert('Conversion rate saved. Billing will use the updated ₹/USD value.');
+    localStorage.setItem(
+      "usdToInrRate",
+      String(dailyUpdateSettings.usdToInrRate),
+    );
+    console.log("Saving daily update settings:", dailyUpdateSettings);
+    alert("Conversion rate saved. Billing will use the updated ₹/USD value.");
   };
 
   const handleSaveUserProfile = () => {
-    console.log('Saving user profile:', userProfile);
+    console.log("Saving user profile:", userProfile);
   };
 
   const handleChangePassword = () => {
     if (newPassword !== confirmPassword) {
-      alert('Passwords do not match');
+      alert("Passwords do not match");
       return;
     }
-    console.log('Changing password');
-    setNewPassword('');
-    setConfirmPassword('');
+    console.log("Changing password");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
   const handleTestAutoUpdate = () => {
-    console.log('Testing auto-update configuration');
+    console.log("Testing auto-update configuration");
   };
 
   const convertToTimezone = (time: string, timezone: string) => {
     // Mock conversion for display
-    const [hours, minutes] = time.split(':');
+    const [hours, minutes] = time.split(":");
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
-    return date.toLocaleString('en-US', { 
+    return date.toLocaleString("en-US", {
       timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -282,7 +303,10 @@ export default function Settings() {
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     <AvatarFallback className="text-lg">
-                      {userProfile.name.split(' ').map(n => n[0]).join('')}
+                      {userProfile.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-2">
@@ -302,7 +326,9 @@ export default function Settings() {
                     <Input
                       id="name"
                       value={userProfile.name}
-                      onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                      onChange={(e) =>
+                        setUserProfile({ ...userProfile, name: e.target.value })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
@@ -311,7 +337,12 @@ export default function Settings() {
                       id="email"
                       type="email"
                       value={userProfile.email}
-                      onChange={(e) => setUserProfile({ ...userProfile, email: e.target.value })}
+                      onChange={(e) =>
+                        setUserProfile({
+                          ...userProfile,
+                          email: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -321,20 +352,34 @@ export default function Settings() {
                     <Input
                       id="phone"
                       value={userProfile.phone}
-                      onChange={(e) => setUserProfile({ ...userProfile, phone: e.target.value })}
+                      onChange={(e) =>
+                        setUserProfile({
+                          ...userProfile,
+                          phone: e.target.value,
+                        })
+                      }
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="department">Department</Label>
-                    <Select value={userProfile.department} onValueChange={(value) => setUserProfile({ ...userProfile, department: value })}>
+                    <Select
+                      value={userProfile.department}
+                      onValueChange={(value) =>
+                        setUserProfile({ ...userProfile, department: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Operations">Operations</SelectItem>
-                        <SelectItem value="Administration">Administration</SelectItem>
-                        <SelectItem value="Quality Assurance">Quality Assurance</SelectItem>
+                        <SelectItem value="Administration">
+                          Administration
+                        </SelectItem>
+                        <SelectItem value="Quality Assurance">
+                          Quality Assurance
+                        </SelectItem>
                         <SelectItem value="Management">Management</SelectItem>
                       </SelectContent>
                     </Select>
@@ -345,7 +390,12 @@ export default function Settings() {
                   <Input
                     id="jobTitle"
                     value={userProfile.jobTitle}
-                    onChange={(e) => setUserProfile({ ...userProfile, jobTitle: e.target.value })}
+                    onChange={(e) =>
+                      setUserProfile({
+                        ...userProfile,
+                        jobTitle: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <Button onClick={handleSaveUserProfile}>
@@ -369,7 +419,12 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>Theme</Label>
-                    <Select value={userProfile.theme} onValueChange={(value: any) => setUserProfile({ ...userProfile, theme: value })}>
+                    <Select
+                      value={userProfile.theme}
+                      onValueChange={(value: any) =>
+                        setUserProfile({ ...userProfile, theme: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -397,7 +452,12 @@ export default function Settings() {
                   </div>
                   <div className="space-y-2">
                     <Label>Language</Label>
-                    <Select value={userProfile.language} onValueChange={(value) => setUserProfile({ ...userProfile, language: value })}>
+                    <Select
+                      value={userProfile.language}
+                      onValueChange={(value) =>
+                        setUserProfile({ ...userProfile, language: value })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -412,12 +472,19 @@ export default function Settings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="notifications">Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Enable desktop notifications</p>
+                      <p className="text-sm text-muted-foreground">
+                        Enable desktop notifications
+                      </p>
                     </div>
                     <Switch
                       id="notifications"
                       checked={userProfile.notifications}
-                      onCheckedChange={(checked) => setUserProfile({ ...userProfile, notifications: checked })}
+                      onCheckedChange={(checked) =>
+                        setUserProfile({
+                          ...userProfile,
+                          notifications: checked,
+                        })
+                      }
                     />
                   </div>
                 </CardContent>
@@ -439,7 +506,7 @@ export default function Settings() {
                     <div className="relative">
                       <Input
                         id="newPassword"
-                        type={showPassword ? 'text' : 'password'}
+                        type={showPassword ? "text" : "password"}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"
@@ -451,7 +518,11 @@ export default function Settings() {
                         className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -459,13 +530,16 @@ export default function Settings() {
                     <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <Input
                       id="confirmPassword"
-                      type={showPassword ? 'text' : 'password'}
+                      type={showPassword ? "text" : "password"}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm new password"
                     />
                   </div>
-                  <Button onClick={handleChangePassword} disabled={!newPassword || !confirmPassword}>
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={!newPassword || !confirmPassword}
+                  >
                     <Key className="h-4 w-4 mr-2" />
                     Change Password
                   </Button>
@@ -506,7 +580,12 @@ export default function Settings() {
                       <Input
                         id="companyName"
                         value={companySettings.name}
-                        onChange={(e) => setCompanySettings({ ...companySettings, name: e.target.value })}
+                        onChange={(e) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            name: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -514,7 +593,12 @@ export default function Settings() {
                       <Input
                         id="website"
                         value={companySettings.website}
-                        onChange={(e) => setCompanySettings({ ...companySettings, website: e.target.value })}
+                        onChange={(e) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            website: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -523,7 +607,12 @@ export default function Settings() {
                     <Textarea
                       id="address"
                       value={companySettings.address}
-                      onChange={(e) => setCompanySettings({ ...companySettings, address: e.target.value })}
+                      onChange={(e) =>
+                        setCompanySettings({
+                          ...companySettings,
+                          address: e.target.value,
+                        })
+                      }
                       rows={3}
                     />
                   </div>
@@ -533,7 +622,12 @@ export default function Settings() {
                       <Input
                         id="companyPhone"
                         value={companySettings.phone}
-                        onChange={(e) => setCompanySettings({ ...companySettings, phone: e.target.value })}
+                        onChange={(e) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            phone: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -542,29 +636,60 @@ export default function Settings() {
                         id="companyEmail"
                         type="email"
                         value={companySettings.email}
-                        onChange={(e) => setCompanySettings({ ...companySettings, email: e.target.value })}
+                        onChange={(e) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            email: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="timezone">Primary Timezone</Label>
-                      <Select value={companySettings.timezone} onValueChange={(value) => setCompanySettings({ ...companySettings, timezone: value })}>
+                      <Select
+                        value={companySettings.timezone}
+                        onValueChange={(value) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            timezone: value,
+                          })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                          <SelectItem value="America/Chicago">Central Time</SelectItem>
-                          <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                          <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                          <SelectItem value="Asia/Kolkata">India Standard Time</SelectItem>
+                          <SelectItem value="America/New_York">
+                            Eastern Time
+                          </SelectItem>
+                          <SelectItem value="America/Chicago">
+                            Central Time
+                          </SelectItem>
+                          <SelectItem value="America/Denver">
+                            Mountain Time
+                          </SelectItem>
+                          <SelectItem value="America/Los_Angeles">
+                            Pacific Time
+                          </SelectItem>
+                          <SelectItem value="Asia/Kolkata">
+                            India Standard Time
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="currency">Currency</Label>
-                      <Select value={companySettings.currency} onValueChange={(value) => setCompanySettings({ ...companySettings, currency: value })}>
+                      <Select
+                        value={companySettings.currency}
+                        onValueChange={(value) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            currency: value,
+                          })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -578,7 +703,15 @@ export default function Settings() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="dateFormat">Date Format</Label>
-                      <Select value={companySettings.dateFormat} onValueChange={(value) => setCompanySettings({ ...companySettings, dateFormat: value })}>
+                      <Select
+                        value={companySettings.dateFormat}
+                        onValueChange={(value) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            dateFormat: value,
+                          })
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -597,10 +730,15 @@ export default function Settings() {
                         id="workStart"
                         type="time"
                         value={companySettings.workingHours.start}
-                        onChange={(e) => setCompanySettings({
-                          ...companySettings,
-                          workingHours: { ...companySettings.workingHours, start: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            workingHours: {
+                              ...companySettings.workingHours,
+                              start: e.target.value,
+                            },
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -609,10 +747,15 @@ export default function Settings() {
                         id="workEnd"
                         type="time"
                         value={companySettings.workingHours.end}
-                        onChange={(e) => setCompanySettings({
-                          ...companySettings,
-                          workingHours: { ...companySettings.workingHours, end: e.target.value }
-                        })}
+                        onChange={(e) =>
+                          setCompanySettings({
+                            ...companySettings,
+                            workingHours: {
+                              ...companySettings.workingHours,
+                              end: e.target.value,
+                            },
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -644,8 +787,16 @@ export default function Settings() {
               <Alert>
                 <Zap className="h-4 w-4" />
                 <AlertDescription>
-                  Daily auto-updates are currently {dailyUpdateSettings.autoUpdateEnabled ? 'enabled' : 'disabled'} and scheduled for{' '}
-                  {convertToTimezone(dailyUpdateSettings.updateTime, dailyUpdateSettings.timezone)} ({dailyUpdateSettings.timezone}).
+                  Daily auto-updates are currently{" "}
+                  {dailyUpdateSettings.autoUpdateEnabled
+                    ? "enabled"
+                    : "disabled"}{" "}
+                  and scheduled for{" "}
+                  {convertToTimezone(
+                    dailyUpdateSettings.updateTime,
+                    dailyUpdateSettings.timezone,
+                  )}{" "}
+                  ({dailyUpdateSettings.timezone}).
                 </AlertDescription>
               </Alert>
 
@@ -657,22 +808,32 @@ export default function Settings() {
                       Auto-Update Configuration
                     </CardTitle>
                     <CardDescription>
-                      Configure when daily file counts are automatically updated.
+                      Configure when daily file counts are automatically
+                      updated.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label htmlFor="autoUpdateEnabled">Enable Auto-Updates</Label>
-                        <p className="text-sm text-muted-foreground">Automatically submit daily counts at scheduled time</p>
+                        <Label htmlFor="autoUpdateEnabled">
+                          Enable Auto-Updates
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Automatically submit daily counts at scheduled time
+                        </p>
                       </div>
                       <Switch
                         id="autoUpdateEnabled"
                         checked={dailyUpdateSettings.autoUpdateEnabled}
-                        onCheckedChange={(checked) => setDailyUpdateSettings({ ...dailyUpdateSettings, autoUpdateEnabled: checked })}
+                        onCheckedChange={(checked) =>
+                          setDailyUpdateSettings({
+                            ...dailyUpdateSettings,
+                            autoUpdateEnabled: checked,
+                          })
+                        }
                       />
                     </div>
-                    
+
                     {dailyUpdateSettings.autoUpdateEnabled && (
                       <>
                         <div className="grid grid-cols-2 gap-4">
@@ -682,26 +843,50 @@ export default function Settings() {
                               id="updateTime"
                               type="time"
                               value={dailyUpdateSettings.updateTime}
-                              onChange={(e) => setDailyUpdateSettings({ ...dailyUpdateSettings, updateTime: e.target.value })}
+                              onChange={(e) =>
+                                setDailyUpdateSettings({
+                                  ...dailyUpdateSettings,
+                                  updateTime: e.target.value,
+                                })
+                              }
                             />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="updateTimezone">Timezone</Label>
-                            <Select 
-                              value={dailyUpdateSettings.timezone} 
-                              onValueChange={(value) => setDailyUpdateSettings({ ...dailyUpdateSettings, timezone: value })}
+                            <Select
+                              value={dailyUpdateSettings.timezone}
+                              onValueChange={(value) =>
+                                setDailyUpdateSettings({
+                                  ...dailyUpdateSettings,
+                                  timezone: value,
+                                })
+                              }
                             >
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Asia/Kolkata">India Standard Time (IST)</SelectItem>
-                                <SelectItem value="America/New_York">Eastern Time (EST/EDT)</SelectItem>
-                                <SelectItem value="America/Chicago">Central Time (CST/CDT)</SelectItem>
-                                <SelectItem value="America/Denver">Mountain Time (MST/MDT)</SelectItem>
-                                <SelectItem value="America/Los_Angeles">Pacific Time (PST/PDT)</SelectItem>
-                                <SelectItem value="Europe/London">Greenwich Mean Time (GMT)</SelectItem>
-                                <SelectItem value="Europe/Berlin">Central European Time (CET)</SelectItem>
+                                <SelectItem value="Asia/Kolkata">
+                                  India Standard Time (IST)
+                                </SelectItem>
+                                <SelectItem value="America/New_York">
+                                  Eastern Time (EST/EDT)
+                                </SelectItem>
+                                <SelectItem value="America/Chicago">
+                                  Central Time (CST/CDT)
+                                </SelectItem>
+                                <SelectItem value="America/Denver">
+                                  Mountain Time (MST/MDT)
+                                </SelectItem>
+                                <SelectItem value="America/Los_Angeles">
+                                  Pacific Time (PST/PDT)
+                                </SelectItem>
+                                <SelectItem value="Europe/London">
+                                  Greenwich Mean Time (GMT)
+                                </SelectItem>
+                                <SelectItem value="Europe/Berlin">
+                                  Central European Time (CET)
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -710,24 +895,40 @@ export default function Settings() {
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <Clock className="h-4 w-4 text-blue-600" />
-                            <span className="font-medium text-blue-900">Scheduled Update Time</span>
+                            <span className="font-medium text-blue-900">
+                              Scheduled Update Time
+                            </span>
                           </div>
                           <p className="text-sm text-blue-700">
-                            Daily counts will be automatically submitted at{' '}
-                            <strong>{convertToTimezone(dailyUpdateSettings.updateTime, dailyUpdateSettings.timezone)}</strong>{' '}
+                            Daily counts will be automatically submitted at{" "}
+                            <strong>
+                              {convertToTimezone(
+                                dailyUpdateSettings.updateTime,
+                                dailyUpdateSettings.timezone,
+                              )}
+                            </strong>{" "}
                             ({dailyUpdateSettings.timezone})
                           </p>
                         </div>
 
                         <div className="flex items-center justify-between">
                           <div>
-                            <Label htmlFor="allowManualOverride">Allow Manual Override</Label>
-                            <p className="text-sm text-muted-foreground">Let users manually submit before auto-update</p>
+                            <Label htmlFor="allowManualOverride">
+                              Allow Manual Override
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Let users manually submit before auto-update
+                            </p>
                           </div>
                           <Switch
                             id="allowManualOverride"
                             checked={dailyUpdateSettings.allowManualOverride}
-                            onCheckedChange={(checked) => setDailyUpdateSettings({ ...dailyUpdateSettings, allowManualOverride: checked })}
+                            onCheckedChange={(checked) =>
+                              setDailyUpdateSettings({
+                                ...dailyUpdateSettings,
+                                allowManualOverride: checked,
+                              })
+                            }
                           />
                         </div>
                       </>
@@ -747,19 +948,27 @@ export default function Settings() {
                       Currency & Billing Settings
                     </CardTitle>
                     <CardDescription>
-                      Configure currency conversion rates for billing calculations.
+                      Configure currency conversion rates for billing
+                      calculations.
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="usdToInrRate">USD to INR Conversion Rate</Label>
+                      <Label htmlFor="usdToInrRate">
+                        USD to INR Conversion Rate
+                      </Label>
                       <div className="relative">
                         <Input
                           id="usdToInrRate"
                           type="number"
                           step="0.01"
                           value={dailyUpdateSettings.usdToInrRate}
-                          onChange={(e) => setDailyUpdateSettings({ ...dailyUpdateSettings, usdToInrRate: parseFloat(e.target.value) || 0 })}
+                          onChange={(e) =>
+                            setDailyUpdateSettings({
+                              ...dailyUpdateSettings,
+                              usdToInrRate: parseFloat(e.target.value) || 0,
+                            })
+                          }
                           placeholder="83.00"
                         />
                         <div className="absolute right-3 top-3 text-sm text-muted-foreground">
@@ -767,12 +976,15 @@ export default function Settings() {
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Current rate: $1 USD = ₹{dailyUpdateSettings.usdToInrRate.toFixed(2)} INR
+                        Current rate: $1 USD = ₹
+                        {dailyUpdateSettings.usdToInrRate.toFixed(2)} INR
                       </p>
                     </div>
 
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <h4 className="font-medium text-green-900 mb-2">Example Calculation</h4>
+                      <h4 className="font-medium text-green-900 mb-2">
+                        Example Calculation
+                      </h4>
                       <div className="space-y-1 text-sm text-green-700">
                         <div className="flex justify-between">
                           <span>1,000 files @ $0.05/file:</span>
@@ -780,7 +992,10 @@ export default function Settings() {
                         </div>
                         <div className="flex justify-between">
                           <span>Converted to INR:</span>
-                          <span>₹{(50 * dailyUpdateSettings.usdToInrRate).toFixed(0)}</span>
+                          <span>
+                            ₹
+                            {(50 * dailyUpdateSettings.usdToInrRate).toFixed(0)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -800,28 +1015,43 @@ export default function Settings() {
                     Notification Settings
                   </CardTitle>
                   <CardDescription>
-                    Configure notifications for daily update reminders and alerts.
+                    Configure notifications for daily update reminders and
+                    alerts.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="reminderEnabled">Update Reminders</Label>
-                      <p className="text-sm text-muted-foreground">Send reminder notifications before auto-update</p>
+                      <p className="text-sm text-muted-foreground">
+                        Send reminder notifications before auto-update
+                      </p>
                     </div>
                     <Switch
                       id="reminderEnabled"
                       checked={dailyUpdateSettings.reminderEnabled}
-                      onCheckedChange={(checked) => setDailyUpdateSettings({ ...dailyUpdateSettings, reminderEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setDailyUpdateSettings({
+                          ...dailyUpdateSettings,
+                          reminderEnabled: checked,
+                        })
+                      }
                     />
                   </div>
 
                   {dailyUpdateSettings.reminderEnabled && (
                     <div className="space-y-2">
-                      <Label htmlFor="reminderMinutes">Reminder Time (minutes before update)</Label>
-                      <Select 
-                        value={dailyUpdateSettings.reminderMinutes.toString()} 
-                        onValueChange={(value) => setDailyUpdateSettings({ ...dailyUpdateSettings, reminderMinutes: parseInt(value) })}
+                      <Label htmlFor="reminderMinutes">
+                        Reminder Time (minutes before update)
+                      </Label>
+                      <Select
+                        value={dailyUpdateSettings.reminderMinutes.toString()}
+                        onValueChange={(value) =>
+                          setDailyUpdateSettings({
+                            ...dailyUpdateSettings,
+                            reminderMinutes: parseInt(value),
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -838,13 +1068,22 @@ export default function Settings() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="notifyBeforeUpdate">Pre-Update Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Notify team members before automatic update</p>
+                      <Label htmlFor="notifyBeforeUpdate">
+                        Pre-Update Notifications
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Notify team members before automatic update
+                      </p>
                     </div>
                     <Switch
                       id="notifyBeforeUpdate"
                       checked={dailyUpdateSettings.notifyBeforeUpdate}
-                      onCheckedChange={(checked) => setDailyUpdateSettings({ ...dailyUpdateSettings, notifyBeforeUpdate: checked })}
+                      onCheckedChange={(checked) =>
+                        setDailyUpdateSettings({
+                          ...dailyUpdateSettings,
+                          notifyBeforeUpdate: checked,
+                        })
+                      }
                     />
                   </div>
 
@@ -852,7 +1091,9 @@ export default function Settings() {
                     <Alert>
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>
-                        Reminders will be sent {dailyUpdateSettings.reminderMinutes} minutes before the scheduled update time.
+                        Reminders will be sent{" "}
+                        {dailyUpdateSettings.reminderMinutes} minutes before the
+                        scheduled update time.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -901,22 +1142,42 @@ export default function Settings() {
                         id="maxFileSize"
                         type="number"
                         value={systemSettings.maxFileSize}
-                        onChange={(e) => setSystemSettings({ ...systemSettings, maxFileSize: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setSystemSettings({
+                            ...systemSettings,
+                            maxFileSize: parseInt(e.target.value) || 0,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                      <Label htmlFor="sessionTimeout">
+                        Session Timeout (minutes)
+                      </Label>
                       <Input
                         id="sessionTimeout"
                         type="number"
                         value={systemSettings.sessionTimeout}
-                        onChange={(e) => setSystemSettings({ ...systemSettings, sessionTimeout: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          setSystemSettings({
+                            ...systemSettings,
+                            sessionTimeout: parseInt(e.target.value) || 0,
+                          })
+                        }
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="backupFrequency">Backup Frequency</Label>
-                    <Select value={systemSettings.backupFrequency} onValueChange={(value) => setSystemSettings({ ...systemSettings, backupFrequency: value })}>
+                    <Select
+                      value={systemSettings.backupFrequency}
+                      onValueChange={(value) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          backupFrequency: value,
+                        })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -929,12 +1190,19 @@ export default function Settings() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="apiRateLimit">API Rate Limit (requests/hour)</Label>
+                    <Label htmlFor="apiRateLimit">
+                      API Rate Limit (requests/hour)
+                    </Label>
                     <Input
                       id="apiRateLimit"
                       type="number"
                       value={systemSettings.apiRateLimit}
-                      onChange={(e) => setSystemSettings({ ...systemSettings, apiRateLimit: parseInt(e.target.value) || 0 })}
+                      onChange={(e) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          apiRateLimit: parseInt(e.target.value) || 0,
+                        })
+                      }
                     />
                   </div>
                   <Button onClick={handleSaveSystemSettings}>
@@ -955,45 +1223,77 @@ export default function Settings() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="maintenanceMode">Maintenance Mode</Label>
-                      <p className="text-sm text-muted-foreground">Put system in maintenance mode</p>
+                      <p className="text-sm text-muted-foreground">
+                        Put system in maintenance mode
+                      </p>
                     </div>
                     <Switch
                       id="maintenanceMode"
                       checked={systemSettings.maintenanceMode}
-                      onCheckedChange={(checked) => setSystemSettings({ ...systemSettings, maintenanceMode: checked })}
+                      onCheckedChange={(checked) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          maintenanceMode: checked,
+                        })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="debugMode">Debug Mode</Label>
-                      <p className="text-sm text-muted-foreground">Enable detailed error logging</p>
+                      <p className="text-sm text-muted-foreground">
+                        Enable detailed error logging
+                      </p>
                     </div>
                     <Switch
                       id="debugMode"
                       checked={systemSettings.debugMode}
-                      onCheckedChange={(checked) => setSystemSettings({ ...systemSettings, debugMode: checked })}
+                      onCheckedChange={(checked) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          debugMode: checked,
+                        })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="allowRegistration">Allow Registration</Label>
-                      <p className="text-sm text-muted-foreground">Allow new user registration</p>
+                      <Label htmlFor="allowRegistration">
+                        Allow Registration
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Allow new user registration
+                      </p>
                     </div>
                     <Switch
                       id="allowRegistration"
                       checked={systemSettings.allowRegistration}
-                      onCheckedChange={(checked) => setSystemSettings({ ...systemSettings, allowRegistration: checked })}
+                      onCheckedChange={(checked) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          allowRegistration: checked,
+                        })
+                      }
                     />
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="requireEmailVerification">Email Verification</Label>
-                      <p className="text-sm text-muted-foreground">Require email verification for new accounts</p>
+                      <Label htmlFor="requireEmailVerification">
+                        Email Verification
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Require email verification for new accounts
+                      </p>
                     </div>
                     <Switch
                       id="requireEmailVerification"
                       checked={systemSettings.requireEmailVerification}
-                      onCheckedChange={(checked) => setSystemSettings({ ...systemSettings, requireEmailVerification: checked })}
+                      onCheckedChange={(checked) =>
+                        setSystemSettings({
+                          ...systemSettings,
+                          requireEmailVerification: checked,
+                        })
+                      }
                     />
                   </div>
                 </CardContent>
@@ -1028,23 +1328,37 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="passwordMinLength">Minimum Password Length</Label>
+                    <Label htmlFor="passwordMinLength">
+                      Minimum Password Length
+                    </Label>
                     <Input
                       id="passwordMinLength"
                       type="number"
                       min="6"
                       max="32"
                       value={securitySettings.passwordMinLength}
-                      onChange={(e) => setSecuritySettings({ ...securitySettings, passwordMinLength: parseInt(e.target.value) || 8 })}
+                      onChange={(e) =>
+                        setSecuritySettings({
+                          ...securitySettings,
+                          passwordMinLength: parseInt(e.target.value) || 8,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="requireSpecialChars">Require Special Characters</Label>
+                      <Label htmlFor="requireSpecialChars">
+                        Require Special Characters
+                      </Label>
                       <Switch
                         id="requireSpecialChars"
                         checked={securitySettings.passwordRequireSpecialChars}
-                        onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, passwordRequireSpecialChars: checked })}
+                        onCheckedChange={(checked) =>
+                          setSecuritySettings({
+                            ...securitySettings,
+                            passwordRequireSpecialChars: checked,
+                          })
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
@@ -1052,39 +1366,65 @@ export default function Settings() {
                       <Switch
                         id="requireNumbers"
                         checked={securitySettings.passwordRequireNumbers}
-                        onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, passwordRequireNumbers: checked })}
+                        onCheckedChange={(checked) =>
+                          setSecuritySettings({
+                            ...securitySettings,
+                            passwordRequireNumbers: checked,
+                          })
+                        }
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="requireUppercase">Require Uppercase</Label>
+                      <Label htmlFor="requireUppercase">
+                        Require Uppercase
+                      </Label>
                       <Switch
                         id="requireUppercase"
                         checked={securitySettings.passwordRequireUppercase}
-                        onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, passwordRequireUppercase: checked })}
+                        onCheckedChange={(checked) =>
+                          setSecuritySettings({
+                            ...securitySettings,
+                            passwordRequireUppercase: checked,
+                          })
+                        }
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
+                      <Label htmlFor="maxLoginAttempts">
+                        Max Login Attempts
+                      </Label>
                       <Input
                         id="maxLoginAttempts"
                         type="number"
                         min="3"
                         max="10"
                         value={securitySettings.maxLoginAttempts}
-                        onChange={(e) => setSecuritySettings({ ...securitySettings, maxLoginAttempts: parseInt(e.target.value) || 5 })}
+                        onChange={(e) =>
+                          setSecuritySettings({
+                            ...securitySettings,
+                            maxLoginAttempts: parseInt(e.target.value) || 5,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lockoutDuration">Lockout Duration (minutes)</Label>
+                      <Label htmlFor="lockoutDuration">
+                        Lockout Duration (minutes)
+                      </Label>
                       <Input
                         id="lockoutDuration"
                         type="number"
                         min="5"
                         max="60"
                         value={securitySettings.lockoutDuration}
-                        onChange={(e) => setSecuritySettings({ ...securitySettings, lockoutDuration: parseInt(e.target.value) || 15 })}
+                        onChange={(e) =>
+                          setSecuritySettings({
+                            ...securitySettings,
+                            lockoutDuration: parseInt(e.target.value) || 15,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -1105,18 +1445,37 @@ export default function Settings() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label htmlFor="twoFactor">Two-Factor Authentication</Label>
-                      <p className="text-sm text-muted-foreground">Require 2FA for all users</p>
+                      <Label htmlFor="twoFactor">
+                        Two-Factor Authentication
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Require 2FA for all users
+                      </p>
                     </div>
                     <Switch
                       id="twoFactor"
                       checked={securitySettings.twoFactorEnabled}
-                      onCheckedChange={(checked) => setSecuritySettings({ ...securitySettings, twoFactorEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setSecuritySettings({
+                          ...securitySettings,
+                          twoFactorEnabled: checked,
+                        })
+                      }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sessionSecurity">Session Security Level</Label>
-                    <Select value={securitySettings.sessionSecurity} onValueChange={(value: any) => setSecuritySettings({ ...securitySettings, sessionSecurity: value })}>
+                    <Label htmlFor="sessionSecurity">
+                      Session Security Level
+                    </Label>
+                    <Select
+                      value={securitySettings.sessionSecurity}
+                      onValueChange={(value: any) =>
+                        setSecuritySettings({
+                          ...securitySettings,
+                          sessionSecurity: value,
+                        })
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -1127,9 +1486,12 @@ export default function Settings() {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      {securitySettings.sessionSecurity === 'basic' && 'Basic session validation'}
-                      {securitySettings.sessionSecurity === 'enhanced' && 'Enhanced session validation with IP tracking'}
-                      {securitySettings.sessionSecurity === 'strict' && 'Strict validation with device fingerprinting'}
+                      {securitySettings.sessionSecurity === "basic" &&
+                        "Basic session validation"}
+                      {securitySettings.sessionSecurity === "enhanced" &&
+                        "Enhanced session validation with IP tracking"}
+                      {securitySettings.sessionSecurity === "strict" &&
+                        "Strict validation with device fingerprinting"}
                     </p>
                   </div>
                 </CardContent>
@@ -1154,18 +1516,12 @@ export default function Settings() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="smtpServer">SMTP Server</Label>
-                  <Input
-                    id="smtpServer"
-                    placeholder="smtp.gmail.com"
-                  />
+                  <Input id="smtpServer" placeholder="smtp.gmail.com" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="smtpPort">Port</Label>
-                    <Input
-                      id="smtpPort"
-                      placeholder="587"
-                    />
+                    <Input id="smtpPort" placeholder="587" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="smtpSecurity">Security</Label>
@@ -1230,9 +1586,15 @@ export default function Settings() {
                 </div>
                 <Separator />
                 <div className="text-sm text-muted-foreground">
-                  <p><strong>Last Backup:</strong> January 15, 2024 at 2:00 AM</p>
-                  <p><strong>Next Scheduled:</strong> January 16, 2024 at 2:00 AM</p>
-                  <p><strong>Backup Size:</strong> 245 MB</p>
+                  <p>
+                    <strong>Last Backup:</strong> January 15, 2024 at 2:00 AM
+                  </p>
+                  <p>
+                    <strong>Next Scheduled:</strong> January 16, 2024 at 2:00 AM
+                  </p>
+                  <p>
+                    <strong>Backup Size:</strong> 245 MB
+                  </p>
                 </div>
               </CardContent>
             </Card>

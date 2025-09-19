@@ -333,7 +333,6 @@ export default function Expense() {
     load();
   }, [selectedMonth]);
 
-
   // Calculate current month statistics
   const currentMonthSalary = salaryEntries
     .filter((entry) => entry.month === selectedMonth)

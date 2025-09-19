@@ -576,7 +576,9 @@ class ApiClient {
     sortBy?: "date" | "amount" | "category" | "type";
     sortOrder?: "asc" | "desc";
   }) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/expenses${qs}`);
   }
 

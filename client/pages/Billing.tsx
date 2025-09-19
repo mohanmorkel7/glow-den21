@@ -603,7 +603,9 @@ export default function Billing() {
                 type="number"
                 step="0.01"
                 value={usdToInrRate}
-                onChange={(e) => setUsdToInrRate(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setUsdToInrRate(parseFloat(e.target.value) || 0)
+                }
                 className="w-24 h-9 border rounded px-2 text-sm"
               />
               <Button
@@ -712,7 +714,9 @@ export default function Billing() {
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(stats.paidUSD, "USD")}
             </div>
-            <p className="text-xs text-blue-600">{formatCurrency(stats.paidUSD * usdToInrRate, "INR")}</p>
+            <p className="text-xs text-blue-600">
+              {formatCurrency(stats.paidUSD * usdToInrRate, "INR")}
+            </p>
             <p className="text-xs text-muted-foreground">Received payments</p>
           </CardContent>
         </Card>
@@ -727,7 +731,9 @@ export default function Billing() {
             <div className="text-2xl font-bold text-orange-600">
               {formatCurrency(stats.pendingUSD, "USD")}
             </div>
-            <p className="text-xs text-blue-600">{formatCurrency(stats.pendingUSD * usdToInrRate, "INR")}</p>
+            <p className="text-xs text-blue-600">
+              {formatCurrency(stats.pendingUSD * usdToInrRate, "INR")}
+            </p>
             <p className="text-xs text-muted-foreground">Awaiting payment</p>
           </CardContent>
         </Card>
@@ -887,7 +893,10 @@ export default function Billing() {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium text-blue-600">
-                          {formatCurrency(billing.totalAmountUSD * usdToInrRate, "INR")}
+                          {formatCurrency(
+                            billing.totalAmountUSD * usdToInrRate,
+                            "INR",
+                          )}
                         </div>
                       </div>
                     </TableCell>
@@ -1014,7 +1023,10 @@ export default function Billing() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-xl font-bold text-blue-600">
-                        {formatCurrency(selectedBilling.totalAmountUSD * usdToInrRate, "INR")}
+                        {formatCurrency(
+                          selectedBilling.totalAmountUSD * usdToInrRate,
+                          "INR",
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Rate: ₹{usdToInrRate}/USD
@@ -1123,7 +1135,10 @@ export default function Billing() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="text-sm font-medium text-blue-600">
-                                    {formatCurrency(processAmount * usdToInrRate, "INR")}
+                                    {formatCurrency(
+                                      processAmount * usdToInrRate,
+                                      "INR",
+                                    )}
                                   </div>
                                 </TableCell>
                               </TableRow>
@@ -1174,12 +1189,15 @@ export default function Billing() {
                               </Badge>
                             </TableCell>
                             <TableCell className="font-bold text-green-600">
-                          {formatCurrency(project.amountUSD, "USD")}
-                        </TableCell>
-                        <TableCell className="font-bold text-blue-600">
-                          {formatCurrency(project.amountUSD * usdToInrRate, "INR")}
-                        </TableCell>
-                      </TableRow>
+                              {formatCurrency(project.amountUSD, "USD")}
+                            </TableCell>
+                            <TableCell className="font-bold text-blue-600">
+                              {formatCurrency(
+                                project.amountUSD * usdToInrRate,
+                                "INR",
+                              )}
+                            </TableCell>
+                          </TableRow>
                         </TableBody>
                       </Table>
                     </div>

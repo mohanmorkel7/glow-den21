@@ -1213,7 +1213,8 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
 router.get("/billing/export", async (req: Request, res: Response) => {
   try {
     const { month, months, rate } = req.query as any;
-    const conversionRate = Number(rate) && isFinite(Number(rate)) ? Number(rate) : 83.0;
+    const conversionRate =
+      Number(rate) && isFinite(Number(rate)) ? Number(rate) : 83.0;
 
     // Preload project rates
     const projRatesRes = await query(
@@ -1235,7 +1236,9 @@ router.get("/billing/export", async (req: Request, res: Response) => {
       const now = new Date();
       const monthKeys: string[] = [];
       for (let i = 0; i < count; i++) {
-        const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+        const dt = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1),
+        );
         monthKeys.push(buildMonthKey(dt));
       }
       monthKeys.reverse();
