@@ -648,7 +648,7 @@ export default function Expense() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{salaryEntries.length}</div>
+            <div className="text-2xl font-bold">{salaryUsers.length}</div>
             <p className="text-xs text-muted-foreground">Active payroll</p>
           </CardContent>
         </Card>
