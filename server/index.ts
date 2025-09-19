@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { ensureFileProcessTables } from "./startup/migrateFileProcess";
+import { ensureTutorialTables } from "./startup/migrateTutorials";
 
 // Import authentication routes
 import {
