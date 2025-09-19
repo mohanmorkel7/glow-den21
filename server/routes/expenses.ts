@@ -1174,7 +1174,6 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
 router.get("/billing/export", async (req: Request, res: Response) => {
   try {
     const { month } = req.query as any;
-    const summaryResp: any = await (router as any).handle; // placeholder to satisfy TS
     // Reuse the summary computation by directly querying
     const m = month ? String(month) : new Date().toISOString().substring(0, 7);
     const monthStart = `${m}-01`;
