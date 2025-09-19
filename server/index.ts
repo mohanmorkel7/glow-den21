@@ -247,6 +247,9 @@ export function createServer() {
     fileProcess.verifyCompletedRequest as any,
   );
 
+  // ===== TUTORIAL ROUTES =====
+  app.use("/api/tutorials", authenticateToken, tutorialsRoutes);
+
   // ===== EXPENSE MANAGEMENT ROUTES =====
   // All expense routes require authentication
   app.use("/api/expenses", authenticateToken, expenseRoutes);
