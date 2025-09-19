@@ -213,42 +213,57 @@ router.get("/:id", async (req: Request, res: Response) => {
 // POST /api/expenses - Create new expense
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const expenseData = createExpenseSchema.parse(req.body);
+    const body = createExpenseSchema.parse(req.body);
+    const currentUser: any = (req as any).user;
 
-    // Mock creation
-    const newExpense = {
-      id: Date.now().toString(),
-      ...expenseData,
-      month: expenseData.date.substring(0, 7), // Extract YYYY-MM
-      status: "pending" as const,
-      approvedBy: "",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      createdBy: {
-        id: "current-user-id",
-        name: "Current User",
+    const month = body.date.substring(0, 7);
+    const sql = `INSERT INTO expenses
+      (category, description, amount, date, month, type, frequency, receipt, status, approved_by, created_by_user_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending','', $9)
+      RETURNING id, category, description, amount::FLOAT8 AS amount,
+        TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt,
+        status, COALESCE(approved_by,'') AS approved_by,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+        created_by_user_id AS created_by`;
+    const r = await query(sql, [
+      body.category,
+      body.description,
+      body.amount,
+      body.date,
+      month,
+      body.type,
+      body.frequency,
+      body.receipt || null,
+      currentUser?.id || null,
+    ]);
+    const row = r.rows[0];
+    res.status(201).json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
       },
-    };
-
-    res.status(201).json({ data: newExpense });
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid expense data",
-          details: error.errors,
-        },
-      });
-    } else {
-      console.error("Error creating expense:", error);
-      res.status(500).json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create expense",
-        },
+      return res.status(400).json({
+        error: { code: "VALIDATION_ERROR", message: "Invalid expense data", details: error.errors },
       });
     }
+    console.error("Error creating expense:", error);
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to create expense" } });
   }
 });
 
