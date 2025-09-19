@@ -596,25 +596,49 @@ export default function Billing() {
           </p>
         </div>
         {canManageBilling && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleExportBilling("csv")}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleExportBilling("excel")}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Excel
-            </Button>
-            <Button onClick={() => handleExportBilling("pdf")}>
-              <Receipt className="h-4 w-4 mr-2" />
-              Generate Report
-            </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground">₹ per USD</label>
+              <input
+                type="number"
+                step="0.01"
+                value={usdToInrRate}
+                onChange={(e) => setUsdToInrRate(parseFloat(e.target.value) || 0)}
+                className="w-24 h-9 border rounded px-2 text-sm"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!isFinite(usdToInrRate) || usdToInrRate <= 0) {
+                    alert("Enter a valid conversion rate");
+                    return;
+                  }
+                  localStorage.setItem("usdToInrRate", String(usdToInrRate));
+                }}
+              >
+                Save Rate
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleExportBilling("csv")}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleExportBilling("excel")}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </Button>
+              <Button onClick={() => handleExportBilling("pdf")}>
+                <Receipt className="h-4 w-4 mr-2" />
+                Generate Report
+              </Button>
+            </div>
           </div>
         )}
       </div>
