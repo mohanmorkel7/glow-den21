@@ -584,7 +584,9 @@ export default function FileProcess() {
           status: "active",
           limit: 200,
           assignedUser:
-            currentUser?.role === "project_manager" ? currentUser.id : undefined,
+            currentUser?.role === "project_manager"
+              ? currentUser.id
+              : undefined,
         } as any);
         const projList =
           (projs as any)?.data || (Array.isArray(projs) ? projs : []);

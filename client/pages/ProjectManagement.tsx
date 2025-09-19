@@ -474,7 +474,6 @@ export default function ProjectManagement() {
             />
           </div>
 
-
           <Table>
             <TableHeader>
               <TableRow>

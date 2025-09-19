@@ -517,7 +517,9 @@ export default function Salary() {
       return <Badge className="bg-amber-100 text-amber-800">Better</Badge>;
     if (rate >= 50)
       return (
-        <Badge className="bg-orange-100 text-orange-800">Need Improvement</Badge>
+        <Badge className="bg-orange-100 text-orange-800">
+          Need Improvement
+        </Badge>
       );
     if (rate <= 0)
       return <Badge className="bg-gray-100 text-gray-700">N/A</Badge>;
