@@ -364,7 +364,7 @@ export default function Tutorial() {
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
   const [videoUpload, setVideoUpload] = useState({
-    tutorialId: "",
+    tutorialName: "",
     file: null as File | null,
     uploadProgress: 0,
     isUploading: false,
