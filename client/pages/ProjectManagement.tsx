@@ -93,6 +93,7 @@ interface Project {
   assignedUsers?: string[];
   createdBy?: string;
   createdAt?: string;
+  ratePerFileUSD?: number | null;
 }
 
 export default function ProjectManagement() {
@@ -122,30 +123,31 @@ export default function ProjectManagement() {
     currentUser?.role === "project_manager";
 
   const mapApiToProject = (p: any): Project => ({
-    id: String(p.id),
-    name: p.name || "",
-    description: p.description || "",
-    status: (p.status as Project["status"]) || "active",
-    priority: (p.priority as Project["priority"]) || "medium",
-    type: p.type,
-    client: p.client,
-    customClient: p.customClient,
-    fileTargets: p.fileTargets,
-    fileCounts: p.fileCounts,
-    rates: p.rates,
-    targetCount: p.target_count ?? p.targetCount ?? 0,
-    currentCount: p.current_count ?? p.currentCount ?? 0,
-    assignedUsers: p.assigned_users
-      ? p.assigned_users.map((u: any) => String(u))
-      : p.assignedUsers || [],
-    createdBy:
-      p.created_by?.name ||
-      p.createdBy?.name ||
-      p.createdBy ||
-      p.created_by_name ||
-      "",
-    createdAt: p.created_at || p.createdAt,
-  });
+  id: String(p.id),
+  name: p.name || "",
+  description: p.description || "",
+  status: (p.status as Project["status"]) || "active",
+  priority: (p.priority as Project["priority"]) || "medium",
+  type: p.type,
+  client: p.client,
+  customClient: p.customClient,
+  fileTargets: p.fileTargets,
+  fileCounts: p.fileCounts,
+  rates: p.rates,
+  targetCount: p.target_count ?? p.targetCount ?? 0,
+  currentCount: p.current_count ?? p.currentCount ?? 0,
+  assignedUsers: p.assigned_users
+    ? p.assigned_users.map((u: any) => String(u))
+    : p.assignedUsers || [],
+  createdBy:
+    p.created_by?.name ||
+    p.createdBy?.name ||
+    p.createdBy ||
+    p.created_by_name ||
+    "",
+  createdAt: p.created_at || p.createdAt,
+  ratePerFileUSD: p.ratePerFileUSD ?? p.rate_per_file_usd ?? null,
+});
 
   const loadProjects = async () => {
     setIsLoading(true);
@@ -224,7 +226,7 @@ export default function ProjectManagement() {
       client: project.client || "mobius_dataservice",
       customClient: project.customClient || "",
       assignedUsers: project.assignedUsers || [],
-      ratePerFileUSD: (project as any).ratePerFileUSD ?? "",
+      ratePerFileUSD: project.ratePerFileUSD ?? (project as any).rate_per_file_usd ?? "",
     });
     setIsAddDialogOpen(true);
   };
