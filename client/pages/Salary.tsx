@@ -410,10 +410,34 @@ export default function Salary() {
     return [];
   };
 
+  const loadBreakdown = async (userId: string, period: BreakdownPeriod) => {
+    try {
+      const resp: any = await apiClient.getSalaryUserBreakdown(userId, period);
+      const data = (resp && resp.data) || resp || [];
+      setBreakdownData(
+        (data as any[]).map((d) => ({
+          period: d.period,
+          files: d.files,
+          tier1Files: d.tier1Files,
+          tier1Rate: d.tier1Rate,
+          tier1Amount: d.tier1Amount,
+          tier2Files: d.tier2Files,
+          tier2Rate: d.tier2Rate,
+          tier2Amount: d.tier2Amount,
+          totalAmount: d.totalAmount,
+        }))
+      );
+    } catch (e) {
+      console.warn("Failed to load breakdown", e);
+      setBreakdownData([]);
+    }
+  };
+
   const handleUserClick = (user: UserSalaryData) => {
     setSelectedUser(user);
     setBreakdownPeriod("daily");
     setIsBreakdownDialogOpen(true);
+    loadBreakdown(user.id, "daily");
   };
 
   const getBreakdownData = () => {
