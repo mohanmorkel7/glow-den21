@@ -1064,7 +1064,7 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
       const nextStr = next.toISOString().substring(0, 10);
 
       // Load completed file requests joined with file processes and projects
-      const sql = `
+      const sqlManual = `
         SELECT
           fr.file_process_id,
           COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)), 0) AS completed_files,
@@ -1080,11 +1080,33 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
         WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
         GROUP BY fr.file_process_id, fp.name, fp.type, fp.total_rows, fp.project_id, fp.project_name, fp.file_name
       `;
-      const rows = await query(sql, [monthStart, nextStr]);
+      const sqlAutomation = `
+        SELECT
+          fp.id AS file_process_id,
+          COALESCE(SUM((d->>'completed')::INT), 0) AS completed_files,
+          MAX((d->>'date')::DATE) AS last_completed_date,
+          fp.name AS process_name,
+          fp.type AS process_type,
+          fp.total_rows AS total_rows,
+          fp.project_id AS project_id,
+          fp.project_name AS project_name,
+          NULL::TEXT AS file_name
+        FROM file_processes fp
+        JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+        WHERE fp.type = 'automation'
+          AND fp.automation_config IS NOT NULL
+          AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+        GROUP BY fp.id, fp.name, fp.type, fp.total_rows, fp.project_id, fp.project_name
+      `;
+      const [rowsManual, rowsAuto] = await Promise.all([
+        query(sqlManual, [monthStart, nextStr]),
+        query(sqlAutomation, [monthStart, nextStr]),
+      ]);
+      const allRows = [...rowsManual.rows, ...rowsAuto.rows];
 
       // Group by project
       const byProject = new Map<string, any[]>();
-      for (const r of rows.rows) {
+      for (const r of allRows) {
         const pId = String((r as any).project_id || "");
         if (!pId) continue;
         if (!byProject.has(pId)) byProject.set(pId, []);
