@@ -347,9 +347,21 @@ export default function Billing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBilling, setSelectedBilling] = useState<MonthlyBillingSummary | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [billingData, setBillingData] = useState<MonthlyBillingSummary[]>([]);
 
-  // Calculate billing data from file processes
-  const billingData = useMemo(() => computeBillingData(), []);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const resp: any = await apiClient.getBillingSummary(undefined, 6);
+        const list = (resp && resp.data) || resp || [];
+        setBillingData(list);
+      } catch (e) {
+        console.error('Failed to load billing summary', e);
+        setBillingData([]);
+      }
+    };
+    load();
+  }, []);
 
   // Only allow super admin to access billing
   if (currentUser?.role !== 'super_admin') {
