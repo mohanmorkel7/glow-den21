@@ -687,7 +687,7 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       const weeklyFiles = Number(r.weekly_files || 0);
       const monthlyFiles = Number(r.monthly_files || 0);
 
-      // Sum target and submitted counts for today across all tagged projects
+      // Sum target/submitted from daily_counts and assigned from file_requests for today
       const perfRes = await query(
         `SELECT
            COALESCE(SUM(dc.target_count),0) AS target_today,
@@ -696,11 +696,25 @@ router.get("/salary/users", async (req: Request, res: Response) => {
          WHERE dc.date = CURRENT_DATE AND dc.user_id::text = $1`,
         [String(userId)],
       );
+      const assignedRes = await query(
+        `SELECT COALESCE(SUM(assigned_count),0) AS assigned_today
+           FROM file_requests
+          WHERE user_id::text = $1 AND DATE(assigned_date) = CURRENT_DATE`,
+        [String(userId)],
+      );
+
       const pr = perfRes.rows[0] || { target_today: 0, submitted_today: 0 };
       const targetToday = Number(pr.target_today || 0);
       const submittedToday = Number(pr.submitted_today || 0);
+      const assignedToday = Number(assignedRes.rows[0]?.assigned_today || 0);
+
       let performancePct = 0;
-      if (targetToday > 0) {
+      if (assignedToday > 0) {
+        performancePct = Math.max(
+          0,
+          Math.min(100, Math.round((todayFiles / assignedToday) * 100)),
+        );
+      } else if (targetToday > 0) {
         performancePct = Math.max(
           0,
           Math.min(100, Math.round((submittedToday / targetToday) * 100)),
@@ -712,6 +726,22 @@ router.get("/salary/users", async (req: Request, res: Response) => {
           Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)),
         );
       }
+
+      // Determine last active from recent activity (completed or assigned)
+      let lastActive: string | null = null;
+      try {
+        const la = await query(
+          `SELECT TO_CHAR(MAX(ts) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_ts FROM (
+             SELECT MAX(completed_date) AS ts FROM file_requests WHERE user_id::text = $1
+             UNION ALL
+             SELECT MAX(assigned_date) AS ts FROM file_requests WHERE user_id::text = $1
+             UNION ALL
+             SELECT MAX(requested_date) AS ts FROM file_requests WHERE user_id::text = $1
+           ) t`,
+          [String(userId)],
+        );
+        lastActive = la.rows[0]?.last_ts || null;
+      } catch (_) {}
 
       users.push({
         id: userId,
