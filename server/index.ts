@@ -79,6 +79,7 @@ export function createServer() {
   if (isDbConfigured()) {
     ensureInitialAdmin().catch((e) => console.error(e));
     ensureFileProcessTables().catch((e) => console.error(e));
+    ensureTutorialTables().catch((e) => console.error(e));
     import("./startup/migrateSalary")
       .then((m) => m.ensureSalaryTables())
       .catch((e) => console.error(e));
