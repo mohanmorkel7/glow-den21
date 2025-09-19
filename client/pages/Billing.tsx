@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { apiClient } from "@/lib/api";
 import {
   DollarSign,
   Download,
@@ -1023,6 +1024,7 @@ export default function Billing() {
                             <TableHead>Completed</TableHead>
                             <TableHead>Progress</TableHead>
                             <TableHead>Amount (USD)</TableHead>
+                            <TableHead>Amount (INR)</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1086,6 +1088,11 @@ export default function Billing() {
                                 <TableCell>
                                   <div className="text-sm font-medium text-green-600">
                                     {formatCurrency(processAmount, "USD")}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm font-medium text-blue-600">
+                                    {formatCurrency(processAmount * project.conversionRate, "INR")}
                                   </div>
                                 </TableCell>
                               </TableRow>
