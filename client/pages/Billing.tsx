@@ -426,9 +426,20 @@ export default function Billing() {
     setIsDetailsDialogOpen(true);
   };
 
-  const handleExportBilling = (format: 'csv' | 'excel' | 'pdf', month?: string) => {
-    // Implementation for export functionality
-    console.log(`Exporting ${format} for ${month || 'all months'}`);
+  const handleExportBilling = async (format: 'csv' | 'excel' | 'pdf', month?: string) => {
+    try {
+      const blob = await apiClient.exportBilling(format, month);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `billing_${month || 'summary'}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export failed', e);
+    }
   };
 
   const formatCurrency = (amount: number, currency: 'USD' | 'INR') => {
