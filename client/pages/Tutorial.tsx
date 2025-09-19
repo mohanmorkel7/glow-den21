@@ -393,6 +393,42 @@ export default function Tutorial() {
     isRequired: false,
   });
 
+  // Tutorials state loaded from API
+  const [tutorials, setTutorials] = useState<Tutorial[]>([] as any);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const list: any[] = (await apiClient.getTutorials()) as any[];
+        const mapped: Tutorial[] = list.map((t: any, idx: number) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description || "",
+          category: (t.category || "getting_started") as any,
+          status: (t.status || "published") as any,
+          videoUrl: t.videoUrl || undefined,
+          videoDuration: undefined as any,
+          instructions: "",
+          steps: [],
+          targetRoles: ["user", "project_manager", "super_admin"] as any,
+          isRequired: false,
+          order: idx + 1,
+          tags: [],
+          createdBy: { id: t.createdBy || "", name: "" },
+          createdAt: t.createdAt || new Date().toISOString(),
+          updatedAt: t.updatedAt || new Date().toISOString(),
+          viewCount: 0,
+          completionCount: 0,
+        }));
+        setTutorials(mapped);
+      } catch (e) {
+        console.error("Failed to load tutorials", e);
+        setTutorials([]);
+      }
+    };
+    load();
+  }, []);
+
   // Mock data for tutorials with sample videos
   const mockTutorials: Tutorial[] = [
     {
