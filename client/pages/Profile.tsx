@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,29 +62,59 @@ export default function Profile() {
   const isAdmin = currentUser?.role === 'super_admin';
   const canEditProfile = isAdmin;
 
-  const handleProfileUpdate = () => {
-    console.log('Updating profile:', profileData);
-    setProfileUpdateMessage('Profile updated successfully!');
-    setTimeout(() => setProfileUpdateMessage(''), 3000);
+  const handleProfileUpdate = async () => {
+    try {
+      const payload: any = {
+        name: profileData.name,
+        phone: profileData.phone,
+        department: profileData.department,
+        jobTitle: profileData.jobTitle,
+      };
+      // Email changes typically require verification; skip here
+      const updated = await apiClient.updateUser(currentUser!.id, payload);
+      setProfileUpdateMessage('Profile updated successfully!');
+      // Update local storage user snapshot for immediate UI consistency
+      try {
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          const u = JSON.parse(stored);
+          const next = { ...u, ...payload };
+          localStorage.setItem('user', JSON.stringify(next));
+        }
+      } catch {}
+    } catch (e: any) {
+      setProfileUpdateMessage(e?.message || 'Failed to update profile');
+    } finally {
+      setTimeout(() => setProfileUpdateMessage(''), 3000);
+    }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setPasswordUpdateMessage('New passwords do not match!');
       setTimeout(() => setPasswordUpdateMessage(''), 3000);
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setPasswordUpdateMessage('Password must be at least 6 characters long!');
+    if (passwordData.newPassword.length < 8) {
+      setPasswordUpdateMessage('Password must be at least 8 characters long');
       setTimeout(() => setPasswordUpdateMessage(''), 3000);
       return;
     }
 
-    console.log('Changing password for user:', currentUser?.email);
-    setPasswordUpdateMessage('Password updated successfully!');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setTimeout(() => setPasswordUpdateMessage(''), 3000);
+    try {
+      await apiClient.changePassword(
+        currentUser!.id,
+        passwordData.currentPassword,
+        passwordData.newPassword,
+      );
+      setPasswordUpdateMessage('Password updated successfully!');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (e: any) {
+      setPasswordUpdateMessage(e?.message || 'Failed to update password');
+    } finally {
+      setTimeout(() => setPasswordUpdateMessage(''), 3000);
+    }
   };
 
   const resetPasswordForm = () => {
