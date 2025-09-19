@@ -96,183 +96,74 @@ const expenseQuerySchema = z.object({
 // GET /api/expenses - List expenses with filtering and pagination
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const query = expenseQuerySchema.parse(req.query);
+    const q = expenseQuerySchema.parse(req.query);
 
-    // Mock expense data for demonstration
-    const mockExpenses = [
-      {
-        id: "1",
-        category: "Office Rent",
-        description: "Monthly office rent payment",
-        amount: 25000,
-        date: "2024-01-01",
-        month: "2024-01",
-        type: "administrative",
-        status: "approved",
-        approvedBy: "Admin",
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-01T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-      {
-        id: "2",
-        category: "Utilities",
-        description: "Electricity and internet bills",
-        amount: 5500,
-        date: "2024-01-05",
-        month: "2024-01",
-        type: "utilities",
-        status: "approved",
-        approvedBy: "Admin",
-        createdAt: "2024-01-05T00:00:00Z",
-        updatedAt: "2024-01-05T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-      {
-        id: "3",
-        category: "Software Licenses",
-        description: "Annual software subscription renewals",
-        amount: 8000,
-        date: "2024-01-10",
-        month: "2024-01",
-        type: "operational",
-        status: "approved",
-        approvedBy: "Admin",
-        createdAt: "2024-01-10T00:00:00Z",
-        updatedAt: "2024-01-10T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-      {
-        id: "4",
-        category: "Marketing",
-        description: "Digital marketing campaigns",
-        amount: 12000,
-        date: "2024-01-15",
-        month: "2024-01",
-        type: "marketing",
-        status: "pending",
-        approvedBy: "",
-        createdAt: "2024-01-15T00:00:00Z",
-        updatedAt: "2024-01-15T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-    ];
+    const where: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
+    if (q.type) { where.push(`type = $${idx++}`); params.push(q.type); }
+    if (q.status) { where.push(`status = $${idx++}`); params.push(q.status); }
+    if (q.category) { where.push(`LOWER(category) LIKE $${idx++}`); params.push(`%${q.category.toLowerCase()}%`); }
+    if (q.search) { where.push(`(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`); params.push(`%${q.search.toLowerCase()}%`); idx++; }
+    if (q.from) { where.push(`date >= $${idx++}`); params.push(q.from); }
+    if (q.to) { where.push(`date <= $${idx++}`); params.push(q.to); }
+    if (q.month) { where.push(`month = $${idx++}`); params.push(q.month); }
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    // Apply filters
-    let filteredExpenses = mockExpenses;
+    const sortCol = q.sortBy === 'amount' ? 'amount' : q.sortBy === 'category' ? 'category' : q.sortBy === 'type' ? 'type' : 'date';
+    const sortDir = q.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
-    if (query.type) {
-      filteredExpenses = filteredExpenses.filter((e) => e.type === query.type);
-    }
+    const countSql = `SELECT COUNT(*)::INT AS count FROM expenses ${whereSql}`;
+    const baseSql = `SELECT id, category, description, amount::FLOAT8 AS amount,
+        TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
+        COALESCE(approved_by,'') AS approved_by,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+        created_by_user_id AS created_by
+      FROM expenses ${whereSql} ORDER BY ${sortCol} ${sortDir}`;
 
-    if (query.status) {
-      filteredExpenses = filteredExpenses.filter(
-        (e) => e.status === query.status,
-      );
-    }
+    const { data, pagination } = await paginatedQuery(baseSql, countSql, params, q.page, q.limit);
 
-    if (query.category) {
-      filteredExpenses = filteredExpenses.filter((e) =>
-        e.category.toLowerCase().includes(query.category!.toLowerCase()),
-      );
-    }
+    const rows = data.map((r: any) => ({
+      id: r.id,
+      category: r.category,
+      description: r.description,
+      amount: Number(r.amount),
+      date: r.date,
+      month: r.month,
+      type: r.type,
+      frequency: r.frequency,
+      receipt: r.receipt || undefined,
+      status: r.status,
+      approvedBy: r.approved_by || "",
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      createdBy: r.created_by ? { id: String(r.created_by), name: "" } : { id: "", name: "" },
+    }));
 
-    if (query.search) {
-      const searchLower = query.search.toLowerCase();
-      filteredExpenses = filteredExpenses.filter(
-        (e) =>
-          e.category.toLowerCase().includes(searchLower) ||
-          e.description.toLowerCase().includes(searchLower),
-      );
-    }
-
-    if (query.month) {
-      filteredExpenses = filteredExpenses.filter(
-        (e) => e.month === query.month,
-      );
-    }
-
-    // Apply sorting
-    filteredExpenses.sort((a, b) => {
-      let aVal: any, bVal: any;
-
-      switch (query.sortBy) {
-        case "date":
-          aVal = new Date(a.date);
-          bVal = new Date(b.date);
-          break;
-        case "amount":
-          aVal = a.amount;
-          bVal = b.amount;
-          break;
-        case "category":
-          aVal = a.category;
-          bVal = b.category;
-          break;
-        case "type":
-          aVal = a.type;
-          bVal = b.type;
-          break;
-        default:
-          aVal = new Date(a.date);
-          bVal = new Date(b.date);
-      }
-
-      if (query.sortOrder === "asc") {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-
-    // Apply pagination
-    const offset = (query.page - 1) * query.limit;
-    const paginatedExpenses = filteredExpenses.slice(
-      offset,
-      offset + query.limit,
+    const statsRes = await query(
+      `SELECT
+         COALESCE(SUM(amount)::FLOAT8,0) AS total_amount,
+         SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END)::INT AS approved_count,
+         SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END)::INT AS pending_count,
+         SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END)::INT AS rejected_count
+       FROM expenses ${whereSql}`,
+      params,
     );
+    const s = statsRes.rows[0] || { total_amount: 0, approved_count: 0, pending_count: 0, rejected_count: 0 };
 
     const statistics = {
-      totalExpenses: filteredExpenses.reduce((sum, e) => sum + e.amount, 0),
-      approvedCount: filteredExpenses.filter((e) => e.status === "approved")
-        .length,
-      pendingCount: filteredExpenses.filter((e) => e.status === "pending")
-        .length,
-      rejectedCount: filteredExpenses.filter((e) => e.status === "rejected")
-        .length,
-      entryCount: filteredExpenses.length,
+      totalExpenses: Number(s.total_amount || 0),
+      approvedCount: Number(s.approved_count || 0),
+      pendingCount: Number(s.pending_count || 0),
+      rejectedCount: Number(s.rejected_count || 0),
+      entryCount: pagination.total,
     };
 
-    res.json({
-      data: paginatedExpenses,
-      statistics,
-      pagination: {
-        total: filteredExpenses.length,
-        page: query.page,
-        limit: query.limit,
-        totalPages: Math.ceil(filteredExpenses.length / query.limit),
-      },
-    });
+    res.json({ data: rows, statistics, pagination });
   } catch (error) {
     console.error("Error fetching expenses:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch expenses",
-      },
-    });
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch expenses" } });
   }
 });
 
