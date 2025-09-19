@@ -140,6 +140,7 @@ export default function Salary() {
   const [selectedUser, setSelectedUser] = useState<UserSalaryData | null>(null);
   const [breakdownPeriod, setBreakdownPeriod] =
     useState<BreakdownPeriod>("daily");
+  const [breakdownData, setBreakdownData] = useState<SalaryBreakdown[]>([]);
 
   // Salary data loaded from backend
   const [userSalaryData, setUserSalaryData] = useState<UserSalaryData[]>([]);
@@ -409,21 +410,50 @@ export default function Salary() {
     return [];
   };
 
+  const loadBreakdown = async (userId: string, period: BreakdownPeriod) => {
+    try {
+      const resp: any = await apiClient.getSalaryUserBreakdown(userId, period);
+      const data = (resp && resp.data) || resp || [];
+      setBreakdownData(
+        (data as any[]).map((d) => ({
+          period: d.period,
+          files: d.files,
+          tier1Files: d.tier1Files,
+          tier1Rate: d.tier1Rate,
+          tier1Amount: d.tier1Amount,
+          tier2Files: d.tier2Files,
+          tier2Rate: d.tier2Rate,
+          tier2Amount: d.tier2Amount,
+          totalAmount: d.totalAmount,
+        })),
+      );
+    } catch (e) {
+      console.warn("Failed to load breakdown", e);
+      setBreakdownData([]);
+    }
+  };
+
   const handleUserClick = (user: UserSalaryData) => {
     setSelectedUser(user);
     setBreakdownPeriod("daily");
     setIsBreakdownDialogOpen(true);
+    loadBreakdown(user.id, "daily");
   };
 
   const getBreakdownData = () => {
-    if (!selectedUser) return [];
-    return generateSalaryBreakdown(selectedUser, breakdownPeriod);
+    return breakdownData;
   };
 
   const getBreakdownTotal = () => {
     const data = getBreakdownData();
     return data.reduce((sum, item) => sum + item.totalAmount, 0);
   };
+
+  useEffect(() => {
+    if (selectedUser) {
+      loadBreakdown(selectedUser.id, breakdownPeriod);
+    }
+  }, [selectedUser?.id, breakdownPeriod]);
 
   // Calculate total salary statistics
   const totalUserSalaries = userSalaryData.reduce(
@@ -474,6 +504,8 @@ export default function Salary() {
       return <Badge className="bg-blue-100 text-blue-800">Good</Badge>;
     if (rate >= 85)
       return <Badge className="bg-orange-100 text-orange-800">Average</Badge>;
+    if (rate <= 0)
+      return <Badge className="bg-gray-100 text-gray-700">N/A</Badge>;
     return <Badge className="bg-red-100 text-red-800">Poor</Badge>;
   };
 
@@ -744,7 +776,7 @@ export default function Salary() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              PM Individual Salaries
+              PM Individual Salaries ({projectManagerSalaryData.length})
             </CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -929,7 +961,9 @@ export default function Salary() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(user.lastActive).toLocaleString()}
+                          {user.lastActive
+                            ? new Date(user.lastActive).toLocaleString()
+                            : "-"}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -990,7 +1024,9 @@ export default function Salary() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(pm.lastActive).toLocaleString()}
+                          {pm.lastActive
+                            ? new Date(pm.lastActive).toLocaleString()
+                            : "-"}
                         </div>
                       </TableCell>
                     </TableRow>

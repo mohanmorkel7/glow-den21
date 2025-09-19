@@ -687,7 +687,7 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       const weeklyFiles = Number(r.weekly_files || 0);
       const monthlyFiles = Number(r.monthly_files || 0);
 
-      // Sum target and submitted counts for today across all tagged projects
+      // Sum target/submitted from daily_counts and assigned from file_requests for today
       const perfRes = await query(
         `SELECT
            COALESCE(SUM(dc.target_count),0) AS target_today,
@@ -696,11 +696,25 @@ router.get("/salary/users", async (req: Request, res: Response) => {
          WHERE dc.date = CURRENT_DATE AND dc.user_id::text = $1`,
         [String(userId)],
       );
+      const assignedRes = await query(
+        `SELECT COALESCE(SUM(assigned_count),0) AS assigned_today
+           FROM file_requests
+          WHERE user_id::text = $1 AND DATE(assigned_date) = CURRENT_DATE`,
+        [String(userId)],
+      );
+
       const pr = perfRes.rows[0] || { target_today: 0, submitted_today: 0 };
       const targetToday = Number(pr.target_today || 0);
       const submittedToday = Number(pr.submitted_today || 0);
+      const assignedToday = Number(assignedRes.rows[0]?.assigned_today || 0);
+
       let performancePct = 0;
-      if (targetToday > 0) {
+      if (assignedToday > 0) {
+        performancePct = Math.max(
+          0,
+          Math.min(100, Math.round((todayFiles / assignedToday) * 100)),
+        );
+      } else if (targetToday > 0) {
         performancePct = Math.max(
           0,
           Math.min(100, Math.round((submittedToday / targetToday) * 100)),
@@ -713,6 +727,22 @@ router.get("/salary/users", async (req: Request, res: Response) => {
         );
       }
 
+      // Determine last active from recent activity (completed or assigned)
+      let lastActive: string | null = null;
+      try {
+        const la = await query(
+          `SELECT TO_CHAR(MAX(ts) AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS last_ts FROM (
+             SELECT MAX(completed_date) AS ts FROM file_requests WHERE user_id::text = $1
+             UNION ALL
+             SELECT MAX(assigned_date) AS ts FROM file_requests WHERE user_id::text = $1
+             UNION ALL
+             SELECT MAX(requested_date) AS ts FROM file_requests WHERE user_id::text = $1
+           ) t`,
+          [String(userId)],
+        );
+        lastActive = la.rows[0]?.last_ts || null;
+      } catch (_) {}
+
       users.push({
         id: userId,
         name: r.user_name,
@@ -724,7 +754,7 @@ router.get("/salary/users", async (req: Request, res: Response) => {
         weeklyEarnings: calc(weeklyFiles),
         monthlyEarnings: calc(monthlyFiles),
         attendanceRate: performancePct,
-        lastActive: null,
+        lastActive,
       });
     }
 
@@ -767,15 +797,19 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
     const targetMonth = month || new Date().toISOString().substring(0, 7);
     const monthStart = `${targetMonth}-01`;
 
-    // Get active PM salaries effective on or before target month
+    // Get active PM salaries effective on or before end of target month
+    const nextMonthDate = new Date(monthStart);
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    const nextMonth = nextMonthDate.toISOString().substring(0, 10);
+
     const sql = `
       SELECT ps.id, ps.user_id, ps.monthly_salary, u.name
       FROM pm_salaries ps
-      JOIN users u ON u.id::text = ps.user_id
-      WHERE ps.is_active = true AND ps.effective_from <= $1
+      JOIN users u ON u.id::text = ps.user_id::text
+      WHERE ps.is_active = true AND ps.effective_from < $1
       ORDER BY u.name
     `;
-    const result = await query(sql, [monthStart]);
+    const result = await query(sql, [nextMonth]);
     const pms = result.rows.map((r: any) => ({
       id: r.id,
       name: r.name,
@@ -805,6 +839,107 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
       error: {
         code: "INTERNAL_SERVER_ERROR",
         message: "Failed to fetch PM salary data",
+      },
+    });
+  }
+});
+
+// GET /api/expenses/salary/breakdown - Per-user salary breakdown for a period
+router.get("/salary/breakdown", async (req: Request, res: Response) => {
+  try {
+    const { userId, period = "daily", month } = req.query as any;
+    if (!userId) {
+      return res.status(400).json({
+        error: { code: "VALIDATION_ERROR", message: "userId is required" },
+      });
+    }
+
+    // Load salary configuration
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
+    const firstTierRate = Number(cfg.first_tier_rate || 0);
+    const secondTierRate = Number(cfg.second_tier_rate || 0);
+    const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+    // Determine date range
+    const today = new Date();
+    let from: Date;
+    let to: Date;
+    if (period === "weekly") {
+      from = new Date(today);
+      from.setDate(today.getDate() - 6);
+      to = today;
+    } else if (period === "monthly") {
+      const target = (month as string) || today.toISOString().substring(0, 7);
+      const monthStart = new Date(`${target}-01T00:00:00Z`);
+      from = monthStart;
+      to = new Date(monthStart);
+      to.setMonth(to.getMonth() + 1);
+      to.setDate(to.getDate() - 1); // last day of month
+    } else {
+      from = new Date(today.toISOString().substring(0, 10));
+      to = new Date(today.toISOString().substring(0, 10));
+    }
+
+    const fromStr = from.toISOString().substring(0, 10);
+    // upper bound exclusive for query convenience
+    const toNext = new Date(to);
+    toNext.setDate(toNext.getDate() + 1);
+    const toNextStr = toNext.toISOString().substring(0, 10);
+
+    // Query completed files per day in range for the user
+    const rowsRes = await query(
+      `SELECT DATE(completed_date) AS d, SUM(COALESCE(assigned_count, requested_count, 0)) AS files
+         FROM file_requests
+        WHERE user_id::text = $1 AND status = 'completed' AND completed_date >= $2 AND completed_date < $3
+        GROUP BY DATE(completed_date)
+        ORDER BY DATE(completed_date)`,
+      [String(userId), fromStr, toNextStr],
+    );
+
+    // Build a map for quick lookup
+    const byDate = new Map<string, number>();
+    for (const r of rowsRes.rows) {
+      const d = (r as any).d as string;
+      byDate.set(d, Number((r as any).files || 0));
+    }
+
+    // Iterate each day in range to build breakdown, including zero-file days
+    const items: any[] = [];
+    for (let dt = new Date(fromStr); dt <= to; dt.setDate(dt.getDate() + 1)) {
+      const dStr = dt.toISOString().substring(0, 10);
+      const files = byDate.get(dStr) || 0;
+      const tier1Files = Math.min(files, firstTierLimit);
+      const tier2Files = Math.max(0, files - firstTierLimit);
+      const tier1Amount = tier1Files * firstTierRate;
+      const tier2Amount = tier2Files * secondTierRate;
+
+      items.push({
+        period: dStr,
+        files,
+        tier1Files,
+        tier1Rate: firstTierRate,
+        tier1Amount,
+        tier2Files,
+        tier2Rate: secondTierRate,
+        tier2Amount,
+        totalAmount: tier1Amount + tier2Amount,
+      });
+    }
+
+    res.json({ data: items });
+  } catch (error) {
+    console.error("Error fetching salary breakdown:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch salary breakdown",
       },
     });
   }
