@@ -1489,54 +1489,91 @@ router.get("/analytics/dashboard", async (req: Request, res: Response) => {
 // GET /api/expenses/analytics/profit-loss - Get profit & loss data
 router.get("/analytics/profit-loss", async (req: Request, res: Response) => {
   try {
-    const mockProfitLossData = [
-      {
-        month: "2023-10",
-        revenue: 285000,
-        salaryExpense: 145000,
-        adminExpense: 45000,
-        totalExpense: 190000,
-        netProfit: 95000,
-        profitMargin: 33.3,
-      },
-      {
-        month: "2023-11",
-        revenue: 320000,
-        salaryExpense: 152000,
-        adminExpense: 48000,
-        totalExpense: 200000,
-        netProfit: 120000,
-        profitMargin: 37.5,
-      },
-      {
-        month: "2023-12",
-        revenue: 375000,
-        salaryExpense: 165000,
-        adminExpense: 52000,
-        totalExpense: 217000,
-        netProfit: 158000,
-        profitMargin: 42.1,
-      },
-      {
-        month: "2024-01",
-        revenue: 420000,
-        salaryExpense: 170000,
-        adminExpense: 50500,
-        totalExpense: 220500,
-        netProfit: 199500,
-        profitMargin: 47.5,
-      },
-    ];
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      months.push(dt.toISOString().substring(0, 7));
+    }
 
-    res.json({ data: mockProfitLossData });
+    const projRatesRes = await query(`SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`);
+    const rateMap = new Map<string, number>();
+    for (const r of projRatesRes.rows) rateMap.set(String((r as any).id), Number((r as any).rate || 0));
+
+    const conversionRate = 83.0;
+
+    const cfgRes = await query(`SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`);
+    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const fRate = Number(cfg.first_tier_rate || 0);
+    const sRate = Number(cfg.second_tier_rate || 0);
+    const fLimit = Number(cfg.first_tier_limit || 0);
+
+    const calcEarning = (files: number) => {
+      const t1 = Math.min(files, fLimit);
+      const t2 = Math.max(0, files - fLimit);
+      return t1 * fRate + t2 * sRate;
+    };
+
+    const result: any[] = [];
+
+    for (const m of months) {
+      const monthStart = `${m}-01`;
+      const next = new Date(`${m}-01T00:00:00Z`);
+      next.setUTCMonth(next.getUTCMonth() + 1);
+      const nextStr = next.toISOString().substring(0, 10);
+
+      const sqlManual = `
+        SELECT fp.project_id, COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS completed
+          FROM file_requests fr JOIN file_processes fp ON fp.id = fr.file_process_id
+         WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
+         GROUP BY fp.project_id`;
+      const sqlAutomation = `
+        SELECT fp.project_id, COALESCE(SUM((d->>'completed')::INT),0) AS completed
+          FROM file_processes fp
+          JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+         WHERE fp.type = 'automation' AND fp.automation_config IS NOT NULL
+           AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+         GROUP BY fp.project_id`;
+      const [rowsManual, rowsAuto] = await Promise.all([
+        query(sqlManual, [monthStart, nextStr]),
+        query(sqlAutomation, [monthStart, nextStr]),
+      ]);
+      const byProject = new Map<string, number>();
+      for (const r of [...rowsManual.rows, ...rowsAuto.rows]) {
+        const p = String((r as any).project_id || '');
+        const c = Number((r as any).completed || 0);
+        if (!p) continue; byProject.set(p, (byProject.get(p) || 0) + c);
+      }
+      let revenueUSD = 0;
+      for (const [pId, completed] of byProject.entries()) revenueUSD += completed * (rateMap.get(pId) || 0);
+      const revenue = revenueUSD * conversionRate;
+
+      const userFilesRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS files
+           FROM file_requests fr WHERE fr.status='completed' AND fr.completed_date >= $1 AND fr.completed_date < $2`,
+        [monthStart, nextStr]
+      );
+      const monthlyFiles = Number(userFilesRes.rows[0]?.files || 0);
+      const userSalaries = calcEarning(monthlyFiles);
+
+      const pmRes = await query(`SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`, [nextStr]);
+      const pmSalaries = Number(pmRes.rows[0]?.total || 0);
+      const salaryExpense = userSalaries + pmSalaries;
+
+      const adminRes = await query(`SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month=$1 AND status <> 'rejected'`, [m]);
+      const adminExpense = Number(adminRes.rows[0]?.total || 0);
+
+      const totalExpense = salaryExpense + adminExpense;
+      const netProfit = revenue - totalExpense;
+      const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+
+      result.push({ month: m, revenue, salaryExpense, adminExpense, totalExpense, netProfit, profitMargin });
+    }
+
+    res.json({ data: result });
   } catch (error) {
     console.error("Error fetching profit & loss data:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch profit & loss data",
-      },
-    });
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch profit & loss data" } });
   }
 });
 
