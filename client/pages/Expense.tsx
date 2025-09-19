@@ -161,50 +161,7 @@ export default function Expense() {
   // Mock data for demonstration
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  const salaryEntries: SalaryEntry[] = [
-    {
-      id: "1",
-      employeeName: "John Smith",
-      employeeId: "EMP001",
-      designation: "Project Manager",
-      department: "Operations",
-      baseSalary: 65000,
-      bonus: 5000,
-      deductions: 8000,
-      netSalary: 62000,
-      month: currentMonth,
-      paymentDate: "2024-01-30",
-      status: "paid",
-    },
-    {
-      id: "2",
-      employeeName: "Sarah Johnson",
-      employeeId: "EMP002",
-      designation: "Data Analyst",
-      department: "Operations",
-      baseSalary: 45000,
-      bonus: 2000,
-      deductions: 5500,
-      netSalary: 41500,
-      month: currentMonth,
-      paymentDate: "2024-01-30",
-      status: "paid",
-    },
-    {
-      id: "3",
-      employeeName: "Mike Davis",
-      employeeId: "EMP003",
-      designation: "Data Entry Specialist",
-      department: "Operations",
-      baseSalary: 35000,
-      bonus: 1500,
-      deductions: 4200,
-      netSalary: 32300,
-      month: currentMonth,
-      paymentDate: "2024-01-30",
-      status: "processing",
-    },
-  ];
+  const salaryEntries: SalaryEntry[] = [];
 
   // Base recurring monthly expenses
   const baseRecurringExpenses: Omit<ExpenseEntry, "id" | "date" | "month">[] = [
@@ -452,20 +409,25 @@ export default function Expense() {
     setIsEditExpenseOpen(true);
   };
 
-  const handleDeleteExpense = (expense: ExpenseEntry) => {
+  const handleDeleteExpense = async (expense: ExpenseEntry) => {
     if (
       window.confirm(
         `Are you sure you want to delete the expense "${expense.description}"?`,
       )
     ) {
-      // In a real application, you would call an API to delete the expense
-      console.log("Deleting expense:", expense.id);
-      alert("Expense deleted successfully!");
+      try {
+        await apiClient.deleteExpense(expense.id);
+        setExpenseEntries((prev) => prev.filter((e) => e.id !== expense.id));
+        alert("Expense deleted successfully!");
+      } catch (err) {
+        console.error("Failed to delete expense", err);
+        alert("Failed to delete expense");
+      }
     }
   };
 
   // New handlers for expense management
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (
       !newExpense.category ||
       !newExpense.description ||
@@ -475,47 +437,22 @@ export default function Expense() {
       alert("Please fill in all required fields");
       return;
     }
-
-    const expenseToAdd: ExpenseEntry = {
-      id: `${newExpense.frequency}-${Date.now()}`,
-      category: newExpense.category,
-      description: newExpense.description,
-      amount: parseFloat(newExpense.amount),
-      date: newExpense.date,
-      month: selectedMonth,
-      type: newExpense.type as any,
-      frequency: newExpense.frequency,
-      createdMonth:
-        newExpense.frequency === "one-time" ? selectedMonth : undefined,
-      approvedBy: "Admin",
-      status: "pending",
-    };
-
-    if (newExpense.frequency === "monthly") {
-      // Add to base recurring expenses
-      console.log("Adding recurring monthly expense:", expenseToAdd);
-      alert(
-        `Monthly recurring expense "${newExpense.category}" added successfully! It will appear in all months.`,
-      );
-    } else {
-      // Add as one-time expense
-      console.log("Adding one-time expense:", expenseToAdd);
-      alert(
-        `One-time expense "${newExpense.category}" added successfully for ${selectedMonth}!`,
-      );
+    try {
+      const created: any = await apiClient.createExpense({
+        category: newExpense.category,
+        description: newExpense.description,
+        amount: parseFloat(newExpense.amount),
+        date: newExpense.date,
+        type: newExpense.type as any,
+        frequency: newExpense.frequency,
+      });
+      setExpenseEntries((prev) => [created as any, ...prev]);
+      resetExpenseForm();
+      setIsAddExpenseOpen(false);
+    } catch (e) {
+      console.error("Failed to add expense", e);
+      alert("Failed to add expense");
     }
-
-    // Reset form
-    setNewExpense({
-      category: "",
-      description: "",
-      amount: "",
-      date: new Date().toISOString().slice(0, 10),
-      type: "",
-      frequency: "one-time",
-    });
-
-    setIsAddExpenseOpen(false);
   };
 
   const resetExpenseForm = () => {
@@ -957,18 +894,18 @@ export default function Expense() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">
-                            First 500 files:
+                            First {salaryConfig?.users?.firstTierLimit ?? 0} files:
                           </span>
                           <span className="ml-2 font-medium text-green-600">
-                            ₹0.50 per file
+                            ₹{Number(salaryConfig?.users?.firstTierRate ?? 0).toFixed(2)} per file
                           </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">
-                            After 500 files:
+                            After {salaryConfig?.users?.firstTierLimit ?? 0} files:
                           </span>
                           <span className="ml-2 font-medium text-green-600">
-                            ₹0.60 per file
+                            ₹{Number(salaryConfig?.users?.secondTierRate ?? 0).toFixed(2)} per file
                           </span>
                         </div>
                         <div>
@@ -976,7 +913,7 @@ export default function Expense() {
                             Total PM Salaries:
                           </span>
                           <span className="ml-2 font-medium text-purple-600">
-                            ₹50,000.00
+                            {formatCurrency(pmMonthlySalaries)}
                           </span>
                         </div>
                         <div>
@@ -984,7 +921,7 @@ export default function Expense() {
                             Est. User Earnings:
                           </span>
                           <span className="ml-2 font-medium text-blue-600">
-                            ₹31,960.00
+                            {formatCurrency(userMonthlyEarnings)}
                           </span>
                         </div>
                       </div>
@@ -1101,156 +1038,60 @@ export default function Expense() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">Sarah Johnson</div>
-                        <div className="text-sm text-muted-foreground">
-                          Data Analyst
+                  {salaryUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.name}</div>
+                          <div className="text-sm text-muted-foreground capitalize">
+                            {(user.role || "user").replace("_", " ")}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-blue-100 text-blue-800">750</Badge>
-                        <span className="text-xs text-green-600">
-                          Tier 2 rate
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-semibold text-green-600">
-                        ₹400.00
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-blue-600">4,200</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">15,200</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-green-600">₹8,320.00</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Excellent
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">Mike Davis</div>
-                        <div className="text-sm text-muted-foreground">
-                          Data Entry Specialist
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {(user.todayFiles || 0).toLocaleString()}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-orange-100 text-orange-800">
-                          420
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-semibold text-green-600">
+                          {formatCurrency(user.todayEarnings || 0)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-blue-600">
+                          {(user.weeklyFiles || 0).toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {(user.monthlyFiles || 0).toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-green-600">
+                          {formatCurrency(user.monthlyEarnings || 0)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={
+                            (user.attendanceRate || 0) >= 95
+                              ? "bg-green-100 text-green-800"
+                              : (user.attendanceRate || 0) >= 85
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-yellow-100 text-yellow-800"
+                          }
+                        >
+                          {(user.attendanceRate || 0) >= 95
+                            ? "Excellent"
+                            : (user.attendanceRate || 0) >= 85
+                              ? "Good"
+                              : "Average"}
                         </Badge>
-                        <span className="text-xs text-blue-600">
-                          Tier 1 rate
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-semibold text-green-600">
-                        ₹210.00
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-blue-600">2,800</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">9,800</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-green-600">₹5,630.00</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-blue-100 text-blue-800">Good</Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">David Chen</div>
-                        <div className="text-sm text-muted-foreground">
-                          Data Analyst
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-blue-100 text-blue-800">680</Badge>
-                        <span className="text-xs text-green-600">
-                          Tier 2 rate
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-semibold text-green-600">
-                        ₹358.00
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-blue-600">3,900</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">14,500</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-green-600">₹7,900.00</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Excellent
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">Lisa Chen</div>
-                        <div className="text-sm text-muted-foreground">
-                          Senior Data Analyst
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-green-100 text-green-800">
-                          850
-                        </Badge>
-                        <span className="text-xs text-green-600">
-                          Tier 2 rate
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-semibold text-green-600">
-                        ₹460.00
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium text-blue-600">5,100</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">18,600</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-green-600">₹10,110.00</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Excellent
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
@@ -1280,78 +1121,58 @@ export default function Expense() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">Emily Wilson</div>
-                        <div className="text-sm text-muted-foreground">
-                          PM_001
+                  {pmList.map((pm) => (
+                    <TableRow key={pm.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{pm.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {pm.id}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">Operations</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-purple-600">
-                        ₹30,000.00
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <Badge className="bg-green-100 text-green-800">
-                          Excellent
-                        </Badge>
-                        <div className="text-xs text-muted-foreground">
-                          98.5%
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{pm.department || "Operations"}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-purple-600">
+                          {formatCurrency(pm.monthlySalary || 0)}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">Jan 21, 2024 5:30 PM</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Active
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">John Smith</div>
-                        <div className="text-sm text-muted-foreground">
-                          PM_002
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge className={
+                            (pm.attendanceRate || 0) >= 95
+                              ? "bg-green-100 text-green-800"
+                              : (pm.attendanceRate || 0) >= 85
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-gray-100 text-gray-800"
+                          }>
+                            {(pm.attendanceRate || 0) > 0
+                              ? (pm.attendanceRate || 0) >= 95
+                                ? "Excellent"
+                                : (pm.attendanceRate || 0) >= 85
+                                  ? "Good"
+                                  : "Average"
+                              : "—"}
+                          </Badge>
+                          {(pm.attendanceRate || 0) > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {pm.attendanceRate}%
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">Operations</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-purple-600">
-                        ₹20,000.00
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <Badge className="bg-blue-100 text-blue-800">
-                          Good
-                        </Badge>
-                        <div className="text-xs text-muted-foreground">
-                          94.2%
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {pm.lastActive ? new Date(pm.lastActive).toLocaleString() : "-"}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">Jan 21, 2024 4:45 PM</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Active
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
@@ -1374,15 +1195,19 @@ export default function Expense() {
                   <h4 className="font-medium">User File-Based Rates</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between p-2 bg-green-50 rounded">
-                      <span>First 500 files:</span>
+                      <span>
+                        First {salaryConfig?.users?.firstTierLimit ?? 0} files:
+                      </span>
                       <span className="font-medium text-green-600">
-                        ₹0.50 per file
+                        ₹{Number(salaryConfig?.users?.firstTierRate ?? 0).toFixed(2)} per file
                       </span>
                     </div>
                     <div className="flex justify-between p-2 bg-blue-50 rounded">
-                      <span>After 500 files:</span>
+                      <span>
+                        After {salaryConfig?.users?.firstTierLimit ?? 0} files:
+                      </span>
                       <span className="font-medium text-blue-600">
-                        ₹0.60 per file
+                        ₹{Number(salaryConfig?.users?.secondTierRate ?? 0).toFixed(2)} per file
                       </span>
                     </div>
                   </div>
@@ -1395,18 +1220,18 @@ export default function Expense() {
                     <div className="flex justify-between p-2 bg-purple-50 rounded">
                       <span>Total User Earnings:</span>
                       <span className="font-medium text-purple-600">
-                        ₹31,960.00
+                        {formatCurrency(userMonthlyEarnings)}
                       </span>
                     </div>
                     <div className="flex justify-between p-2 bg-purple-50 rounded">
                       <span>Total PM Salaries:</span>
                       <span className="font-medium text-purple-600">
-                        ₹50,000.00
+                        {formatCurrency(pmMonthlySalaries)}
                       </span>
                     </div>
                     <div className="flex justify-between p-2 bg-gray-800 text-white rounded">
                       <span className="font-semibold">Total Monthly Cost:</span>
-                      <span className="font-bold">₹81,960.00</span>
+                      <span className="font-bold">{formatCurrency(currentMonthSalary)}</span>
                     </div>
                   </div>
                 </div>
