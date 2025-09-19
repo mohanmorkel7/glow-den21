@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -187,14 +186,17 @@ export default function ProjectManagement() {
 
   useEffect(() => {
     loadProjects();
-    // Load project-wise metrics for current month
-    (async () => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const run = async () => {
       try {
         const month = new Date().toISOString().substring(0, 7);
         const resp: any = await apiClient.getBillingSummary(month, 1);
         const summaries = (resp && (resp as any).data) || resp || [];
         const monthSummary = Array.isArray(summaries)
-          ? summaries.find((s: any) => s.month === month)
+          ? summaries.find((s: any) => s.month === month) || summaries[0]
           : null;
         const items =
           (monthSummary?.projects || monthSummary || []).projects ||
@@ -206,11 +208,11 @@ export default function ProjectManagement() {
           amount: Number(p.amountINR || p.amountUsd || 0),
         }));
         setProjectCharts(charts);
-      } catch (e) {
-        // ignore
+      } catch (_e) {
+        // ignore chart loading errors
       }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    };
+    run();
   }, []);
 
   const resetNewProject = () => {
@@ -511,58 +513,12 @@ export default function ProjectManagement() {
             />
           </div>
 
-          {projectCharts.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Volume (Files Completed)</CardTitle>
-                  <CardDescription>
-                    Which projects processed the most files this month
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={projectCharts}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" hide={false} />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="files" name="Files" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Revenue (₹)</CardTitle>
-                  <CardDescription>
-                    Which projects generated the most this month
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={projectCharts}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" hide={false} />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="amount" name="Amount (₹)" fill="#10b981" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
-                <TableHead>Progress</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -590,20 +546,6 @@ export default function ProjectManagement() {
                   </TableCell>
                   <TableCell>
                     <Badge className="capitalize">{project.priority}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Progress
-                      value={
-                        project.currentCount && project.targetCount
-                          ? Math.min(
-                              (project.currentCount /
-                                Math.max(1, project.targetCount)) *
-                                100,
-                              100,
-                            )
-                          : 0
-                      }
-                    />
                   </TableCell>
                   <TableCell>{project.createdAt?.split("T")[0]}</TableCell>
                   <TableCell>
@@ -683,6 +625,51 @@ export default function ProjectManagement() {
           )}
         </CardContent>
       </Card>
+
+      {projectCharts.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Volume (Files Completed)</CardTitle>
+              <CardDescription>
+                Which projects processed the most files this month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={projectCharts}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" hide={false} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="files" name="Files" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Revenue (₹)</CardTitle>
+              <CardDescription>
+                Which projects generated the most this month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={projectCharts}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" hide={false} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="amount" name="Amount (₹)" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
