@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   User,
   Lock,
   Eye,
@@ -21,8 +27,8 @@ import {
   Mail,
   Phone,
   Calendar,
-  Shield
-} from 'lucide-react';
+  Shield,
+} from "lucide-react";
 
 interface UserProfileData {
   name: string;
@@ -35,31 +41,39 @@ interface UserProfileData {
 
 export default function Profile() {
   const { user: currentUser } = useAuth();
-  
+
   const [profileData, setProfileData] = useState<UserProfileData>({
-    name: currentUser?.name || '',
-    email: currentUser?.email || '',
-    phone: '+1 (555) 123-4567',
-    department: currentUser?.role === 'super_admin' ? 'Administration' : 
-                 currentUser?.role === 'project_manager' ? 'Project Management' : 'Operations',
-    jobTitle: currentUser?.role === 'super_admin' ? 'System Administrator' : 
-              currentUser?.role === 'project_manager' ? 'Project Manager' : 'Data Processor',
-    joinDate: '2024-01-15'
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
+    phone: "+1 (555) 123-4567",
+    department:
+      currentUser?.role === "super_admin"
+        ? "Administration"
+        : currentUser?.role === "project_manager"
+          ? "Project Management"
+          : "Operations",
+    jobTitle:
+      currentUser?.role === "super_admin"
+        ? "System Administrator"
+        : currentUser?.role === "project_manager"
+          ? "Project Manager"
+          : "Data Processor",
+    joinDate: "2024-01-15",
   });
 
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [profileUpdateMessage, setProfileUpdateMessage] = useState('');
-  const [passwordUpdateMessage, setPasswordUpdateMessage] = useState('');
+  const [profileUpdateMessage, setProfileUpdateMessage] = useState("");
+  const [passwordUpdateMessage, setPasswordUpdateMessage] = useState("");
 
-  const isAdmin = currentUser?.role === 'super_admin';
+  const isAdmin = currentUser?.role === "super_admin";
   const canEditProfile = isAdmin;
 
   const handleProfileUpdate = async () => {
@@ -72,33 +86,33 @@ export default function Profile() {
       };
       // Email changes typically require verification; skip here
       const updated = await apiClient.updateUser(currentUser!.id, payload);
-      setProfileUpdateMessage('Profile updated successfully!');
+      setProfileUpdateMessage("Profile updated successfully!");
       // Update local storage user snapshot for immediate UI consistency
       try {
-        const stored = localStorage.getItem('user');
+        const stored = localStorage.getItem("user");
         if (stored) {
           const u = JSON.parse(stored);
           const next = { ...u, ...payload };
-          localStorage.setItem('user', JSON.stringify(next));
+          localStorage.setItem("user", JSON.stringify(next));
         }
       } catch {}
     } catch (e: any) {
-      setProfileUpdateMessage(e?.message || 'Failed to update profile');
+      setProfileUpdateMessage(e?.message || "Failed to update profile");
     } finally {
-      setTimeout(() => setProfileUpdateMessage(''), 3000);
+      setTimeout(() => setProfileUpdateMessage(""), 3000);
     }
   };
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordUpdateMessage('New passwords do not match!');
-      setTimeout(() => setPasswordUpdateMessage(''), 3000);
+      setPasswordUpdateMessage("New passwords do not match!");
+      setTimeout(() => setPasswordUpdateMessage(""), 3000);
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      setPasswordUpdateMessage('Password must be at least 8 characters long');
-      setTimeout(() => setPasswordUpdateMessage(''), 3000);
+      setPasswordUpdateMessage("Password must be at least 8 characters long");
+      setTimeout(() => setPasswordUpdateMessage(""), 3000);
       return;
     }
 
@@ -108,18 +122,26 @@ export default function Profile() {
         passwordData.currentPassword,
         passwordData.newPassword,
       );
-      setPasswordUpdateMessage('Password updated successfully!');
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordUpdateMessage("Password updated successfully!");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (e: any) {
-      setPasswordUpdateMessage(e?.message || 'Failed to update password');
+      setPasswordUpdateMessage(e?.message || "Failed to update password");
     } finally {
-      setTimeout(() => setPasswordUpdateMessage(''), 3000);
+      setTimeout(() => setPasswordUpdateMessage(""), 3000);
     }
   };
 
   const resetPasswordForm = () => {
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setPasswordUpdateMessage('');
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+    setPasswordUpdateMessage("");
   };
 
   if (!currentUser) return null;
@@ -129,13 +151,15 @@ export default function Profile() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Profile Settings
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage your profile information and account settings.
           </p>
         </div>
         <Badge variant="secondary" className="capitalize">
-          {currentUser.role.replace('_', ' ')}
+          {currentUser.role.replace("_", " ")}
         </Badge>
       </div>
 
@@ -145,16 +169,21 @@ export default function Profile() {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarFallback className="text-lg">
-                {currentUser.name.split(' ').map(n => n[0]).join('')}
+                {currentUser.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")}
               </AvatarFallback>
             </Avatar>
             <div>
               <CardTitle className="text-xl">{currentUser.name}</CardTitle>
-              <CardDescription className="text-base">{currentUser.email}</CardDescription>
+              <CardDescription className="text-base">
+                {currentUser.email}
+              </CardDescription>
               <div className="flex items-center gap-2 mt-2">
                 <Badge variant="outline" className="capitalize">
                   <Shield className="h-3 w-3 mr-1" />
-                  {currentUser.role.replace('_', ' ')}
+                  {currentUser.role.replace("_", " ")}
                 </Badge>
                 <Badge variant="secondary">
                   <Calendar className="h-3 w-3 mr-1" />
@@ -172,7 +201,7 @@ export default function Profile() {
           <TabsTrigger value="profile">Profile Information</TabsTrigger>
           <TabsTrigger value="security">Security & Password</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="profile" className="space-y-6">
           <Card>
             <CardHeader>
@@ -181,10 +210,9 @@ export default function Profile() {
                 Personal Information
               </CardTitle>
               <CardDescription>
-                {canEditProfile 
+                {canEditProfile
                   ? "Update your personal details and contact information."
-                  : "View your profile information. Contact your administrator to make changes."
-                }
+                  : "View your profile information. Contact your administrator to make changes."}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -201,7 +229,9 @@ export default function Profile() {
                   <Input
                     id="name"
                     value={profileData.name}
-                    onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, name: e.target.value })
+                    }
                     disabled={!canEditProfile}
                   />
                 </div>
@@ -214,7 +244,12 @@ export default function Profile() {
                       id="email"
                       type="email"
                       value={profileData.email}
-                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          email: e.target.value,
+                        })
+                      }
                       className="pl-10"
                       disabled={!canEditProfile}
                     />
@@ -228,7 +263,12 @@ export default function Profile() {
                     <Input
                       id="phone"
                       value={profileData.phone}
-                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          phone: e.target.value,
+                        })
+                      }
                       className="pl-10"
                       disabled={!canEditProfile}
                     />
@@ -240,7 +280,12 @@ export default function Profile() {
                   <Input
                     id="department"
                     value={profileData.department}
-                    onChange={(e) => setProfileData({ ...profileData, department: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        department: e.target.value,
+                      })
+                    }
                     disabled={!canEditProfile}
                   />
                 </div>
@@ -250,7 +295,12 @@ export default function Profile() {
                   <Input
                     id="jobTitle"
                     value={profileData.jobTitle}
-                    onChange={(e) => setProfileData({ ...profileData, jobTitle: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        jobTitle: e.target.value,
+                      })
+                    }
                     disabled={!canEditProfile}
                   />
                 </div>
@@ -261,7 +311,12 @@ export default function Profile() {
                     id="joinDate"
                     type="date"
                     value={profileData.joinDate}
-                    onChange={(e) => setProfileData({ ...profileData, joinDate: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        joinDate: e.target.value,
+                      })
+                    }
                     disabled={!canEditProfile}
                   />
                 </div>
@@ -280,14 +335,15 @@ export default function Profile() {
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    You don't have permission to edit profile information. Contact your administrator to make changes.
+                    You don't have permission to edit profile information.
+                    Contact your administrator to make changes.
                   </AlertDescription>
                 </Alert>
               )}
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
@@ -296,18 +352,31 @@ export default function Profile() {
                 Change Password
               </CardTitle>
               <CardDescription>
-                Update your password to keep your account secure. Use a strong password with at least 6 characters.
+                Update your password to keep your account secure. Use a strong
+                password with at least 6 characters.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {passwordUpdateMessage && (
-                <Alert className={passwordUpdateMessage.includes('successfully') ? '' : 'border-red-200'}>
-                  {passwordUpdateMessage.includes('successfully') ? (
+                <Alert
+                  className={
+                    passwordUpdateMessage.includes("successfully")
+                      ? ""
+                      : "border-red-200"
+                  }
+                >
+                  {passwordUpdateMessage.includes("successfully") ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : (
                     <AlertTriangle className="h-4 w-4" />
                   )}
-                  <AlertDescription className={passwordUpdateMessage.includes('successfully') ? '' : 'text-red-600'}>
+                  <AlertDescription
+                    className={
+                      passwordUpdateMessage.includes("successfully")
+                        ? ""
+                        : "text-red-600"
+                    }
+                  >
                     {passwordUpdateMessage}
                   </AlertDescription>
                 </Alert>
@@ -321,7 +390,12 @@ export default function Profile() {
                       id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
                       value={passwordData.currentPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          currentPassword: e.target.value,
+                        })
+                      }
                       placeholder="Enter current password"
                     />
                     <Button
@@ -329,7 +403,9 @@ export default function Profile() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                     >
                       {showCurrentPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -347,7 +423,12 @@ export default function Profile() {
                       id="newPassword"
                       type={showNewPassword ? "text" : "password"}
                       value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          newPassword: e.target.value,
+                        })
+                      }
                       placeholder="Enter new password"
                     />
                     <Button
@@ -373,7 +454,12 @@ export default function Profile() {
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
                       placeholder="Confirm new password"
                     />
                     <Button
@@ -381,7 +467,9 @@ export default function Profile() {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -396,15 +484,16 @@ export default function Profile() {
               <Separator />
 
               <div className="flex justify-between">
-                <Button 
-                  variant="outline" 
-                  onClick={resetPasswordForm}
-                >
+                <Button variant="outline" onClick={resetPasswordForm}>
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handlePasswordChange}
-                  disabled={!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                  disabled={
+                    !passwordData.currentPassword ||
+                    !passwordData.newPassword ||
+                    !passwordData.confirmPassword
+                  }
                 >
                   <Lock className="h-4 w-4 mr-2" />
                   Update Password
@@ -439,14 +528,17 @@ export default function Profile() {
                   <Label className="text-sm font-medium">Account Type</Label>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="capitalize">
-                      {currentUser.role.replace('_', ' ')}
+                      {currentUser.role.replace("_", " ")}
                     </Badge>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Account Status</Label>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-800"
+                    >
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Active
                     </Badge>
@@ -455,7 +547,8 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Last Login</Label>
                   <p className="text-sm text-muted-foreground">
-                    {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                    {new Date().toLocaleDateString()} at{" "}
+                    {new Date().toLocaleTimeString()}
                   </p>
                 </div>
                 <div className="space-y-2">

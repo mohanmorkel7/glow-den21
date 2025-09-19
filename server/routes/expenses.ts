@@ -1036,7 +1036,9 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
       const now = new Date();
       // last count months including current
       for (let i = 0; i < count; i++) {
-        const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+        const dt = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1),
+        );
         monthKeys.push(buildMonthKey(dt));
       }
       monthKeys.reverse();
@@ -1044,7 +1046,7 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
 
     // Preload project rates
     const projRatesRes = await query(
-      `SELECT id, name, COALESCE(rate_per_file_usd, 0) AS rate_per_file_usd FROM projects`
+      `SELECT id, name, COALESCE(rate_per_file_usd, 0) AS rate_per_file_usd FROM projects`,
     );
     const projectRates = new Map<string, { name: string; rate: number }>();
     for (const r of projRatesRes.rows) {
@@ -1099,13 +1101,20 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
 
       for (const [projectId, items] of byProject.entries()) {
         const rate = projectRates.get(projectId)?.rate || 0;
-        const projectName = projectRates.get(projectId)?.name || (items[0] as any).project_name || "Project";
+        const projectName =
+          projectRates.get(projectId)?.name ||
+          (items[0] as any).project_name ||
+          "Project";
 
         const fileProcesses = items.map((it: any) => {
           const completedFiles = Number(it.completed_files || 0);
           const totalFiles = Number(it.total_rows || 0);
-          const processType = (it.process_type as string) === "automation" ? "automation" : "manual";
-          if (processType === "automation") automationProcesses++; else manualProcesses++;
+          const processType =
+            (it.process_type as string) === "automation"
+              ? "automation"
+              : "manual";
+          if (processType === "automation") automationProcesses++;
+          else manualProcesses++;
           return {
             processId: String(it.file_process_id),
             processName: it.process_name,
@@ -1113,12 +1122,20 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
             type: processType,
             totalFiles,
             completedFiles,
-            progressPercentage: totalFiles > 0 ? Math.min(100, (completedFiles / totalFiles) * 100) : 0,
-            completedDate: it.last_completed_date ? String(it.last_completed_date) : null,
+            progressPercentage:
+              totalFiles > 0
+                ? Math.min(100, (completedFiles / totalFiles) * 100)
+                : 0,
+            completedDate: it.last_completed_date
+              ? String(it.last_completed_date)
+              : null,
           };
         });
 
-        const projectCompleted = fileProcesses.reduce((s: number, fp: any) => s + (fp.completedFiles || 0), 0);
+        const projectCompleted = fileProcesses.reduce(
+          (s: number, fp: any) => s + (fp.completedFiles || 0),
+          0,
+        );
         const amountUSD = projectCompleted * rate;
         const amountINR = amountUSD * conversionRate;
 
@@ -1182,7 +1199,7 @@ router.get("/billing/export", async (req: Request, res: Response) => {
     const nextStr = next.toISOString().substring(0, 10);
 
     const projRatesRes = await query(
-      `SELECT id, name, COALESCE(rate_per_file_usd, 0) AS rate_per_file_usd FROM projects`
+      `SELECT id, name, COALESCE(rate_per_file_usd, 0) AS rate_per_file_usd FROM projects`,
     );
     const projectRates = new Map<string, { name: string; rate: number }>();
     for (const r of projRatesRes.rows) {

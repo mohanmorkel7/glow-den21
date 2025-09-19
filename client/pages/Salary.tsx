@@ -534,7 +534,10 @@ export default function Salary() {
                 });
                 setTempConfig({
                   users: { ...salaryConfig.users },
-                  projectManagers: { ...(salaryConfig.projectManagers || {}), ...pmMap },
+                  projectManagers: {
+                    ...(salaryConfig.projectManagers || {}),
+                    ...pmMap,
+                  },
                 });
               }}
             >
