@@ -416,6 +416,11 @@ const computeBillingData = (): MonthlyBillingSummary[] => {
 
 export default function Billing() {
   const { user: currentUser } = useAuth();
+  const [usdToInrRate, setUsdToInrRate] = useState<number>(() => {
+    const v = localStorage.getItem("usdToInrRate");
+    const n = v ? parseFloat(v) : NaN;
+    return Number.isFinite(n) ? n : 83;
+  });
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
