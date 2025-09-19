@@ -767,15 +767,19 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
     const targetMonth = month || new Date().toISOString().substring(0, 7);
     const monthStart = `${targetMonth}-01`;
 
-    // Get active PM salaries effective on or before target month
+    // Get active PM salaries effective on or before end of target month
+    const nextMonthDate = new Date(monthStart);
+    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+    const nextMonth = nextMonthDate.toISOString().substring(0, 10);
+
     const sql = `
       SELECT ps.id, ps.user_id, ps.monthly_salary, u.name
       FROM pm_salaries ps
       JOIN users u ON u.id::text = ps.user_id
-      WHERE ps.is_active = true AND ps.effective_from <= $1
+      WHERE ps.is_active = true AND ps.effective_from < $1
       ORDER BY u.name
     `;
-    const result = await query(sql, [monthStart]);
+    const result = await query(sql, [nextMonth]);
     const pms = result.rows.map((r: any) => ({
       id: r.id,
       name: r.name,
