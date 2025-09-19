@@ -113,6 +113,7 @@ export const listProjects: RequestHandler = async (req, res) => {
       },
       createdAt: project.created_at,
       updatedAt: project.updated_at,
+      ratePerFileUSD: project.rate_per_file_usd ?? null,
     }));
 
     const response: PaginatedResponse<Project> = {
@@ -271,8 +272,8 @@ export const createProject: RequestHandler = async (req, res) => {
     const result = await transaction(async (client) => {
       // Create project
       const insertQuery = `
-        INSERT INTO projects (name, description, status, priority, start_date, end_date, target_count, created_by_user_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO projects (name, description, status, priority, start_date, end_date, target_count, created_by_user_id, rate_per_file_usd)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `;
 
@@ -285,6 +286,7 @@ export const createProject: RequestHandler = async (req, res) => {
         endDate,
         targetCount,
         currentUser.id,
+        (projectRequest as any).ratePerFileUSD ?? null,
       ]);
 
       const project = projectResult.rows[0];
@@ -326,6 +328,7 @@ export const createProject: RequestHandler = async (req, res) => {
       },
       createdAt: result.created_at,
       updatedAt: result.updated_at,
+      ratePerFileUSD: result.rate_per_file_usd ?? null,
     };
 
     res.status(201).json({
@@ -392,7 +395,9 @@ export const updateProject: RequestHandler = async (req, res) => {
               ? "end_date"
               : key === "targetCount"
                 ? "target_count"
-                : key;
+                : key === "ratePerFileUSD"
+                  ? "rate_per_file_usd"
+                  : key;
         updateFields.push(`${dbField} = $${paramCount}`);
         updateValues.push(value);
       }
@@ -485,6 +490,7 @@ export const updateProject: RequestHandler = async (req, res) => {
       },
       createdAt: project.created_at,
       updatedAt: project.updated_at,
+      ratePerFileUSD: project.rate_per_file_usd ?? null,
     };
 
     res.json({

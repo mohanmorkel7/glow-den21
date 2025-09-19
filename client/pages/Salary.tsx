@@ -525,7 +525,22 @@ export default function Salary() {
         </div>
         <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setTempConfig(salaryConfig)}>
+            <Button
+              onClick={() => {
+                // Merge current salaryConfig with PM mapping from loaded data to avoid zeros
+                const pmMap: Record<string, number> = {};
+                projectManagerSalaryData.forEach((pm) => {
+                  pmMap[pm.id] = pm.monthlySalary || 0;
+                });
+                setTempConfig({
+                  users: { ...salaryConfig.users },
+                  projectManagers: {
+                    ...(salaryConfig.projectManagers || {}),
+                    ...pmMap,
+                  },
+                });
+              }}
+            >
               <Settings className="h-4 w-4 mr-2" />
               Configure Rates
             </Button>

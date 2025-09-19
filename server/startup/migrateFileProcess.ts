@@ -78,6 +78,11 @@ export async function ensureFileProcessTables(): Promise<void> {
       "ALTER TABLE file_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP",
     );
 
+    // Ensure projects table has rate_per_file_usd for billing
+    await query(
+      "ALTER TABLE projects ADD COLUMN IF NOT EXISTS rate_per_file_usd NUMERIC",
+    );
+
     // Indexes for performance
     await query(
       "CREATE INDEX IF NOT EXISTS idx_file_processes_project_id ON file_processes(project_id)",

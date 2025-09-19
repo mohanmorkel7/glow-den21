@@ -562,6 +562,30 @@ class ApiClient {
     return this.request(`/expenses/salary/config`);
   }
 
+  // Billing
+  async getBillingSummary(month?: string, months?: number) {
+    const params = new URLSearchParams();
+    if (month) params.set("month", month);
+    if (months) params.set("months", String(months));
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return this.request(`/expenses/billing/summary${qs}`);
+  }
+
+  async exportBilling(format: "csv" | "excel" | "pdf", month?: string) {
+    const params = new URLSearchParams();
+    if (month) params.set("month", month);
+    params.set("format", format);
+    const url = `${API_BASE_URL}/expenses/billing/export?${params.toString()}`;
+    const headers = this.getAuthHeaders();
+    const resp = await fetch(url, { headers });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => resp.statusText);
+      throw new Error(text || `Export failed (${resp.status})`);
+    }
+    const blob = await resp.blob();
+    return blob;
+  }
+
   async updateSalaryConfig(config: any) {
     return this.request(`/expenses/salary/config`, {
       method: "PUT",
