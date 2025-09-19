@@ -503,15 +503,27 @@ export default function Salary() {
   };
 
   const getPerformanceBadge = (rate: number) => {
-    if (rate >= 95)
+    if (rate >= 100)
       return <Badge className="bg-green-100 text-green-800">Excellent</Badge>;
     if (rate >= 90)
+      return (
+        <Badge className="bg-emerald-100 text-emerald-800">Outstanding</Badge>
+      );
+    if (rate >= 80)
+      return <Badge className="bg-sky-100 text-sky-800">Nice Work</Badge>;
+    if (rate >= 70)
       return <Badge className="bg-blue-100 text-blue-800">Good</Badge>;
-    if (rate >= 85)
-      return <Badge className="bg-orange-100 text-orange-800">Average</Badge>;
+    if (rate >= 60)
+      return <Badge className="bg-amber-100 text-amber-800">Better</Badge>;
+    if (rate >= 50)
+      return (
+        <Badge className="bg-orange-100 text-orange-800">Need Improvement</Badge>
+      );
     if (rate <= 0)
       return <Badge className="bg-gray-100 text-gray-700">N/A</Badge>;
-    return <Badge className="bg-red-100 text-red-800">Poor</Badge>;
+    return (
+      <Badge className="bg-orange-100 text-orange-800">Need Improvement</Badge>
+    );
   };
 
   return (
