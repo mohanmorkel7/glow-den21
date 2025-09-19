@@ -67,6 +67,16 @@ import {
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 interface User {
   id: string;
@@ -105,6 +115,9 @@ export default function ProjectManagement() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [projectCharts, setProjectCharts] = useState<
+    { name: string; files: number; amount: number }[]
+  >([]);
 
   const [newProject, setNewProject] = useState({
     name: "",
@@ -174,6 +187,32 @@ export default function ProjectManagement() {
   useEffect(() => {
     loadProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const month = new Date().toISOString().substring(0, 7);
+        const resp: any = await apiClient.getBillingSummary(month, 1);
+        const summaries = (resp && (resp as any).data) || resp || [];
+        const monthSummary = Array.isArray(summaries)
+          ? summaries.find((s: any) => s.month === month) || summaries[0]
+          : null;
+        const items =
+          (monthSummary?.projects || monthSummary || []).projects ||
+          monthSummary?.projects ||
+          [];
+        const charts = (items as any[]).map((p: any) => ({
+          name: p.projectName || p.project_name || "Project",
+          files: Number(p.totalFilesCompleted || 0),
+          amount: Number(p.amountINR || p.amountUsd || 0),
+        }));
+        setProjectCharts(charts);
+      } catch (_e) {
+        // ignore chart loading errors
+      }
+    };
+    run();
   }, []);
 
   const resetNewProject = () => {
@@ -586,6 +625,51 @@ export default function ProjectManagement() {
           )}
         </CardContent>
       </Card>
+
+      {projectCharts.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Volume (Files Completed)</CardTitle>
+              <CardDescription>
+                Which projects processed the most files this month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={projectCharts}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" hide={false} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="files" name="Files" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Revenue (₹)</CardTitle>
+              <CardDescription>
+                Which projects generated the most this month
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={projectCharts}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" hide={false} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="amount" name="Amount (₹)" fill="#10b981" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
