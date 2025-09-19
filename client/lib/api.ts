@@ -562,6 +562,33 @@ class ApiClient {
     return this.request(`/expenses/salary/config`);
   }
 
+  // Expenses
+  async getExpenses(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    status?: string;
+    category?: string;
+    from?: string;
+    to?: string;
+    month?: string;
+    sortBy?: "date" | "amount" | "category" | "type";
+    sortOrder?: "asc" | "desc";
+  }) {
+    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    return this.request(`/expenses${qs}`);
+  }
+
+  async getExpenseAnalyticsDashboard(month?: string) {
+    const qs = month ? `?month=${encodeURIComponent(month)}` : "";
+    return this.request(`/expenses/analytics/dashboard${qs}`);
+  }
+
+  async getExpenseProfitLoss() {
+    return this.request(`/expenses/analytics/profit-loss`);
+  }
+
   // Billing
   async getBillingSummary(month?: string, months?: number) {
     const params = new URLSearchParams();
