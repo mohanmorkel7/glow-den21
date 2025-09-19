@@ -318,20 +318,29 @@ export default function Expense() {
     const load = async () => {
       try {
         setLoading(true);
-        const [list, pl] = await Promise.all([
+        const [expResp, plResp, usersResp, pmResp, cfg] = await Promise.all([
           apiClient.getExpenses({ month: selectedMonth, limit: 500 }),
           apiClient.getExpenseProfitLoss(),
+          apiClient.getSalaryUsers(selectedMonth),
+          apiClient.getSalaryProjectManagers(),
+          apiClient.getSalaryConfig(),
         ]);
-        const data = (list as any)?.data || list || [];
-        const stats = (list as any)?.statistics || null;
-        setExpenseEntries(data as any);
+        const expData = (expResp as any)?.data || expResp || [];
+        const stats = (expResp as any)?.statistics || null;
+        setExpenseEntries(expData as any);
         setExpenseStats(stats);
-        setProfitLossData(((pl as any)?.data || pl || []) as any);
+        setProfitLossData(((plResp as any)?.data || plResp || []) as any);
+        setSalaryUsers(((usersResp as any)?.data || usersResp || []) as any);
+        setPmList(((pmResp as any)?.data || pmResp || []) as any);
+        setSalaryConfig(((cfg as any)?.data || cfg || null) as any);
       } catch (e) {
         console.error("Failed to load expenses", e);
         setExpenseEntries([]);
         setExpenseStats(null);
         setProfitLossData([]);
+        setSalaryUsers([]);
+        setPmList([]);
+        setSalaryConfig(null);
       } finally {
         setLoading(false);
       }
