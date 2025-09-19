@@ -883,8 +883,8 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       to.setMonth(to.getMonth() + 1);
       to.setDate(to.getDate() - 1); // last day of month
     } else {
-      from = new Date(today.toISOString().substring(0,10));
-      to = new Date(today.toISOString().substring(0,10));
+      from = new Date(today.toISOString().substring(0, 10));
+      to = new Date(today.toISOString().substring(0, 10));
     }
 
     const fromStr = from.toISOString().substring(0, 10);
@@ -899,7 +899,7 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
          FROM file_requests
         WHERE user_id::text = $1 AND status = 'completed' AND completed_date >= $2 AND completed_date < $3
         GROUP BY DATE(completed_date)
-        ORDER BY DATE(completed_date)` ,
+        ORDER BY DATE(completed_date)`,
       [String(userId), fromStr, toNextStr],
     );
 
@@ -912,11 +912,7 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
 
     // Iterate each day in range to build breakdown, including zero-file days
     const items: any[] = [];
-    for (
-      let dt = new Date(fromStr);
-      dt <= to;
-      dt.setDate(dt.getDate() + 1)
-    ) {
+    for (let dt = new Date(fromStr); dt <= to; dt.setDate(dt.getDate() + 1)) {
       const dStr = dt.toISOString().substring(0, 10);
       const files = byDate.get(dStr) || 0;
       const tier1Files = Math.min(files, firstTierLimit);

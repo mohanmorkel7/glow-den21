@@ -589,7 +589,11 @@ class ApiClient {
     });
   }
 
-  async getSalaryUserBreakdown(userId: string, period: "daily" | "weekly" | "monthly", month?: string) {
+  async getSalaryUserBreakdown(
+    userId: string,
+    period: "daily" | "weekly" | "monthly",
+    month?: string,
+  ) {
     const params = new URLSearchParams({ userId, period });
     if (month) params.set("month", month);
     return this.request(`/expenses/salary/breakdown?${params.toString()}`);

@@ -425,7 +425,7 @@ export default function Salary() {
           tier2Rate: d.tier2Rate,
           tier2Amount: d.tier2Amount,
           totalAmount: d.totalAmount,
-        }))
+        })),
       );
     } catch (e) {
       console.warn("Failed to load breakdown", e);
@@ -504,7 +504,8 @@ export default function Salary() {
       return <Badge className="bg-blue-100 text-blue-800">Good</Badge>;
     if (rate >= 85)
       return <Badge className="bg-orange-100 text-orange-800">Average</Badge>;
-    if (rate <= 0) return <Badge className="bg-gray-100 text-gray-700">N/A</Badge>;
+    if (rate <= 0)
+      return <Badge className="bg-gray-100 text-gray-700">N/A</Badge>;
     return <Badge className="bg-red-100 text-red-800">Poor</Badge>;
   };
 
@@ -960,7 +961,9 @@ export default function Salary() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {user.lastActive ? new Date(user.lastActive).toLocaleString() : "-"}
+                          {user.lastActive
+                            ? new Date(user.lastActive).toLocaleString()
+                            : "-"}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1021,7 +1024,9 @@ export default function Salary() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {pm.lastActive ? new Date(pm.lastActive).toLocaleString() : "-"}
+                          {pm.lastActive
+                            ? new Date(pm.lastActive).toLocaleString()
+                            : "-"}
                         </div>
                       </TableCell>
                     </TableRow>
