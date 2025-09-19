@@ -504,6 +504,7 @@ export default function Salary() {
       return <Badge className="bg-blue-100 text-blue-800">Good</Badge>;
     if (rate >= 85)
       return <Badge className="bg-orange-100 text-orange-800">Average</Badge>;
+    if (rate <= 0) return <Badge className="bg-gray-100 text-gray-700">N/A</Badge>;
     return <Badge className="bg-red-100 text-red-800">Poor</Badge>;
   };
 
