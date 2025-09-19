@@ -39,7 +39,7 @@ export const login: RequestHandler = async (req, res) => {
     try {
       const userQuery = `
         SELECT u.*, r.name as role_name,
-               ARRAY_AGG(p.id) FILTER (WHERE p.id IS NOT NULL) as permissions
+               ARRAY_AGG(p.name) FILTER (WHERE p.name IS NOT NULL) as permissions
         FROM users u
         LEFT JOIN user_roles ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
@@ -176,7 +176,7 @@ export const refresh: RequestHandler = async (req, res) => {
     try {
       const userQuery = `
         SELECT u.*, r.name as role_name,
-               ARRAY_AGG(p.id) FILTER (WHERE p.id IS NOT NULL) as permissions
+               ARRAY_AGG(p.name) FILTER (WHERE p.name IS NOT NULL) as permissions
         FROM users u
         LEFT JOIN user_roles ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
