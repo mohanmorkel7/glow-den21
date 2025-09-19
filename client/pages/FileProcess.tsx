@@ -578,12 +578,14 @@ export default function FileProcess() {
       }));
 
       setFileRequests(normalized as any);
-      // Load active projects
+      // Load active projects - for project_manager, only list projects assigned to them
       try {
         const projs = await apiClient.getProjects({
           status: "active",
           limit: 200,
-        });
+          assignedUser:
+            currentUser?.role === "project_manager" ? currentUser.id : undefined,
+        } as any);
         const projList =
           (projs as any)?.data || (Array.isArray(projs) ? projs : []);
         setProjects(projList as any);
