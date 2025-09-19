@@ -441,14 +441,19 @@ export default function Salary() {
   };
 
   const getBreakdownData = () => {
-    if (!selectedUser) return [];
-    return generateSalaryBreakdown(selectedUser, breakdownPeriod);
+    return breakdownData;
   };
 
   const getBreakdownTotal = () => {
     const data = getBreakdownData();
     return data.reduce((sum, item) => sum + item.totalAmount, 0);
   };
+
+  useEffect(() => {
+    if (selectedUser) {
+      loadBreakdown(selectedUser.id, breakdownPeriod);
+    }
+  }, [selectedUser?.id, breakdownPeriod]);
 
   // Calculate total salary statistics
   const totalUserSalaries = userSalaryData.reduce(
