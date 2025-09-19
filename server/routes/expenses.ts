@@ -1212,14 +1212,10 @@ router.get("/billing/summary", async (req: Request, res: Response) => {
 // GET /api/expenses/billing/export - Export billing as CSV (optionally for a month)
 router.get("/billing/export", async (req: Request, res: Response) => {
   try {
-    const { month } = req.query as any;
-    // Reuse the summary computation by directly querying
-    const m = month ? String(month) : new Date().toISOString().substring(0, 7);
-    const monthStart = `${m}-01`;
-    const next = new Date(`${m}-01T00:00:00Z`);
-    next.setUTCMonth(next.getUTCMonth() + 1);
-    const nextStr = next.toISOString().substring(0, 10);
+    const { month, months, rate } = req.query as any;
+    const conversionRate = Number(rate) && isFinite(Number(rate)) ? Number(rate) : 83.0;
 
+    // Preload project rates
     const projRatesRes = await query(
       `SELECT id, name, COALESCE(rate_per_file_usd, 0) AS rate_per_file_usd FROM projects`,
     );
@@ -1231,7 +1227,109 @@ router.get("/billing/export", async (req: Request, res: Response) => {
       });
     }
 
-    const sql = `
+    const buildMonthKey = (d: Date) => d.toISOString().substring(0, 7);
+
+    if (!month) {
+      // Export monthly summary for the last N months (default 6)
+      const count = Math.max(1, Math.min(24, parseInt(String(months)) || 6));
+      const now = new Date();
+      const monthKeys: string[] = [];
+      for (let i = 0; i < count; i++) {
+        const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+        monthKeys.push(buildMonthKey(dt));
+      }
+      monthKeys.reverse();
+
+      const header = [
+        "Month",
+        "Items (Projects)",
+        "Completed Files",
+        "Amount USD",
+        "Amount INR",
+        "Conversion Rate (₹/USD)",
+      ];
+      const lines = [header.join(",")];
+
+      for (const mKey of monthKeys) {
+        const monthStart = `${mKey}-01`;
+        const next = new Date(`${mKey}-01T00:00:00Z`);
+        next.setUTCMonth(next.getUTCMonth() + 1);
+        const nextStr = next.toISOString().substring(0, 10);
+
+        const sqlManual = `
+          SELECT
+            fr.file_process_id,
+            COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)), 0) AS completed_files,
+            fp.project_id AS project_id
+          FROM file_requests fr
+          JOIN file_processes fp ON fp.id = fr.file_process_id
+          WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
+          GROUP BY fr.file_process_id, fp.project_id
+        `;
+        const sqlAutomation = `
+          SELECT
+            fp.id AS file_process_id,
+            COALESCE(SUM((d->>'completed')::INT), 0) AS completed_files,
+            fp.project_id AS project_id
+          FROM file_processes fp
+          JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+          WHERE fp.type = 'automation'
+            AND fp.automation_config IS NOT NULL
+            AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+          GROUP BY fp.id, fp.project_id
+        `;
+        const [rowsManual, rowsAuto] = await Promise.all([
+          query(sqlManual, [monthStart, nextStr]),
+          query(sqlAutomation, [monthStart, nextStr]),
+        ]);
+        const allRows = [...rowsManual.rows, ...rowsAuto.rows];
+
+        // Aggregate per project
+        const byProject = new Map<string, number>();
+        for (const r of allRows) {
+          const pId = String((r as any).project_id || "");
+          if (!pId) continue;
+          const completed = Number((r as any).completed_files || 0);
+          byProject.set(pId, (byProject.get(pId) || 0) + completed);
+        }
+
+        let totalFilesCompleted = 0;
+        let totalAmountUSD = 0;
+        for (const [pId, completed] of byProject.entries()) {
+          const rateUSD = projectRates.get(pId)?.rate || 0;
+          totalFilesCompleted += completed;
+          totalAmountUSD += completed * rateUSD;
+        }
+        const totalAmountINR = totalAmountUSD * conversionRate;
+
+        const line = [
+          mKey,
+          String(byProject.size),
+          String(totalFilesCompleted),
+          String(totalAmountUSD),
+          String(totalAmountINR),
+          String(conversionRate),
+        ];
+        lines.push(line.join(","));
+      }
+
+      const csv = lines.join("\n");
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="billing_summary.csv"`,
+      );
+      return res.send(csv);
+    }
+
+    // Detailed export for a specific month, include automation and INR
+    const m = String(month);
+    const monthStart = `${m}-01`;
+    const next = new Date(`${m}-01T00:00:00Z`);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    const nextStr = next.toISOString().substring(0, 10);
+
+    const sqlManual = `
       SELECT fr.file_process_id, fp.name AS process_name, fp.type AS process_type, fp.total_rows,
              fp.project_id, fp.project_name,
              COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS completed_files
@@ -1239,9 +1337,22 @@ router.get("/billing/export", async (req: Request, res: Response) => {
         JOIN file_processes fp ON fp.id = fr.file_process_id
        WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
        GROUP BY fr.file_process_id, fp.name, fp.type, fp.total_rows, fp.project_id, fp.project_name
-       ORDER BY fp.project_name, fp.name
     `;
-    const rows = await query(sql, [monthStart, nextStr]);
+    const sqlAutomation = `
+      SELECT fp.id AS file_process_id, fp.name AS process_name, fp.type AS process_type, fp.total_rows,
+             fp.project_id, fp.project_name,
+             COALESCE(SUM((d->>'completed')::INT), 0) AS completed_files
+        FROM file_processes fp
+        JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+       WHERE fp.type = 'automation' AND fp.automation_config IS NOT NULL
+         AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+       GROUP BY fp.id, fp.name, fp.type, fp.total_rows, fp.project_id, fp.project_name
+    `;
+    const [rowsManual, rowsAuto] = await Promise.all([
+      query(sqlManual, [monthStart, nextStr]),
+      query(sqlAutomation, [monthStart, nextStr]),
+    ]);
+    const rows = [...rowsManual.rows, ...rowsAuto.rows];
 
     const header = [
       "Month",
@@ -1253,13 +1364,17 @@ router.get("/billing/export", async (req: Request, res: Response) => {
       "Completed Files",
       "Rate Per File (USD)",
       "Amount USD",
+      "Amount INR",
+      "Conversion Rate (₹/USD)",
     ];
     const lines = [header.join(",")];
 
-    for (const r of rows.rows) {
+    for (const r of rows) {
       const pId = String((r as any).project_id || "");
-      const rate = projectRates.get(pId)?.rate || 0;
-      const amountUSD = Number((r as any).completed_files || 0) * rate;
+      const rateUSD = projectRates.get(pId)?.rate || 0;
+      const completed = Number((r as any).completed_files || 0);
+      const amountUSD = completed * rateUSD;
+      const amountINR = amountUSD * conversionRate;
       const line = [
         m,
         pId,
@@ -1267,9 +1382,11 @@ router.get("/billing/export", async (req: Request, res: Response) => {
         String((r as any).file_process_id),
         (r as any).process_name || "",
         (r as any).process_type || "",
-        String((r as any).completed_files || 0),
-        String(rate),
+        String(completed),
+        String(rateUSD),
         String(amountUSD),
+        String(amountINR),
+        String(conversionRate),
       ];
       lines.push(line.join(","));
     }
