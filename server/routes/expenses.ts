@@ -1389,77 +1389,100 @@ router.get("/billing/export", async (req: Request, res: Response) => {
 // GET /api/expenses/analytics/dashboard - Get expense dashboard data
 router.get("/analytics/dashboard", async (req: Request, res: Response) => {
   try {
-    const { month = "2024-01" } = req.query;
+    const { month } = req.query as any;
+    const targetMonth = String(month || new Date().toISOString().substring(0, 7));
+    const monthStart = `${targetMonth}-01`;
+    const next = new Date(`${targetMonth}-01T00:00:00Z`);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    const nextStr = next.toISOString().substring(0, 10);
 
-    const mockDashboardData = {
-      currentMonth: {
-        totalRevenue: 420000,
-        totalExpenses: 270460,
-        netProfit: 149540,
-        profitMargin: 35.6,
-        salaryExpenses: 81960,
-        adminExpenses: 50500,
-      },
-      trends: {
-        revenueGrowth: 12.5,
-        expenseGrowth: 8.3,
-        profitGrowth: 18.7,
-      },
-      alerts: [
-        {
-          type: "budget_warning",
-          message: "Marketing expenses are 15% over budget for this month",
-          severity: "medium",
-        },
-      ],
-      topExpenseCategories: [
-        {
-          name: "Salaries",
-          value: 81960,
-          percentage: 72.8,
-          fill: "#3b82f6",
-          count: 4,
-        },
-        {
-          name: "Administrative",
-          value: 25000,
-          percentage: 22.2,
-          fill: "#ef4444",
-          count: 1,
-        },
-        {
-          name: "Operational",
-          value: 8000,
-          percentage: 7.1,
-          fill: "#f59e0b",
-          count: 1,
-        },
-        {
-          name: "Marketing",
-          value: 12000,
-          percentage: 10.7,
-          fill: "#10b981",
-          count: 1,
-        },
-        {
-          name: "Utilities",
-          value: 5500,
-          percentage: 4.9,
-          fill: "#8b5cf6",
-          count: 1,
-        },
-      ],
+    const projRatesRes = await query(`SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`);
+    const rateMap = new Map<string, number>();
+    for (const r of projRatesRes.rows) rateMap.set(String((r as any).id), Number((r as any).rate || 0));
+
+    const sqlManual = `
+      SELECT fp.project_id, COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS completed
+        FROM file_requests fr
+        JOIN file_processes fp ON fp.id = fr.file_process_id
+       WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
+       GROUP BY fp.project_id`;
+    const sqlAutomation = `
+      SELECT fp.project_id, COALESCE(SUM((d->>'completed')::INT),0) AS completed
+        FROM file_processes fp
+        JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+       WHERE fp.type = 'automation' AND fp.automation_config IS NOT NULL
+         AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+       GROUP BY fp.project_id`;
+    const [rowsManual, rowsAuto] = await Promise.all([
+      query(sqlManual, [monthStart, nextStr]),
+      query(sqlAutomation, [monthStart, nextStr]),
+    ]);
+
+    const byProject = new Map<string, number>();
+    for (const r of [...rowsManual.rows, ...rowsAuto.rows]) {
+      const p = String((r as any).project_id || '');
+      const c = Number((r as any).completed || 0);
+      if (!p) continue; byProject.set(p, (byProject.get(p) || 0) + c);
+    }
+
+    const conversionRate = 83.0;
+    let totalRevenueUSD = 0;
+    for (const [pId, completed] of byProject.entries()) {
+      const rateUSD = rateMap.get(pId) || 0;
+      totalRevenueUSD += completed * rateUSD;
+    }
+    const totalRevenue = totalRevenueUSD * conversionRate;
+
+    const cfgRes = await query(`SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`);
+    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const fRate = Number(cfg.first_tier_rate || 0);
+    const sRate = Number(cfg.second_tier_rate || 0);
+    const fLimit = Number(cfg.first_tier_limit || 0);
+
+    const userFilesRes = await query(
+      `SELECT COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS files
+         FROM file_requests fr WHERE fr.status='completed' AND fr.completed_date >= $1 AND fr.completed_date < $2`,
+      [monthStart, nextStr]
+    );
+    const monthlyFiles = Number(userFilesRes.rows[0]?.files || 0);
+    const t1 = Math.min(monthlyFiles, fLimit);
+    const t2 = Math.max(0, monthlyFiles - fLimit);
+    const userSalaries = t1 * fRate + t2 * sRate;
+
+    const pmRes = await query(`SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`, [nextStr]);
+    const pmSalaries = Number(pmRes.rows[0]?.total || 0);
+
+    const salaryExpenses = userSalaries + pmSalaries;
+
+    const adminRes = await query(`SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected'`, [targetMonth]);
+    const adminExpenses = Number(adminRes.rows[0]?.total || 0);
+
+    const totalExpenses = salaryExpenses + adminExpenses;
+    const netProfit = totalRevenue - totalExpenses;
+    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+    const catRows = await query(
+      `SELECT type, COUNT(*)::INT AS count, COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected' GROUP BY type ORDER BY total DESC LIMIT 5`,
+      [targetMonth]
+    );
+    const topExpenseCategories = [
+      { name: 'Salaries', value: salaryExpenses, percentage: 0, fill: '#3b82f6', count: 0 },
+      ...catRows.rows.map((r: any) => ({ name: String(r.type), value: Number(r.total || 0), percentage: 0, fill: '#ef4444', count: Number(r.count || 0) })),
+    ];
+    const catSum = topExpenseCategories.reduce((s, c) => s + c.value, 0);
+    for (const c of topExpenseCategories) c.percentage = catSum > 0 ? (c.value / catSum) * 100 : 0;
+
+    const data = {
+      currentMonth: { totalRevenue, totalExpenses, netProfit, profitMargin, salaryExpenses, adminExpenses },
+      trends: { revenueGrowth: 0, expenseGrowth: 0, profitGrowth: 0 },
+      alerts: [],
+      topExpenseCategories,
     };
 
-    res.json({ data: mockDashboardData });
+    res.json({ data });
   } catch (error) {
     console.error("Error fetching dashboard analytics:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch dashboard analytics",
-      },
-    });
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch dashboard analytics" } });
   }
 });
 
