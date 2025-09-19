@@ -140,6 +140,7 @@ export default function Salary() {
   const [selectedUser, setSelectedUser] = useState<UserSalaryData | null>(null);
   const [breakdownPeriod, setBreakdownPeriod] =
     useState<BreakdownPeriod>("daily");
+  const [breakdownData, setBreakdownData] = useState<SalaryBreakdown[]>([]);
 
   // Salary data loaded from backend
   const [userSalaryData, setUserSalaryData] = useState<UserSalaryData[]>([]);
