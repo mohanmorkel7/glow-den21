@@ -271,47 +271,62 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const expenseData = updateExpenseSchema.parse(req.body);
+    const body = updateExpenseSchema.parse(req.body);
 
-    // Mock update
-    const updatedExpense = {
-      id: id,
-      category: expenseData.category || "Office Rent",
-      description: expenseData.description || "Monthly office rent payment",
-      amount: expenseData.amount || 25000,
-      date: expenseData.date || "2024-01-01",
-      month: (expenseData.date || "2024-01-01").substring(0, 7),
-      type: expenseData.type || "administrative",
-      receipt: expenseData.receipt,
-      status: expenseData.status || "pending",
-      approvedBy: "Admin",
-      createdAt: "2024-01-01T00:00:00Z",
-      updatedAt: new Date().toISOString(),
-      createdBy: {
-        id: "admin-id",
-        name: "Admin User",
+    const sets: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
+    if (body.category !== undefined) { sets.push(`category = $${idx++}`); params.push(body.category); }
+    if (body.description !== undefined) { sets.push(`description = $${idx++}`); params.push(body.description); }
+    if (body.amount !== undefined) { sets.push(`amount = $${idx++}`); params.push(body.amount); }
+    if (body.date !== undefined) { sets.push(`date = $${idx++}`); params.push(body.date); }
+    if (body.type !== undefined) { sets.push(`type = $${idx++}`); params.push(body.type); }
+    if (body.frequency !== undefined) { sets.push(`frequency = $${idx++}`); params.push(body.frequency); }
+    if (body.receipt !== undefined) { sets.push(`receipt = $${idx++}`); params.push(body.receipt); }
+    if (body.status !== undefined) { sets.push(`status = $${idx++}`); params.push(body.status); }
+
+    if (sets.length === 0) {
+      return res.status(400).json({ error: { code: "NO_CHANGES", message: "No fields to update" } });
+    }
+
+    if (body.date !== undefined) {
+      sets.push(`month = SUBSTRING($${idx-1}::text, 1, 7)`);
+    }
+    sets.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    const sql = `UPDATE expenses SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, category, description, amount::FLOAT8 AS amount,
+      TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
+      TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+      TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+      created_by_user_id AS created_by`;
+    const r = await query(sql, [...params, id]);
+    const row = r.rows[0];
+    if (!row) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+
+    res.json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
       },
-    };
-
-    res.json({ data: updatedExpense });
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid expense data",
-          details: error.errors,
-        },
-      });
-    } else {
-      console.error("Error updating expense:", error);
-      res.status(500).json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update expense",
-        },
-      });
+      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid expense data", details: error.errors } });
     }
+    console.error("Error updating expense:", error);
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to update expense" } });
   }
 });
 
