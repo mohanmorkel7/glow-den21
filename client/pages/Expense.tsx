@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -126,6 +127,10 @@ export default function Expense() {
     new Date().toISOString().slice(0, 7),
   );
   const [isAddSalaryOpen, setIsAddSalaryOpen] = useState(false);
+  const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>([]);
+  const [expenseStats, setExpenseStats] = useState<any>(null);
+  const [profitLossData, setProfitLossData] = useState<ProfitLossData[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isViewExpenseOpen, setIsViewExpenseOpen] = useState(false);
@@ -303,7 +308,30 @@ export default function Expense() {
     return [...monthlyExpenses, ...currentMonthOneTime];
   };
 
-  const expenseEntries = generateExpensesForMonth(selectedMonth);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const [list, pl] = await Promise.all([
+          apiClient.getExpenses({ month: selectedMonth, limit: 500 }),
+          apiClient.getExpenseProfitLoss(),
+        ]);
+        const data = (list as any)?.data || list || [];
+        const stats = (list as any)?.statistics || null;
+        setExpenseEntries(data as any);
+        setExpenseStats(stats);
+        setProfitLossData(((pl as any)?.data || pl || []) as any);
+      } catch (e) {
+        console.error("Failed to load expenses", e);
+        setExpenseEntries([]);
+        setExpenseStats(null);
+        setProfitLossData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [selectedMonth]);
 
   const profitLossData: ProfitLossData[] = [
     {
