@@ -333,44 +333,6 @@ export default function Expense() {
     load();
   }, [selectedMonth]);
 
-  const profitLossData: ProfitLossData[] = [
-    {
-      month: "2023-10",
-      revenue: 285000,
-      salaryExpense: 145000,
-      adminExpense: 45000,
-      totalExpense: 190000,
-      netProfit: 95000,
-      profitMargin: 33.3,
-    },
-    {
-      month: "2023-11",
-      revenue: 320000,
-      salaryExpense: 152000,
-      adminExpense: 48000,
-      totalExpense: 200000,
-      netProfit: 120000,
-      profitMargin: 37.5,
-    },
-    {
-      month: "2023-12",
-      revenue: 375000,
-      salaryExpense: 165000,
-      adminExpense: 52000,
-      totalExpense: 217000,
-      netProfit: 158000,
-      profitMargin: 42.1,
-    },
-    {
-      month: "2024-01",
-      revenue: 420000,
-      salaryExpense: 170000,
-      adminExpense: 50500,
-      totalExpense: 220500,
-      netProfit: 199500,
-      profitMargin: 47.5,
-    },
-  ];
 
   // Calculate current month statistics
   const currentMonthSalary = salaryEntries
