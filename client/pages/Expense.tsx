@@ -152,6 +152,12 @@ export default function Expense() {
   // Enhanced expenses state with recurring functionality
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
 
+  // Live data
+  const [salaryUsers, setSalaryUsers] = useState<any[]>([]);
+  const [pmList, setPmList] = useState<any[]>([]);
+  const [salaryConfig, setSalaryConfig] = useState<any | null>(null);
+  const [editExpense, setEditExpense] = useState<any | null>(null);
+
   // Mock data for demonstration
   const currentMonth = new Date().toISOString().slice(0, 7);
 
