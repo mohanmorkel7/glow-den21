@@ -401,6 +401,50 @@ class ApiClient {
     return this.request("/dashboard/user");
   }
 
+  // Tutorials
+  async getTutorials(params?: { category?: string; search?: string }) {
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return this.request(`/tutorials${qs}`);
+  }
+
+  async uploadTutorialVideo(file: Blob, name: string, category?: string) {
+    const headers: Record<string, string> = {
+      ...(this.getAuthHeaders() as any),
+      "x-file-name": (file as any).name || "video.mp4",
+      "x-tutorial-name": name,
+    };
+    if (category) headers["x-tutorial-category"] = category;
+    const url = `${API_BASE_URL}/tutorials/upload`;
+    const resp = await fetch(url, { method: "POST", headers, body: file });
+    if (!resp.ok) {
+      const msg = await resp.text().catch(() => resp.statusText);
+      throw new Error(msg || `Upload failed (${resp.status})`);
+    }
+    const json = await resp.json().catch(() => ({}));
+    return (json as any)?.data ?? json;
+  }
+
+  async updateTutorial(
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      category?: string;
+      status?: string;
+    },
+  ) {
+    return this.request(`/tutorials/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTutorial(id: string) {
+    return this.request(`/tutorials/${id}`, { method: "DELETE" });
+  }
+
   // File processes
   async getFileProcesses(params?: { page?: number; limit?: number }) {
     const queryString = params

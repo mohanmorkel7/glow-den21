@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { ensureFileProcessTables } from "./startup/migrateFileProcess";
+import { ensureTutorialTables } from "./startup/migrateTutorials";
 
 // Import authentication routes
 import {
@@ -62,6 +63,7 @@ import {
 
 // Import expense management routes
 import expenseRoutes from "./routes/expenses";
+import tutorialsRoutes from "./routes/tutorials";
 import { ensureInitialAdmin } from "./startup/seedAdmin";
 import * as fileProcess from "./routes/fileProcess";
 import { isDbConfigured } from "./db/connection";
@@ -78,6 +80,7 @@ export function createServer() {
   if (isDbConfigured()) {
     ensureInitialAdmin().catch((e) => console.error(e));
     ensureFileProcessTables().catch((e) => console.error(e));
+    ensureTutorialTables().catch((e) => console.error(e));
     import("./startup/migrateSalary")
       .then((m) => m.ensureSalaryTables())
       .catch((e) => console.error(e));
@@ -243,6 +246,9 @@ export function createServer() {
     requireRole(["project_manager", "super_admin"]),
     fileProcess.verifyCompletedRequest as any,
   );
+
+  // ===== TUTORIAL ROUTES =====
+  app.use("/api/tutorials", authenticateToken, tutorialsRoutes);
 
   // ===== EXPENSE MANAGEMENT ROUTES =====
   // All expense routes require authentication

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -363,7 +364,7 @@ export default function Tutorial() {
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
   const [videoUpload, setVideoUpload] = useState({
-    tutorialId: "",
+    tutorialName: "",
     file: null as File | null,
     uploadProgress: 0,
     isUploading: false,
@@ -391,6 +392,42 @@ export default function Tutorial() {
     description: "",
     isRequired: false,
   });
+
+  // Tutorials state loaded from API
+  const [tutorials, setTutorials] = useState<Tutorial[]>([] as any);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const list: any[] = (await apiClient.getTutorials()) as any[];
+        const mapped: Tutorial[] = list.map((t: any, idx: number) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description || "",
+          category: (t.category || "getting_started") as any,
+          status: (t.status || "published") as any,
+          videoUrl: t.videoUrl || undefined,
+          videoDuration: undefined as any,
+          instructions: "",
+          steps: [],
+          targetRoles: ["user", "project_manager", "super_admin"] as any,
+          isRequired: false,
+          order: idx + 1,
+          tags: [],
+          createdBy: { id: t.createdBy || "", name: "" },
+          createdAt: t.createdAt || new Date().toISOString(),
+          updatedAt: t.updatedAt || new Date().toISOString(),
+          viewCount: 0,
+          completionCount: 0,
+        }));
+        setTutorials(mapped);
+      } catch (e) {
+        console.error("Failed to load tutorials", e);
+        setTutorials([]);
+      }
+    };
+    load();
+  }, []);
 
   // Mock data for tutorials with sample videos
   const mockTutorials: Tutorial[] = [
@@ -651,17 +688,14 @@ export default function Tutorial() {
   ];
 
   // Filter tutorials based on role, category, and search
-  const filteredTutorials = mockTutorials.filter((tutorial) => {
+  const filteredTutorials = tutorials.filter((tutorial) => {
     const matchesRole = tutorial.targetRoles.includes(user?.role || "user");
     const matchesCategory =
       selectedCategory === "all" || tutorial.category === selectedCategory;
     const matchesSearch =
       searchQuery === "" ||
       tutorial.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tutorial.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tutorial.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      tutorial.description.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesRole && matchesCategory && matchesSearch;
   });
@@ -721,33 +755,50 @@ export default function Tutorial() {
     });
   };
 
-  // Helper function to simulate video upload
+  // Upload tutorial video with name -> creates a new tutorial on server
   const handleVideoUpload = async () => {
-    if (!videoUpload.file || !videoUpload.tutorialId) return;
+    if (!videoUpload.file || !videoUpload.tutorialName) return;
 
     setVideoUpload({ ...videoUpload, isUploading: true });
 
     try {
-      // Simulate upload progress
-      for (let progress = 0; progress <= 100; progress += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        setVideoUpload((prev) => ({ ...prev, uploadProgress: progress }));
-      }
-
-      // Simulate successful upload
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const tutorialTitle = mockTutorials.find(
-        (t) => t.id === videoUpload.tutorialId,
-      )?.title;
+      await apiClient.uploadTutorialVideo(
+        videoUpload.file,
+        videoUpload.tutorialName,
+        "getting_started",
+      );
       toast({
         title: "Upload successful",
-        description: `Video uploaded successfully for tutorial: ${tutorialTitle}`,
+        description: `Video uploaded successfully for tutorial: ${videoUpload.tutorialName}`,
       });
+
+      // Reload tutorials
+      const list: any[] = (await apiClient.getTutorials()) as any[];
+      const mapped: Tutorial[] = list.map((t: any, idx: number) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description || "",
+        category: (t.category || "getting_started") as any,
+        status: (t.status || "published") as any,
+        videoUrl: t.videoUrl || undefined,
+        videoDuration: undefined as any,
+        instructions: "",
+        steps: [],
+        targetRoles: ["user", "project_manager", "super_admin"] as any,
+        isRequired: false,
+        order: idx + 1,
+        tags: [],
+        createdBy: { id: t.createdBy || "", name: "" },
+        createdAt: t.createdAt || new Date().toISOString(),
+        updatedAt: t.updatedAt || new Date().toISOString(),
+        viewCount: 0,
+        completionCount: 0,
+      }));
+      setTutorials(mapped);
 
       // Reset upload state and close dialog
       setVideoUpload({
-        tutorialId: "",
+        tutorialName: "",
         file: null,
         uploadProgress: 0,
         isUploading: false,
@@ -755,11 +806,10 @@ export default function Tutorial() {
         dragActive: false,
       });
       setIsUploadVideoOpen(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Upload failed",
-        description:
-          "There was an error uploading your video. Please try again.",
+        description: String(error?.message || error),
         variant: "destructive",
       });
       setVideoUpload({ ...videoUpload, isUploading: false });
