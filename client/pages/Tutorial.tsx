@@ -688,7 +688,7 @@ export default function Tutorial() {
   ];
 
   // Filter tutorials based on role, category, and search
-  const filteredTutorials = mockTutorials.filter((tutorial) => {
+  const filteredTutorials = tutorials.filter((tutorial) => {
     const matchesRole = tutorial.targetRoles.includes(user?.role || "user");
     const matchesCategory =
       selectedCategory === "all" || tutorial.category === selectedCategory;
