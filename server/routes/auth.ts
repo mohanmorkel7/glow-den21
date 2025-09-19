@@ -360,6 +360,11 @@ export const requirePermission = (permission: string) => {
       return next();
     }
 
+    // Default allowances by role (helps when permission tables are not configured)
+    if (user.role === "project_manager" && permission === "project_read") {
+      return next();
+    }
+
     // Check specific permission
     if (!user.permissions.includes(permission)) {
       return res.status(403).json({
