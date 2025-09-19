@@ -626,6 +626,41 @@ class ApiClient {
     return this.request(`/expenses${qs}`);
   }
 
+  async createExpense(payload: {
+    category: string;
+    description: string;
+    amount: number;
+    date: string; // YYYY-MM-DD
+    type: "administrative" | "operational" | "marketing" | "utilities" | "miscellaneous";
+    frequency?: "monthly" | "one-time";
+    receipt?: string;
+  }) {
+    return this.request(`/expenses`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateExpense(id: string, payload: Partial<{
+    category: string;
+    description: string;
+    amount: number;
+    date: string;
+    type: "administrative" | "operational" | "marketing" | "utilities" | "miscellaneous";
+    frequency: "monthly" | "one-time";
+    receipt: string;
+    status: "pending" | "approved" | "rejected";
+  }>) {
+    return this.request(`/expenses/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteExpense(id: string) {
+    return this.request(`/expenses/${id}`, { method: "DELETE" });
+  }
+
   async getExpenseAnalyticsDashboard(month?: string) {
     const qs = month ? `?month=${encodeURIComponent(month)}` : "";
     return this.request(`/expenses/analytics/dashboard${qs}`);
