@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { z } from "zod";
-import { query, transaction } from "../db/connection";
+import { query, transaction, paginatedQuery } from "../db/connection";
 import bcrypt from "bcrypt";
 
 const router = Router();
@@ -207,14 +207,12 @@ router.get("/", async (req: Request, res: Response) => {
     res.json({ data: rows, statistics, pagination });
   } catch (error) {
     console.error("Error fetching expenses:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch expenses",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch expenses",
+      },
+    });
   }
 });
 
@@ -262,14 +260,12 @@ router.get("/:id", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching expense:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch expense",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch expense",
+      },
+    });
   }
 });
 
@@ -332,14 +328,12 @@ router.post("/", async (req: Request, res: Response) => {
       });
     }
     console.error("Error creating expense:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create expense",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create expense",
+      },
+    });
   }
 });
 
@@ -386,11 +380,9 @@ router.put("/:id", async (req: Request, res: Response) => {
     }
 
     if (sets.length === 0) {
-      return res
-        .status(400)
-        .json({
-          error: { code: "NO_CHANGES", message: "No fields to update" },
-        });
+      return res.status(400).json({
+        error: { code: "NO_CHANGES", message: "No fields to update" },
+      });
     }
 
     if (body.date !== undefined) {
@@ -432,25 +424,21 @@ router.put("/:id", async (req: Request, res: Response) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Invalid expense data",
-            details: error.errors,
-          },
-        });
-    }
-    console.error("Error updating expense:", error);
-    res
-      .status(500)
-      .json({
+      return res.status(400).json({
         error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update expense",
+          code: "VALIDATION_ERROR",
+          message: "Invalid expense data",
+          details: error.errors,
         },
       });
+    }
+    console.error("Error updating expense:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update expense",
+      },
+    });
   }
 });
 
@@ -504,25 +492,21 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            code: "VALIDATION_ERROR",
-            message: "Invalid approval data",
-            details: error.errors,
-          },
-        });
-    }
-    console.error("Error approving expense:", error);
-    res
-      .status(500)
-      .json({
+      return res.status(400).json({
         error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to approve expense",
+          code: "VALIDATION_ERROR",
+          message: "Invalid approval data",
+          details: error.errors,
         },
       });
+    }
+    console.error("Error approving expense:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to approve expense",
+      },
+    });
   }
 });
 
@@ -534,14 +518,12 @@ router.delete("/:id", async (req: Request, res: Response) => {
     res.json({ success: true, message: "Expense deleted successfully" });
   } catch (error) {
     console.error("Error deleting expense:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to delete expense",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to delete expense",
+      },
+    });
   }
 });
 
@@ -1676,14 +1658,12 @@ router.get("/analytics/dashboard", async (req: Request, res: Response) => {
     res.json({ data });
   } catch (error) {
     console.error("Error fetching dashboard analytics:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch dashboard analytics",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch dashboard analytics",
+      },
+    });
   }
 });
 
@@ -1801,14 +1781,12 @@ router.get("/analytics/profit-loss", async (req: Request, res: Response) => {
     res.json({ data: result });
   } catch (error) {
     console.error("Error fetching profit & loss data:", error);
-    res
-      .status(500)
-      .json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch profit & loss data",
-        },
-      });
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch profit & loss data",
+      },
+    });
   }
 });
 
