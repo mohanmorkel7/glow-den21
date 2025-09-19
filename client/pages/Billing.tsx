@@ -906,7 +906,7 @@ export default function Billing() {
 
       {/* Billing Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[1000px] lg:max-w-[1200px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Billing Details -{" "}
