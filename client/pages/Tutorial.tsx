@@ -695,10 +695,7 @@ export default function Tutorial() {
     const matchesSearch =
       searchQuery === "" ||
       tutorial.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tutorial.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tutorial.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      tutorial.description.toLowerCase().includes(searchQuery.toLowerCase());
 
     return matchesRole && matchesCategory && matchesSearch;
   });
