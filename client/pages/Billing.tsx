@@ -801,7 +801,7 @@ export default function Billing() {
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Rate: ₹{billing.conversionRate}/USD
+                            Rate: ₹{usdToInrRate}/USD
                           </div>
                         </div>
                       </div>
