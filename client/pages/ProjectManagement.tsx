@@ -114,6 +114,7 @@ export default function ProjectManagement() {
     client: "mobius_dataservice",
     customClient: "",
     assignedUsers: [] as string[],
+    ratePerFileUSD: "" as any,
   });
 
   const canManageProjects =
@@ -180,6 +181,7 @@ export default function ProjectManagement() {
       client: "mobius_dataservice",
       customClient: "",
       assignedUsers: [] as string[],
+      ratePerFileUSD: "",
     });
   };
 
@@ -191,6 +193,10 @@ export default function ProjectManagement() {
         description: newProject.description,
         status: newProject.status,
         priority: newProject.priority,
+        ratePerFileUSD:
+          newProject.ratePerFileUSD !== "" && newProject.ratePerFileUSD !== null
+            ? Number(newProject.ratePerFileUSD)
+            : undefined,
         // server expects startDate/endDate/targetCount optionally
       };
       const created = await apiClient.createProject(payload);
@@ -218,6 +224,7 @@ export default function ProjectManagement() {
       client: project.client || "mobius_dataservice",
       customClient: project.customClient || "",
       assignedUsers: project.assignedUsers || [],
+      ratePerFileUSD: (project as any).ratePerFileUSD ?? "",
     });
     setIsAddDialogOpen(true);
   };
@@ -231,6 +238,10 @@ export default function ProjectManagement() {
         description: newProject.description,
         status: newProject.status,
         priority: newProject.priority,
+        ratePerFileUSD:
+          newProject.ratePerFileUSD !== "" && newProject.ratePerFileUSD !== null
+            ? Number(newProject.ratePerFileUSD)
+            : undefined,
       };
       const updated = await apiClient.updateProject(editingProject.id, payload);
       const mapped = mapApiToProject(updated as any);
@@ -333,7 +344,7 @@ export default function ProjectManagement() {
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type">Project Type</Label>
                     <Select
@@ -387,6 +398,22 @@ export default function ProjectManagement() {
                         <SelectItem value="high">High</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ratePerFileUSD">Cost per file ($)</Label>
+                    <Input
+                      id="ratePerFileUSD"
+                      type="number"
+                      step="0.0001"
+                      placeholder="e.g. 0.05"
+                      value={newProject.ratePerFileUSD}
+                      onChange={(e) =>
+                        setNewProject({
+                          ...newProject,
+                          ratePerFileUSD: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                 </div>
 
