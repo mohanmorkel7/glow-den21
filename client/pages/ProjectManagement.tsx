@@ -554,6 +554,12 @@ export default function ProjectManagement() {
                     <div className="text-xs text-muted-foreground">
                       {project.description}
                     </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      Rate: {project.ratePerFileUSD ? `$${project.ratePerFileUSD}` : '—'}
+                    </div>
+                    <div className="text-xs text-purple-600">
+                      Assigned Users: {project.assignedUsersCount ?? 0}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge className="capitalize">{project.status}</Badge>
