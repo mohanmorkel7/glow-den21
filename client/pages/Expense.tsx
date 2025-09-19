@@ -894,18 +894,28 @@ export default function Expense() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-muted-foreground">
-                            First {salaryConfig?.users?.firstTierLimit ?? 0} files:
+                            First {salaryConfig?.users?.firstTierLimit ?? 0}{" "}
+                            files:
                           </span>
                           <span className="ml-2 font-medium text-green-600">
-                            ₹{Number(salaryConfig?.users?.firstTierRate ?? 0).toFixed(2)} per file
+                            ₹
+                            {Number(
+                              salaryConfig?.users?.firstTierRate ?? 0,
+                            ).toFixed(2)}{" "}
+                            per file
                           </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">
-                            After {salaryConfig?.users?.firstTierLimit ?? 0} files:
+                            After {salaryConfig?.users?.firstTierLimit ?? 0}{" "}
+                            files:
                           </span>
                           <span className="ml-2 font-medium text-green-600">
-                            ₹{Number(salaryConfig?.users?.secondTierRate ?? 0).toFixed(2)} per file
+                            ₹
+                            {Number(
+                              salaryConfig?.users?.secondTierRate ?? 0,
+                            ).toFixed(2)}{" "}
+                            per file
                           </span>
                         </div>
                         <div>
@@ -1132,7 +1142,9 @@ export default function Expense() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">{pm.department || "Operations"}</div>
+                        <div className="font-medium">
+                          {pm.department || "Operations"}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-bold text-purple-600">
@@ -1141,13 +1153,15 @@ export default function Expense() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <Badge className={
-                            (pm.attendanceRate || 0) >= 95
-                              ? "bg-green-100 text-green-800"
-                              : (pm.attendanceRate || 0) >= 85
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-gray-100 text-gray-800"
-                          }>
+                          <Badge
+                            className={
+                              (pm.attendanceRate || 0) >= 95
+                                ? "bg-green-100 text-green-800"
+                                : (pm.attendanceRate || 0) >= 85
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }
+                          >
                             {(pm.attendanceRate || 0) > 0
                               ? (pm.attendanceRate || 0) >= 95
                                 ? "Excellent"
@@ -1165,11 +1179,15 @@ export default function Expense() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {pm.lastActive ? new Date(pm.lastActive).toLocaleString() : "-"}
+                          {pm.lastActive
+                            ? new Date(pm.lastActive).toLocaleString()
+                            : "-"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
+                        <Badge className="bg-green-100 text-green-800">
+                          Active
+                        </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1199,7 +1217,11 @@ export default function Expense() {
                         First {salaryConfig?.users?.firstTierLimit ?? 0} files:
                       </span>
                       <span className="font-medium text-green-600">
-                        ₹{Number(salaryConfig?.users?.firstTierRate ?? 0).toFixed(2)} per file
+                        ₹
+                        {Number(
+                          salaryConfig?.users?.firstTierRate ?? 0,
+                        ).toFixed(2)}{" "}
+                        per file
                       </span>
                     </div>
                     <div className="flex justify-between p-2 bg-blue-50 rounded">
@@ -1207,7 +1229,11 @@ export default function Expense() {
                         After {salaryConfig?.users?.firstTierLimit ?? 0} files:
                       </span>
                       <span className="font-medium text-blue-600">
-                        ₹{Number(salaryConfig?.users?.secondTierRate ?? 0).toFixed(2)} per file
+                        ₹
+                        {Number(
+                          salaryConfig?.users?.secondTierRate ?? 0,
+                        ).toFixed(2)}{" "}
+                        per file
                       </span>
                     </div>
                   </div>
@@ -1231,7 +1257,9 @@ export default function Expense() {
                     </div>
                     <div className="flex justify-between p-2 bg-gray-800 text-white rounded">
                       <span className="font-semibold">Total Monthly Cost:</span>
-                      <span className="font-bold">{formatCurrency(currentMonthSalary)}</span>
+                      <span className="font-bold">
+                        {formatCurrency(currentMonthSalary)}
+                      </span>
                     </div>
                   </div>
                 </div>
