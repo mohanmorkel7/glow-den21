@@ -988,10 +988,10 @@ export default function Billing() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-xl font-bold text-blue-600">
-                        {formatCurrency(selectedBilling.totalAmountINR, "INR")}
+                        {formatCurrency(selectedBilling.totalAmountUSD * usdToInrRate, "INR")}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Rate: ₹{selectedBilling.conversionRate}/USD
+                        Rate: ₹{usdToInrRate}/USD
                       </div>
                     </CardContent>
                   </Card>
