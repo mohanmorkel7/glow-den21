@@ -710,7 +710,7 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       );
 
       const projectIds = projUserRes.rows
-        .map((r: any) => String(r.project_id || ''))
+        .map((r: any) => String(r.project_id || ""))
         .filter(Boolean);
 
       let performancePct = 0;
@@ -730,7 +730,10 @@ router.get("/salary/users", async (req: Request, res: Response) => {
         );
         const totalsMap = new Map<string, number>();
         for (const row of totalsRes.rows) {
-          totalsMap.set(String((row as any).project_id), Number((row as any).total_rows || 0));
+          totalsMap.set(
+            String((row as any).project_id),
+            Number((row as any).total_rows || 0),
+          );
         }
         const userCompletedSum = projUserRes.rows.reduce(
           (s: number, r: any) => s + Number(r.user_completed || 0),
@@ -743,7 +746,10 @@ router.get("/salary/users", async (req: Request, res: Response) => {
         if (projectTotalRows > 0) {
           performancePct = Math.max(
             0,
-            Math.min(100, Math.round((userCompletedSum / projectTotalRows) * 100)),
+            Math.min(
+              100,
+              Math.round((userCompletedSum / projectTotalRows) * 100),
+            ),
           );
         }
       }
