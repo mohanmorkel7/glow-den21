@@ -727,6 +727,7 @@ export default function Billing() {
             <div className="text-2xl font-bold text-orange-600">
               {formatCurrency(stats.pendingUSD, "USD")}
             </div>
+            <p className="text-xs text-blue-600">{formatCurrency(stats.pendingUSD * usdToInrRate, "INR")}</p>
             <p className="text-xs text-muted-foreground">Awaiting payment</p>
           </CardContent>
         </Card>
