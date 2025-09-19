@@ -403,7 +403,9 @@ class ApiClient {
 
   // Tutorials
   async getTutorials(params?: { category?: string; search?: string }) {
-    const qs = params ? `?${new URLSearchParams(params as any).toString()}` : "";
+    const qs = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
     return this.request(`/tutorials${qs}`);
   }
 
@@ -424,8 +426,19 @@ class ApiClient {
     return (json as any)?.data ?? json;
   }
 
-  async updateTutorial(id: string, data: { title?: string; description?: string; category?: string; status?: string }) {
-    return this.request(`/tutorials/${id}`, { method: "PUT", body: JSON.stringify(data) });
+  async updateTutorial(
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      category?: string;
+      status?: string;
+    },
+  ) {
+    return this.request(`/tutorials/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
   }
 
   async deleteTutorial(id: string) {

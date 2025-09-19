@@ -47,7 +47,10 @@ router.get("/", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("List tutorials error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to list tutorials" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to list tutorials",
+      },
     });
   }
 });
@@ -70,7 +73,10 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     if (!fields.length) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "No updatable fields provided" },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "No updatable fields provided",
+        },
       });
     }
 
@@ -78,7 +84,9 @@ router.put("/:id", async (req: Request, res: Response) => {
     const sql = `UPDATE tutorials SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`;
     const result = await query(sql, values);
     if (!result.rows.length) {
-      return res.status(404).json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
     }
     const r = result.rows[0];
     res.json({
@@ -97,7 +105,10 @@ router.put("/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Update tutorial error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to update tutorial" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to update tutorial",
+      },
     });
   }
 });
@@ -121,13 +132,18 @@ router.delete("/:id", async (req: Request, res: Response) => {
       }
     }
     if (!result.rowCount) {
-      return res.status(404).json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
     }
     res.status(204).send();
   } catch (error) {
     console.error("Delete tutorial error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to delete tutorial" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to delete tutorial",
+      },
     });
   }
 });
@@ -136,10 +152,13 @@ router.delete("/:id", async (req: Request, res: Response) => {
 router.post("/upload", async (req: Request, res: Response) => {
   try {
     const currentUser: any = (req as any).user;
-    const titleHeader = (req.headers["x-tutorial-name"] as string) || "Untitled Tutorial";
-    const categoryHeader = (req.headers["x-tutorial-category"] as string) || "getting_started";
+    const titleHeader =
+      (req.headers["x-tutorial-name"] as string) || "Untitled Tutorial";
+    const categoryHeader =
+      (req.headers["x-tutorial-category"] as string) || "getting_started";
     const originalName = (req.headers["x-file-name"] as string) || "video.mp4";
-    const mime = (req.headers["content-type"] as string) || "application/octet-stream";
+    const mime =
+      (req.headers["content-type"] as string) || "application/octet-stream";
 
     const safeName = originalName.replace(/[^a-zA-Z0-9_.\-]/g, "_");
     const id = `tut_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -185,13 +204,19 @@ router.post("/upload", async (req: Request, res: Response) => {
     ws.on("error", (err) => {
       console.error("Tutorial upload write error:", err);
       res.status(500).json({
-        error: { code: "WRITE_ERROR", message: "Failed to save uploaded video" },
+        error: {
+          code: "WRITE_ERROR",
+          message: "Failed to save uploaded video",
+        },
       });
     });
   } catch (error) {
     console.error("Upload tutorial error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to upload tutorial video" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to upload tutorial video",
+      },
     });
   }
 });
@@ -205,7 +230,9 @@ router.get("/:id/video", async (req: Request, res: Response) => {
       [id],
     );
     if (!result.rows.length) {
-      return res.status(404).json({ error: { code: "NOT_FOUND", message: "Video not found" } });
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Video not found" } });
     }
     const r = result.rows[0];
     const absPath = path.isAbsolute(r.video_file_path)
@@ -213,7 +240,11 @@ router.get("/:id/video", async (req: Request, res: Response) => {
       : path.join(process.cwd(), r.video_file_path);
 
     if (!r.video_file_path || !fs.existsSync(absPath)) {
-      return res.status(404).json({ error: { code: "FILE_NOT_FOUND", message: "Video file missing" } });
+      return res
+        .status(404)
+        .json({
+          error: { code: "FILE_NOT_FOUND", message: "Video file missing" },
+        });
     }
 
     const stat = fs.statSync(absPath);
@@ -246,7 +277,10 @@ router.get("/:id/video", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Stream tutorial video error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to stream video" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to stream video",
+      },
     });
   }
 });
