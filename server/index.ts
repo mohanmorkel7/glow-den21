@@ -63,6 +63,7 @@ import {
 
 // Import expense management routes
 import expenseRoutes from "./routes/expenses";
+import tutorialsRoutes from "./routes/tutorials";
 import { ensureInitialAdmin } from "./startup/seedAdmin";
 import * as fileProcess from "./routes/fileProcess";
 import { isDbConfigured } from "./db/connection";
