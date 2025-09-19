@@ -348,10 +348,16 @@ export default function Expense() {
     load();
   }, [selectedMonth]);
 
-  // Calculate current month statistics
-  const currentMonthSalary = salaryEntries
-    .filter((entry) => entry.month === selectedMonth)
-    .reduce((sum, entry) => sum + entry.netSalary, 0);
+  // Calculate current month statistics (live)
+  const userMonthlyEarnings = salaryUsers.reduce(
+    (s, u) => s + (u.monthlyEarnings || 0),
+    0,
+  );
+  const pmMonthlySalaries = pmList.reduce(
+    (s, p) => s + (p.monthlySalary || 0),
+    0,
+  );
+  const currentMonthSalary = userMonthlyEarnings + pmMonthlySalaries;
 
   const currentMonthExpenses = expenseEntries
     .filter((entry) => entry.month === selectedMonth)
@@ -361,9 +367,16 @@ export default function Expense() {
     (data) => data.month === selectedMonth,
   );
   const totalExpense = currentMonthSalary + currentMonthExpenses;
-  const estimatedRevenue = currentMonthData?.revenue || 420000;
+  const estimatedRevenue = currentMonthData?.revenue || 0;
   const netProfit = estimatedRevenue - totalExpense;
-  const profitMargin = (netProfit / estimatedRevenue) * 100;
+  const profitMargin = estimatedRevenue > 0 ? (netProfit / estimatedRevenue) * 100 : 0;
+
+  const totalTodayFiles = salaryUsers.reduce((s, u) => s + (u.todayFiles || 0), 0);
+  const totalWeeklyFiles = salaryUsers.reduce((s, u) => s + (u.weeklyFiles || 0), 0);
+  const totalMonthlyFiles = salaryUsers.reduce((s, u) => s + (u.monthlyFiles || 0), 0);
+  const avgDaily = salaryUsers.length
+    ? Math.round(totalMonthlyFiles / Math.max(1, salaryUsers.length))
+    : 0;
 
   // Expense breakdown for pie chart
   const expenseBreakdown = [
