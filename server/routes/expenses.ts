@@ -335,48 +335,46 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, notes } = approveExpenseSchema.parse(req.body);
+    const currentUser: any = (req as any).user;
 
-    // Mock approval
-    const approvedExpense = {
-      id: id,
-      category: "Office Rent",
-      description: "Monthly office rent payment",
-      amount: 25000,
-      date: "2024-01-01",
-      month: "2024-01",
-      type: "administrative",
-      status: status,
-      approvedBy: "Current User",
-      approvedAt: new Date().toISOString(),
-      approvalNotes: notes,
-      rejectionReason: status === "rejected" ? notes : undefined,
-      createdAt: "2024-01-01T00:00:00Z",
-      updatedAt: new Date().toISOString(),
-      createdBy: {
-        id: "admin-id",
-        name: "Admin User",
+    const sql = `UPDATE expenses SET status = $1, approved_by = $2, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $3
+                 RETURNING id, category, description, amount::FLOAT8 AS amount, TO_CHAR(date,'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
+                   COALESCE(approved_by,'') AS approved_by,
+                   TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
+                   TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+                   TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+                   created_by_user_id AS created_by`;
+    const r = await query(sql, [status, currentUser?.name || "Current User", id]);
+    const row = r.rows[0];
+    if (!row) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+
+    res.json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        approvedAt: row.approved_at || null,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
+        approvalNotes: notes,
+        rejectionReason: status === "rejected" ? notes : undefined,
       },
-    };
-
-    res.json({ data: approvedExpense });
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid approval data",
-          details: error.errors,
-        },
-      });
-    } else {
-      console.error("Error approving expense:", error);
-      res.status(500).json({
-        error: {
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to approve expense",
-        },
-      });
+      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid approval data", details: error.errors } });
     }
+    console.error("Error approving expense:", error);
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to approve expense" } });
   }
 });
 
