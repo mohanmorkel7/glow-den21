@@ -18,6 +18,7 @@ const createExpenseSchema = z.object({
     "utilities",
     "miscellaneous",
   ]),
+  frequency: z.enum(["monthly", "one-time"]).default("one-time"),
   receipt: z.string().optional(),
 });
 
@@ -38,6 +39,7 @@ const updateExpenseSchema = z.object({
       "miscellaneous",
     ])
     .optional(),
+  frequency: z.enum(["monthly", "one-time"]).optional(),
   receipt: z.string().optional(),
   status: z.enum(["pending", "approved", "rejected"]).optional(),
 });
