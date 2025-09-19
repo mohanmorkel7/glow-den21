@@ -1148,9 +1148,12 @@ export default function Billing() {
                               </Badge>
                             </TableCell>
                             <TableCell className="font-bold text-green-600">
-                              {formatCurrency(project.amountUSD, "USD")}
-                            </TableCell>
-                          </TableRow>
+                          {formatCurrency(project.amountUSD, "USD")}
+                        </TableCell>
+                        <TableCell className="font-bold text-blue-600">
+                          {formatCurrency(project.amountUSD * usdToInrRate, "INR")}
+                        </TableCell>
+                      </TableRow>
                         </TableBody>
                       </Table>
                     </div>
