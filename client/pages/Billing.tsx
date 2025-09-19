@@ -1097,10 +1097,7 @@ export default function Billing() {
                                 </TableCell>
                                 <TableCell>
                                   <div className="text-sm font-medium text-blue-600">
-                                    {formatCurrency(
-                                      processAmount * project.conversionRate,
-                                      "INR",
-                                    )}
+                                    {formatCurrency(processAmount * usdToInrRate, "INR")}
                                   </div>
                                 </TableCell>
                               </TableRow>
