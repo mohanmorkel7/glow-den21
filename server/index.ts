@@ -4,6 +4,7 @@ import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { ensureFileProcessTables } from "./startup/migrateFileProcess";
 import { ensureTutorialTables } from "./startup/migrateTutorials";
+import { ensureExpenseTables } from "./startup/migrateExpenses";
 
 // Import authentication routes
 import {
@@ -81,6 +82,7 @@ export function createServer() {
     ensureInitialAdmin().catch((e) => console.error(e));
     ensureFileProcessTables().catch((e) => console.error(e));
     ensureTutorialTables().catch((e) => console.error(e));
+    ensureExpenseTables().catch((e) => console.error(e));
     import("./startup/migrateSalary")
       .then((m) => m.ensureSalaryTables())
       .catch((e) => console.error(e));

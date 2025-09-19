@@ -152,6 +152,12 @@ export default function Expense() {
   // Enhanced expenses state with recurring functionality
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
 
+  // Live data
+  const [salaryUsers, setSalaryUsers] = useState<any[]>([]);
+  const [pmList, setPmList] = useState<any[]>([]);
+  const [salaryConfig, setSalaryConfig] = useState<any | null>(null);
+  const [editExpense, setEditExpense] = useState<any | null>(null);
+
   // Mock data for demonstration
   const currentMonth = new Date().toISOString().slice(0, 7);
 
@@ -312,20 +318,29 @@ export default function Expense() {
     const load = async () => {
       try {
         setLoading(true);
-        const [list, pl] = await Promise.all([
+        const [expResp, plResp, usersResp, pmResp, cfg] = await Promise.all([
           apiClient.getExpenses({ month: selectedMonth, limit: 500 }),
           apiClient.getExpenseProfitLoss(),
+          apiClient.getSalaryUsers(selectedMonth),
+          apiClient.getSalaryProjectManagers(),
+          apiClient.getSalaryConfig(),
         ]);
-        const data = (list as any)?.data || list || [];
-        const stats = (list as any)?.statistics || null;
-        setExpenseEntries(data as any);
+        const expData = (expResp as any)?.data || expResp || [];
+        const stats = (expResp as any)?.statistics || null;
+        setExpenseEntries(expData as any);
         setExpenseStats(stats);
-        setProfitLossData(((pl as any)?.data || pl || []) as any);
+        setProfitLossData(((plResp as any)?.data || plResp || []) as any);
+        setSalaryUsers(((usersResp as any)?.data || usersResp || []) as any);
+        setPmList(((pmResp as any)?.data || pmResp || []) as any);
+        setSalaryConfig(((cfg as any)?.data || cfg || null) as any);
       } catch (e) {
         console.error("Failed to load expenses", e);
         setExpenseEntries([]);
         setExpenseStats(null);
         setProfitLossData([]);
+        setSalaryUsers([]);
+        setPmList([]);
+        setSalaryConfig(null);
       } finally {
         setLoading(false);
       }
@@ -333,10 +348,16 @@ export default function Expense() {
     load();
   }, [selectedMonth]);
 
-  // Calculate current month statistics
-  const currentMonthSalary = salaryEntries
-    .filter((entry) => entry.month === selectedMonth)
-    .reduce((sum, entry) => sum + entry.netSalary, 0);
+  // Calculate current month statistics (live)
+  const userMonthlyEarnings = salaryUsers.reduce(
+    (s, u) => s + (u.monthlyEarnings || 0),
+    0,
+  );
+  const pmMonthlySalaries = pmList.reduce(
+    (s, p) => s + (p.monthlySalary || 0),
+    0,
+  );
+  const currentMonthSalary = userMonthlyEarnings + pmMonthlySalaries;
 
   const currentMonthExpenses = expenseEntries
     .filter((entry) => entry.month === selectedMonth)
@@ -346,9 +367,26 @@ export default function Expense() {
     (data) => data.month === selectedMonth,
   );
   const totalExpense = currentMonthSalary + currentMonthExpenses;
-  const estimatedRevenue = currentMonthData?.revenue || 420000;
+  const estimatedRevenue = currentMonthData?.revenue || 0;
   const netProfit = estimatedRevenue - totalExpense;
-  const profitMargin = (netProfit / estimatedRevenue) * 100;
+  const profitMargin =
+    estimatedRevenue > 0 ? (netProfit / estimatedRevenue) * 100 : 0;
+
+  const totalTodayFiles = salaryUsers.reduce(
+    (s, u) => s + (u.todayFiles || 0),
+    0,
+  );
+  const totalWeeklyFiles = salaryUsers.reduce(
+    (s, u) => s + (u.weeklyFiles || 0),
+    0,
+  );
+  const totalMonthlyFiles = salaryUsers.reduce(
+    (s, u) => s + (u.monthlyFiles || 0),
+    0,
+  );
+  const avgDaily = salaryUsers.length
+    ? Math.round(totalMonthlyFiles / Math.max(1, salaryUsers.length))
+    : 0;
 
   // Expense breakdown for pie chart
   const expenseBreakdown = [
@@ -620,7 +658,7 @@ export default function Expense() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{salaryEntries.length}</div>
+            <div className="text-2xl font-bold">{salaryUsers.length}</div>
             <p className="text-xs text-muted-foreground">Active payroll</p>
           </CardContent>
         </Card>
@@ -979,7 +1017,9 @@ export default function Expense() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">2,700</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {totalTodayFiles.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   All users combined
                 </p>
@@ -994,7 +1034,9 @@ export default function Expense() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">15,800</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {totalWeeklyFiles.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">This week total</p>
               </CardContent>
             </Card>
@@ -1007,7 +1049,9 @@ export default function Expense() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">58,100</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {totalMonthlyFiles.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   This month total
                 </p>
@@ -1022,7 +1066,9 @@ export default function Expense() {
                 <Calculator className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">675</div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {avgDaily.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Per user average
                 </p>

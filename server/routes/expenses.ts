@@ -18,6 +18,7 @@ const createExpenseSchema = z.object({
     "utilities",
     "miscellaneous",
   ]),
+  frequency: z.enum(["monthly", "one-time"]).default("one-time"),
   receipt: z.string().optional(),
 });
 
@@ -38,6 +39,7 @@ const updateExpenseSchema = z.object({
       "miscellaneous",
     ])
     .optional(),
+  frequency: z.enum(["monthly", "one-time"]).optional(),
   receipt: z.string().optional(),
   status: z.enum(["pending", "approved", "rejected"]).optional(),
 });
@@ -94,183 +96,125 @@ const expenseQuerySchema = z.object({
 // GET /api/expenses - List expenses with filtering and pagination
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const query = expenseQuerySchema.parse(req.query);
+    const q = expenseQuerySchema.parse(req.query);
 
-    // Mock expense data for demonstration
-    const mockExpenses = [
-      {
-        id: "1",
-        category: "Office Rent",
-        description: "Monthly office rent payment",
-        amount: 25000,
-        date: "2024-01-01",
-        month: "2024-01",
-        type: "administrative",
-        status: "approved",
-        approvedBy: "Admin",
-        createdAt: "2024-01-01T00:00:00Z",
-        updatedAt: "2024-01-01T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-      {
-        id: "2",
-        category: "Utilities",
-        description: "Electricity and internet bills",
-        amount: 5500,
-        date: "2024-01-05",
-        month: "2024-01",
-        type: "utilities",
-        status: "approved",
-        approvedBy: "Admin",
-        createdAt: "2024-01-05T00:00:00Z",
-        updatedAt: "2024-01-05T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-      {
-        id: "3",
-        category: "Software Licenses",
-        description: "Annual software subscription renewals",
-        amount: 8000,
-        date: "2024-01-10",
-        month: "2024-01",
-        type: "operational",
-        status: "approved",
-        approvedBy: "Admin",
-        createdAt: "2024-01-10T00:00:00Z",
-        updatedAt: "2024-01-10T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-      {
-        id: "4",
-        category: "Marketing",
-        description: "Digital marketing campaigns",
-        amount: 12000,
-        date: "2024-01-15",
-        month: "2024-01",
-        type: "marketing",
-        status: "pending",
-        approvedBy: "",
-        createdAt: "2024-01-15T00:00:00Z",
-        updatedAt: "2024-01-15T00:00:00Z",
-        createdBy: {
-          id: "admin-id",
-          name: "Admin User",
-        },
-      },
-    ];
-
-    // Apply filters
-    let filteredExpenses = mockExpenses;
-
-    if (query.type) {
-      filteredExpenses = filteredExpenses.filter((e) => e.type === query.type);
+    const where: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
+    if (q.type) {
+      where.push(`type = $${idx++}`);
+      params.push(q.type);
     }
-
-    if (query.status) {
-      filteredExpenses = filteredExpenses.filter(
-        (e) => e.status === query.status,
+    if (q.status) {
+      where.push(`status = $${idx++}`);
+      params.push(q.status);
+    }
+    if (q.category) {
+      where.push(`LOWER(category) LIKE $${idx++}`);
+      params.push(`%${q.category.toLowerCase()}%`);
+    }
+    if (q.search) {
+      where.push(
+        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`,
       );
+      params.push(`%${q.search.toLowerCase()}%`);
+      idx++;
     }
-
-    if (query.category) {
-      filteredExpenses = filteredExpenses.filter((e) =>
-        e.category.toLowerCase().includes(query.category!.toLowerCase()),
-      );
+    if (q.from) {
+      where.push(`date >= $${idx++}`);
+      params.push(q.from);
     }
-
-    if (query.search) {
-      const searchLower = query.search.toLowerCase();
-      filteredExpenses = filteredExpenses.filter(
-        (e) =>
-          e.category.toLowerCase().includes(searchLower) ||
-          e.description.toLowerCase().includes(searchLower),
-      );
+    if (q.to) {
+      where.push(`date <= $${idx++}`);
+      params.push(q.to);
     }
-
-    if (query.month) {
-      filteredExpenses = filteredExpenses.filter(
-        (e) => e.month === query.month,
-      );
+    if (q.month) {
+      where.push(`month = $${idx++}`);
+      params.push(q.month);
     }
+    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    // Apply sorting
-    filteredExpenses.sort((a, b) => {
-      let aVal: any, bVal: any;
+    const sortCol =
+      q.sortBy === "amount"
+        ? "amount"
+        : q.sortBy === "category"
+          ? "category"
+          : q.sortBy === "type"
+            ? "type"
+            : "date";
+    const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
-      switch (query.sortBy) {
-        case "date":
-          aVal = new Date(a.date);
-          bVal = new Date(b.date);
-          break;
-        case "amount":
-          aVal = a.amount;
-          bVal = b.amount;
-          break;
-        case "category":
-          aVal = a.category;
-          bVal = b.category;
-          break;
-        case "type":
-          aVal = a.type;
-          bVal = b.type;
-          break;
-        default:
-          aVal = new Date(a.date);
-          bVal = new Date(b.date);
-      }
+    const countSql = `SELECT COUNT(*)::INT AS count FROM expenses ${whereSql}`;
+    const baseSql = `SELECT id, category, description, amount::FLOAT8 AS amount,
+        TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
+        COALESCE(approved_by,'') AS approved_by,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+        created_by_user_id AS created_by
+      FROM expenses ${whereSql} ORDER BY ${sortCol} ${sortDir}`;
 
-      if (query.sortOrder === "asc") {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-
-    // Apply pagination
-    const offset = (query.page - 1) * query.limit;
-    const paginatedExpenses = filteredExpenses.slice(
-      offset,
-      offset + query.limit,
+    const { data, pagination } = await paginatedQuery(
+      baseSql,
+      countSql,
+      params,
+      q.page,
+      q.limit,
     );
 
-    const statistics = {
-      totalExpenses: filteredExpenses.reduce((sum, e) => sum + e.amount, 0),
-      approvedCount: filteredExpenses.filter((e) => e.status === "approved")
-        .length,
-      pendingCount: filteredExpenses.filter((e) => e.status === "pending")
-        .length,
-      rejectedCount: filteredExpenses.filter((e) => e.status === "rejected")
-        .length,
-      entryCount: filteredExpenses.length,
+    const rows = data.map((r: any) => ({
+      id: r.id,
+      category: r.category,
+      description: r.description,
+      amount: Number(r.amount),
+      date: r.date,
+      month: r.month,
+      type: r.type,
+      frequency: r.frequency,
+      receipt: r.receipt || undefined,
+      status: r.status,
+      approvedBy: r.approved_by || "",
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      createdBy: r.created_by
+        ? { id: String(r.created_by), name: "" }
+        : { id: "", name: "" },
+    }));
+
+    const statsRes = await query(
+      `SELECT
+         COALESCE(SUM(amount)::FLOAT8,0) AS total_amount,
+         SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END)::INT AS approved_count,
+         SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END)::INT AS pending_count,
+         SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END)::INT AS rejected_count
+       FROM expenses ${whereSql}`,
+      params,
+    );
+    const s = statsRes.rows[0] || {
+      total_amount: 0,
+      approved_count: 0,
+      pending_count: 0,
+      rejected_count: 0,
     };
 
-    res.json({
-      data: paginatedExpenses,
-      statistics,
-      pagination: {
-        total: filteredExpenses.length,
-        page: query.page,
-        limit: query.limit,
-        totalPages: Math.ceil(filteredExpenses.length / query.limit),
-      },
-    });
+    const statistics = {
+      totalExpenses: Number(s.total_amount || 0),
+      approvedCount: Number(s.approved_count || 0),
+      pendingCount: Number(s.pending_count || 0),
+      rejectedCount: Number(s.rejected_count || 0),
+      entryCount: pagination.total,
+    };
+
+    res.json({ data: rows, statistics, pagination });
   } catch (error) {
     console.error("Error fetching expenses:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch expenses",
-      },
-    });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch expenses",
+        },
+      });
   }
 });
 
@@ -278,79 +222,124 @@ router.get("/", async (req: Request, res: Response) => {
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
-    // Mock single expense data
-    const mockExpense = {
-      id: id,
-      category: "Office Rent",
-      description: "Monthly office rent payment",
-      amount: 25000,
-      date: "2024-01-01",
-      month: "2024-01",
-      type: "administrative",
-      receipt: "/uploads/receipts/office-rent-jan-2024.pdf",
-      status: "approved",
-      approvedBy: "Admin",
-      approvedAt: "2024-01-02T10:00:00Z",
-      createdAt: "2024-01-01T00:00:00Z",
-      updatedAt: "2024-01-02T10:00:00Z",
-      createdBy: {
-        id: "admin-id",
-        name: "Admin User",
-      },
-    };
-
-    res.json({ data: mockExpense });
-  } catch (error) {
-    console.error("Error fetching expense:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch expense",
+    const r = await query(
+      `SELECT id, category, description, amount::FLOAT8 AS amount,
+              TO_CHAR(date, 'YYYY-MM-DD') AS date,
+              month, type, frequency, receipt, status,
+              COALESCE(approved_by,'') AS approved_by,
+              TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
+              TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+              TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+              created_by_user_id AS created_by
+         FROM expenses WHERE id = $1`,
+      [id],
+    );
+    const row = r.rows[0];
+    if (!row)
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+    res.json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        approvedAt: row.approved_at || null,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
       },
     });
+  } catch (error) {
+    console.error("Error fetching expense:", error);
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch expense",
+        },
+      });
   }
 });
 
 // POST /api/expenses - Create new expense
 router.post("/", async (req: Request, res: Response) => {
   try {
-    const expenseData = createExpenseSchema.parse(req.body);
+    const body = createExpenseSchema.parse(req.body);
+    const currentUser: any = (req as any).user;
 
-    // Mock creation
-    const newExpense = {
-      id: Date.now().toString(),
-      ...expenseData,
-      month: expenseData.date.substring(0, 7), // Extract YYYY-MM
-      status: "pending" as const,
-      approvedBy: "",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      createdBy: {
-        id: "current-user-id",
-        name: "Current User",
+    const month = body.date.substring(0, 7);
+    const sql = `INSERT INTO expenses
+      (category, description, amount, date, month, type, frequency, receipt, status, approved_by, created_by_user_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending','', $9)
+      RETURNING id, category, description, amount::FLOAT8 AS amount,
+        TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt,
+        status, COALESCE(approved_by,'') AS approved_by,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+        created_by_user_id AS created_by`;
+    const r = await query(sql, [
+      body.category,
+      body.description,
+      body.amount,
+      body.date,
+      month,
+      body.type,
+      body.frequency,
+      body.receipt || null,
+      currentUser?.id || null,
+    ]);
+    const row = r.rows[0];
+    res.status(201).json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
       },
-    };
-
-    res.status(201).json({ data: newExpense });
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
+      return res.status(400).json({
         error: {
           code: "VALIDATION_ERROR",
           message: "Invalid expense data",
           details: error.errors,
         },
       });
-    } else {
-      console.error("Error creating expense:", error);
-      res.status(500).json({
+    }
+    console.error("Error creating expense:", error);
+    res
+      .status(500)
+      .json({
         error: {
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create expense",
         },
       });
-    }
   }
 });
 
@@ -358,47 +347,110 @@ router.post("/", async (req: Request, res: Response) => {
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const expenseData = updateExpenseSchema.parse(req.body);
+    const body = updateExpenseSchema.parse(req.body);
 
-    // Mock update
-    const updatedExpense = {
-      id: id,
-      category: expenseData.category || "Office Rent",
-      description: expenseData.description || "Monthly office rent payment",
-      amount: expenseData.amount || 25000,
-      date: expenseData.date || "2024-01-01",
-      month: (expenseData.date || "2024-01-01").substring(0, 7),
-      type: expenseData.type || "administrative",
-      receipt: expenseData.receipt,
-      status: expenseData.status || "pending",
-      approvedBy: "Admin",
-      createdAt: "2024-01-01T00:00:00Z",
-      updatedAt: new Date().toISOString(),
-      createdBy: {
-        id: "admin-id",
-        name: "Admin User",
+    const sets: string[] = [];
+    const params: any[] = [];
+    let idx = 1;
+    if (body.category !== undefined) {
+      sets.push(`category = $${idx++}`);
+      params.push(body.category);
+    }
+    if (body.description !== undefined) {
+      sets.push(`description = $${idx++}`);
+      params.push(body.description);
+    }
+    if (body.amount !== undefined) {
+      sets.push(`amount = $${idx++}`);
+      params.push(body.amount);
+    }
+    if (body.date !== undefined) {
+      sets.push(`date = $${idx++}`);
+      params.push(body.date);
+    }
+    if (body.type !== undefined) {
+      sets.push(`type = $${idx++}`);
+      params.push(body.type);
+    }
+    if (body.frequency !== undefined) {
+      sets.push(`frequency = $${idx++}`);
+      params.push(body.frequency);
+    }
+    if (body.receipt !== undefined) {
+      sets.push(`receipt = $${idx++}`);
+      params.push(body.receipt);
+    }
+    if (body.status !== undefined) {
+      sets.push(`status = $${idx++}`);
+      params.push(body.status);
+    }
+
+    if (sets.length === 0) {
+      return res
+        .status(400)
+        .json({
+          error: { code: "NO_CHANGES", message: "No fields to update" },
+        });
+    }
+
+    if (body.date !== undefined) {
+      sets.push(`month = SUBSTRING($${idx - 1}::text, 1, 7)`);
+    }
+    sets.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    const sql = `UPDATE expenses SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, category, description, amount::FLOAT8 AS amount,
+      TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
+      TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+      TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+      created_by_user_id AS created_by`;
+    const r = await query(sql, [...params, id]);
+    const row = r.rows[0];
+    if (!row)
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+
+    res.json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
       },
-    };
-
-    res.json({ data: updatedExpense });
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid expense data",
-          details: error.errors,
-        },
-      });
-    } else {
-      console.error("Error updating expense:", error);
-      res.status(500).json({
+      return res
+        .status(400)
+        .json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid expense data",
+            details: error.errors,
+          },
+        });
+    }
+    console.error("Error updating expense:", error);
+    res
+      .status(500)
+      .json({
         error: {
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to update expense",
         },
       });
-    }
   }
 });
 
@@ -407,48 +459,70 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, notes } = approveExpenseSchema.parse(req.body);
+    const currentUser: any = (req as any).user;
 
-    // Mock approval
-    const approvedExpense = {
-      id: id,
-      category: "Office Rent",
-      description: "Monthly office rent payment",
-      amount: 25000,
-      date: "2024-01-01",
-      month: "2024-01",
-      type: "administrative",
-      status: status,
-      approvedBy: "Current User",
-      approvedAt: new Date().toISOString(),
-      approvalNotes: notes,
-      rejectionReason: status === "rejected" ? notes : undefined,
-      createdAt: "2024-01-01T00:00:00Z",
-      updatedAt: new Date().toISOString(),
-      createdBy: {
-        id: "admin-id",
-        name: "Admin User",
+    const sql = `UPDATE expenses SET status = $1, approved_by = $2, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $3
+                 RETURNING id, category, description, amount::FLOAT8 AS amount, TO_CHAR(date,'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
+                   COALESCE(approved_by,'') AS approved_by,
+                   TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
+                   TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+                   TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+                   created_by_user_id AS created_by`;
+    const r = await query(sql, [
+      status,
+      currentUser?.name || "Current User",
+      id,
+    ]);
+    const row = r.rows[0];
+    if (!row)
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+
+    res.json({
+      data: {
+        id: row.id,
+        category: row.category,
+        description: row.description,
+        amount: Number(row.amount),
+        date: row.date,
+        month: row.month,
+        type: row.type,
+        frequency: row.frequency,
+        receipt: row.receipt || undefined,
+        status: row.status,
+        approvedBy: row.approved_by || "",
+        approvedAt: row.approved_at || null,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
+        approvalNotes: notes,
+        rejectionReason: status === "rejected" ? notes : undefined,
       },
-    };
-
-    res.json({ data: approvedExpense });
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "Invalid approval data",
-          details: error.errors,
-        },
-      });
-    } else {
-      console.error("Error approving expense:", error);
-      res.status(500).json({
+      return res
+        .status(400)
+        .json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid approval data",
+            details: error.errors,
+          },
+        });
+    }
+    console.error("Error approving expense:", error);
+    res
+      .status(500)
+      .json({
         error: {
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to approve expense",
         },
       });
-    }
   }
 });
 
@@ -456,20 +530,18 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
-    // Mock deletion
-    res.json({
-      success: true,
-      message: "Expense deleted successfully",
-    });
+    await query(`DELETE FROM expenses WHERE id = $1`, [id]);
+    res.json({ success: true, message: "Expense deleted successfully" });
   } catch (error) {
     console.error("Error deleting expense:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to delete expense",
-      },
-    });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete expense",
+        },
+      });
   }
 });
 
@@ -1472,131 +1544,271 @@ router.get("/billing/export", async (req: Request, res: Response) => {
 // GET /api/expenses/analytics/dashboard - Get expense dashboard data
 router.get("/analytics/dashboard", async (req: Request, res: Response) => {
   try {
-    const { month = "2024-01" } = req.query;
+    const { month } = req.query as any;
+    const targetMonth = String(
+      month || new Date().toISOString().substring(0, 7),
+    );
+    const monthStart = `${targetMonth}-01`;
+    const next = new Date(`${targetMonth}-01T00:00:00Z`);
+    next.setUTCMonth(next.getUTCMonth() + 1);
+    const nextStr = next.toISOString().substring(0, 10);
 
-    const mockDashboardData = {
+    const projRatesRes = await query(
+      `SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`,
+    );
+    const rateMap = new Map<string, number>();
+    for (const r of projRatesRes.rows)
+      rateMap.set(String((r as any).id), Number((r as any).rate || 0));
+
+    const sqlManual = `
+      SELECT fp.project_id, COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS completed
+        FROM file_requests fr
+        JOIN file_processes fp ON fp.id = fr.file_process_id
+       WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
+       GROUP BY fp.project_id`;
+    const sqlAutomation = `
+      SELECT fp.project_id, COALESCE(SUM((d->>'completed')::INT),0) AS completed
+        FROM file_processes fp
+        JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+       WHERE fp.type = 'automation' AND fp.automation_config IS NOT NULL
+         AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+       GROUP BY fp.project_id`;
+    const [rowsManual, rowsAuto] = await Promise.all([
+      query(sqlManual, [monthStart, nextStr]),
+      query(sqlAutomation, [monthStart, nextStr]),
+    ]);
+
+    const byProject = new Map<string, number>();
+    for (const r of [...rowsManual.rows, ...rowsAuto.rows]) {
+      const p = String((r as any).project_id || "");
+      const c = Number((r as any).completed || 0);
+      if (!p) continue;
+      byProject.set(p, (byProject.get(p) || 0) + c);
+    }
+
+    const conversionRate = 83.0;
+    let totalRevenueUSD = 0;
+    for (const [pId, completed] of byProject.entries()) {
+      const rateUSD = rateMap.get(pId) || 0;
+      totalRevenueUSD += completed * rateUSD;
+    }
+    const totalRevenue = totalRevenueUSD * conversionRate;
+
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
+    const fRate = Number(cfg.first_tier_rate || 0);
+    const sRate = Number(cfg.second_tier_rate || 0);
+    const fLimit = Number(cfg.first_tier_limit || 0);
+
+    const userFilesRes = await query(
+      `SELECT COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS files
+         FROM file_requests fr WHERE fr.status='completed' AND fr.completed_date >= $1 AND fr.completed_date < $2`,
+      [monthStart, nextStr],
+    );
+    const monthlyFiles = Number(userFilesRes.rows[0]?.files || 0);
+    const t1 = Math.min(monthlyFiles, fLimit);
+    const t2 = Math.max(0, monthlyFiles - fLimit);
+    const userSalaries = t1 * fRate + t2 * sRate;
+
+    const pmRes = await query(
+      `SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`,
+      [nextStr],
+    );
+    const pmSalaries = Number(pmRes.rows[0]?.total || 0);
+
+    const salaryExpenses = userSalaries + pmSalaries;
+
+    const adminRes = await query(
+      `SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected'`,
+      [targetMonth],
+    );
+    const adminExpenses = Number(adminRes.rows[0]?.total || 0);
+
+    const totalExpenses = salaryExpenses + adminExpenses;
+    const netProfit = totalRevenue - totalExpenses;
+    const profitMargin =
+      totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+    const catRows = await query(
+      `SELECT type, COUNT(*)::INT AS count, COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected' GROUP BY type ORDER BY total DESC LIMIT 5`,
+      [targetMonth],
+    );
+    const topExpenseCategories = [
+      {
+        name: "Salaries",
+        value: salaryExpenses,
+        percentage: 0,
+        fill: "#3b82f6",
+        count: 0,
+      },
+      ...catRows.rows.map((r: any) => ({
+        name: String(r.type),
+        value: Number(r.total || 0),
+        percentage: 0,
+        fill: "#ef4444",
+        count: Number(r.count || 0),
+      })),
+    ];
+    const catSum = topExpenseCategories.reduce((s, c) => s + c.value, 0);
+    for (const c of topExpenseCategories)
+      c.percentage = catSum > 0 ? (c.value / catSum) * 100 : 0;
+
+    const data = {
       currentMonth: {
-        totalRevenue: 420000,
-        totalExpenses: 270460,
-        netProfit: 149540,
-        profitMargin: 35.6,
-        salaryExpenses: 81960,
-        adminExpenses: 50500,
+        totalRevenue,
+        totalExpenses,
+        netProfit,
+        profitMargin,
+        salaryExpenses,
+        adminExpenses,
       },
-      trends: {
-        revenueGrowth: 12.5,
-        expenseGrowth: 8.3,
-        profitGrowth: 18.7,
-      },
-      alerts: [
-        {
-          type: "budget_warning",
-          message: "Marketing expenses are 15% over budget for this month",
-          severity: "medium",
-        },
-      ],
-      topExpenseCategories: [
-        {
-          name: "Salaries",
-          value: 81960,
-          percentage: 72.8,
-          fill: "#3b82f6",
-          count: 4,
-        },
-        {
-          name: "Administrative",
-          value: 25000,
-          percentage: 22.2,
-          fill: "#ef4444",
-          count: 1,
-        },
-        {
-          name: "Operational",
-          value: 8000,
-          percentage: 7.1,
-          fill: "#f59e0b",
-          count: 1,
-        },
-        {
-          name: "Marketing",
-          value: 12000,
-          percentage: 10.7,
-          fill: "#10b981",
-          count: 1,
-        },
-        {
-          name: "Utilities",
-          value: 5500,
-          percentage: 4.9,
-          fill: "#8b5cf6",
-          count: 1,
-        },
-      ],
+      trends: { revenueGrowth: 0, expenseGrowth: 0, profitGrowth: 0 },
+      alerts: [],
+      topExpenseCategories,
     };
 
-    res.json({ data: mockDashboardData });
+    res.json({ data });
   } catch (error) {
     console.error("Error fetching dashboard analytics:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch dashboard analytics",
-      },
-    });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch dashboard analytics",
+        },
+      });
   }
 });
 
 // GET /api/expenses/analytics/profit-loss - Get profit & loss data
 router.get("/analytics/profit-loss", async (req: Request, res: Response) => {
   try {
-    const mockProfitLossData = [
-      {
-        month: "2023-10",
-        revenue: 285000,
-        salaryExpense: 145000,
-        adminExpense: 45000,
-        totalExpense: 190000,
-        netProfit: 95000,
-        profitMargin: 33.3,
-      },
-      {
-        month: "2023-11",
-        revenue: 320000,
-        salaryExpense: 152000,
-        adminExpense: 48000,
-        totalExpense: 200000,
-        netProfit: 120000,
-        profitMargin: 37.5,
-      },
-      {
-        month: "2023-12",
-        revenue: 375000,
-        salaryExpense: 165000,
-        adminExpense: 52000,
-        totalExpense: 217000,
-        netProfit: 158000,
-        profitMargin: 42.1,
-      },
-      {
-        month: "2024-01",
-        revenue: 420000,
-        salaryExpense: 170000,
-        adminExpense: 50500,
-        totalExpense: 220500,
-        netProfit: 199500,
-        profitMargin: 47.5,
-      },
-    ];
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const dt = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1),
+      );
+      months.push(dt.toISOString().substring(0, 7));
+    }
 
-    res.json({ data: mockProfitLossData });
+    const projRatesRes = await query(
+      `SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`,
+    );
+    const rateMap = new Map<string, number>();
+    for (const r of projRatesRes.rows)
+      rateMap.set(String((r as any).id), Number((r as any).rate || 0));
+
+    const conversionRate = 83.0;
+
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
+    const fRate = Number(cfg.first_tier_rate || 0);
+    const sRate = Number(cfg.second_tier_rate || 0);
+    const fLimit = Number(cfg.first_tier_limit || 0);
+
+    const calcEarning = (files: number) => {
+      const t1 = Math.min(files, fLimit);
+      const t2 = Math.max(0, files - fLimit);
+      return t1 * fRate + t2 * sRate;
+    };
+
+    const result: any[] = [];
+
+    for (const m of months) {
+      const monthStart = `${m}-01`;
+      const next = new Date(`${m}-01T00:00:00Z`);
+      next.setUTCMonth(next.getUTCMonth() + 1);
+      const nextStr = next.toISOString().substring(0, 10);
+
+      const sqlManual = `
+        SELECT fp.project_id, COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS completed
+          FROM file_requests fr JOIN file_processes fp ON fp.id = fr.file_process_id
+         WHERE fr.status = 'completed' AND fr.completed_date >= $1 AND fr.completed_date < $2
+         GROUP BY fp.project_id`;
+      const sqlAutomation = `
+        SELECT fp.project_id, COALESCE(SUM((d->>'completed')::INT),0) AS completed
+          FROM file_processes fp
+          JOIN LATERAL jsonb_array_elements(fp.automation_config->'dailyCompletions') AS d ON TRUE
+         WHERE fp.type = 'automation' AND fp.automation_config IS NOT NULL
+           AND (d->>'date')::DATE >= $1 AND (d->>'date')::DATE < $2
+         GROUP BY fp.project_id`;
+      const [rowsManual, rowsAuto] = await Promise.all([
+        query(sqlManual, [monthStart, nextStr]),
+        query(sqlAutomation, [monthStart, nextStr]),
+      ]);
+      const byProject = new Map<string, number>();
+      for (const r of [...rowsManual.rows, ...rowsAuto.rows]) {
+        const p = String((r as any).project_id || "");
+        const c = Number((r as any).completed || 0);
+        if (!p) continue;
+        byProject.set(p, (byProject.get(p) || 0) + c);
+      }
+      let revenueUSD = 0;
+      for (const [pId, completed] of byProject.entries())
+        revenueUSD += completed * (rateMap.get(pId) || 0);
+      const revenue = revenueUSD * conversionRate;
+
+      const userFilesRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS files
+           FROM file_requests fr WHERE fr.status='completed' AND fr.completed_date >= $1 AND fr.completed_date < $2`,
+        [monthStart, nextStr],
+      );
+      const monthlyFiles = Number(userFilesRes.rows[0]?.files || 0);
+      const userSalaries = calcEarning(monthlyFiles);
+
+      const pmRes = await query(
+        `SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`,
+        [nextStr],
+      );
+      const pmSalaries = Number(pmRes.rows[0]?.total || 0);
+      const salaryExpense = userSalaries + pmSalaries;
+
+      const adminRes = await query(
+        `SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month=$1 AND status <> 'rejected'`,
+        [m],
+      );
+      const adminExpense = Number(adminRes.rows[0]?.total || 0);
+
+      const totalExpense = salaryExpense + adminExpense;
+      const netProfit = revenue - totalExpense;
+      const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+
+      result.push({
+        month: m,
+        revenue,
+        salaryExpense,
+        adminExpense,
+        totalExpense,
+        netProfit,
+        profitMargin,
+      });
+    }
+
+    res.json({ data: result });
   } catch (error) {
     console.error("Error fetching profit & loss data:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch profit & loss data",
-      },
-    });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch profit & loss data",
+        },
+      });
   }
 });
 
