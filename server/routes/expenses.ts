@@ -754,7 +754,7 @@ router.get("/salary/users", async (req: Request, res: Response) => {
         weeklyEarnings: calc(weeklyFiles),
         monthlyEarnings: calc(monthlyFiles),
         attendanceRate: performancePct,
-        lastActive: null,
+        lastActive,
       });
     }
 
