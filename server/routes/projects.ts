@@ -216,6 +216,7 @@ export const getProject: RequestHandler = async (req, res) => {
       },
       createdAt: project.created_at,
       updatedAt: project.updated_at,
+      ratePerFileUSD: project.rate_per_file_usd ?? null,
     };
 
     res.json({
