@@ -519,16 +519,24 @@ export default function FileProcess() {
         totalRows: Number(p.total_rows ?? p.totalRows ?? 0),
         headerRows: Number(p.header_rows ?? p.headerRows ?? 0),
         processedRows: Number(p.processed_rows ?? p.processedRows ?? 0),
-        availableRows:
-          Number(
-            (p.available_rows ?? p.availableRows ?? p.total_rows ?? p.totalRows ?? 0)
-          ),
+        availableRows: Number(
+          p.available_rows ??
+            p.availableRows ??
+            p.total_rows ??
+            p.totalRows ??
+            0,
+        ),
         uploadDate: p.upload_date || p.uploadDate || null,
         status: p.status || "pending",
         createdBy: p.created_by || p.createdBy || null,
         activeUsers: p.active_users ?? p.activeUsers ?? 0,
         type: p.type || "manual",
-        dailyTarget: p.daily_target != null ? Number(p.daily_target) : (p.dailyTarget != null ? Number(p.dailyTarget) : null),
+        dailyTarget:
+          p.daily_target != null
+            ? Number(p.daily_target)
+            : p.dailyTarget != null
+              ? Number(p.dailyTarget)
+              : null,
         automationConfig: p.automation_config || p.automationConfig || null,
         createdAt: p.created_at || p.createdAt || null,
         updatedAt: p.updated_at || p.updatedAt || null,
@@ -761,8 +769,11 @@ export default function FileProcess() {
   const submitDailyUpdate = async () => {
     if (!selectedAutomationProcess) return;
 
-    const process = fileProcesses.find((p) => p.id === selectedAutomationProcess.id);
-    if (!process || process.type !== "automation" || !process.automationConfig) return;
+    const process = fileProcesses.find(
+      (p) => p.id === selectedAutomationProcess.id,
+    );
+    if (!process || process.type !== "automation" || !process.automationConfig)
+      return;
 
     // Build updated completions
     const existingIndex = process.automationConfig.dailyCompletions.findIndex(
@@ -1009,7 +1020,8 @@ export default function FileProcess() {
       await loadData();
       // Keep dialog selection in sync if open
       if (selectedProcess?.id === processId) {
-        const refreshed = (fileProcesses.find((p) => p.id === processId) || null) as any;
+        const refreshed = (fileProcesses.find((p) => p.id === processId) ||
+          null) as any;
         setSelectedProcess(refreshed);
       }
     } catch (e) {
