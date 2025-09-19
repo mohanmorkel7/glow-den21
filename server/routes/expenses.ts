@@ -382,20 +382,11 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
-    // Mock deletion
-    res.json({
-      success: true,
-      message: "Expense deleted successfully",
-    });
+    await query(`DELETE FROM expenses WHERE id = $1`, [id]);
+    res.json({ success: true, message: "Expense deleted successfully" });
   } catch (error) {
     console.error("Error deleting expense:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to delete expense",
-      },
-    });
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to delete expense" } });
   }
 });
 
