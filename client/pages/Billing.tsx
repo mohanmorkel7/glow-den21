@@ -861,7 +861,7 @@ export default function Billing() {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium text-blue-600">
-                          {formatCurrency(billing.totalAmountINR, "INR")}
+                          {formatCurrency(billing.totalAmountUSD * usdToInrRate, "INR")}
                         </div>
                       </div>
                     </TableCell>
