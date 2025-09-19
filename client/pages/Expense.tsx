@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiClient } from "@/lib/api";
 import {
   Card,
   CardContent,
@@ -126,6 +127,10 @@ export default function Expense() {
     new Date().toISOString().slice(0, 7),
   );
   const [isAddSalaryOpen, setIsAddSalaryOpen] = useState(false);
+  const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>([]);
+  const [expenseStats, setExpenseStats] = useState<any>(null);
+  const [profitLossData, setProfitLossData] = useState<ProfitLossData[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [isViewExpenseOpen, setIsViewExpenseOpen] = useState(false);
@@ -303,46 +308,30 @@ export default function Expense() {
     return [...monthlyExpenses, ...currentMonthOneTime];
   };
 
-  const expenseEntries = generateExpensesForMonth(selectedMonth);
-
-  const profitLossData: ProfitLossData[] = [
-    {
-      month: "2023-10",
-      revenue: 285000,
-      salaryExpense: 145000,
-      adminExpense: 45000,
-      totalExpense: 190000,
-      netProfit: 95000,
-      profitMargin: 33.3,
-    },
-    {
-      month: "2023-11",
-      revenue: 320000,
-      salaryExpense: 152000,
-      adminExpense: 48000,
-      totalExpense: 200000,
-      netProfit: 120000,
-      profitMargin: 37.5,
-    },
-    {
-      month: "2023-12",
-      revenue: 375000,
-      salaryExpense: 165000,
-      adminExpense: 52000,
-      totalExpense: 217000,
-      netProfit: 158000,
-      profitMargin: 42.1,
-    },
-    {
-      month: "2024-01",
-      revenue: 420000,
-      salaryExpense: 170000,
-      adminExpense: 50500,
-      totalExpense: 220500,
-      netProfit: 199500,
-      profitMargin: 47.5,
-    },
-  ];
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const [list, pl] = await Promise.all([
+          apiClient.getExpenses({ month: selectedMonth, limit: 500 }),
+          apiClient.getExpenseProfitLoss(),
+        ]);
+        const data = (list as any)?.data || list || [];
+        const stats = (list as any)?.statistics || null;
+        setExpenseEntries(data as any);
+        setExpenseStats(stats);
+        setProfitLossData(((pl as any)?.data || pl || []) as any);
+      } catch (e) {
+        console.error("Failed to load expenses", e);
+        setExpenseEntries([]);
+        setExpenseStats(null);
+        setProfitLossData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [selectedMonth]);
 
   // Calculate current month statistics
   const currentMonthSalary = salaryEntries

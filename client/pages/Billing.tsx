@@ -416,6 +416,11 @@ const computeBillingData = (): MonthlyBillingSummary[] => {
 
 export default function Billing() {
   const { user: currentUser } = useAuth();
+  const [usdToInrRate, setUsdToInrRate] = useState<number>(() => {
+    const v = localStorage.getItem("usdToInrRate");
+    const n = v ? parseFloat(v) : NaN;
+    return Number.isFinite(n) ? n : 83;
+  });
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -591,25 +596,51 @@ export default function Billing() {
           </p>
         </div>
         {canManageBilling && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleExportBilling("csv")}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => handleExportBilling("excel")}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Excel
-            </Button>
-            <Button onClick={() => handleExportBilling("pdf")}>
-              <Receipt className="h-4 w-4 mr-2" />
-              Generate Report
-            </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground">₹ per USD</label>
+              <input
+                type="number"
+                step="0.01"
+                value={usdToInrRate}
+                onChange={(e) =>
+                  setUsdToInrRate(parseFloat(e.target.value) || 0)
+                }
+                className="w-24 h-9 border rounded px-2 text-sm"
+              />
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!isFinite(usdToInrRate) || usdToInrRate <= 0) {
+                    alert("Enter a valid conversion rate");
+                    return;
+                  }
+                  localStorage.setItem("usdToInrRate", String(usdToInrRate));
+                }}
+              >
+                Save Rate
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleExportBilling("csv")}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleExportBilling("excel")}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export Excel
+              </Button>
+              <Button onClick={() => handleExportBilling("pdf")}>
+                <Receipt className="h-4 w-4 mr-2" />
+                Generate Report
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -683,6 +714,9 @@ export default function Billing() {
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(stats.paidUSD, "USD")}
             </div>
+            <p className="text-xs text-blue-600">
+              {formatCurrency(stats.paidUSD * usdToInrRate, "INR")}
+            </p>
             <p className="text-xs text-muted-foreground">Received payments</p>
           </CardContent>
         </Card>
@@ -697,6 +731,9 @@ export default function Billing() {
             <div className="text-2xl font-bold text-orange-600">
               {formatCurrency(stats.pendingUSD, "USD")}
             </div>
+            <p className="text-xs text-blue-600">
+              {formatCurrency(stats.pendingUSD * usdToInrRate, "INR")}
+            </p>
             <p className="text-xs text-muted-foreground">Awaiting payment</p>
           </CardContent>
         </Card>
@@ -796,7 +833,7 @@ export default function Billing() {
                             )}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Rate: ₹{billing.conversionRate}/USD
+                            Rate: ₹{usdToInrRate}/USD
                           </div>
                         </div>
                       </div>
@@ -856,7 +893,10 @@ export default function Billing() {
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium text-blue-600">
-                          {formatCurrency(billing.totalAmountINR, "INR")}
+                          {formatCurrency(
+                            billing.totalAmountUSD * usdToInrRate,
+                            "INR",
+                          )}
                         </div>
                       </div>
                     </TableCell>
@@ -983,10 +1023,13 @@ export default function Billing() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-xl font-bold text-blue-600">
-                        {formatCurrency(selectedBilling.totalAmountINR, "INR")}
+                        {formatCurrency(
+                          selectedBilling.totalAmountUSD * usdToInrRate,
+                          "INR",
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Rate: ₹{selectedBilling.conversionRate}/USD
+                        Rate: ₹{usdToInrRate}/USD
                       </div>
                     </CardContent>
                   </Card>
@@ -1093,7 +1136,7 @@ export default function Billing() {
                                 <TableCell>
                                   <div className="text-sm font-medium text-blue-600">
                                     {formatCurrency(
-                                      processAmount * project.conversionRate,
+                                      processAmount * usdToInrRate,
                                       "INR",
                                     )}
                                   </div>
@@ -1147,6 +1190,12 @@ export default function Billing() {
                             </TableCell>
                             <TableCell className="font-bold text-green-600">
                               {formatCurrency(project.amountUSD, "USD")}
+                            </TableCell>
+                            <TableCell className="font-bold text-blue-600">
+                              {formatCurrency(
+                                project.amountUSD * usdToInrRate,
+                                "INR",
+                              )}
                             </TableCell>
                           </TableRow>
                         </TableBody>
