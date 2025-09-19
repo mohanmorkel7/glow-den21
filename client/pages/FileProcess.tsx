@@ -516,21 +516,27 @@ export default function FileProcess() {
         projectId: p.project_id || p.projectId || null,
         projectName: p.project_name || p.projectName || null,
         fileName: p.file_name || p.fileName || null,
-        totalRows: p.total_rows ?? p.totalRows ?? 0,
-        headerRows: p.header_rows ?? p.headerRows ?? 0,
-        processedRows: p.processed_rows ?? p.processedRows ?? 0,
-        availableRows:
+        totalRows: Number(p.total_rows ?? p.totalRows ?? 0),
+        headerRows: Number(p.header_rows ?? p.headerRows ?? 0),
+        processedRows: Number(p.processed_rows ?? p.processedRows ?? 0),
+        availableRows: Number(
           p.available_rows ??
-          p.availableRows ??
-          p.total_rows ??
-          p.totalRows ??
-          0,
+            p.availableRows ??
+            p.total_rows ??
+            p.totalRows ??
+            0,
+        ),
         uploadDate: p.upload_date || p.uploadDate || null,
         status: p.status || "pending",
         createdBy: p.created_by || p.createdBy || null,
         activeUsers: p.active_users ?? p.activeUsers ?? 0,
         type: p.type || "manual",
-        dailyTarget: p.daily_target ?? p.dailyTarget ?? null,
+        dailyTarget:
+          p.daily_target != null
+            ? Number(p.daily_target)
+            : p.dailyTarget != null
+              ? Number(p.dailyTarget)
+              : null,
         automationConfig: p.automation_config || p.automationConfig || null,
         createdAt: p.created_at || p.createdAt || null,
         updatedAt: p.updated_at || p.updatedAt || null,
@@ -760,60 +766,58 @@ export default function FileProcess() {
     setIsUpdateDialogOpen(true);
   };
 
-  const submitDailyUpdate = () => {
+  const submitDailyUpdate = async () => {
     if (!selectedAutomationProcess) return;
 
-    const updatedProcesses = fileProcesses.map((p) => {
-      if (
-        p.id === selectedAutomationProcess.id &&
-        p.type === "automation" &&
-        p.automationConfig
-      ) {
-        // Check if there's already an entry for this date
-        const existingEntryIndex =
-          p.automationConfig.dailyCompletions.findIndex(
-            (d) => d.date === dailyUpdate.date,
-          );
-        let updatedCompletions = [...p.automationConfig.dailyCompletions];
-        let processedRowsDiff = dailyUpdate.completed;
+    const process = fileProcesses.find(
+      (p) => p.id === selectedAutomationProcess.id,
+    );
+    if (!process || process.type !== "automation" || !process.automationConfig)
+      return;
 
-        if (existingEntryIndex >= 0) {
-          // Update existing entry
-          const oldCompleted = updatedCompletions[existingEntryIndex].completed;
-          updatedCompletions[existingEntryIndex] = {
-            date: dailyUpdate.date,
-            completed: dailyUpdate.completed,
-          };
-          processedRowsDiff = dailyUpdate.completed - oldCompleted;
-        } else {
-          // Add new entry
-          updatedCompletions = [
-            ...updatedCompletions,
-            { date: dailyUpdate.date, completed: dailyUpdate.completed },
-          ].slice(-30); // Keep last 30 days
-        }
+    // Build updated completions
+    const existingIndex = process.automationConfig.dailyCompletions.findIndex(
+      (d) => d.date === dailyUpdate.date,
+    );
+    let updatedCompletions = [...process.automationConfig.dailyCompletions];
+    let processedRowsDiff = dailyUpdate.completed;
 
-        const newProcessedRows = p.processedRows + processedRowsDiff;
-        const newAvailableRows = p.totalRows - newProcessedRows;
+    if (existingIndex >= 0) {
+      const oldCompleted = updatedCompletions[existingIndex].completed;
+      updatedCompletions[existingIndex] = {
+        date: dailyUpdate.date,
+        completed: dailyUpdate.completed,
+      };
+      processedRowsDiff = dailyUpdate.completed - oldCompleted;
+    } else {
+      updatedCompletions = [
+        ...updatedCompletions,
+        { date: dailyUpdate.date, completed: dailyUpdate.completed },
+      ].slice(-30);
+    }
 
-        return {
-          ...p,
-          processedRows: Math.max(0, newProcessedRows),
-          availableRows: Math.max(0, newAvailableRows),
-          status: newAvailableRows <= 0 ? ("completed" as const) : p.status,
-          automationConfig: {
-            ...p.automationConfig,
-            lastUpdate: new Date().toISOString(),
-            dailyCompletions: updatedCompletions,
-          },
-        };
-      }
-      return p;
-    });
+    const newProcessedRows = process.processedRows + processedRowsDiff;
+    const newAvailableRows = process.totalRows - newProcessedRows;
+    const newStatus = newAvailableRows <= 0 ? "completed" : process.status;
 
-    setFileProcesses(updatedProcesses);
-    setIsUpdateDialogOpen(false);
-    setSelectedAutomationProcess(null);
+    try {
+      await apiClient.updateFileProcess(process.id, {
+        processed_rows: Math.max(0, newProcessedRows),
+        available_rows: Math.max(0, newAvailableRows),
+        status: newStatus,
+        automation_config: JSON.stringify({
+          ...process.automationConfig,
+          lastUpdate: new Date().toISOString(),
+          dailyCompletions: updatedCompletions,
+        }),
+      });
+      await loadData();
+      setIsUpdateDialogOpen(false);
+      setSelectedAutomationProcess(null);
+    } catch (e) {
+      console.error("Failed to update automation progress", e);
+      alert("Failed to update automation progress");
+    }
   };
 
   const getAutomationStats = () => {
@@ -1010,23 +1014,19 @@ export default function FileProcess() {
       (req: any) => req.status === "completed" || req.status === "rework",
     );
 
-  const handleStatusChange = (processId: string, newStatus: string) => {
-    const updatedProcesses = fileProcesses.map((p) => {
-      if (p.id === processId) {
-        return {
-          ...p,
-          status: newStatus as FileProcess["status"],
-        };
+  const handleStatusChange = async (processId: string, newStatus: string) => {
+    try {
+      await apiClient.updateFileProcess(processId, { status: newStatus });
+      await loadData();
+      // Keep dialog selection in sync if open
+      if (selectedProcess?.id === processId) {
+        const refreshed = (fileProcesses.find((p) => p.id === processId) ||
+          null) as any;
+        setSelectedProcess(refreshed);
       }
-      return p;
-    });
-
-    setFileProcesses(updatedProcesses);
-
-    // Update the selected process if it's currently being viewed
-    if (selectedProcess?.id === processId) {
-      const updatedProcess = updatedProcesses.find((p) => p.id === processId);
-      setSelectedProcess(updatedProcess || null);
+    } catch (e) {
+      console.error("Failed to update process status", e);
+      alert("Failed to update status");
     }
   };
 

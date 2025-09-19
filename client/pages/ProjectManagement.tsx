@@ -93,6 +93,7 @@ interface Project {
   assignedUsers?: string[];
   createdBy?: string;
   createdAt?: string;
+  ratePerFileUSD?: number | null;
 }
 
 export default function ProjectManagement() {
@@ -145,6 +146,7 @@ export default function ProjectManagement() {
       p.created_by_name ||
       "",
     createdAt: p.created_at || p.createdAt,
+    ratePerFileUSD: p.ratePerFileUSD ?? p.rate_per_file_usd ?? null,
   });
 
   const loadProjects = async () => {
@@ -224,7 +226,8 @@ export default function ProjectManagement() {
       client: project.client || "mobius_dataservice",
       customClient: project.customClient || "",
       assignedUsers: project.assignedUsers || [],
-      ratePerFileUSD: (project as any).ratePerFileUSD ?? "",
+      ratePerFileUSD:
+        project.ratePerFileUSD ?? (project as any).rate_per_file_usd ?? "",
     });
     setIsAddDialogOpen(true);
   };
