@@ -712,6 +712,7 @@ export default function Billing() {
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(stats.paidUSD, "USD")}
             </div>
+            <p className="text-xs text-blue-600">{formatCurrency(stats.paidUSD * usdToInrRate, "INR")}</p>
             <p className="text-xs text-muted-foreground">Received payments</p>
           </CardContent>
         </Card>
