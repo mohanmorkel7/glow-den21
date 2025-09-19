@@ -990,7 +990,7 @@ export default function Salary() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {new Date(pm.lastActive).toLocaleString()}
+                          {pm.lastActive ? new Date(pm.lastActive).toLocaleString() : "-"}
                         </div>
                       </TableCell>
                     </TableRow>
