@@ -68,6 +68,17 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 interface User {
   id: string;
@@ -91,6 +102,7 @@ interface Project {
   targetCount?: number;
   currentCount?: number;
   assignedUsers?: string[];
+  assignedUsersCount?: number;
   createdBy?: string;
   createdAt?: string;
   ratePerFileUSD?: number | null;
@@ -105,6 +117,9 @@ export default function ProjectManagement() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [projectCharts, setProjectCharts] = useState<
+    { name: string; files: number; amount: number }[]
+  >([]);
 
   const [newProject, setNewProject] = useState({
     name: "",
@@ -139,6 +154,9 @@ export default function ProjectManagement() {
     assignedUsers: p.assigned_users
       ? p.assigned_users.map((u: any) => String(u))
       : p.assignedUsers || [],
+    assignedUsersCount: parseInt(
+      p.assigned_users_count ?? p.assignedUsersCount ?? 0,
+    ),
     createdBy:
       p.created_by?.name ||
       p.createdBy?.name ||
@@ -170,6 +188,29 @@ export default function ProjectManagement() {
 
   useEffect(() => {
     loadProjects();
+    // Load project-wise metrics for current month
+    (async () => {
+      try {
+        const month = new Date().toISOString().substring(0, 7);
+        const resp: any = await apiClient.getBillingSummary(month, 1);
+        const summaries = (resp && (resp as any).data) || resp || [];
+        const monthSummary = Array.isArray(summaries)
+          ? summaries.find((s: any) => s.month === month)
+          : null;
+        const items =
+          (monthSummary?.projects || monthSummary || []).projects ||
+          monthSummary?.projects ||
+          [];
+        const charts = (items as any[]).map((p: any) => ({
+          name: p.projectName || p.project_name || "Project",
+          files: Number(p.totalFilesCompleted || 0),
+          amount: Number(p.amountINR || p.amountUsd || 0),
+        }));
+        setProjectCharts(charts);
+      } catch (e) {
+        // ignore
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -471,6 +512,51 @@ export default function ProjectManagement() {
             />
           </div>
 
+          {projectCharts.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Volume (Files Completed)</CardTitle>
+                  <CardDescription>
+                    Which projects processed the most files this month
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={projectCharts}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" hide={false} />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="files" name="Files" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Revenue (₹)</CardTitle>
+                  <CardDescription>
+                    Which projects generated the most this month
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={projectCharts}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" hide={false} />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="amount" name="Amount (₹)" fill="#10b981" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -489,6 +575,15 @@ export default function ProjectManagement() {
                     <div className="font-medium">{project.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {project.description}
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      Rate:{" "}
+                      {project.ratePerFileUSD
+                        ? `$${project.ratePerFileUSD}`
+                        : "—"}
+                    </div>
+                    <div className="text-xs text-purple-600">
+                      Assigned Users: {project.assignedUsersCount ?? 0}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -532,9 +627,46 @@ export default function ProjectManagement() {
                           </Button>
                         </>
                       )}
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try {
+                                const data: any =
+                                  await apiClient.getProjectProgress(
+                                    project.id,
+                                  );
+                                const d =
+                                  (data && (data as any).data) || data || {};
+                                alert(
+                                  `Progress for ${project.name}:\nTarget: ${d.targetCount || 0}\nCurrent: ${d.currentCount || 0}\nEfficiency: ${(d.overallEfficiency || 0).toFixed ? (d.overallEfficiency || 0).toFixed(1) : d.overallEfficiency || 0}%`,
+                                );
+                              } catch (_) {}
+                            }}
+                          >
+                            View Progress
+                          </DropdownMenuItem>
+                          {canManageProjects && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleEditProject(project)}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDeleteProject(project.id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                 </TableRow>

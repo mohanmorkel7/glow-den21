@@ -696,44 +696,99 @@ router.get("/salary/users", async (req: Request, res: Response) => {
       const weeklyFiles = Number(r.weekly_files || 0);
       const monthlyFiles = Number(r.monthly_files || 0);
 
-      // Sum target/submitted from daily_counts and assigned from file_requests for today
-      const perfRes = await query(
-        `SELECT
-           COALESCE(SUM(dc.target_count),0) AS target_today,
-           COALESCE(SUM(dc.submitted_count),0) AS submitted_today
-         FROM daily_counts dc
-         WHERE dc.date = CURRENT_DATE AND dc.user_id::text = $1`,
-        [String(userId)],
-      );
-      const assignedRes = await query(
-        `SELECT COALESCE(SUM(assigned_count),0) AS assigned_today
-           FROM file_requests
-          WHERE user_id::text = $1 AND DATE(assigned_date) = CURRENT_DATE`,
-        [String(userId)],
+      // Calculate performance: user's completed count vs overall project totals for current month
+      const projUserRes = await query(
+        `SELECT fp.project_id AS project_id,
+                SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)) AS user_completed
+           FROM file_requests fr
+           JOIN file_processes fp ON fp.id = fr.file_process_id
+          WHERE fr.status = 'completed'
+            AND fr.completed_date >= $1 AND fr.completed_date < $2
+            AND fr.user_id::text = $3
+          GROUP BY fp.project_id`,
+        [monthStart, nextMonth, String(userId)],
       );
 
-      const pr = perfRes.rows[0] || { target_today: 0, submitted_today: 0 };
-      const targetToday = Number(pr.target_today || 0);
-      const submittedToday = Number(pr.submitted_today || 0);
-      const assignedToday = Number(assignedRes.rows[0]?.assigned_today || 0);
+      const projectIds = projUserRes.rows
+        .map((r: any) => String(r.project_id || ""))
+        .filter(Boolean);
 
       let performancePct = 0;
-      if (assignedToday > 0) {
-        performancePct = Math.max(
-          0,
-          Math.min(100, Math.round((todayFiles / assignedToday) * 100)),
+      if (projectIds.length) {
+        const totalsRes = await query(
+          `SELECT fp.project_id, SUM(fp.total_rows) AS total_rows
+             FROM file_processes fp
+            WHERE fp.project_id = ANY($1)
+              AND EXISTS (
+                SELECT 1 FROM file_requests fr2
+                 WHERE fr2.file_process_id = fp.id
+                   AND fr2.status = 'completed'
+                   AND fr2.completed_date >= $2 AND fr2.completed_date < $3
+              )
+            GROUP BY fp.project_id`,
+          [projectIds, monthStart, nextMonth],
         );
-      } else if (targetToday > 0) {
-        performancePct = Math.max(
+        const totalsMap = new Map<string, number>();
+        for (const row of totalsRes.rows) {
+          totalsMap.set(
+            String((row as any).project_id),
+            Number((row as any).total_rows || 0),
+          );
+        }
+        const userCompletedSum = projUserRes.rows.reduce(
+          (s: number, r: any) => s + Number(r.user_completed || 0),
           0,
-          Math.min(100, Math.round((submittedToday / targetToday) * 100)),
         );
-      } else if (firstTierLimit > 0) {
-        // Fallback: compare to first tier limit if no explicit target is set
-        performancePct = Math.max(
+        const projectTotalRows = projectIds.reduce(
+          (s, pid) => s + (totalsMap.get(pid) || 0),
           0,
-          Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)),
         );
+        if (projectTotalRows > 0) {
+          performancePct = Math.max(
+            0,
+            Math.min(
+              100,
+              Math.round((userCompletedSum / projectTotalRows) * 100),
+            ),
+          );
+        }
+      }
+
+      // Fallbacks when monthly project data is insufficient
+      if (performancePct === 0) {
+        const perfRes = await query(
+          `SELECT COALESCE(SUM(dc.target_count),0) AS target_today,
+                  COALESCE(SUM(dc.submitted_count),0) AS submitted_today
+             FROM daily_counts dc
+            WHERE dc.date = CURRENT_DATE AND dc.user_id::text = $1`,
+          [String(userId)],
+        );
+        const assignedRes = await query(
+          `SELECT COALESCE(SUM(assigned_count),0) AS assigned_today
+             FROM file_requests
+            WHERE user_id::text = $1 AND DATE(assigned_date) = CURRENT_DATE`,
+          [String(userId)],
+        );
+        const pr = perfRes.rows[0] || { target_today: 0, submitted_today: 0 };
+        const targetToday = Number(pr.target_today || 0);
+        const submittedToday = Number(pr.submitted_today || 0);
+        const assignedToday = Number(assignedRes.rows[0]?.assigned_today || 0);
+        if (assignedToday > 0) {
+          performancePct = Math.max(
+            0,
+            Math.min(100, Math.round((todayFiles / assignedToday) * 100)),
+          );
+        } else if (targetToday > 0) {
+          performancePct = Math.max(
+            0,
+            Math.min(100, Math.round((submittedToday / targetToday) * 100)),
+          );
+        } else if (firstTierLimit > 0) {
+          performancePct = Math.max(
+            0,
+            Math.min(100, Math.round((todayFiles / firstTierLimit) * 100)),
+          );
+        }
       }
 
       // Determine last active from recent activity (completed or assigned)

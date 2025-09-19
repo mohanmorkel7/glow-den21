@@ -414,22 +414,27 @@ export default function Salary() {
     try {
       const resp: any = await apiClient.getSalaryUserBreakdown(userId, period);
       const data = (resp && resp.data) || resp || [];
-      setBreakdownData(
-        (data as any[]).map((d) => ({
-          period: d.period,
-          files: d.files,
-          tier1Files: d.tier1Files,
-          tier1Rate: d.tier1Rate,
-          tier1Amount: d.tier1Amount,
-          tier2Files: d.tier2Files,
-          tier2Rate: d.tier2Rate,
-          tier2Amount: d.tier2Amount,
-          totalAmount: d.totalAmount,
-        })),
-      );
+      const mapped = (data as any[]).map((d) => ({
+        period: d.period,
+        files: d.files,
+        tier1Files: d.tier1Files,
+        tier1Rate: d.tier1Rate,
+        tier1Amount: d.tier1Amount,
+        tier2Files: d.tier2Files,
+        tier2Rate: d.tier2Rate,
+        tier2Amount: d.tier2Amount,
+        totalAmount: d.totalAmount,
+      }));
+      if (mapped.length === 0) {
+        const user = userSalaryData.find((u) => u.id === userId);
+        setBreakdownData(user ? generateSalaryBreakdown(user, period) : []);
+      } else {
+        setBreakdownData(mapped);
+      }
     } catch (e) {
       console.warn("Failed to load breakdown", e);
-      setBreakdownData([]);
+      const user = userSalaryData.find((u) => u.id === userId);
+      setBreakdownData(user ? generateSalaryBreakdown(user, period) : []);
     }
   };
 
