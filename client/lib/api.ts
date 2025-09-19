@@ -631,7 +631,12 @@ class ApiClient {
     description: string;
     amount: number;
     date: string; // YYYY-MM-DD
-    type: "administrative" | "operational" | "marketing" | "utilities" | "miscellaneous";
+    type:
+      | "administrative"
+      | "operational"
+      | "marketing"
+      | "utilities"
+      | "miscellaneous";
     frequency?: "monthly" | "one-time";
     receipt?: string;
   }) {
@@ -641,16 +646,24 @@ class ApiClient {
     });
   }
 
-  async updateExpense(id: string, payload: Partial<{
-    category: string;
-    description: string;
-    amount: number;
-    date: string;
-    type: "administrative" | "operational" | "marketing" | "utilities" | "miscellaneous";
-    frequency: "monthly" | "one-time";
-    receipt: string;
-    status: "pending" | "approved" | "rejected";
-  }>) {
+  async updateExpense(
+    id: string,
+    payload: Partial<{
+      category: string;
+      description: string;
+      amount: number;
+      date: string;
+      type:
+        | "administrative"
+        | "operational"
+        | "marketing"
+        | "utilities"
+        | "miscellaneous";
+      frequency: "monthly" | "one-time";
+      receipt: string;
+      status: "pending" | "approved" | "rejected";
+    }>,
+  ) {
     return this.request(`/expenses/${id}`, {
       method: "PUT",
       body: JSON.stringify(payload),

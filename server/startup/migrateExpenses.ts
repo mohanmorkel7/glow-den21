@@ -22,9 +22,15 @@ export async function ensureExpenseTables(): Promise<void> {
       )
     `);
 
-    await query(`CREATE INDEX IF NOT EXISTS idx_expenses_month ON expenses(month)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status)`);
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_expenses_month ON expenses(month)`,
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`,
+    );
+    await query(
+      `CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status)`,
+    );
 
     console.log("✅ Expense tables ready");
   } catch (err) {

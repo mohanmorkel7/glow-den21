@@ -369,11 +369,21 @@ export default function Expense() {
   const totalExpense = currentMonthSalary + currentMonthExpenses;
   const estimatedRevenue = currentMonthData?.revenue || 0;
   const netProfit = estimatedRevenue - totalExpense;
-  const profitMargin = estimatedRevenue > 0 ? (netProfit / estimatedRevenue) * 100 : 0;
+  const profitMargin =
+    estimatedRevenue > 0 ? (netProfit / estimatedRevenue) * 100 : 0;
 
-  const totalTodayFiles = salaryUsers.reduce((s, u) => s + (u.todayFiles || 0), 0);
-  const totalWeeklyFiles = salaryUsers.reduce((s, u) => s + (u.weeklyFiles || 0), 0);
-  const totalMonthlyFiles = salaryUsers.reduce((s, u) => s + (u.monthlyFiles || 0), 0);
+  const totalTodayFiles = salaryUsers.reduce(
+    (s, u) => s + (u.todayFiles || 0),
+    0,
+  );
+  const totalWeeklyFiles = salaryUsers.reduce(
+    (s, u) => s + (u.weeklyFiles || 0),
+    0,
+  );
+  const totalMonthlyFiles = salaryUsers.reduce(
+    (s, u) => s + (u.monthlyFiles || 0),
+    0,
+  );
   const avgDaily = salaryUsers.length
     ? Math.round(totalMonthlyFiles / Math.max(1, salaryUsers.length))
     : 0;
@@ -1007,7 +1017,9 @@ export default function Expense() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{totalTodayFiles.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {totalTodayFiles.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   All users combined
                 </p>
@@ -1022,7 +1034,9 @@ export default function Expense() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{totalWeeklyFiles.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {totalWeeklyFiles.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">This week total</p>
               </CardContent>
             </Card>
@@ -1035,7 +1049,9 @@ export default function Expense() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{totalMonthlyFiles.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {totalMonthlyFiles.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   This month total
                 </p>
@@ -1050,7 +1066,9 @@ export default function Expense() {
                 <Calculator className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{avgDaily.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {avgDaily.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Per user average
                 </p>

@@ -101,17 +101,48 @@ router.get("/", async (req: Request, res: Response) => {
     const where: string[] = [];
     const params: any[] = [];
     let idx = 1;
-    if (q.type) { where.push(`type = $${idx++}`); params.push(q.type); }
-    if (q.status) { where.push(`status = $${idx++}`); params.push(q.status); }
-    if (q.category) { where.push(`LOWER(category) LIKE $${idx++}`); params.push(`%${q.category.toLowerCase()}%`); }
-    if (q.search) { where.push(`(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`); params.push(`%${q.search.toLowerCase()}%`); idx++; }
-    if (q.from) { where.push(`date >= $${idx++}`); params.push(q.from); }
-    if (q.to) { where.push(`date <= $${idx++}`); params.push(q.to); }
-    if (q.month) { where.push(`month = $${idx++}`); params.push(q.month); }
+    if (q.type) {
+      where.push(`type = $${idx++}`);
+      params.push(q.type);
+    }
+    if (q.status) {
+      where.push(`status = $${idx++}`);
+      params.push(q.status);
+    }
+    if (q.category) {
+      where.push(`LOWER(category) LIKE $${idx++}`);
+      params.push(`%${q.category.toLowerCase()}%`);
+    }
+    if (q.search) {
+      where.push(
+        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`,
+      );
+      params.push(`%${q.search.toLowerCase()}%`);
+      idx++;
+    }
+    if (q.from) {
+      where.push(`date >= $${idx++}`);
+      params.push(q.from);
+    }
+    if (q.to) {
+      where.push(`date <= $${idx++}`);
+      params.push(q.to);
+    }
+    if (q.month) {
+      where.push(`month = $${idx++}`);
+      params.push(q.month);
+    }
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    const sortCol = q.sortBy === 'amount' ? 'amount' : q.sortBy === 'category' ? 'category' : q.sortBy === 'type' ? 'type' : 'date';
-    const sortDir = q.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const sortCol =
+      q.sortBy === "amount"
+        ? "amount"
+        : q.sortBy === "category"
+          ? "category"
+          : q.sortBy === "type"
+            ? "type"
+            : "date";
+    const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
     const countSql = `SELECT COUNT(*)::INT AS count FROM expenses ${whereSql}`;
     const baseSql = `SELECT id, category, description, amount::FLOAT8 AS amount,
@@ -122,7 +153,13 @@ router.get("/", async (req: Request, res: Response) => {
         created_by_user_id AS created_by
       FROM expenses ${whereSql} ORDER BY ${sortCol} ${sortDir}`;
 
-    const { data, pagination } = await paginatedQuery(baseSql, countSql, params, q.page, q.limit);
+    const { data, pagination } = await paginatedQuery(
+      baseSql,
+      countSql,
+      params,
+      q.page,
+      q.limit,
+    );
 
     const rows = data.map((r: any) => ({
       id: r.id,
@@ -138,7 +175,9 @@ router.get("/", async (req: Request, res: Response) => {
       approvedBy: r.approved_by || "",
       createdAt: r.created_at,
       updatedAt: r.updated_at,
-      createdBy: r.created_by ? { id: String(r.created_by), name: "" } : { id: "", name: "" },
+      createdBy: r.created_by
+        ? { id: String(r.created_by), name: "" }
+        : { id: "", name: "" },
     }));
 
     const statsRes = await query(
@@ -150,7 +189,12 @@ router.get("/", async (req: Request, res: Response) => {
        FROM expenses ${whereSql}`,
       params,
     );
-    const s = statsRes.rows[0] || { total_amount: 0, approved_count: 0, pending_count: 0, rejected_count: 0 };
+    const s = statsRes.rows[0] || {
+      total_amount: 0,
+      approved_count: 0,
+      pending_count: 0,
+      rejected_count: 0,
+    };
 
     const statistics = {
       totalExpenses: Number(s.total_amount || 0),
@@ -163,7 +207,14 @@ router.get("/", async (req: Request, res: Response) => {
     res.json({ data: rows, statistics, pagination });
   } catch (error) {
     console.error("Error fetching expenses:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch expenses" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch expenses",
+        },
+      });
   }
 });
 
@@ -184,7 +235,10 @@ router.get("/:id", async (req: Request, res: Response) => {
       [id],
     );
     const row = r.rows[0];
-    if (!row) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+    if (!row)
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
     res.json({
       data: {
         id: row.id,
@@ -201,12 +255,21 @@ router.get("/:id", async (req: Request, res: Response) => {
         approvedAt: row.approved_at || null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
       },
     });
   } catch (error) {
     console.error("Error fetching expense:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch expense" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch expense",
+        },
+      });
   }
 });
 
@@ -253,17 +316,30 @@ router.post("/", async (req: Request, res: Response) => {
         approvedBy: row.approved_by || "",
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
       },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
-        error: { code: "VALIDATION_ERROR", message: "Invalid expense data", details: error.errors },
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Invalid expense data",
+          details: error.errors,
+        },
       });
     }
     console.error("Error creating expense:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to create expense" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create expense",
+        },
+      });
   }
 });
 
@@ -276,21 +352,49 @@ router.put("/:id", async (req: Request, res: Response) => {
     const sets: string[] = [];
     const params: any[] = [];
     let idx = 1;
-    if (body.category !== undefined) { sets.push(`category = $${idx++}`); params.push(body.category); }
-    if (body.description !== undefined) { sets.push(`description = $${idx++}`); params.push(body.description); }
-    if (body.amount !== undefined) { sets.push(`amount = $${idx++}`); params.push(body.amount); }
-    if (body.date !== undefined) { sets.push(`date = $${idx++}`); params.push(body.date); }
-    if (body.type !== undefined) { sets.push(`type = $${idx++}`); params.push(body.type); }
-    if (body.frequency !== undefined) { sets.push(`frequency = $${idx++}`); params.push(body.frequency); }
-    if (body.receipt !== undefined) { sets.push(`receipt = $${idx++}`); params.push(body.receipt); }
-    if (body.status !== undefined) { sets.push(`status = $${idx++}`); params.push(body.status); }
+    if (body.category !== undefined) {
+      sets.push(`category = $${idx++}`);
+      params.push(body.category);
+    }
+    if (body.description !== undefined) {
+      sets.push(`description = $${idx++}`);
+      params.push(body.description);
+    }
+    if (body.amount !== undefined) {
+      sets.push(`amount = $${idx++}`);
+      params.push(body.amount);
+    }
+    if (body.date !== undefined) {
+      sets.push(`date = $${idx++}`);
+      params.push(body.date);
+    }
+    if (body.type !== undefined) {
+      sets.push(`type = $${idx++}`);
+      params.push(body.type);
+    }
+    if (body.frequency !== undefined) {
+      sets.push(`frequency = $${idx++}`);
+      params.push(body.frequency);
+    }
+    if (body.receipt !== undefined) {
+      sets.push(`receipt = $${idx++}`);
+      params.push(body.receipt);
+    }
+    if (body.status !== undefined) {
+      sets.push(`status = $${idx++}`);
+      params.push(body.status);
+    }
 
     if (sets.length === 0) {
-      return res.status(400).json({ error: { code: "NO_CHANGES", message: "No fields to update" } });
+      return res
+        .status(400)
+        .json({
+          error: { code: "NO_CHANGES", message: "No fields to update" },
+        });
     }
 
     if (body.date !== undefined) {
-      sets.push(`month = SUBSTRING($${idx-1}::text, 1, 7)`);
+      sets.push(`month = SUBSTRING($${idx - 1}::text, 1, 7)`);
     }
     sets.push(`updated_at = CURRENT_TIMESTAMP`);
 
@@ -301,7 +405,10 @@ router.put("/:id", async (req: Request, res: Response) => {
       created_by_user_id AS created_by`;
     const r = await query(sql, [...params, id]);
     const row = r.rows[0];
-    if (!row) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+    if (!row)
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
 
     res.json({
       data: {
@@ -318,15 +425,32 @@ router.put("/:id", async (req: Request, res: Response) => {
         approvedBy: row.approved_by || "",
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
       },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid expense data", details: error.errors } });
+      return res
+        .status(400)
+        .json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid expense data",
+            details: error.errors,
+          },
+        });
     }
     console.error("Error updating expense:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to update expense" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update expense",
+        },
+      });
   }
 });
 
@@ -344,9 +468,16 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
                    TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
                    TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
                    created_by_user_id AS created_by`;
-    const r = await query(sql, [status, currentUser?.name || "Current User", id]);
+    const r = await query(sql, [
+      status,
+      currentUser?.name || "Current User",
+      id,
+    ]);
     const row = r.rows[0];
-    if (!row) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+    if (!row)
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
 
     res.json({
       data: {
@@ -364,17 +495,34 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
         approvedAt: row.approved_at || null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        createdBy: row.created_by ? { id: String(row.created_by), name: "" } : { id: "", name: "" },
+        createdBy: row.created_by
+          ? { id: String(row.created_by), name: "" }
+          : { id: "", name: "" },
         approvalNotes: notes,
         rejectionReason: status === "rejected" ? notes : undefined,
       },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "Invalid approval data", details: error.errors } });
+      return res
+        .status(400)
+        .json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid approval data",
+            details: error.errors,
+          },
+        });
     }
     console.error("Error approving expense:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to approve expense" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to approve expense",
+        },
+      });
   }
 });
 
@@ -386,7 +534,14 @@ router.delete("/:id", async (req: Request, res: Response) => {
     res.json({ success: true, message: "Expense deleted successfully" });
   } catch (error) {
     console.error("Error deleting expense:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to delete expense" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete expense",
+        },
+      });
   }
 });
 
@@ -1390,15 +1545,20 @@ router.get("/billing/export", async (req: Request, res: Response) => {
 router.get("/analytics/dashboard", async (req: Request, res: Response) => {
   try {
     const { month } = req.query as any;
-    const targetMonth = String(month || new Date().toISOString().substring(0, 7));
+    const targetMonth = String(
+      month || new Date().toISOString().substring(0, 7),
+    );
     const monthStart = `${targetMonth}-01`;
     const next = new Date(`${targetMonth}-01T00:00:00Z`);
     next.setUTCMonth(next.getUTCMonth() + 1);
     const nextStr = next.toISOString().substring(0, 10);
 
-    const projRatesRes = await query(`SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`);
+    const projRatesRes = await query(
+      `SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`,
+    );
     const rateMap = new Map<string, number>();
-    for (const r of projRatesRes.rows) rateMap.set(String((r as any).id), Number((r as any).rate || 0));
+    for (const r of projRatesRes.rows)
+      rateMap.set(String((r as any).id), Number((r as any).rate || 0));
 
     const sqlManual = `
       SELECT fp.project_id, COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS completed
@@ -1420,9 +1580,10 @@ router.get("/analytics/dashboard", async (req: Request, res: Response) => {
 
     const byProject = new Map<string, number>();
     for (const r of [...rowsManual.rows, ...rowsAuto.rows]) {
-      const p = String((r as any).project_id || '');
+      const p = String((r as any).project_id || "");
       const c = Number((r as any).completed || 0);
-      if (!p) continue; byProject.set(p, (byProject.get(p) || 0) + c);
+      if (!p) continue;
+      byProject.set(p, (byProject.get(p) || 0) + c);
     }
 
     const conversionRate = 83.0;
@@ -1433,8 +1594,14 @@ router.get("/analytics/dashboard", async (req: Request, res: Response) => {
     }
     const totalRevenue = totalRevenueUSD * conversionRate;
 
-    const cfgRes = await query(`SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`);
-    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
     const fRate = Number(cfg.first_tier_rate || 0);
     const sRate = Number(cfg.second_tier_rate || 0);
     const fLimit = Number(cfg.first_tier_limit || 0);
@@ -1442,38 +1609,65 @@ router.get("/analytics/dashboard", async (req: Request, res: Response) => {
     const userFilesRes = await query(
       `SELECT COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS files
          FROM file_requests fr WHERE fr.status='completed' AND fr.completed_date >= $1 AND fr.completed_date < $2`,
-      [monthStart, nextStr]
+      [monthStart, nextStr],
     );
     const monthlyFiles = Number(userFilesRes.rows[0]?.files || 0);
     const t1 = Math.min(monthlyFiles, fLimit);
     const t2 = Math.max(0, monthlyFiles - fLimit);
     const userSalaries = t1 * fRate + t2 * sRate;
 
-    const pmRes = await query(`SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`, [nextStr]);
+    const pmRes = await query(
+      `SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`,
+      [nextStr],
+    );
     const pmSalaries = Number(pmRes.rows[0]?.total || 0);
 
     const salaryExpenses = userSalaries + pmSalaries;
 
-    const adminRes = await query(`SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected'`, [targetMonth]);
+    const adminRes = await query(
+      `SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected'`,
+      [targetMonth],
+    );
     const adminExpenses = Number(adminRes.rows[0]?.total || 0);
 
     const totalExpenses = salaryExpenses + adminExpenses;
     const netProfit = totalRevenue - totalExpenses;
-    const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+    const profitMargin =
+      totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
     const catRows = await query(
       `SELECT type, COUNT(*)::INT AS count, COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month = $1 AND status <> 'rejected' GROUP BY type ORDER BY total DESC LIMIT 5`,
-      [targetMonth]
+      [targetMonth],
     );
     const topExpenseCategories = [
-      { name: 'Salaries', value: salaryExpenses, percentage: 0, fill: '#3b82f6', count: 0 },
-      ...catRows.rows.map((r: any) => ({ name: String(r.type), value: Number(r.total || 0), percentage: 0, fill: '#ef4444', count: Number(r.count || 0) })),
+      {
+        name: "Salaries",
+        value: salaryExpenses,
+        percentage: 0,
+        fill: "#3b82f6",
+        count: 0,
+      },
+      ...catRows.rows.map((r: any) => ({
+        name: String(r.type),
+        value: Number(r.total || 0),
+        percentage: 0,
+        fill: "#ef4444",
+        count: Number(r.count || 0),
+      })),
     ];
     const catSum = topExpenseCategories.reduce((s, c) => s + c.value, 0);
-    for (const c of topExpenseCategories) c.percentage = catSum > 0 ? (c.value / catSum) * 100 : 0;
+    for (const c of topExpenseCategories)
+      c.percentage = catSum > 0 ? (c.value / catSum) * 100 : 0;
 
     const data = {
-      currentMonth: { totalRevenue, totalExpenses, netProfit, profitMargin, salaryExpenses, adminExpenses },
+      currentMonth: {
+        totalRevenue,
+        totalExpenses,
+        netProfit,
+        profitMargin,
+        salaryExpenses,
+        adminExpenses,
+      },
       trends: { revenueGrowth: 0, expenseGrowth: 0, profitGrowth: 0 },
       alerts: [],
       topExpenseCategories,
@@ -1482,7 +1676,14 @@ router.get("/analytics/dashboard", async (req: Request, res: Response) => {
     res.json({ data });
   } catch (error) {
     console.error("Error fetching dashboard analytics:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch dashboard analytics" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch dashboard analytics",
+        },
+      });
   }
 });
 
@@ -1492,18 +1693,29 @@ router.get("/analytics/profit-loss", async (req: Request, res: Response) => {
     const months: string[] = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
-      const dt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+      const dt = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1),
+      );
       months.push(dt.toISOString().substring(0, 7));
     }
 
-    const projRatesRes = await query(`SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`);
+    const projRatesRes = await query(
+      `SELECT id, COALESCE(rate_per_file_usd,0) AS rate FROM projects`,
+    );
     const rateMap = new Map<string, number>();
-    for (const r of projRatesRes.rows) rateMap.set(String((r as any).id), Number((r as any).rate || 0));
+    for (const r of projRatesRes.rows)
+      rateMap.set(String((r as any).id), Number((r as any).rate || 0));
 
     const conversionRate = 83.0;
 
-    const cfgRes = await query(`SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`);
-    const cfg = cfgRes.rows[0] || { first_tier_rate: 0.5, second_tier_rate: 0.6, first_tier_limit: 500 };
+    const cfgRes = await query(
+      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+    );
+    const cfg = cfgRes.rows[0] || {
+      first_tier_rate: 0.5,
+      second_tier_rate: 0.6,
+      first_tier_limit: 500,
+    };
     const fRate = Number(cfg.first_tier_rate || 0);
     const sRate = Number(cfg.second_tier_rate || 0);
     const fLimit = Number(cfg.first_tier_limit || 0);
@@ -1540,40 +1752,63 @@ router.get("/analytics/profit-loss", async (req: Request, res: Response) => {
       ]);
       const byProject = new Map<string, number>();
       for (const r of [...rowsManual.rows, ...rowsAuto.rows]) {
-        const p = String((r as any).project_id || '');
+        const p = String((r as any).project_id || "");
         const c = Number((r as any).completed || 0);
-        if (!p) continue; byProject.set(p, (byProject.get(p) || 0) + c);
+        if (!p) continue;
+        byProject.set(p, (byProject.get(p) || 0) + c);
       }
       let revenueUSD = 0;
-      for (const [pId, completed] of byProject.entries()) revenueUSD += completed * (rateMap.get(pId) || 0);
+      for (const [pId, completed] of byProject.entries())
+        revenueUSD += completed * (rateMap.get(pId) || 0);
       const revenue = revenueUSD * conversionRate;
 
       const userFilesRes = await query(
         `SELECT COALESCE(SUM(COALESCE(fr.assigned_count, fr.requested_count, 0)),0) AS files
            FROM file_requests fr WHERE fr.status='completed' AND fr.completed_date >= $1 AND fr.completed_date < $2`,
-        [monthStart, nextStr]
+        [monthStart, nextStr],
       );
       const monthlyFiles = Number(userFilesRes.rows[0]?.files || 0);
       const userSalaries = calcEarning(monthlyFiles);
 
-      const pmRes = await query(`SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`, [nextStr]);
+      const pmRes = await query(
+        `SELECT COALESCE(SUM(monthly_salary)::FLOAT8,0) AS total FROM pm_salaries WHERE is_active = true AND effective_from < $1`,
+        [nextStr],
+      );
       const pmSalaries = Number(pmRes.rows[0]?.total || 0);
       const salaryExpense = userSalaries + pmSalaries;
 
-      const adminRes = await query(`SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month=$1 AND status <> 'rejected'`, [m]);
+      const adminRes = await query(
+        `SELECT COALESCE(SUM(amount)::FLOAT8,0) AS total FROM expenses WHERE month=$1 AND status <> 'rejected'`,
+        [m],
+      );
       const adminExpense = Number(adminRes.rows[0]?.total || 0);
 
       const totalExpense = salaryExpense + adminExpense;
       const netProfit = revenue - totalExpense;
       const profitMargin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
 
-      result.push({ month: m, revenue, salaryExpense, adminExpense, totalExpense, netProfit, profitMargin });
+      result.push({
+        month: m,
+        revenue,
+        salaryExpense,
+        adminExpense,
+        totalExpense,
+        netProfit,
+        profitMargin,
+      });
     }
 
     res.json({ data: result });
   } catch (error) {
     console.error("Error fetching profit & loss data:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch profit & loss data" } });
+    res
+      .status(500)
+      .json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch profit & loss data",
+        },
+      });
   }
 });
 
