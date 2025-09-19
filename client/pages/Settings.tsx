@@ -206,7 +206,9 @@ export default function Settings() {
   };
 
   const handleSaveDailyUpdateSettings = () => {
+    localStorage.setItem('usdToInrRate', String(dailyUpdateSettings.usdToInrRate));
     console.log('Saving daily update settings:', dailyUpdateSettings);
+    alert('Conversion rate saved. Billing will use the updated ₹/USD value.');
   };
 
   const handleSaveUserProfile = () => {
