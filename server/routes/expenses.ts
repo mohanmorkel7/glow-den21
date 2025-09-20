@@ -585,9 +585,9 @@ router.put("/:id", async (req: Request, res: Response) => {
       sets.push(`amount = $${idx++}`);
       params.push(body.amount);
     }
-    if (body.date !== undefined) {
+    if (body.expense_date !== undefined) {
       sets.push(`date = $${idx++}`);
-      params.push(body.date);
+      params.push(body.expense_date);
     }
     if (body.type !== undefined) {
       sets.push(`type = $${idx++}`);
