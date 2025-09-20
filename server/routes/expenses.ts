@@ -26,7 +26,7 @@ const updateExpenseSchema = z.object({
   category: z.string().min(1).max(100).optional(),
   description: z.string().min(1).max(500).optional(),
   amount: z.number().positive().optional(),
-  date: z
+  expense_date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
