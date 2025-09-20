@@ -1311,6 +1311,50 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
       department: null,
     }));
 
+    // Compute PM performance from automation processes
+    const procsRes = await query(
+      `SELECT id, name, daily_target, total_rows, processed_rows, status, automation_config FROM file_processes WHERE type = 'automation'`
+    );
+    const processes = (procsRes.rows || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      dailyTarget: Number(row.daily_target || 0),
+      totalRows: Number(row.total_rows || 0),
+      processedRows: Number(row.processed_rows || 0),
+      status: row.status || 'pending',
+      automationConfig: (() => { try { return typeof row.automation_config === 'string' ? JSON.parse(row.automation_config) : row.automation_config || {}; } catch { return {}; } })(),
+    }));
+
+    const today = new Date();
+    const yearMonth = today.toISOString().substring(0,7);
+    const monthStartDate = new Date(`${yearMonth}-01T00:00:00Z`);
+    const daysSoFar = Math.min(
+      Math.floor((Date.now() - monthStartDate.getTime()) / (1000*60*60*24)) + 1,
+      31,
+    );
+
+    for (const pm of pms) {
+      const uid = pm.userId || pm.user_id || pm.id;
+      const assigned = processes.filter((p: any) => {
+        const assignedPMs = (p.automationConfig && p.automationConfig.assignedPMs) || [];
+        return Array.isArray(assignedPMs) && assignedPMs.some((a: any) => String(a.userId) === String(uid));
+      });
+      let completedSum = 0;
+      let expectedSum = 0;
+      for (const p of assigned) {
+        const target = Number(p.dailyTarget || 0);
+        expectedSum += target * Math.max(daysSoFar, 0);
+        const dcs = (p.automationConfig && p.automationConfig.dailyCompletions) || [];
+        for (const d of dcs) {
+          const dStr = String(d.date || '').substring(0,10);
+          if (dStr.startsWith(yearMonth)) completedSum += Number(d.completed || 0);
+        }
+      }
+      const pct = expectedSum > 0 ? Math.max(0, Math.min(100, Math.round((completedSum/expectedSum)*100))) : 0;
+      pm.attendanceRate = pct;
+    }
+
+
     const summary = {
       totalMonthlySalaries: pms.reduce(
         (s: number, p: any) => s + (p.monthlySalary || 0),
