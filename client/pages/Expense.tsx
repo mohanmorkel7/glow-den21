@@ -96,7 +96,7 @@ interface ExpenseEntry {
   category: string;
   description: string;
   amount: number;
-  date: string;
+  expense_date: string;
   month: string;
   type:
     | "administrative"
@@ -164,7 +164,7 @@ export default function Expense() {
   const salaryEntries: SalaryEntry[] = [];
 
   // Base recurring monthly expenses
-  const baseRecurringExpenses: Omit<ExpenseEntry, "id" | "date" | "month">[] = [
+  const baseRecurringExpenses: Omit<ExpenseEntry, "id" | "expense_date" | "month">[] = [
     {
       category: "Office Rent",
       description: "Monthly office rent payment",
@@ -219,7 +219,7 @@ export default function Expense() {
       category: "Office Equipment",
       description: "New computers and peripherals",
       amount: 85000,
-      date: "2024-01-10",
+      expense_date: "2024-01-10",
       month: currentMonth,
       type: "operational",
       frequency: "one-time",
@@ -232,7 +232,7 @@ export default function Expense() {
       category: "Marketing Campaign",
       description: "Q1 digital marketing campaign launch",
       amount: 15000,
-      date: "2024-01-15",
+      expense_date: "2024-01-15",
       month: currentMonth,
       type: "marketing",
       frequency: "one-time",
@@ -245,7 +245,7 @@ export default function Expense() {
       category: "Training",
       description: "Employee skill development workshop",
       amount: 8500,
-      date: "2024-01-20",
+      expense_date: "2024-01-20",
       month: currentMonth,
       type: "administrative",
       frequency: "one-time",
@@ -260,7 +260,7 @@ export default function Expense() {
     const monthlyExpenses = baseRecurringExpenses.map((expense, index) => ({
       ...expense,
       id: `recurring-${month}-${index}`,
-      date: `${month}-01`,
+      expense_date: `${month}-01`,
       month: month,
     }));
 
@@ -276,7 +276,7 @@ export default function Expense() {
       try {
         setLoading(true);
         const [expResp, plResp, usersResp, pmResp, cfg] = await Promise.all([
-          apiClient.getExpenses({ month: selectedMonth, limit: 500 }),
+          apiClient.getExpenses({ month: selectedMonth, limit: 100 }),
           apiClient.getExpenseProfitLoss(),
           apiClient.getSalaryUsers(selectedMonth),
           apiClient.getSalaryProjectManagers(),
@@ -442,7 +442,7 @@ export default function Expense() {
         category: newExpense.category,
         description: newExpense.description,
         amount: parseFloat(newExpense.amount),
-        date: newExpense.date,
+        expense_date: newExpense.date,
         type: newExpense.type as any,
         frequency: newExpense.frequency,
       });
@@ -479,7 +479,7 @@ export default function Expense() {
         "Approved By",
       ],
       ...expenseEntries.map((entry) => [
-        new Date(entry.date).toLocaleDateString(),
+        new Date(entry.expense_date).toLocaleDateString(),
         entry.category,
         entry.type,
         entry.description,
@@ -716,7 +716,7 @@ export default function Expense() {
                       status: entry.status,
                     })),
                     ...expenseEntries.slice(0, 3).map((entry) => ({
-                      date: entry.date,
+                      date: entry.expense_date,
                       type: "Expense",
                       description: entry.description,
                       amount: entry.amount,
@@ -1575,7 +1575,7 @@ export default function Expense() {
                       }
                     >
                       <TableCell>
-                        {new Date(entry.date).toLocaleDateString()}
+                        {new Date(entry.expense_date).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="font-medium">
                         {entry.category}
@@ -1807,7 +1807,7 @@ export default function Expense() {
                     Date
                   </Label>
                   <p className="text-sm">
-                    {new Date(selectedExpense.date).toLocaleDateString()}
+                    {new Date(selectedExpense.expense_date).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
@@ -1947,7 +1947,7 @@ export default function Expense() {
                   <Input
                     id="edit-date"
                     type="date"
-                    defaultValue={selectedExpense.date}
+                    defaultValue={selectedExpense.expense_date}
                   />
                 </div>
               </div>
