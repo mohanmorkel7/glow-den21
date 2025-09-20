@@ -1570,11 +1570,9 @@ router.get(
       const { userId } = req.params as any;
       const { month } = req.query as any;
       if (!userId) {
-        return res
-          .status(400)
-          .json({
-            error: { code: "VALIDATION_ERROR", message: "userId is required" },
-          });
+        return res.status(400).json({
+          error: { code: "VALIDATION_ERROR", message: "userId is required" },
+        });
       }
       const targetMonth =
         (month as string) || new Date().toISOString().substring(0, 7);
@@ -1674,14 +1672,12 @@ router.get(
       });
     } catch (error) {
       console.error("Error fetching PM automation details:", error);
-      res
-        .status(500)
-        .json({
-          error: {
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch PM automation details",
-          },
-        });
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch PM automation details",
+        },
+      });
     }
   },
 );
