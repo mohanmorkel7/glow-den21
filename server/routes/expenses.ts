@@ -618,7 +618,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     sets.push(`updated_at = CURRENT_TIMESTAMP`);
 
     const sql = `UPDATE expenses SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, category, description, amount::FLOAT8 AS amount,
-      TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
+      TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
       TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
       TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
       created_by_user_id AS created_by`;
