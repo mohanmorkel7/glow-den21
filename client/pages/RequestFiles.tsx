@@ -696,7 +696,13 @@ export default function RequestFiles() {
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
                 {pendingRequests
-                  .reduce((sum, req) => sum + req.requestedCount, 0)
+                  .reduce(
+                    (sum, req) =>
+                      sum + (typeof req.assignedCount === "number" && req.assignedCount > 0
+                        ? req.assignedCount
+                        : req.requestedCount),
+                    0,
+                  )
                   .toLocaleString()}
               </div>
               <div className="text-sm text-blue-700">Files In Queue</div>
