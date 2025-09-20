@@ -72,6 +72,9 @@ import { isDbConfigured } from "./db/connection";
 export function createServer() {
   const app = express();
 
+  // Disable ETag to prevent 304 caching during development/API usage
+  app.set("etag", false);
+
   // Middleware
   app.use(cors());
   app.use(express.json());
