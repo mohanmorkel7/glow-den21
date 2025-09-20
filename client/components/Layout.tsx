@@ -60,7 +60,7 @@ const navigationItems: NavItem[] = [
     label: "Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["super_admin", "project_manager", "user"],
+    roles: ["super_admin"],
   },
   {
     label: "Tutorial",
