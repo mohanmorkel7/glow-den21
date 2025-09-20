@@ -612,7 +612,7 @@ router.put("/:id", async (req: Request, res: Response) => {
       });
     }
 
-    if (body.date !== undefined) {
+    if (body.expense_date !== undefined) {
       sets.push(`month = SUBSTRING($${idx - 1}::text, 1, 7)`);
     }
     sets.push(`updated_at = CURRENT_TIMESTAMP`);
