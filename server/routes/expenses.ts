@@ -494,16 +494,16 @@ router.post("/", async (req: Request, res: Response) => {
 
     const sql = `
       INSERT INTO expenses (
-        category, description, amount, expense_date, month, type, frequency, receipt_path,
-        status, approved_by_user_id, approved_at, approval_notes, rejection_reason, created_by_user_id
+        category, description, amount, date, month, type, frequency, receipt,
+        status, approved_by, approved_at, created_by_user_id
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8,
-        'pending', NULL, NULL, NULL, NULL, $9
+        'pending', '', NULL, $9
       )
       RETURNING id, category, description, amount::FLOAT8 AS amount,
-        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt_path,
-        status, approved_by_user_id,
+        TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt,
+        status, approved_by,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
         created_by_user_id
