@@ -729,6 +729,15 @@ class ApiClient {
     return this.request(`/expenses/salary/project-managers`);
   }
 
+  async getPMAutomationDetails(userId: string, month?: string) {
+    const params = new URLSearchParams();
+    if (month) params.set("month", month);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return this.request(
+      `/expenses/salary/project-managers/${encodeURIComponent(userId)}/automation-details${qs}`,
+    );
+  }
+
   async createPMSalary(payload: {
     name: string;
     email?: string;
