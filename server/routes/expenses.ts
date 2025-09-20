@@ -10,7 +10,7 @@ const createExpenseSchema = z.object({
   category: z.string().min(1).max(100),
   description: z.string().min(1).max(500),
   amount: z.number().positive(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   type: z.enum([
     "administrative",
     "operational",
@@ -19,7 +19,7 @@ const createExpenseSchema = z.object({
     "miscellaneous",
   ]),
   frequency: z.enum(["monthly", "one-time"]).default("one-time"),
-  receipt: z.string().optional(),
+  receipt_path: z.string().optional(),
 });
 
 const updateExpenseSchema = z.object({
@@ -93,6 +93,129 @@ const expenseQuerySchema = z.object({
 
 // ===== EXPENSE ENDPOINTS =====
 
+// // GET /api/expenses - List expenses with filtering and pagination
+// router.get("/", async (req: Request, res: Response) => {
+//   try {
+//     const q = expenseQuerySchema.parse(req.query);
+
+//     const where: string[] = [];
+//     const params: any[] = [];
+//     let idx = 1;
+//     if (q.type) {
+//       where.push(`type = $${idx++}`);
+//       params.push(q.type);
+//     }
+//     if (q.status) {
+//       where.push(`status = $${idx++}`);
+//       params.push(q.status);
+//     }
+//     if (q.category) {
+//       where.push(`LOWER(category) LIKE $${idx++}`);
+//       params.push(`%${q.category.toLowerCase()}%`);
+//     }
+//     if (q.search) {
+//       where.push(
+//         `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`,
+//       );
+//       params.push(`%${q.search.toLowerCase()}%`);
+//       idx++;
+//     }
+//     if (q.from) {
+//       where.push(`expense_date >= $${idx++}`);
+//       params.push(q.from);
+//     }
+//     if (q.to) {
+//       where.push(`expense_date <= $${idx++}`);
+//       params.push(q.to);
+//     }
+//     if (q.month) {
+//       where.push(`month = $${idx++}`);
+//       params.push(q.month);
+//     }
+//     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+
+//     const sortCol =
+//       q.sortBy === "amount"
+//         ? "amount"
+//         : q.sortBy === "category"
+//           ? "category"
+//           : q.sortBy === "type"
+//             ? "type"
+//             : "expense_date";
+//     const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
+
+//     const countSql = `SELECT COUNT(*)::INT AS count FROM expenses ${whereSql}`;
+//     const baseSql = `SELECT id, category, description, amount::FLOAT8 AS amount,
+//         TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, receipt_path, status,
+//         COALESCE(approved_by_user_id,'') AS approved_by_user_id,
+//         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+//         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+//         created_by_user_id AS created_by_user_id
+//       FROM expenses ${whereSql} ORDER BY ${sortCol} ${sortDir}`;
+
+//     const { data, pagination } = await paginatedQuery(
+//       baseSql,
+//       countSql,
+//       params,
+//       q.page,
+//       q.limit,
+//     );
+
+//     const rows = data.map((r: any) => ({
+//       id: r.id,
+//       category: r.category,
+//       description: r.description,
+//       amount: Number(r.amount),
+//       expense_date: r.expense_date,
+//       month: r.month,
+//       type: r.type,
+//       receipt_path: r.receipt_path || undefined,
+//       status: r.status,
+//       approved_by_user_id: r.approved_by_user_id || "",
+//       createdAt: r.created_at,
+//       updatedAt: r.updated_at,
+//       createdBy: r.created_by
+//                 ? { id: String(r.created_by), name: "" }
+//                 : null,
+//     }));
+
+//     const statsRes = await query(
+//       `SELECT
+//          COALESCE(SUM(amount)::FLOAT8,0) AS total_amount,
+//          SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END)::INT AS approved_count,
+//          SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END)::INT AS pending_count,
+//          SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END)::INT AS rejected_count
+//        FROM expenses ${whereSql}`,
+//       params,
+//     );
+//     const s = statsRes.rows[0] || {
+//       total_amount: 0,
+//       approved_count: 0,
+//       pending_count: 0,
+//       rejected_count: 0,
+//     };
+
+//     const statistics = {
+//       totalExpenses: Number(s.total_amount || 0),
+//       approvedCount: Number(s.approved_count || 0),
+//       pendingCount: Number(s.pending_count || 0),
+//       rejectedCount: Number(s.rejected_count || 0),
+//       entryCount: pagination.total,
+//     };
+
+//     res.json({ data: rows, statistics, pagination });
+//   } catch (error) {
+//     console.error("Error fetching expenses:", error);
+//     res.status(500).json({
+//       error: {
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to fetch expenses",
+//       },
+//     });
+//   }
+// });
+
+
 // GET /api/expenses - List expenses with filtering and pagination
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -101,6 +224,7 @@ router.get("/", async (req: Request, res: Response) => {
     const where: string[] = [];
     const params: any[] = [];
     let idx = 1;
+
     if (q.type) {
       where.push(`type = $${idx++}`);
       params.push(q.type);
@@ -115,50 +239,66 @@ router.get("/", async (req: Request, res: Response) => {
     }
     if (q.search) {
       where.push(
-        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`,
+        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`
       );
       params.push(`%${q.search.toLowerCase()}%`);
       idx++;
     }
     if (q.from) {
-      where.push(`date >= $${idx++}`);
+      where.push(`expense_date >= $${idx++}`);
       params.push(q.from);
     }
     if (q.to) {
-      where.push(`date <= $${idx++}`);
+      where.push(`expense_date <= $${idx++}`);
       params.push(q.to);
     }
     if (q.month) {
       where.push(`month = $${idx++}`);
       params.push(q.month);
     }
+
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
     const sortCol =
       q.sortBy === "amount"
         ? "amount"
         : q.sortBy === "category"
-          ? "category"
-          : q.sortBy === "type"
-            ? "type"
-            : "date";
+        ? "category"
+        : q.sortBy === "type"
+        ? "type"
+        : "expense_date";
+
     const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
     const countSql = `SELECT COUNT(*)::INT AS count FROM expenses ${whereSql}`;
-    const baseSql = `SELECT id, category, description, amount::FLOAT8 AS amount,
-        TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
-        COALESCE(approved_by,'') AS approved_by,
+
+    const baseSql = `
+      SELECT 
+        id,
+        category,
+        description,
+        amount::FLOAT8 AS amount,
+        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
+        month,
+        type,
+        frequency,
+        receipt_path,
+        status,
+        approved_by_user_id,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
-        created_by_user_id AS created_by
-      FROM expenses ${whereSql} ORDER BY ${sortCol} ${sortDir}`;
+        created_by_user_id
+      FROM expenses
+      ${whereSql}
+      ORDER BY ${sortCol} ${sortDir}
+    `;
 
     const { data, pagination } = await paginatedQuery(
       baseSql,
       countSql,
       params,
       q.page,
-      q.limit,
+      q.limit
     );
 
     const rows = data.map((r: any) => ({
@@ -166,29 +306,33 @@ router.get("/", async (req: Request, res: Response) => {
       category: r.category,
       description: r.description,
       amount: Number(r.amount),
-      date: r.date,
+      expense_date: r.expense_date,
       month: r.month,
       type: r.type,
       frequency: r.frequency,
-      receipt: r.receipt || undefined,
+      receipt_path: r.receipt_path || undefined,
       status: r.status,
-      approvedBy: r.approved_by || "",
+      approved_by_user_id: r.approved_by_user_id || undefined,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
-      createdBy: r.created_by
-        ? { id: String(r.created_by), name: "" }
-        : { id: "", name: "" },
+      createdBy: r.created_by_user_id
+        ? { id: String(r.created_by_user_id), name: "" }
+        : undefined,
     }));
 
     const statsRes = await query(
-      `SELECT
-         COALESCE(SUM(amount)::FLOAT8,0) AS total_amount,
-         SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END)::INT AS approved_count,
-         SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END)::INT AS pending_count,
-         SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END)::INT AS rejected_count
-       FROM expenses ${whereSql}`,
-      params,
+      `
+      SELECT
+        COALESCE(SUM(amount)::FLOAT8, 0) AS total_amount,
+        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END)::INT AS approved_count,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END)::INT AS pending_count,
+        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END)::INT AS rejected_count
+      FROM expenses
+      ${whereSql}
+      `,
+      params
     );
+
     const s = statsRes.rows[0] || {
       total_amount: 0,
       approved_count: 0,
@@ -216,14 +360,17 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+
+
+
 // GET /api/expenses/:id - Get single expense
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const r = await query(
       `SELECT id, category, description, amount::FLOAT8 AS amount,
-              TO_CHAR(date, 'YYYY-MM-DD') AS date,
-              month, type, frequency, receipt, status,
+              TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
+              month, type, frequency, receipt_path, status,
               COALESCE(approved_by,'') AS approved_by,
               TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
               TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
@@ -243,7 +390,7 @@ router.get("/:id", async (req: Request, res: Response) => {
         category: row.category,
         description: row.description,
         amount: Number(row.amount),
-        date: row.date,
+        expense_date: row.expense_date,
         month: row.month,
         type: row.type,
         frequency: row.frequency,
@@ -269,52 +416,131 @@ router.get("/:id", async (req: Request, res: Response) => {
   }
 });
 
+// // POST /api/expenses - Create new expense
+// router.post("/", async (req: Request, res: Response) => {
+//   try {
+//     const body = createExpenseSchema.parse(req.body);
+//     const currentUser: any = (req as any).user;
+
+//     const month = body.date.substring(0, 7);
+//     const sql = `INSERT INTO expenses
+//       (category, description, amount, date, month, type, frequency, receipt, status, approved_by, created_by_user_id)
+//       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending','', $9)
+//       RETURNING id, category, description, amount::FLOAT8 AS amount,
+//         TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt,
+//         status, COALESCE(approved_by,'') AS approved_by,
+//         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+//         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+//         created_by_user_id AS created_by`;
+//     const r = await query(sql, [
+//       body.category,
+//       body.description,
+//       body.amount,
+//       body.date,
+//       month,
+//       body.type,
+//       body.frequency,
+//       body.receipt || null,
+//       currentUser?.id || null,
+//     ]);
+//     const row = r.rows[0];
+//     res.status(201).json({
+//       data: {
+//         id: row.id,
+//         category: row.category,
+//         description: row.description,
+//         amount: Number(row.amount),
+//         date: row.date,
+//         month: row.month,
+//         type: row.type,
+//         frequency: row.frequency,
+//         receipt: row.receipt || undefined,
+//         status: row.status,
+//         approvedBy: row.approved_by || "",
+//         createdAt: row.created_at,
+//         updatedAt: row.updated_at,
+//         createdBy: row.created_by
+//           ? { id: String(row.created_by), name: "" }
+//           : { id: "", name: "" },
+//       },
+//     });
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return res.status(400).json({
+//         error: {
+//           code: "VALIDATION_ERROR",
+//           message: "Invalid expense data",
+//           details: error.errors,
+//         },
+//       });
+//     }
+//     console.error("Error creating expense:", error);
+//     res.status(500).json({
+//       error: {
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to create expense",
+//       },
+//     });
+//   }
+// });
+
 // POST /api/expenses - Create new expense
 router.post("/", async (req: Request, res: Response) => {
   try {
     const body = createExpenseSchema.parse(req.body);
     const currentUser: any = (req as any).user;
 
-    const month = body.date.substring(0, 7);
-    const sql = `INSERT INTO expenses
-      (category, description, amount, date, month, type, frequency, receipt, status, approved_by, created_by_user_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending','', $9)
+    const month = body.expense_date.substring(0, 7);
+
+    const sql = `
+      INSERT INTO expenses (
+        category, description, amount, expense_date, month, type, frequency, receipt_path,
+        status, approved_by_user_id, approved_at, approval_notes, rejection_reason, created_by_user_id
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        'pending', NULL, NULL, NULL, NULL, $9
+      )
       RETURNING id, category, description, amount::FLOAT8 AS amount,
-        TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt,
-        status, COALESCE(approved_by,'') AS approved_by,
+        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt_path,
+        status, approved_by_user_id,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
-        created_by_user_id AS created_by`;
+        created_by_user_id
+    `;
+
     const r = await query(sql, [
       body.category,
       body.description,
       body.amount,
-      body.date,
+      body.expense_date,
       month,
       body.type,
       body.frequency,
-      body.receipt || null,
+      body.receipt_path || null,
       currentUser?.id || null,
     ]);
+
     const row = r.rows[0];
+
     res.status(201).json({
       data: {
         id: row.id,
         category: row.category,
         description: row.description,
         amount: Number(row.amount),
-        date: row.date,
+        expense_date: row.expense_date,
         month: row.month,
         type: row.type,
         frequency: row.frequency,
-        receipt: row.receipt || undefined,
+        receipt_path: row.receipt_path || undefined,
         status: row.status,
-        approvedBy: row.approved_by || "",
+        approved_by_user_id: row.approved_by_user_id || undefined,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        createdBy: row.created_by
-          ? { id: String(row.created_by), name: "" }
-          : { id: "", name: "" },
+        createdBy: row.created_by_user_id
+          ? { id: String(row.created_by_user_id), name: "" }
+          : undefined,
       },
     });
   } catch (error) {
@@ -336,6 +562,7 @@ router.post("/", async (req: Request, res: Response) => {
     });
   }
 });
+
 
 // PUT /api/expenses/:id - Update expense
 router.put("/:id", async (req: Request, res: Response) => {

@@ -617,7 +617,7 @@ class ApiClient {
     from?: string;
     to?: string;
     month?: string;
-    sortBy?: "date" | "amount" | "category" | "type";
+    sortBy?: "expense_date" | "amount" | "category" | "type";
     sortOrder?: "asc" | "desc";
   }) {
     const qs = params
@@ -630,7 +630,7 @@ class ApiClient {
     category: string;
     description: string;
     amount: number;
-    date: string; // YYYY-MM-DD
+    expense_date: string; // YYYY-MM-DD
     type:
       | "administrative"
       | "operational"
@@ -638,7 +638,7 @@ class ApiClient {
       | "utilities"
       | "miscellaneous";
     frequency?: "monthly" | "one-time";
-    receipt?: string;
+    receipt_path?: string;
   }) {
     return this.request(`/expenses`, {
       method: "POST",
