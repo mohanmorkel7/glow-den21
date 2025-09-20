@@ -1444,6 +1444,87 @@ export default function Salary() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={pmPerfDialogOpen} onOpenChange={setPmPerfDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Automation Performance - {selectedPM?.name}</DialogTitle>
+            <DialogDescription>
+              Daily counts and estimates for assigned automation processes.
+            </DialogDescription>
+          </DialogHeader>
+          {pmAutomationDetails ? (
+            <div className="space-y-4">
+              <Card className="bg-purple-50">
+                <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Performance</div>
+                    <div className="text-2xl font-bold text-purple-700">
+                      {pmAutomationDetails.performancePct}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Completed (month)</div>
+                    <div className="text-2xl font-bold text-green-700">
+                      {pmAutomationDetails.totalCompleted?.toLocaleString?.() ?? pmAutomationDetails.totalCompleted}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Expected (month)</div>
+                    <div className="text-2xl font-bold text-blue-700">
+                      {pmAutomationDetails.totalExpected?.toLocaleString?.() ?? pmAutomationDetails.totalExpected}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {pmAutomationDetails.processes?.map((proc: any) => (
+                <Card key={proc.processId}>
+                  <CardHeader>
+                    <CardTitle className="text-sm">{proc.processName}</CardTitle>
+                    <CardDescription>
+                      Daily target: {proc.dailyTarget?.toLocaleString?.() ?? proc.dailyTarget} | Remaining: {proc.remainingRows?.toLocaleString?.() ?? proc.remainingRows} | Est. days: {proc.estimatedDaysRemaining ?? "-"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Completed</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {proc.completions?.length ? (
+                          proc.completions.map((d: any, idx: number) => (
+                            <TableRow key={idx}>
+                              <TableCell>{new Date(d.date).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-right">{Number(d.completed || 0).toLocaleString()}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={2} className="text-muted-foreground">
+                              No completions recorded this month.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">No automation details available.</div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPmPerfDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
