@@ -108,7 +108,10 @@ router.post("/", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Create tutorial error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to create tutorial" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create tutorial",
+      },
     });
   }
 });
@@ -163,7 +166,10 @@ router.get("/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Get tutorial error:", error);
     res.status(500).json({
-      error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch tutorial" },
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch tutorial",
+      },
     });
   }
 });
@@ -193,8 +199,8 @@ router.put("/:id", async (req: Request, res: Response) => {
       k === "targetRoles"
         ? "target_roles"
         : k === "isRequired"
-        ? "is_required"
-        : k;
+          ? "is_required"
+          : k;
 
     for (const [k, v] of Object.entries(body)) {
       const col = mapKey(k);
@@ -401,11 +407,9 @@ router.get("/:id/video", async (req: Request, res: Response) => {
       : path.join(process.cwd(), r.video_file_path);
 
     if (!r.video_file_path || !fs.existsSync(absPath)) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "FILE_NOT_FOUND", message: "Video file missing" },
-        });
+      return res.status(404).json({
+        error: { code: "FILE_NOT_FOUND", message: "Video file missing" },
+      });
     }
 
     const stat = fs.statSync(absPath);

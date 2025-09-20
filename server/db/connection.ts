@@ -16,7 +16,7 @@ type DbConfigOptions = {
   connectionTimeoutMillis?: number;
 };
 
-const isConfigured =true;
+const isConfigured = true;
 
 const dbConfig: DbConfigOptions = process.env.DATABASE_URL
   ? {

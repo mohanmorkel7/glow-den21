@@ -164,7 +164,10 @@ export default function Expense() {
   const salaryEntries: SalaryEntry[] = [];
 
   // Base recurring monthly expenses
-  const baseRecurringExpenses: Omit<ExpenseEntry, "id" | "expense_date" | "month">[] = [
+  const baseRecurringExpenses: Omit<
+    ExpenseEntry,
+    "id" | "expense_date" | "month"
+  >[] = [
     {
       category: "Office Rent",
       description: "Monthly office rent payment",
@@ -1807,7 +1810,9 @@ export default function Expense() {
                     Date
                   </Label>
                   <p className="text-sm">
-                    {new Date(selectedExpense.expense_date).toLocaleDateString()}
+                    {new Date(
+                      selectedExpense.expense_date,
+                    ).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
@@ -1976,18 +1981,46 @@ export default function Expense() {
             <Button
               onClick={async () => {
                 if (!selectedExpense) return;
-                const cat = (document.getElementById("edit-category") as HTMLInputElement)?.value || selectedExpense.category;
-                const desc = (document.getElementById("edit-description") as HTMLInputElement)?.value || selectedExpense.description;
-                const amt = Number((document.getElementById("edit-amount") as HTMLInputElement)?.value || selectedExpense.amount);
-                const dt = (document.getElementById("edit-date") as HTMLInputElement)?.value || selectedExpense.expense_date;
+                const cat =
+                  (document.getElementById("edit-category") as HTMLInputElement)
+                    ?.value || selectedExpense.category;
+                const desc =
+                  (
+                    document.getElementById(
+                      "edit-description",
+                    ) as HTMLInputElement
+                  )?.value || selectedExpense.description;
+                const amt = Number(
+                  (document.getElementById("edit-amount") as HTMLInputElement)
+                    ?.value || selectedExpense.amount,
+                );
+                const dt =
+                  (document.getElementById("edit-date") as HTMLInputElement)
+                    ?.value || selectedExpense.expense_date;
                 try {
-                  const updated: any = await apiClient.updateExpense(selectedExpense.id, {
-                    category: cat,
-                    description: desc,
-                    amount: amt,
-                    expense_date: dt,
-                  } as any);
-                  setExpenseEntries((prev) => prev.map((e) => (e.id === selectedExpense.id ? { ...e, ...updated, expense_date: dt, amount: amt, category: cat, description: desc } as any : e)));
+                  const updated: any = await apiClient.updateExpense(
+                    selectedExpense.id,
+                    {
+                      category: cat,
+                      description: desc,
+                      amount: amt,
+                      expense_date: dt,
+                    } as any,
+                  );
+                  setExpenseEntries((prev) =>
+                    prev.map((e) =>
+                      e.id === selectedExpense.id
+                        ? ({
+                            ...e,
+                            ...updated,
+                            expense_date: dt,
+                            amount: amt,
+                            category: cat,
+                            description: desc,
+                          } as any)
+                        : e,
+                    ),
+                  );
                   setIsEditExpenseOpen(false);
                   alert("Expense updated successfully!");
                 } catch (e) {

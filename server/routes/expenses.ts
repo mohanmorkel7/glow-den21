@@ -215,7 +215,6 @@ const expenseQuerySchema = z.object({
 //   }
 // });
 
-
 // GET /api/expenses - List expenses with filtering and pagination
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -239,7 +238,7 @@ router.get("/", async (req: Request, res: Response) => {
     }
     if (q.search) {
       where.push(
-        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`
+        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`,
       );
       params.push(`%${q.search.toLowerCase()}%`);
       idx++;
@@ -263,10 +262,10 @@ router.get("/", async (req: Request, res: Response) => {
       q.sortBy === "amount"
         ? "amount"
         : q.sortBy === "category"
-        ? "category"
-        : q.sortBy === "type"
-        ? "type"
-        : "date";
+          ? "category"
+          : q.sortBy === "type"
+            ? "type"
+            : "date";
 
     const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
@@ -298,7 +297,7 @@ router.get("/", async (req: Request, res: Response) => {
       countSql,
       params,
       q.page,
-      q.limit
+      q.limit,
     );
 
     const rows = data.map((r: any) => ({
@@ -330,7 +329,7 @@ router.get("/", async (req: Request, res: Response) => {
       FROM expenses
       ${whereSql}
       `,
-      params
+      params,
     );
 
     const s = statsRes.rows[0] || {
@@ -359,9 +358,6 @@ router.get("/", async (req: Request, res: Response) => {
     });
   }
 });
-
-
-
 
 // GET /api/expenses/:id - Get single expense
 router.get("/:id", async (req: Request, res: Response) => {
@@ -562,7 +558,6 @@ router.post("/", async (req: Request, res: Response) => {
     });
   }
 });
-
 
 // PUT /api/expenses/:id - Update expense
 router.put("/:id", async (req: Request, res: Response) => {

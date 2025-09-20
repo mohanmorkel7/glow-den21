@@ -26,13 +26,27 @@ export async function ensureTutorialTables() {
   `);
 
   // Make sure new columns exist when table already created
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS instructions TEXT;`);
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS target_roles TEXT[] DEFAULT '{user}';`);
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS is_required BOOLEAN DEFAULT false;`);
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';`);
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS "order" INT DEFAULT 0;`);
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0;`);
-  await query(`ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS completion_count INT DEFAULT 0;`);
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS instructions TEXT;`,
+  );
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS target_roles TEXT[] DEFAULT '{user}';`,
+  );
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS is_required BOOLEAN DEFAULT false;`,
+  );
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';`,
+  );
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS "order" INT DEFAULT 0;`,
+  );
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0;`,
+  );
+  await query(
+    `ALTER TABLE tutorials ADD COLUMN IF NOT EXISTS completion_count INT DEFAULT 0;`,
+  );
 
   // Steps table
   await query(`

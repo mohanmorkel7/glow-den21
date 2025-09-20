@@ -433,10 +433,7 @@ class ApiClient {
     });
   }
 
-  async updateTutorial(
-    id: string,
-    data: any,
-  ) {
+  async updateTutorial(id: string, data: any) {
     return this.request(`/tutorials/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
