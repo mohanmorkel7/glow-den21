@@ -1302,6 +1302,7 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
     const result = await query(sql, [nextMonth]);
     const pms = result.rows.map((r: any) => ({
       id: r.id,
+      userId: r.user_id,
       name: r.name,
       role: "project_manager",
       monthlySalary: Number(r.monthly_salary || 0),
