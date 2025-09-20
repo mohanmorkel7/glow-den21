@@ -1974,11 +1974,26 @@ export default function Expense() {
               Cancel
             </Button>
             <Button
-              onClick={() => {
-                // In a real application, you would save the changes here
-                console.log("Saving expense changes for:", selectedExpense?.id);
-                setIsEditExpenseOpen(false);
-                alert("Expense updated successfully!");
+              onClick={async () => {
+                if (!selectedExpense) return;
+                const cat = (document.getElementById("edit-category") as HTMLInputElement)?.value || selectedExpense.category;
+                const desc = (document.getElementById("edit-description") as HTMLInputElement)?.value || selectedExpense.description;
+                const amt = Number((document.getElementById("edit-amount") as HTMLInputElement)?.value || selectedExpense.amount);
+                const dt = (document.getElementById("edit-date") as HTMLInputElement)?.value || selectedExpense.expense_date;
+                try {
+                  const updated: any = await apiClient.updateExpense(selectedExpense.id, {
+                    category: cat,
+                    description: desc,
+                    amount: amt,
+                    expense_date: dt,
+                  } as any);
+                  setExpenseEntries((prev) => prev.map((e) => (e.id === selectedExpense.id ? { ...e, ...updated, expense_date: dt, amount: amt, category: cat, description: desc } as any : e)));
+                  setIsEditExpenseOpen(false);
+                  alert("Expense updated successfully!");
+                } catch (e) {
+                  console.error(e);
+                  alert("Failed to update expense");
+                }
               }}
             >
               Save Changes

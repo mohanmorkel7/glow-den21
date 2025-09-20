@@ -90,8 +90,13 @@ export default function RichTextEditor({
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (editorRef.current && !readOnly) {
-      editorRef.current.innerHTML = value;
+    const el = editorRef.current;
+    if (!el || readOnly) return;
+
+    // Avoid resetting content while the user is typing to preserve caret position
+    const isFocused = document.activeElement === el;
+    if (!isFocused && el.innerHTML !== value) {
+      el.innerHTML = value;
       updateWordCount();
     }
   }, [value, readOnly]);
