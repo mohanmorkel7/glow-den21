@@ -783,13 +783,22 @@ export default function FileProcess() {
     let processedRowsDiff = dailyUpdate.completed;
 
     if (existingIndex >= 0) {
+      // When editing an existing entry, interpret input as the desired remaining available count
       const oldCompleted = updatedCompletions[existingIndex].completed;
+      const currentAvailable = Math.max(0, Number(process.availableRows || 0));
+      const desiredAvailable = Math.max(
+        0,
+        Math.min(currentAvailable, Number(dailyUpdate.completed || 0)),
+      );
+      const deltaCompleted = currentAvailable - desiredAvailable;
+      const newCompletedForDay = Math.max(0, oldCompleted + deltaCompleted);
       updatedCompletions[existingIndex] = {
         date: dailyUpdate.date,
-        completed: dailyUpdate.completed,
+        completed: newCompletedForDay,
       };
-      processedRowsDiff = dailyUpdate.completed - oldCompleted;
+      processedRowsDiff = deltaCompleted;
     } else {
+      // New entry: treat input as today's completed count
       updatedCompletions = [
         ...updatedCompletions,
         { date: dailyUpdate.date, completed: dailyUpdate.completed },
@@ -3019,9 +3028,11 @@ export default function FileProcess() {
                                 </p>
                                 <p>
                                   <strong>Submitted:</strong>{" "}
-                                  {new Date(
-                                    request.submittedDate,
-                                  ).toLocaleString()}
+                                  {(() => {
+                                    const d = request.completedDate || request.requestedDate || null;
+                                    const t = d ? new Date(d) : null;
+                                    return t && !isNaN(t.getTime()) ? t.toLocaleString() : "-";
+                                  })()}
                                 </p>
                               </div>
                             </div>
@@ -3677,6 +3688,11 @@ export default function FileProcess() {
                   {selectedAutomationProcess.availableRows.toLocaleString()}{" "}
                   items
                 </p>
+                {isEditingExisting && (
+                  <p className="text-xs text-blue-600">
+                    Tip: Enter desired remaining available items; we’ll compute today’s completion.
+                  </p>
+                )}
               </div>
 
               {dailyUpdate.completed > 0 && (
