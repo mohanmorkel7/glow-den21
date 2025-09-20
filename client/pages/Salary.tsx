@@ -142,6 +142,9 @@ export default function Salary() {
   const [breakdownPeriod, setBreakdownPeriod] =
     useState<BreakdownPeriod>("daily");
   const [breakdownData, setBreakdownData] = useState<SalaryBreakdown[]>([]);
+  const [pmPerfDialogOpen, setPmPerfDialogOpen] = useState(false);
+  const [selectedPM, setSelectedPM] = useState<ProjectManagerSalaryData | null>(null);
+  const [pmAutomationDetails, setPmAutomationDetails] = useState<any>(null);
 
   // Salary data loaded from backend
   const [userSalaryData, setUserSalaryData] = useState<UserSalaryData[]>([]);
