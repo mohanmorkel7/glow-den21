@@ -1472,12 +1472,12 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const fromIso = `${fromStr}T00:00:00Z`;
     const toNextIso = `${toNextStr}T00:00:00Z`;
     const rowsRes = await query(
-      `SELECT ((COALESCE(completed_date, verified_at) AT TIME ZONE 'Asia/Kolkata')::date) AS d,
+      `SELECT ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) AS d,
               SUM(COALESCE(assigned_count, requested_count, 0)) AS files
          FROM file_requests
         WHERE user_id::text = $1
-          AND ((COALESCE(completed_date, verified_at) AT TIME ZONE 'Asia/Kolkata')::date) >= $2::date
-          AND ((COALESCE(completed_date, verified_at) AT TIME ZONE 'Asia/Kolkata')::date) < $3::date
+          AND ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) >= $2::date
+          AND ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) < $3::date
         GROUP BY 1
         ORDER BY 1`,
       [String(userId), fromStr, toNextStr],
