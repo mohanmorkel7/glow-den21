@@ -3029,9 +3029,14 @@ export default function FileProcess() {
                                 <p>
                                   <strong>Submitted:</strong>{" "}
                                   {(() => {
-                                    const d = request.completedDate || request.requestedDate || null;
+                                    const d =
+                                      request.completedDate ||
+                                      request.requestedDate ||
+                                      null;
                                     const t = d ? new Date(d) : null;
-                                    return t && !isNaN(t.getTime()) ? t.toLocaleString() : "-";
+                                    return t && !isNaN(t.getTime())
+                                      ? t.toLocaleString()
+                                      : "-";
                                   })()}
                                 </p>
                               </div>
@@ -3690,7 +3695,8 @@ export default function FileProcess() {
                 </p>
                 {isEditingExisting && (
                   <p className="text-xs text-blue-600">
-                    Tip: Enter desired remaining available items; we’ll compute today’s completion.
+                    Tip: Enter desired remaining available items; we’ll compute
+                    today’s completion.
                   </p>
                 )}
               </div>
@@ -4192,9 +4198,14 @@ export default function FileProcess() {
                         </Label>
                         <p className="text-base">
                           {(() => {
-                            const d = selectedVerificationRequest.completedDate || selectedVerificationRequest.requestedDate || null;
+                            const d =
+                              selectedVerificationRequest.completedDate ||
+                              selectedVerificationRequest.requestedDate ||
+                              null;
                             const t = d ? new Date(d) : null;
-                            return t && !isNaN(t.getTime()) ? t.toLocaleString() : "-";
+                            return t && !isNaN(t.getTime())
+                              ? t.toLocaleString()
+                              : "-";
                           })()}
                         </p>
                       </div>
