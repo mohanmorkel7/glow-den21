@@ -310,9 +310,9 @@ router.get("/", async (req: Request, res: Response) => {
       month: r.month,
       type: r.type,
       frequency: r.frequency,
-      receipt_path: r.receipt_path || undefined,
+      receipt: r.receipt || undefined,
       status: r.status,
-      approved_by_user_id: r.approved_by_user_id || undefined,
+      approvedBy: r.approved_by || "",
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       createdBy: r.created_by_user_id
