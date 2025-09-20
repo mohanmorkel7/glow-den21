@@ -1071,7 +1071,10 @@ router.put("/salary/config", async (req: Request, res: Response) => {
 router.get("/salary/users", async (req: Request, res: Response) => {
   try {
     // Prevent cache for dynamic salary user aggregates
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
     const { month } = req.query as any;
@@ -1405,7 +1408,10 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 router.get("/salary/breakdown", async (req: Request, res: Response) => {
   try {
     // Prevent cache for fresh salary breakdowns
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
     const { userId, period = "daily", month } = req.query as any;
