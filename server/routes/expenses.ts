@@ -266,7 +266,7 @@ router.get("/", async (req: Request, res: Response) => {
         ? "category"
         : q.sortBy === "type"
         ? "type"
-        : "expense_date";
+        : "date";
 
     const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
