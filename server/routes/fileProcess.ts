@@ -949,6 +949,7 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
                  verified_by = $1,
                  verified_at = CURRENT_TIMESTAMP,
                  notes = COALESCE($2, notes),
+                 completed_date = COALESCE(completed_date, CURRENT_TIMESTAMP),
                  updated_at = CURRENT_TIMESTAMP
            WHERE id = $3`,
           [currentUser?.name || currentUser?.id || null, notes || null, id],
