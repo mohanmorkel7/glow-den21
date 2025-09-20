@@ -533,9 +533,9 @@ router.post("/", async (req: Request, res: Response) => {
         month: row.month,
         type: row.type,
         frequency: row.frequency,
-        receipt_path: row.receipt_path || undefined,
+        receipt: row.receipt || undefined,
         status: row.status,
-        approved_by_user_id: row.approved_by_user_id || undefined,
+        approvedBy: row.approved_by || "",
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         createdBy: row.created_by_user_id
