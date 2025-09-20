@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { z } from "zod";
 import { query, transaction, paginatedQuery } from "../db/connection";
 import bcrypt from "bcrypt";
+import { validate as isUuid } from "uuid";
 
 const router = Router();
 
@@ -244,11 +245,11 @@ router.get("/", async (req: Request, res: Response) => {
       idx++;
     }
     if (q.from) {
-      where.push(`date >= $${idx++}`);
+      where.push(`expense_date >= $${idx++}`);
       params.push(q.from);
     }
     if (q.to) {
-      where.push(`date <= $${idx++}`);
+      where.push(`expense_date <= $${idx++}`);
       params.push(q.to);
     }
     if (q.month) {
@@ -265,7 +266,7 @@ router.get("/", async (req: Request, res: Response) => {
           ? "category"
           : q.sortBy === "type"
             ? "type"
-            : "date";
+            : "expense_date";
 
     const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
@@ -277,13 +278,13 @@ router.get("/", async (req: Request, res: Response) => {
         category,
         description,
         amount::FLOAT8 AS amount,
-        TO_CHAR(date, 'YYYY-MM-DD') AS expense_date,
+        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
         month,
         type,
         frequency,
-        receipt,
+        receipt_path,
         status,
-        approved_by,
+        approved_by_user_id,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
         created_by_user_id
@@ -309,9 +310,9 @@ router.get("/", async (req: Request, res: Response) => {
       month: r.month,
       type: r.type,
       frequency: r.frequency,
-      receipt: r.receipt || undefined,
+      receipt_path: r.receipt_path || undefined,
       status: r.status,
-      approvedBy: r.approved_by || "",
+      approvedBy: r.approved_by_user_id || "",
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       createdBy: r.created_by_user_id
@@ -559,15 +560,133 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/expenses/:id - Update expense
+// // PUT /api/expenses/:id - Update expense
+// router.put("/:id", async (req: Request, res: Response) => {
+//   try {
+//     const { id } = req.params;
+//     const body = updateExpenseSchema.parse(req.body);
+
+//     const sets: string[] = [];
+//     const params: any[] = [];
+//     let idx = 1;
+//     if (body.category !== undefined) {
+//       sets.push(`category = $${idx++}`);
+//       params.push(body.category);
+//     }
+//     if (body.description !== undefined) {
+//       sets.push(`description = $${idx++}`);
+//       params.push(body.description);
+//     }
+//     if (body.amount !== undefined) {
+//       sets.push(`amount = $${idx++}`);
+//       params.push(body.amount);
+//     }
+//     if (body.expense_date !== undefined) {
+//       sets.push(`expense_date = $${idx++}`);
+//       params.push(body.expense_date);
+//     }
+//     if (body.type !== undefined) {
+//       sets.push(`type = $${idx++}`);
+//       params.push(body.type);
+//     }
+//     if (body.frequency !== undefined) {
+//       sets.push(`frequency = $${idx++}`);
+//       params.push(body.frequency);
+//     }
+//     if (body.receipt !== undefined) {
+//       sets.push(`receipt_path = $${idx++}`);
+//       params.push(body.receipt);
+//     }
+//     if (body.status !== undefined) {
+//       sets.push(`status = $${idx++}`);
+//       params.push(body.status);
+//     }
+
+//     if (sets.length === 0) {
+//       return res.status(400).json({
+//         error: { code: "NO_CHANGES", message: "No fields to update" },
+//       });
+//     }
+
+//     if (body.expense_date !== undefined) {
+//       sets.push(`month = SUBSTRING($${idx - 1}::text, 1, 7)`);
+//     }
+//     sets.push(`updated_at = CURRENT_TIMESTAMP`);
+
+//     const sql = `UPDATE expenses SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, category, description, amount::FLOAT8 AS amount,
+//       TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt_path, status, COALESCE(approved_by_user_id,'') AS approved_by_user_id,
+//       TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+//       TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+//       created_by_user_id AS created_by_user_id`;
+//     const r = await query(sql, [...params, id]);
+//     const row = r.rows[0];
+//     if (!row)
+//       return res
+//         .status(404)
+//         .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
+
+//     res.json({
+//       data: {
+//         id: row.id,
+//         category: row.category,
+//         description: row.description,
+//         amount: Number(row.amount),
+//         expense_date: row.expense_date,
+//         month: row.month,
+//         type: row.type,
+//         frequency: row.frequency,
+//         receipt_path: row.receipt_path || undefined,
+//         status: row.status,
+//         approvedBy: row.approved_by_user_id ? row.approved_by_user_id : undefined,
+//         createdAt: row.created_at,
+//         updatedAt: row.updated_at,
+//         createdBy: row.created_by_user_id
+//           ? { id: String(row.created_by_user_id), name: "" }
+//           : undefined,
+//       },
+//     });
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return res.status(400).json({
+//         error: {
+//           code: "VALIDATION_ERROR",
+//           message: "Invalid expense data",
+//           details: error.errors,
+//         },
+//       });
+//     }
+//     console.error("Error updating expense:", error);
+//     res.status(500).json({
+//       error: {
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to update expense",
+//       },
+//     });
+//   }
+// });
+
+
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    // ✅ Validate UUID format
+    if (!isUuid(id)) {
+      return res.status(400).json({
+        error: { code: "INVALID_ID", message: "Invalid expense ID" },
+      });
+    }
+
+    // ✅ Validate request body against schema
     const body = updateExpenseSchema.parse(req.body);
 
     const sets: string[] = [];
     const params: any[] = [];
     let idx = 1;
+
+    // ✅ Track the index for expense_date to use in month update
+    let expenseDateParamIndex = -1;
+
     if (body.category !== undefined) {
       sets.push(`category = $${idx++}`);
       params.push(body.category);
@@ -580,10 +699,21 @@ router.put("/:id", async (req: Request, res: Response) => {
       sets.push(`amount = $${idx++}`);
       params.push(body.amount);
     }
+    // if (body.expense_date !== undefined) {
+    //   sets.push(`expense_date = $${idx}`);
+    //   params.push(body.expense_date);
+    //   expenseDateParamIndex = idx;
+    //   idx++;
+    // }
+
     if (body.expense_date !== undefined) {
-      sets.push(`date = $${idx++}`);
+      sets.push(`expense_date = $${idx}`);
       params.push(body.expense_date);
+      expenseDateParamIndex = idx;
+      idx++;
     }
+
+
     if (body.type !== undefined) {
       sets.push(`type = $${idx++}`);
       params.push(body.type);
@@ -593,13 +723,24 @@ router.put("/:id", async (req: Request, res: Response) => {
       params.push(body.frequency);
     }
     if (body.receipt !== undefined) {
-      sets.push(`receipt = $${idx++}`);
+      sets.push(`receipt_path = $${idx++}`);
       params.push(body.receipt);
     }
     if (body.status !== undefined) {
-      sets.push(`status = $${idx++}`);
+      sets.push(`status = $${idx++}::expense_status`);
       params.push(body.status);
     }
+
+    // // ✅ Add month if expense_date is updated
+    // if (expenseDateParamIndex !== -1) {
+    //   sets.push(`month = SUBSTRING($${expenseDateParamIndex}::text, 1, 7)`);
+    // }
+
+    if (expenseDateParamIndex !== -1) {
+      sets.push(`month = TO_CHAR($${expenseDateParamIndex}::date, 'YYYY-MM')`);
+    }
+
+    sets.push(`updated_at = CURRENT_TIMESTAMP`);
 
     if (sets.length === 0) {
       return res.status(400).json({
@@ -607,41 +748,47 @@ router.put("/:id", async (req: Request, res: Response) => {
       });
     }
 
-    if (body.expense_date !== undefined) {
-      sets.push(`month = SUBSTRING($${idx - 1}::text, 1, 7)`);
-    }
-    sets.push(`updated_at = CURRENT_TIMESTAMP`);
+    const sql = `
+      UPDATE expenses SET ${sets.join(", ")}
+      WHERE id = $${idx}
+      RETURNING id, category, description, amount::FLOAT8 AS amount,
+        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
+        month, type, frequency, receipt_path, status,
+        COALESCE(approved_by_user_id, NULL) AS approved_by_user_id,
+        TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
+        TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
+        created_by_user_id
+    `;
 
-    const sql = `UPDATE expenses SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, category, description, amount::FLOAT8 AS amount,
-      TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
-      TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
-      TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
-      created_by_user_id AS created_by`;
+    // ✅ Execute the update query
     const r = await query(sql, [...params, id]);
     const row = r.rows[0];
-    if (!row)
-      return res
-        .status(404)
-        .json({ error: { code: "NOT_FOUND", message: "Expense not found" } });
 
+    if (!row) {
+      return res.status(404).json({
+        error: { code: "NOT_FOUND", message: "Expense not found" },
+      });
+    }
+
+    // ✅ Send updated data
     res.json({
       data: {
         id: row.id,
         category: row.category,
         description: row.description,
         amount: Number(row.amount),
-        date: row.date,
+        expense_date: row.expense_date,
         month: row.month,
         type: row.type,
         frequency: row.frequency,
-        receipt: row.receipt || undefined,
+        receipt_path: row.receipt_path || undefined,
         status: row.status,
-        approvedBy: row.approved_by || "",
+        approvedBy: row.approved_by_user_id || null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-        createdBy: row.created_by
-          ? { id: String(row.created_by), name: "" }
-          : { id: "", name: "" },
+        createdBy: row.created_by_user_id
+          ? { id: String(row.created_by_user_id), name: "" }
+          : null,
       },
     });
   } catch (error) {
@@ -654,7 +801,9 @@ router.put("/:id", async (req: Request, res: Response) => {
         },
       });
     }
+
     console.error("Error updating expense:", error);
+
     res.status(500).json({
       error: {
         code: "INTERNAL_SERVER_ERROR",
@@ -663,6 +812,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     });
   }
 });
+
 
 // POST /api/expenses/:id/approve - Approve/reject expense
 router.post("/:id/approve", async (req: Request, res: Response) => {

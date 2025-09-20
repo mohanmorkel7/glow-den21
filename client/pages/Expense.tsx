@@ -1956,19 +1956,29 @@ export default function Expense() {
                   />
                 </div>
               </div>
-              <div>
-                <Label htmlFor="edit-status">Status</Label>
-                <Select defaultValue={selectedExpense.status}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {selectedExpense && (
+                <div>
+                  <Label htmlFor="edit-status">Status</Label>
+                  <Select
+                    value={selectedExpense.status}
+                    onValueChange={(value) =>
+                      setSelectedExpense((prev) =>
+                        prev ? { ...prev, status: value as ExpenseEntry["status"] } : null
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
             </div>
           )}
           <DialogFooter>
@@ -2005,6 +2015,7 @@ export default function Expense() {
                       description: desc,
                       amount: amt,
                       expense_date: dt,
+                      status:selectedExpense.status
                     } as any,
                   );
                   setExpenseEntries((prev) =>
@@ -2017,6 +2028,7 @@ export default function Expense() {
                             amount: amt,
                             category: cat,
                             description: desc,
+                            status:selectedExpense.status
                           } as any)
                         : e,
                     ),
