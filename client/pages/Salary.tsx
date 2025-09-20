@@ -96,11 +96,12 @@ type BreakdownPeriod = "daily" | "weekly" | "monthly";
 
 interface ProjectManagerSalaryData {
   id: string;
+  userId?: string | null;
   name: string;
   role: string;
   monthlySalary: number; // Individual monthly salary
   attendanceRate: number;
-  lastActive: string;
+  lastActive: string | null;
 }
 
 export default function Salary() {
