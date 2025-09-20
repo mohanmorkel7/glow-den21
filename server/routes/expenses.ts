@@ -245,11 +245,11 @@ router.get("/", async (req: Request, res: Response) => {
       idx++;
     }
     if (q.from) {
-      where.push(`expense_date >= $${idx++}`);
+      where.push(`date >= $${idx++}`);
       params.push(q.from);
     }
     if (q.to) {
-      where.push(`expense_date <= $${idx++}`);
+      where.push(`date <= $${idx++}`);
       params.push(q.to);
     }
     if (q.month) {
