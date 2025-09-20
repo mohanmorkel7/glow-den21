@@ -1055,7 +1055,20 @@ export default function Salary() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="space-y-1">
+                        <div
+                          className="space-y-1 cursor-pointer hover:bg-purple-50 p-2 rounded"
+                          onClick={async () => {
+                            setSelectedPM(pm);
+                            setPmPerfDialogOpen(true);
+                            try {
+                              const resp: any = await apiClient.getPMAutomationDetails(pm.userId || pm.id);
+                              setPmAutomationDetails((resp && (resp.data || resp)) || null);
+                            } catch (e) {
+                              setPmAutomationDetails(null);
+                            }
+                          }}
+                          title="View automation performance details"
+                        >
                           {getPerformanceBadge(pm.attendanceRate)}
                           <div className="text-xs text-muted-foreground">
                             {pm.attendanceRate}%
