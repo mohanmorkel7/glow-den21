@@ -16,7 +16,7 @@ type DbConfigOptions = {
   connectionTimeoutMillis?: number;
 };
 
-const isConfigured =true;
+const isConfigured = true;
 
 const dbConfig: DbConfigOptions = process.env.DATABASE_URL
   ? {
@@ -129,10 +129,16 @@ export const paginatedQuery = async (
   };
 };
 
+let poolEnded = false;
+let cleanupRegistered = false;
+
 export const cleanup = async (): Promise<void> => {
   try {
-    if (pool) {
+    if (pool && !poolEnded) {
+      poolEnded = true;
       await pool.end();
+      // ensure pool reference cleared to prevent reuse after end
+      pool = null as any;
       console.log("🔌 Database connection pool closed");
     }
   } catch (error) {
@@ -140,7 +146,12 @@ export const cleanup = async (): Promise<void> => {
   }
 };
 
-process.on("SIGINT", cleanup);
-process.on("SIGTERM", cleanup);
+// Register signal handlers only once across HMR reloads
+if (!cleanupRegistered && typeof process !== "undefined") {
+  cleanupRegistered = true;
+  // Use once to avoid multiple invocations
+  process.once("SIGINT", cleanup);
+  process.once("SIGTERM", cleanup);
+}
 
 export { pool };

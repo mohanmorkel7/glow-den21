@@ -28,7 +28,7 @@ router.get("/", async (req: Request, res: Response) => {
       where.push(`LOWER(title) LIKE $${params.length}`);
     }
     const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-    const sql = `SELECT id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at FROM tutorials ${whereClause} ORDER BY created_at DESC`;
+    const sql = `SELECT id, title, description, category, status, instructions, target_roles, is_required, tags, "order", video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at FROM tutorials ${whereClause} ORDER BY created_at DESC`;
     const result = await query(sql, params);
 
     const data = result.rows.map((r: any) => ({
@@ -37,6 +37,11 @@ router.get("/", async (req: Request, res: Response) => {
       description: r.description || "",
       category: r.category || "getting_started",
       status: r.status || "published",
+      instructions: r.instructions || "",
+      targetRoles: Array.isArray(r.target_roles) ? r.target_roles : ["user"],
+      isRequired: !!r.is_required,
+      tags: Array.isArray(r.tags) ? r.tags : [],
+      order: r.order ?? 0,
       videoUrl: r.video_file_path ? `/api/tutorials/${r.id}/video` : null,
       videoFileName: r.video_file_name || null,
       createdAt: r.created_at,
@@ -55,7 +60,121 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/tutorials/:id - update tutorial (rename, description, category, status)
+// POST /api/tutorials - create tutorial with metadata and optional steps
+router.post("/", async (req: Request, res: Response) => {
+  try {
+    const currentUser: any = (req as any).user;
+    const b = req.body || {};
+    const id = `tut_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const insert = `INSERT INTO tutorials (id, title, description, category, status, instructions, target_roles, is_required, tags, "order", created_by_user_id, created_at, updated_at)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),$11,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`;
+
+    await query(insert, [
+      id,
+      b.title,
+      b.description || null,
+      b.category || "getting_started",
+      b.status || "published",
+      b.instructions || null,
+      Array.isArray(b.targetRoles) ? b.targetRoles : ["user"],
+      !!b.isRequired,
+      Array.isArray(b.tags) ? b.tags : [],
+      Number.isFinite(b.order) ? Number(b.order) : 0,
+      currentUser?.id || null,
+    ]);
+
+    if (Array.isArray(b.steps) && b.steps.length) {
+      for (const s of b.steps) {
+        const sid = `tstep_${Math.random().toString(36).slice(2, 10)}`;
+        await query(
+          `INSERT INTO tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            sid,
+            id,
+            s.stepNumber || 1,
+            s.title || "",
+            s.description || null,
+            s.imageUrl || null,
+            s.videoTimestamp || null,
+            !!s.isRequired,
+          ],
+        );
+      }
+    }
+
+    res.status(201).json({ data: { id } });
+  } catch (error) {
+    console.error("Create tutorial error:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create tutorial",
+      },
+    });
+  }
+});
+
+// GET /api/tutorials/:id - get tutorial with steps
+router.get("/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const tr = await query(
+      `SELECT id, title, description, category, status, instructions, target_roles, is_required, tags, "order", video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at FROM tutorials WHERE id = $1`,
+      [id],
+    );
+    if (!tr.rows.length) {
+      return res
+        .status(404)
+        .json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
+    }
+    const r = tr.rows[0];
+    const stepsRes = await query(
+      `SELECT id, step_number, title, description, image_url, video_timestamp, is_required FROM tutorial_steps WHERE tutorial_id = $1 ORDER BY step_number ASC`,
+      [id],
+    );
+    const steps = stepsRes.rows.map((s: any) => ({
+      id: s.id,
+      stepNumber: s.step_number,
+      title: s.title,
+      description: s.description || "",
+      imageUrl: s.image_url || undefined,
+      videoTimestamp: s.video_timestamp || undefined,
+      isRequired: !!s.is_required,
+    }));
+
+    res.json({
+      data: {
+        id: r.id,
+        title: r.title,
+        description: r.description || "",
+        category: r.category || "getting_started",
+        status: r.status || "published",
+        instructions: r.instructions || "",
+        targetRoles: Array.isArray(r.target_roles) ? r.target_roles : ["user"],
+        isRequired: !!r.is_required,
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        order: r.order ?? 0,
+        videoUrl: r.video_file_path ? `/api/tutorials/${r.id}/video` : null,
+        videoFileName: r.video_file_name || null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        steps,
+      },
+    });
+  } catch (error) {
+    console.error("Get tutorial error:", error);
+    res.status(500).json({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch tutorial",
+      },
+    });
+  }
+});
+
+// PUT /api/tutorials/:id - update tutorial (metadata and optionally replace steps)
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -64,10 +183,30 @@ router.put("/:id", async (req: Request, res: Response) => {
     const values: any[] = [];
     let idx = 1;
 
+    const updatable = [
+      "title",
+      "description",
+      "category",
+      "status",
+      "instructions",
+      "target_roles",
+      "is_required",
+      "tags",
+      "order",
+    ];
+
+    const mapKey = (k: string) =>
+      k === "targetRoles"
+        ? "target_roles"
+        : k === "isRequired"
+          ? "is_required"
+          : k;
+
     for (const [k, v] of Object.entries(body)) {
-      if (["title", "description", "category", "status"].includes(k)) {
-        fields.push(`${k} = $${idx++}`);
-        values.push(v);
+      const col = mapKey(k);
+      if (updatable.includes(col)) {
+        fields.push(`${col} = $${idx++}`);
+        values.push(col === "order" ? Number(v) : v);
       }
     }
 
@@ -81,13 +220,36 @@ router.put("/:id", async (req: Request, res: Response) => {
     }
 
     values.push(id);
-    const sql = `UPDATE tutorials SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`;
+    const sql = `UPDATE tutorials SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING id, title, description, category, status, instructions, target_roles, is_required, tags, "order", video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`;
     const result = await query(sql, values);
     if (!result.rows.length) {
       return res
         .status(404)
         .json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
     }
+
+    // Optionally replace steps
+    if (Array.isArray(body.steps)) {
+      await query(`DELETE FROM tutorial_steps WHERE tutorial_id = $1`, [id]);
+      for (const s of body.steps) {
+        const sid = `tstep_${Math.random().toString(36).slice(2, 10)}`;
+        await query(
+          `INSERT INTO tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            sid,
+            id,
+            s.stepNumber || 1,
+            s.title || "",
+            s.description || null,
+            s.imageUrl || null,
+            s.videoTimestamp || null,
+            !!s.isRequired,
+          ],
+        );
+      }
+    }
+
     const r = result.rows[0];
     res.json({
       data: {
@@ -96,6 +258,11 @@ router.put("/:id", async (req: Request, res: Response) => {
         description: r.description || "",
         category: r.category || "getting_started",
         status: r.status || "published",
+        instructions: r.instructions || "",
+        targetRoles: Array.isArray(r.target_roles) ? r.target_roles : ["user"],
+        isRequired: !!r.is_required,
+        tags: Array.isArray(r.tags) ? r.tags : [],
+        order: r.order ?? 0,
         videoUrl: r.video_file_path ? `/api/tutorials/${r.id}/video` : null,
         videoFileName: r.video_file_name || null,
         createdAt: r.created_at,
@@ -240,11 +407,9 @@ router.get("/:id/video", async (req: Request, res: Response) => {
       : path.join(process.cwd(), r.video_file_path);
 
     if (!r.video_file_path || !fs.existsSync(absPath)) {
-      return res
-        .status(404)
-        .json({
-          error: { code: "FILE_NOT_FOUND", message: "Video file missing" },
-        });
+      return res.status(404).json({
+        error: { code: "FILE_NOT_FOUND", message: "Video file missing" },
+      });
     }
 
     const stat = fs.statSync(absPath);

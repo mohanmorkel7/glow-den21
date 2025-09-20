@@ -26,7 +26,7 @@ const updateExpenseSchema = z.object({
   category: z.string().min(1).max(100).optional(),
   description: z.string().min(1).max(500).optional(),
   amount: z.number().positive().optional(),
-  date: z
+  expense_date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
@@ -215,7 +215,6 @@ const expenseQuerySchema = z.object({
 //   }
 // });
 
-
 // GET /api/expenses - List expenses with filtering and pagination
 router.get("/", async (req: Request, res: Response) => {
   try {
@@ -239,17 +238,17 @@ router.get("/", async (req: Request, res: Response) => {
     }
     if (q.search) {
       where.push(
-        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`
+        `(LOWER(category) LIKE $${idx} OR LOWER(description) LIKE $${idx})`,
       );
       params.push(`%${q.search.toLowerCase()}%`);
       idx++;
     }
     if (q.from) {
-      where.push(`expense_date >= $${idx++}`);
+      where.push(`date >= $${idx++}`);
       params.push(q.from);
     }
     if (q.to) {
-      where.push(`expense_date <= $${idx++}`);
+      where.push(`date <= $${idx++}`);
       params.push(q.to);
     }
     if (q.month) {
@@ -263,10 +262,10 @@ router.get("/", async (req: Request, res: Response) => {
       q.sortBy === "amount"
         ? "amount"
         : q.sortBy === "category"
-        ? "category"
-        : q.sortBy === "type"
-        ? "type"
-        : "expense_date";
+          ? "category"
+          : q.sortBy === "type"
+            ? "type"
+            : "date";
 
     const sortDir = q.sortOrder === "asc" ? "ASC" : "DESC";
 
@@ -278,13 +277,13 @@ router.get("/", async (req: Request, res: Response) => {
         category,
         description,
         amount::FLOAT8 AS amount,
-        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
+        TO_CHAR(date, 'YYYY-MM-DD') AS expense_date,
         month,
         type,
         frequency,
-        receipt_path,
+        receipt,
         status,
-        approved_by_user_id,
+        approved_by,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
         created_by_user_id
@@ -298,7 +297,7 @@ router.get("/", async (req: Request, res: Response) => {
       countSql,
       params,
       q.page,
-      q.limit
+      q.limit,
     );
 
     const rows = data.map((r: any) => ({
@@ -310,9 +309,9 @@ router.get("/", async (req: Request, res: Response) => {
       month: r.month,
       type: r.type,
       frequency: r.frequency,
-      receipt_path: r.receipt_path || undefined,
+      receipt: r.receipt || undefined,
       status: r.status,
-      approved_by_user_id: r.approved_by_user_id || undefined,
+      approvedBy: r.approved_by || "",
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       createdBy: r.created_by_user_id
@@ -330,7 +329,7 @@ router.get("/", async (req: Request, res: Response) => {
       FROM expenses
       ${whereSql}
       `,
-      params
+      params,
     );
 
     const s = statsRes.rows[0] || {
@@ -360,17 +359,14 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
-
-
-
 // GET /api/expenses/:id - Get single expense
 router.get("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const r = await query(
       `SELECT id, category, description, amount::FLOAT8 AS amount,
-              TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
-              month, type, frequency, receipt_path, status,
+              TO_CHAR(date, 'YYYY-MM-DD') AS expense_date,
+              month, type, frequency, receipt, status,
               COALESCE(approved_by,'') AS approved_by,
               TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
               TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
@@ -494,16 +490,16 @@ router.post("/", async (req: Request, res: Response) => {
 
     const sql = `
       INSERT INTO expenses (
-        category, description, amount, expense_date, month, type, frequency, receipt_path,
-        status, approved_by_user_id, approved_at, approval_notes, rejection_reason, created_by_user_id
+        category, description, amount, date, month, type, frequency, receipt,
+        status, approved_by, approved_at, created_by_user_id
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8,
-        'pending', NULL, NULL, NULL, NULL, $9
+        'pending', '', NULL, $9
       )
       RETURNING id, category, description, amount::FLOAT8 AS amount,
-        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt_path,
-        status, approved_by_user_id,
+        TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt,
+        status, approved_by,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
         created_by_user_id
@@ -533,9 +529,9 @@ router.post("/", async (req: Request, res: Response) => {
         month: row.month,
         type: row.type,
         frequency: row.frequency,
-        receipt_path: row.receipt_path || undefined,
+        receipt: row.receipt || undefined,
         status: row.status,
-        approved_by_user_id: row.approved_by_user_id || undefined,
+        approvedBy: row.approved_by || "",
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         createdBy: row.created_by_user_id
@@ -563,7 +559,6 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
-
 // PUT /api/expenses/:id - Update expense
 router.put("/:id", async (req: Request, res: Response) => {
   try {
@@ -585,9 +580,9 @@ router.put("/:id", async (req: Request, res: Response) => {
       sets.push(`amount = $${idx++}`);
       params.push(body.amount);
     }
-    if (body.date !== undefined) {
+    if (body.expense_date !== undefined) {
       sets.push(`date = $${idx++}`);
-      params.push(body.date);
+      params.push(body.expense_date);
     }
     if (body.type !== undefined) {
       sets.push(`type = $${idx++}`);
@@ -612,13 +607,13 @@ router.put("/:id", async (req: Request, res: Response) => {
       });
     }
 
-    if (body.date !== undefined) {
+    if (body.expense_date !== undefined) {
       sets.push(`month = SUBSTRING($${idx - 1}::text, 1, 7)`);
     }
     sets.push(`updated_at = CURRENT_TIMESTAMP`);
 
     const sql = `UPDATE expenses SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, category, description, amount::FLOAT8 AS amount,
-      TO_CHAR(date, 'YYYY-MM-DD') AS date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
+      TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt, status, COALESCE(approved_by,'') AS approved_by,
       TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
       TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
       created_by_user_id AS created_by`;
