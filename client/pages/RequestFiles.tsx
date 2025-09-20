@@ -698,7 +698,9 @@ export default function RequestFiles() {
                 {pendingRequests
                   .reduce(
                     (sum, req) =>
-                      sum + (typeof req.assignedCount === "number" && req.assignedCount > 0
+                      sum +
+                      (typeof req.assignedCount === "number" &&
+                      req.assignedCount > 0
                         ? req.assignedCount
                         : req.requestedCount),
                     0,

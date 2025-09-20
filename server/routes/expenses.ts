@@ -665,7 +665,6 @@ router.post("/", async (req: Request, res: Response) => {
 //   }
 // });
 
-
 router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -712,7 +711,6 @@ router.put("/:id", async (req: Request, res: Response) => {
       expenseDateParamIndex = idx;
       idx++;
     }
-
 
     if (body.type !== undefined) {
       sets.push(`type = $${idx++}`);
@@ -812,7 +810,6 @@ router.put("/:id", async (req: Request, res: Response) => {
     });
   }
 });
-
 
 // POST /api/expenses/:id/approve - Approve/reject expense
 router.post("/:id/approve", async (req: Request, res: Response) => {
@@ -1313,7 +1310,7 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 
     // Compute PM performance from automation processes
     const procsRes = await query(
-      `SELECT id, name, daily_target, total_rows, processed_rows, status, automation_config FROM file_processes WHERE type = 'automation'`
+      `SELECT id, name, daily_target, total_rows, processed_rows, status, automation_config FROM file_processes WHERE type = 'automation'`,
     );
     const processes = (procsRes.rows || []).map((row: any) => ({
       id: row.id,
@@ -1321,39 +1318,60 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
       dailyTarget: Number(row.daily_target || 0),
       totalRows: Number(row.total_rows || 0),
       processedRows: Number(row.processed_rows || 0),
-      status: row.status || 'pending',
-      automationConfig: (() => { try { return typeof row.automation_config === 'string' ? JSON.parse(row.automation_config) : row.automation_config || {}; } catch { return {}; } })(),
+      status: row.status || "pending",
+      automationConfig: (() => {
+        try {
+          return typeof row.automation_config === "string"
+            ? JSON.parse(row.automation_config)
+            : row.automation_config || {};
+        } catch {
+          return {};
+        }
+      })(),
     }));
 
     const today = new Date();
-    const yearMonth = today.toISOString().substring(0,7);
+    const yearMonth = today.toISOString().substring(0, 7);
     const monthStartDate = new Date(`${yearMonth}-01T00:00:00Z`);
     const daysSoFar = Math.min(
-      Math.floor((Date.now() - monthStartDate.getTime()) / (1000*60*60*24)) + 1,
+      Math.floor(
+        (Date.now() - monthStartDate.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1,
       31,
     );
 
     for (const pm of pms) {
       const uid = pm.userId || pm.user_id || pm.id;
       const assigned = processes.filter((p: any) => {
-        const assignedPMs = (p.automationConfig && p.automationConfig.assignedPMs) || [];
-        return Array.isArray(assignedPMs) && assignedPMs.some((a: any) => String(a.userId) === String(uid));
+        const assignedPMs =
+          (p.automationConfig && p.automationConfig.assignedPMs) || [];
+        return (
+          Array.isArray(assignedPMs) &&
+          assignedPMs.some((a: any) => String(a.userId) === String(uid))
+        );
       });
       let completedSum = 0;
       let expectedSum = 0;
       for (const p of assigned) {
         const target = Number(p.dailyTarget || 0);
         expectedSum += target * Math.max(daysSoFar, 0);
-        const dcs = (p.automationConfig && p.automationConfig.dailyCompletions) || [];
+        const dcs =
+          (p.automationConfig && p.automationConfig.dailyCompletions) || [];
         for (const d of dcs) {
-          const dStr = String(d.date || '').substring(0,10);
-          if (dStr.startsWith(yearMonth)) completedSum += Number(d.completed || 0);
+          const dStr = String(d.date || "").substring(0, 10);
+          if (dStr.startsWith(yearMonth))
+            completedSum += Number(d.completed || 0);
         }
       }
-      const pct = expectedSum > 0 ? Math.max(0, Math.min(100, Math.round((completedSum/expectedSum)*100))) : 0;
+      const pct =
+        expectedSum > 0
+          ? Math.max(
+              0,
+              Math.min(100, Math.round((completedSum / expectedSum) * 100)),
+            )
+          : 0;
       pm.attendanceRate = pct;
     }
-
 
     const summary = {
       totalMonthlySalaries: pms.reduce(
@@ -1543,77 +1561,128 @@ router.post("/salary/project-managers", async (req: Request, res: Response) => {
 });
 
 // PM automation details per user
-router.get("/salary/project-managers/:userId/automation-details", async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params as any;
-    const { month } = req.query as any;
-    if (!userId) {
-      return res.status(400).json({ error: { code: "VALIDATION_ERROR", message: "userId is required" } });
-    }
-    const targetMonth = (month as string) || new Date().toISOString().substring(0,7);
-    const monthStart = `${targetMonth}-01`;
-    const nextMonthDate = new Date(monthStart);
-    nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
-    const monthEndExclusive = nextMonthDate.toISOString().substring(0,10);
+router.get(
+  "/salary/project-managers/:userId/automation-details",
+  async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params as any;
+      const { month } = req.query as any;
+      if (!userId) {
+        return res
+          .status(400)
+          .json({
+            error: { code: "VALIDATION_ERROR", message: "userId is required" },
+          });
+      }
+      const targetMonth =
+        (month as string) || new Date().toISOString().substring(0, 7);
+      const monthStart = `${targetMonth}-01`;
+      const nextMonthDate = new Date(monthStart);
+      nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+      const monthEndExclusive = nextMonthDate.toISOString().substring(0, 10);
 
-    const procsRes = await query(
-      `SELECT id, name, daily_target, total_rows, processed_rows, status, automation_config
-         FROM file_processes WHERE type = 'automation'`
-    );
-
-    const details: any[] = [];
-    let totalCompleted = 0;
-    let totalExpected = 0;
-
-    for (const row of procsRes.rows || []) {
-      let cfg: any = null;
-      try { cfg = typeof row.automation_config === 'string' ? JSON.parse(row.automation_config) : row.automation_config; } catch { cfg = null; }
-      const assigned = (cfg && Array.isArray(cfg.assignedPMs)) ? cfg.assignedPMs : [];
-      const isAssigned = assigned.some((a: any) => String(a.userId) === String(userId));
-      if (!isAssigned) continue;
-
-      const dailyTarget = Number(row.daily_target || 0);
-      const totalRows = Number(row.total_rows || 0);
-      const processedRows = Number(row.processed_rows || 0);
-      const remainingRows = Math.max(0, totalRows - processedRows);
-      const dcs = (cfg && Array.isArray(cfg.dailyCompletions)) ? cfg.dailyCompletions : [];
-
-      const monthCompletions = dcs.filter((d: any) => {
-        const ds = String(d.date || '').substring(0,10);
-        return ds >= monthStart && ds < monthEndExclusive;
-      });
-      const completedSum = monthCompletions.reduce((s: number, d: any) => s + Number(d.completed || 0), 0);
-
-      // Expected based on daily target and days elapsed in month
-      const daysElapsed = Math.min(
-        Math.floor((new Date().getTime() - new Date(monthStart + 'T00:00:00Z').getTime())/(1000*60*60*24)) + 1,
-        31,
+      const procsRes = await query(
+        `SELECT id, name, daily_target, total_rows, processed_rows, status, automation_config
+         FROM file_processes WHERE type = 'automation'`,
       );
-      const expected = Math.max(0, dailyTarget * daysElapsed);
-      totalCompleted += completedSum;
-      totalExpected += expected;
 
-      const estimatedDaysRemaining = dailyTarget > 0 ? Math.ceil(remainingRows / dailyTarget) : null;
+      const details: any[] = [];
+      let totalCompleted = 0;
+      let totalExpected = 0;
 
-      details.push({
-        processId: row.id,
-        processName: row.name,
-        dailyTarget,
-        totalRows,
-        processedRows,
-        remainingRows,
-        estimatedDaysRemaining,
-        completions: monthCompletions,
+      for (const row of procsRes.rows || []) {
+        let cfg: any = null;
+        try {
+          cfg =
+            typeof row.automation_config === "string"
+              ? JSON.parse(row.automation_config)
+              : row.automation_config;
+        } catch {
+          cfg = null;
+        }
+        const assigned =
+          cfg && Array.isArray(cfg.assignedPMs) ? cfg.assignedPMs : [];
+        const isAssigned = assigned.some(
+          (a: any) => String(a.userId) === String(userId),
+        );
+        if (!isAssigned) continue;
+
+        const dailyTarget = Number(row.daily_target || 0);
+        const totalRows = Number(row.total_rows || 0);
+        const processedRows = Number(row.processed_rows || 0);
+        const remainingRows = Math.max(0, totalRows - processedRows);
+        const dcs =
+          cfg && Array.isArray(cfg.dailyCompletions)
+            ? cfg.dailyCompletions
+            : [];
+
+        const monthCompletions = dcs.filter((d: any) => {
+          const ds = String(d.date || "").substring(0, 10);
+          return ds >= monthStart && ds < monthEndExclusive;
+        });
+        const completedSum = monthCompletions.reduce(
+          (s: number, d: any) => s + Number(d.completed || 0),
+          0,
+        );
+
+        // Expected based on daily target and days elapsed in month
+        const daysElapsed = Math.min(
+          Math.floor(
+            (new Date().getTime() -
+              new Date(monthStart + "T00:00:00Z").getTime()) /
+              (1000 * 60 * 60 * 24),
+          ) + 1,
+          31,
+        );
+        const expected = Math.max(0, dailyTarget * daysElapsed);
+        totalCompleted += completedSum;
+        totalExpected += expected;
+
+        const estimatedDaysRemaining =
+          dailyTarget > 0 ? Math.ceil(remainingRows / dailyTarget) : null;
+
+        details.push({
+          processId: row.id,
+          processName: row.name,
+          dailyTarget,
+          totalRows,
+          processedRows,
+          remainingRows,
+          estimatedDaysRemaining,
+          completions: monthCompletions,
+        });
+      }
+
+      const performancePct =
+        totalExpected > 0
+          ? Math.max(
+              0,
+              Math.min(100, Math.round((totalCompleted / totalExpected) * 100)),
+            )
+          : 0;
+      res.json({
+        data: {
+          userId,
+          month: targetMonth,
+          performancePct,
+          totalCompleted,
+          totalExpected,
+          processes: details,
+        },
       });
+    } catch (error) {
+      console.error("Error fetching PM automation details:", error);
+      res
+        .status(500)
+        .json({
+          error: {
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch PM automation details",
+          },
+        });
     }
-
-    const performancePct = totalExpected > 0 ? Math.max(0, Math.min(100, Math.round((totalCompleted/totalExpected)*100))) : 0;
-    res.json({ data: { userId, month: targetMonth, performancePct, totalCompleted, totalExpected, processes: details } });
-  } catch (error) {
-    console.error("Error fetching PM automation details:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to fetch PM automation details" } });
-  }
-});
+  },
+);
 
 // ===== BILLING ENDPOINTS =====
 
