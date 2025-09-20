@@ -1435,47 +1435,52 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const firstTierLimit = Number(cfg.first_tier_limit || 0);
 
     // Determine date range
-    const today = new Date();
-    let from: Date;
-    let to: Date;
-    if (period === "weekly") {
-      from = new Date(today);
-      from.setDate(today.getDate() - 6);
-      to = today;
-    } else if (period === "monthly") {
-      const target = (month as string) || today.toISOString().substring(0, 7);
-      const monthStart = new Date(`${target}-01T00:00:00Z`);
-      from = monthStart;
-      to = new Date(monthStart);
-      to.setMonth(to.getMonth() + 1);
-      to.setDate(to.getDate() - 1); // last day of month
-    } else {
-      // Use UTC date strings to avoid timezone shifts
-      const todayStr = new Date().toISOString().substring(0, 10);
-      from = new Date(`${todayStr}T00:00:00Z`);
-      to = new Date(`${todayStr}T00:00:00Z`);
-    }
+    const tz = "Asia/Kolkata";
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const todayIST = fmt.format(new Date()); // YYYY-MM-DD in IST
+    const parseISTStart = (d: string) => new Date(`${d}T00:00:00+05:30`);
 
-    const fromStr = from.toISOString().substring(0, 10);
-    // upper bound exclusive for query convenience
-    const toNext = new Date(to.getTime());
-    toNext.setUTCDate(toNext.getUTCDate() + 1);
-    const toNextStr = toNext.toISOString().substring(0, 10);
+    let fromStr = "";
+    let toNextStr = "";
+
+    if (period === "weekly") {
+      const start = parseISTStart(todayIST);
+      start.setDate(start.getDate() - 6);
+      fromStr = fmt.format(start);
+      const tomorrow = parseISTStart(todayIST);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      toNextStr = fmt.format(tomorrow);
+    } else if (period === "monthly") {
+      const target = (month as string) || todayIST.substring(0, 7);
+      fromStr = `${target}-01`;
+      const nextMonth = new Date(`${target}-01T00:00:00+05:30`);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      toNextStr = fmt.format(nextMonth);
+    } else {
+      fromStr = todayIST;
+      const tomorrow = parseISTStart(todayIST);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      toNextStr = fmt.format(tomorrow);
+    }
 
     // Query completed files per day in range for the user
     const fromIso = `${fromStr}T00:00:00Z`;
     const toNextIso = `${toNextStr}T00:00:00Z`;
     const rowsRes = await query(
-      `SELECT ((COALESCE(completed_date, verified_at) AT TIME ZONE 'UTC')::date) AS d,
+      `SELECT ((COALESCE(completed_date, verified_at) AT TIME ZONE 'Asia/Kolkata')::date) AS d,
               SUM(COALESCE(assigned_count, requested_count, 0)) AS files
          FROM file_requests
         WHERE user_id::text = $1
-          AND COALESCE(completed_date, verified_at) >= $2::timestamptz
-          AND COALESCE(completed_date, verified_at) < $3::timestamptz
-          AND (status = 'completed' OR verification_status = 'approved')
-        GROUP BY ((COALESCE(completed_date, verified_at) AT TIME ZONE 'UTC')::date)
+          AND ((COALESCE(completed_date, verified_at) AT TIME ZONE 'Asia/Kolkata')::date) >= $2::date
+          AND ((COALESCE(completed_date, verified_at) AT TIME ZONE 'Asia/Kolkata')::date) < $3::date
+        GROUP BY 1
         ORDER BY 1`,
-      [String(userId), fromIso, toNextIso],
+      [String(userId), fromStr, toNextStr],
     );
 
     // Build a map for quick lookup
