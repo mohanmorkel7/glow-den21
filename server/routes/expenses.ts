@@ -1436,14 +1436,16 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       to.setMonth(to.getMonth() + 1);
       to.setDate(to.getDate() - 1); // last day of month
     } else {
-      from = new Date(today.toISOString().substring(0, 10));
-      to = new Date(today.toISOString().substring(0, 10));
+      // Use UTC date strings to avoid timezone shifts
+      const todayStr = new Date().toISOString().substring(0, 10);
+      from = new Date(`${todayStr}T00:00:00Z`);
+      to = new Date(`${todayStr}T00:00:00Z`);
     }
 
     const fromStr = from.toISOString().substring(0, 10);
     // upper bound exclusive for query convenience
-    const toNext = new Date(to);
-    toNext.setDate(toNext.getDate() + 1);
+    const toNext = new Date(to.getTime());
+    toNext.setUTCDate(toNext.getUTCDate() + 1);
     const toNextStr = toNext.toISOString().substring(0, 10);
 
     // Query completed files per day in range for the user
