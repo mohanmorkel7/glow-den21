@@ -1449,13 +1449,15 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const toNextStr = toNext.toISOString().substring(0, 10);
 
     // Query completed files per day in range for the user
+    const fromIso = `${fromStr}T00:00:00Z`;
+    const toNextIso = `${toNextStr}T00:00:00Z`;
     const rowsRes = await query(
       `SELECT DATE(completed_date) AS d, SUM(COALESCE(assigned_count, requested_count, 0)) AS files
          FROM file_requests
-        WHERE user_id::text = $1 AND status = 'completed' AND completed_date >= $2 AND completed_date < $3
+        WHERE user_id::text = $1 AND status = 'completed' AND completed_date >= $2::timestamptz AND completed_date < $3::timestamptz
         GROUP BY DATE(completed_date)
         ORDER BY DATE(completed_date)`,
-      [String(userId), fromStr, toNextStr],
+      [String(userId), fromIso, toNextIso],
     );
 
     // Build a map for quick lookup
