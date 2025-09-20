@@ -219,6 +219,7 @@ export default function Salary() {
         setProjectManagerSalaryData(
           pms.map((p: any) => ({
             id: p.id,
+            userId: p.userId || p.user_id || null,
             name: p.name,
             role: p.role,
             monthlySalary: p.monthlySalary,
