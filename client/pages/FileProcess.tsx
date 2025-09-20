@@ -4191,9 +4191,11 @@ export default function FileProcess() {
                           Submitted Date
                         </Label>
                         <p className="text-base">
-                          {new Date(
-                            selectedVerificationRequest.submittedDate,
-                          ).toLocaleString()}
+                          {(() => {
+                            const d = selectedVerificationRequest.completedDate || selectedVerificationRequest.requestedDate || null;
+                            const t = d ? new Date(d) : null;
+                            return t && !isNaN(t.getTime()) ? t.toLocaleString() : "-";
+                          })()}
                         </p>
                       </div>
                     </div>
