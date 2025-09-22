@@ -123,9 +123,49 @@ export default function Dashboard() {
       } catch (e) {
         console.warn("Failed to load trend", e);
       }
+
+      if (user.role === "user") {
+        apiClient
+          .getFileRequests({ userId: user.id, limit: 100 })
+          .then((res: any) => {
+            const list = Array.isArray(res) ? res : (res?.data as any[]) || [];
+            setMyRequests(list);
+          })
+          .catch(() => undefined);
+      }
+
+      if (user.role === "project_manager" || user.role === "super_admin") {
+        try {
+          const [tp, fr, fp] = await Promise.all([
+            apiClient.getTeamPerformance("week"),
+            apiClient.getFileRequests({ limit: 200 }),
+            apiClient.getFileProcesses({ limit: 200 }),
+          ]);
+          setTeamPerformance((Array.isArray(tp) ? tp : (tp as any) || []) as any);
+          setPmFileRequests((Array.isArray(fr) ? fr : (fr as any) || []) as any);
+          setFileProcesses((Array.isArray(fp) ? fp : (fp as any) || []) as any);
+        } catch (e) {
+          console.warn("Failed to load PM/Admin data", e);
+        }
+        if (user.role === "super_admin") {
+          try {
+            const users = await apiClient.getUsers({ page: 1, limit: 1 });
+            const total = (users as any)?.pagination?.total ?? (users as any)?.data?.pagination?.total ?? null;
+            setUsersTotal(total);
+          } catch (e) {
+            setUsersTotal(null);
+          }
+          try {
+            const bs = await apiClient.getBillingSummary();
+            setBillingSummary(bs as any);
+          } catch (e) {
+            setBillingSummary(null);
+          }
+        }
+      }
     };
     load();
-  }, [user.id]);
+  }, [user.id, user.role]);
 
   // Admin dashboard data
   const dashboardStats = {
