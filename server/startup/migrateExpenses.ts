@@ -25,6 +25,11 @@ export async function ensureExpenseTables(): Promise<void> {
     await query(
       `CREATE INDEX IF NOT EXISTS idx_expenses_month ON expenses(month)`,
     );
+
+    // Ensure legacy deployments that missed the 'date' column get the column added
+    await query(
+      "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS date DATE",
+    );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`,
     );
