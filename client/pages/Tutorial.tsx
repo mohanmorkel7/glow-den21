@@ -755,22 +755,29 @@ export default function Tutorial() {
     });
   };
 
-  // Upload tutorial video with name -> creates a new tutorial on server
+  // Upload tutorial video: either attach to existing tutorial (tutorialId) or create a new tutorial with title/description
   const handleVideoUpload = async () => {
-    if (!videoUpload.file || !videoUpload.tutorialName) return;
+    if (!videoUpload.file) return;
 
     setVideoUpload({ ...videoUpload, isUploading: true });
 
     try {
-      await apiClient.uploadTutorialVideo(
-        videoUpload.file,
-        videoUpload.tutorialName,
-        "getting_started",
-      );
-      toast({
-        title: "Upload successful",
-        description: `Video uploaded successfully for tutorial: ${videoUpload.tutorialName}`,
-      });
+      if ((videoUpload as any).tutorialId) {
+        await apiClient.uploadVideoForTutorial((videoUpload as any).tutorialId, videoUpload.file);
+        toast({ title: "Upload successful", description: `Video uploaded successfully` });
+      } else if ((videoUpload as any).tutorialName) {
+        await apiClient.uploadTutorialVideo(
+          videoUpload.file,
+          (videoUpload as any).tutorialName,
+          "getting_started",
+          (videoUpload as any).description,
+        );
+        toast({ title: "Upload successful", description: `Video uploaded successfully for tutorial: ${(videoUpload as any).tutorialName}` });
+      } else {
+        toast({ title: "Missing tutorial", description: "Please provide a tutorial title or select an existing tutorial", variant: "destructive" });
+        setVideoUpload({ ...videoUpload, isUploading: false });
+        return;
+      }
 
       // Reload tutorials
       const list: any[] = (await apiClient.getTutorials()) as any[];
@@ -782,17 +789,17 @@ export default function Tutorial() {
         status: (t.status || "published") as any,
         videoUrl: t.videoUrl || undefined,
         videoDuration: undefined as any,
-        instructions: "",
-        steps: [],
-        targetRoles: ["user", "project_manager", "super_admin"] as any,
-        isRequired: false,
+        instructions: t.instructions || "",
+        steps: t.steps || [],
+        targetRoles: t.targetRoles || ["user"],
+        isRequired: t.isRequired || false,
         order: idx + 1,
-        tags: [],
+        tags: t.tags || [],
         createdBy: { id: t.createdBy || "", name: "" },
         createdAt: t.createdAt || new Date().toISOString(),
         updatedAt: t.updatedAt || new Date().toISOString(),
-        viewCount: 0,
-        completionCount: 0,
+        viewCount: t.viewCount || 0,
+        completionCount: t.completionCount || 0,
       }));
       setTutorials(mapped);
 
