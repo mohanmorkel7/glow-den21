@@ -427,6 +427,21 @@ class ApiClient {
     return (json as any)?.data ?? json;
   }
 
+  async uploadVideoForTutorial(tutorialId: string, file: Blob) {
+    const headers: Record<string, string> = {
+      ...(this.getAuthHeaders() as any),
+      "x-file-name": (file as any).name || "video.mp4",
+    };
+    const url = `${API_BASE_URL}/tutorials/${tutorialId}/upload`;
+    const resp = await fetch(url, { method: "POST", headers, body: file });
+    if (!resp.ok) {
+      const msg = await resp.text().catch(() => resp.statusText);
+      throw new Error(msg || `Upload failed (${resp.status})`);
+    }
+    const json = await resp.json().catch(() => ({}));
+    return (json as any)?.data ?? json;
+  }
+
   async createTutorial(data: any) {
     return this.request(`/tutorials`, {
       method: "POST",
