@@ -47,6 +47,7 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
+import { apiClient } from "@/lib/api";
 
 export default function Dashboard() {
   const { user } = useAuth();
