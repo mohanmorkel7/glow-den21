@@ -1578,15 +1578,7 @@ export default function Tutorial() {
                         variant="ghost"
                         size="sm"
                         title="Delete Tutorial"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Are you sure you want to delete "${tutorial.title}"?`,
-                            )
-                          ) {
-                            handleDeleteTutorial(tutorial);
-                          }
-                        }}
+                        disabled
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
