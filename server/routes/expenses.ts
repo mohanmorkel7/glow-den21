@@ -491,7 +491,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const sql = `
       INSERT INTO expenses (
-        category, description, amount, date, month, type, frequency, receipt,
+        category, description, amount, expense_date, month, type, frequency, receipt,
         status, approved_by, approved_at, created_by_user_id
       )
       VALUES (
