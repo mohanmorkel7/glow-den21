@@ -2341,77 +2341,22 @@ export default function Tutorial() {
           <div className="space-y-6">
             {/* Tutorial Selection or New Tutorial */}
             <div>
-              <Label htmlFor="tutorial-select">
-                Select Tutorial (or create new)
-              </Label>
-              <Select
-                value={(videoUpload as any).tutorialId || ""}
-                onValueChange={(value) =>
-                  setVideoUpload({
-                    ...videoUpload,
-                    tutorialId: value,
-                    tutorialName: "",
-                  })
-                }
+              <Label>Title *</Label>
+              <Input
+                placeholder="Enter tutorial title"
+                value={(videoUpload as any).title || ""}
+                onChange={(e) => setVideoUpload({ ...videoUpload, title: e.target.value })}
                 disabled={videoUpload.isUploading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a tutorial to add video to" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockTutorials
-                    .filter((t) => !t.videoUrl)
-                    .map((tutorial) => (
-                      <SelectItem key={tutorial.id} value={tutorial.id}>
-                        <div>
-                          <div className="font-medium">{tutorial.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {
-                              TUTORIAL_CATEGORIES_DATA.find(
-                                (cat) => cat.id === tutorial.category,
-                              )?.name
-                            }
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              {mockTutorials.filter((t) => !t.videoUrl).length === 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  All tutorials already have videos. Create a new tutorial
-                  first.
-                </p>
-              )}
-
-              <div className="mt-4">
-                <Label>Or create new tutorial</Label>
-                <Input
-                  placeholder="Enter tutorial title"
-                  value={(videoUpload as any).tutorialName || ""}
-                  onChange={(e) =>
-                    setVideoUpload({
-                      ...videoUpload,
-                      tutorialName: e.target.value,
-                      tutorialId: "",
-                    })
-                  }
-                  disabled={videoUpload.isUploading}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Provide a title if you want to create a new tutorial with this
-                  video.
-                </p>
-              </div>
+              />
 
               <div className="mt-4">
                 <Label>Description (optional)</Label>
-                <RichTextEditor
+                <Textarea
+                  placeholder="Enter a brief description"
                   value={(videoUpload as any).description || ""}
-                  onChange={(value) =>
-                    setVideoUpload({ ...videoUpload, description: value })
-                  }
-                  minHeight={120}
+                  onChange={(e) => setVideoUpload({ ...videoUpload, description: e.target.value })}
+                  rows={3}
+                  disabled={videoUpload.isUploading}
                 />
               </div>
             </div>
