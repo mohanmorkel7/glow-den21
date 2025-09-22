@@ -31,8 +31,12 @@ export async function ensureExpenseTables(): Promise<void> {
     // Ensure legacy deployments that missed the 'receipt' column get the column added
     await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt TEXT");
     // Ensure approved_by/approved_at exist for older DBs
-    await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_by TEXT");
-    await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE");
+    await query(
+      "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_by TEXT",
+    );
+    await query(
+      "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE",
+    );
     await query(
       `CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`,
     );
