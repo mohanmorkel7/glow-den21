@@ -159,6 +159,16 @@ function VideoPlayer({
     };
   }, [src]);
 
+  useEffect(() => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch {}
+      videoRef.current.load();
+      setIsPlaying(false);
+    }
+  }, [resolvedSrc]);
+
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
@@ -241,6 +251,8 @@ function VideoPlayer({
           <video
             ref={videoRef}
             className="w-full h-auto max-h-96"
+            src={resolvedSrc}
+            key={resolvedSrc || "no-src"}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onPlay={() => setIsPlaying(true)}
@@ -248,7 +260,6 @@ function VideoPlayer({
             onEnded={() => setIsPlaying(false)}
             playsInline
           >
-            <source src={resolvedSrc} />
             Your browser does not support the video tag.
           </video>
 
