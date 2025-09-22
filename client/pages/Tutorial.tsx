@@ -763,8 +763,14 @@ export default function Tutorial() {
 
     try {
       if ((videoUpload as any).tutorialId) {
-        await apiClient.uploadVideoForTutorial((videoUpload as any).tutorialId, videoUpload.file);
-        toast({ title: "Upload successful", description: `Video uploaded successfully` });
+        await apiClient.uploadVideoForTutorial(
+          (videoUpload as any).tutorialId,
+          videoUpload.file,
+        );
+        toast({
+          title: "Upload successful",
+          description: `Video uploaded successfully`,
+        });
       } else if ((videoUpload as any).tutorialName) {
         await apiClient.uploadTutorialVideo(
           videoUpload.file,
@@ -772,9 +778,17 @@ export default function Tutorial() {
           "getting_started",
           (videoUpload as any).description,
         );
-        toast({ title: "Upload successful", description: `Video uploaded successfully for tutorial: ${(videoUpload as any).tutorialName}` });
+        toast({
+          title: "Upload successful",
+          description: `Video uploaded successfully for tutorial: ${(videoUpload as any).tutorialName}`,
+        });
       } else {
-        toast({ title: "Missing tutorial", description: "Please provide a tutorial title or select an existing tutorial", variant: "destructive" });
+        toast({
+          title: "Missing tutorial",
+          description:
+            "Please provide a tutorial title or select an existing tutorial",
+          variant: "destructive",
+        });
         setVideoUpload({ ...videoUpload, isUploading: false });
         return;
       }
@@ -2361,11 +2375,17 @@ export default function Tutorial() {
           <div className="space-y-6">
             {/* Tutorial Selection or New Tutorial */}
             <div>
-              <Label htmlFor="tutorial-select">Select Tutorial (or create new)</Label>
+              <Label htmlFor="tutorial-select">
+                Select Tutorial (or create new)
+              </Label>
               <Select
                 value={(videoUpload as any).tutorialId || ""}
                 onValueChange={(value) =>
-                  setVideoUpload({ ...videoUpload, tutorialId: value, tutorialName: "" })
+                  setVideoUpload({
+                    ...videoUpload,
+                    tutorialId: value,
+                    tutorialName: "",
+                  })
                 }
                 disabled={videoUpload.isUploading}
               >
@@ -2404,12 +2424,17 @@ export default function Tutorial() {
                   placeholder="Enter tutorial title"
                   value={(videoUpload as any).tutorialName || ""}
                   onChange={(e) =>
-                    setVideoUpload({ ...videoUpload, tutorialName: e.target.value, tutorialId: "" })
+                    setVideoUpload({
+                      ...videoUpload,
+                      tutorialName: e.target.value,
+                      tutorialId: "",
+                    })
                   }
                   disabled={videoUpload.isUploading}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Provide a title if you want to create a new tutorial with this video.
+                  Provide a title if you want to create a new tutorial with this
+                  video.
                 </p>
               </div>
 
@@ -2417,7 +2442,9 @@ export default function Tutorial() {
                 <Label>Description (optional)</Label>
                 <RichTextEditor
                   value={(videoUpload as any).description || ""}
-                  onChange={(value) => setVideoUpload({ ...videoUpload, description: value })}
+                  onChange={(value) =>
+                    setVideoUpload({ ...videoUpload, description: value })
+                  }
                   minHeight={120}
                 />
               </div>
@@ -2565,7 +2592,8 @@ export default function Tutorial() {
             <Button
               onClick={handleVideoUpload}
               disabled={
-                (!((videoUpload as any).tutorialId) && !((videoUpload as any).tutorialName)) ||
+                (!(videoUpload as any).tutorialId &&
+                  !(videoUpload as any).tutorialName) ||
                 !videoUpload.file ||
                 videoUpload.isUploading
               }
