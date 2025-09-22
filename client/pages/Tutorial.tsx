@@ -97,30 +97,6 @@ const TUTORIAL_CATEGORIES_DATA: TutorialCategoryInfo[] = [
     order: 3,
     requiredForRoles: ["project_manager"],
   },
-  {
-    id: "reports",
-    name: "Reports & Analytics",
-    description: "Understanding reports, analytics, and data insights",
-    icon: "Settings",
-    color: "#8b5cf6",
-    order: 4,
-  },
-  {
-    id: "advanced",
-    name: "Advanced Features",
-    description: "Advanced functionality and power user features",
-    icon: "Settings",
-    color: "#6b7280",
-    order: 5,
-  },
-  {
-    id: "troubleshooting",
-    name: "Troubleshooting",
-    description: "Common issues and how to resolve them",
-    icon: "AlertCircle",
-    color: "#ef4444",
-    order: 6,
-  },
 ];
 
 interface VideoPlayerProps {
