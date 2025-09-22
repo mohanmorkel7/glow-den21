@@ -945,10 +945,6 @@ export default function Tutorial() {
               <Upload className="h-4 w-4 mr-2" />
               Upload Video
             </Button>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Tutorial
-            </Button>
           </div>
         )}
       </div>
