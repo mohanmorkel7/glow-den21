@@ -253,6 +253,95 @@ export default function Dashboard() {
     );
   }
 
+  // PM dashboard
+  if (user.role === "project_manager") {
+    const active = fileProcesses.filter((p: any) => p.status === "active").length;
+    const inProgress = fileProcesses.filter((p: any) => p.status === "in_progress").length;
+    const completed = fileProcesses.filter((p: any) => p.status === "completed").length;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Project Manager Dashboard</h1>
+            <p className="text-muted-foreground mt-1">Team performance, requests, and process overview</p>
+          </div>
+          <Badge variant="secondary" className="capitalize">{user.role.replace("_", " ")}</Badge>
+        </div>
+
+        {/* File Processes Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card><CardHeader><CardTitle>Active Processes</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold text-blue-600">{active}</div></CardContent></Card>
+          <Card><CardHeader><CardTitle>In Progress</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold text-orange-600">{inProgress}</div></CardContent></Card>
+          <Card><CardHeader><CardTitle>Completed</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold text-green-600">{completed}</div></CardContent></Card>
+        </div>
+
+        {/* Team Performance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Team Performance (7 days)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead className="text-right">Submitted</TableHead>
+                  <TableHead className="text-right">Completed Requests</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(teamPerformance as any[]).map((u: any) => (
+                  <TableRow key={u.id}>
+                    <TableCell>{u.name || u.id}</TableCell>
+                    <TableCell className="text-right">{Number(u.submitted || 0).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{Number(u.completedRequests || 0).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+                {teamPerformance.length === 0 && (
+                  <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No data</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* File Requests (managed) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> File Requests</CardTitle>
+            <CardDescription>Recent requests from your team</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Process</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(pmFileRequests as any[]).slice(0, 50).map((r: any) => (
+                  <TableRow key={r.id}>
+                    <TableCell>{r.user_name || r.userName || "-"}</TableCell>
+                    <TableCell>{r.file_process_name || r.fileProcessName || "-"}</TableCell>
+                    <TableCell className="capitalize">{String(r.status || "").replace("_", " ")}</TableCell>
+                    <TableCell className="text-right">{Number(r.assigned_count ?? r.requested_count ?? 0).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+                {pmFileRequests.length === 0 && (
+                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No requests</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Enhanced mock data for admin dashboard
   const monthlyPerformanceData = [
     {
