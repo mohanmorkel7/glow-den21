@@ -1530,7 +1530,7 @@ export default function Tutorial() {
                         variant="ghost"
                         size="sm"
                         title="Edit Tutorial"
-                        onClick={() => handleEditTutorial(tutorial)}
+                        disabled
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
