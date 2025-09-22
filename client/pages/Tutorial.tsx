@@ -2318,13 +2318,14 @@ export default function Tutorial() {
           if (!open) {
             // Reset upload state when dialog closes
             setVideoUpload({
-              tutorialId: "",
-              file: null,
-              uploadProgress: 0,
-              isUploading: false,
-              previewUrl: "",
-              dragActive: false,
-            });
+          title: "",
+          description: "",
+          file: null,
+          uploadProgress: 0,
+          isUploading: false,
+          previewUrl: "",
+          dragActive: false,
+        });
           }
         }}
       >
