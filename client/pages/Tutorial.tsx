@@ -208,8 +208,9 @@ function VideoPlayer({
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
+            playsInline
           >
-            <source src={src} type="video/mp4" />
+            <source src={src} />
             Your browser does not support the video tag.
           </video>
 
@@ -325,6 +326,10 @@ function VideoPlayer({
 }
 
 export default function Tutorial() {
+  const stripHtml = (str: string) => {
+    if (!str) return "";
+    return str.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  };
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("browse");
@@ -340,7 +345,8 @@ export default function Tutorial() {
   const [editingTutorial, setEditingTutorial] = useState<Tutorial | null>(null);
   const [isUploadVideoOpen, setIsUploadVideoOpen] = useState(false);
   const [videoUpload, setVideoUpload] = useState({
-    tutorialName: "",
+    title: "",
+    description: "",
     file: null as File | null,
     uploadProgress: 0,
     isUploading: false,
@@ -747,10 +753,10 @@ export default function Tutorial() {
           title: "Upload successful",
           description: `Video uploaded successfully`,
         });
-      } else if ((videoUpload as any).tutorialName) {
+      } else if ((videoUpload as any).title) {
         await apiClient.uploadTutorialVideo(
           videoUpload.file,
-          (videoUpload as any).tutorialName,
+          (videoUpload as any).title,
           "getting_started",
           (videoUpload as any).description,
         );
@@ -835,43 +841,82 @@ export default function Tutorial() {
   };
 
   // Handle save edited tutorial
-  const handleSaveEditedTutorial = () => {
+  const handleSaveEditedTutorial = async () => {
     if (!editingTutorial) return;
-
-    // Here you would update the tutorial via API
-    console.log("Updating tutorial:", editingTutorial.id, newTutorial);
-
-    toast({
-      title: "Tutorial updated",
-      description: `"${newTutorial.title}" has been updated successfully`,
-    });
-
-    setIsEditDialogOpen(false);
-    setEditingTutorial(null);
-
-    // Reset form
-    setNewTutorial({
-      title: "",
-      description: "",
-      category: "getting_started",
-      instructions: "",
-      steps: [],
-      targetRoles: ["user"],
-      isRequired: false,
-      tags: [],
-    });
+    try {
+      await apiClient.updateTutorial(editingTutorial.id, {
+        title: newTutorial.title,
+        description: newTutorial.description,
+        category: newTutorial.category,
+        instructions: newTutorial.instructions,
+        targetRoles: newTutorial.targetRoles,
+        isRequired: newTutorial.isRequired,
+        tags: newTutorial.tags,
+        steps: newTutorial.steps,
+      });
+      const list: any[] = (await apiClient.getTutorials()) as any[];
+      const mapped: Tutorial[] = list.map((t: any, idx: number) => ({
+        id: t.id,
+        title: t.title,
+        description: t.description || "",
+        category: (t.category || "getting_started") as any,
+        status: (t.status || "published") as any,
+        videoUrl: t.videoUrl || undefined,
+        videoDuration: undefined as any,
+        instructions: t.instructions || "",
+        steps: [],
+        targetRoles: t.targetRoles || ["user"],
+        isRequired: t.isRequired || false,
+        order: idx + 1,
+        tags: t.tags || [],
+        createdBy: { id: t.createdBy || "", name: "" },
+               createdAt: t.createdAt || new Date().toISOString(),
+        updatedAt: t.updatedAt || new Date().toISOString(),
+        viewCount: t.viewCount || 0,
+        completionCount: t.completionCount || 0,
+      }));
+      setTutorials(mapped);
+      toast({
+        title: "Tutorial updated",
+        description: `"${newTutorial.title}" has been updated successfully`,
+      });
+      setIsEditDialogOpen(false);
+      setEditingTutorial(null);
+      setNewTutorial({
+        title: "",
+        description: "",
+        category: "getting_started",
+        instructions: "",
+        steps: [],
+        targetRoles: ["user"],
+        isRequired: false,
+        tags: [],
+      });
+    } catch (error: any) {
+      toast({
+        title: "Update failed",
+        description: String(error?.message || error),
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle delete tutorial
-  const handleDeleteTutorial = (tutorial: Tutorial) => {
-    // Here you would delete the tutorial via API
-    console.log("Deleting tutorial:", tutorial.id);
-
-    toast({
-      title: "Tutorial deleted",
-      description: `"${tutorial.title}" has been deleted successfully`,
-      variant: "destructive",
-    });
+  const handleDeleteTutorial = async (tutorial: Tutorial) => {
+    try {
+      await apiClient.deleteTutorial(tutorial.id);
+      setTutorials((prev) => prev.filter((t) => t.id !== tutorial.id));
+      toast({
+        title: "Tutorial deleted",
+        description: `"${tutorial.title}" has been deleted successfully`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: String(error?.message || error),
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle create tutorial
@@ -939,7 +984,7 @@ export default function Tutorial() {
             guides
           </p>
         </div>
-        {canManageTutorials && (
+        {false && (
           <div className="flex gap-2">
             <Button onClick={() => setIsUploadVideoOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />
@@ -958,7 +1003,7 @@ export default function Tutorial() {
         <TabsList>
           <TabsTrigger value="browse">Browse Tutorials</TabsTrigger>
           <TabsTrigger value="watch">Watch Tutorial</TabsTrigger>
-          {canManageTutorials && (
+          {false && (
             <TabsTrigger value="manage">Manage Tutorials</TabsTrigger>
           )}
         </TabsList>
@@ -1056,29 +1101,51 @@ export default function Tutorial() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="flex items-center gap-2">
-                          {tutorial.title}
+                          {stripHtml(tutorial.title)}
                           {tutorial.isRequired && (
                             <Badge variant="secondary">Required</Badge>
                           )}
                         </CardTitle>
                         <CardDescription className="mt-1">
-                          {tutorial.description}
+                          {stripHtml(tutorial.description)}
                         </CardDescription>
                       </div>
-                      <Badge
-                        variant="outline"
-                        style={{
-                          borderColor: TUTORIAL_CATEGORIES_DATA.find(
-                            (cat) => cat.id === tutorial.category,
-                          )?.color,
-                        }}
-                      >
-                        {
-                          TUTORIAL_CATEGORIES_DATA.find(
-                            (cat) => cat.id === tutorial.category,
-                          )?.name
-                        }
-                      </Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          style={{
+                            borderColor: TUTORIAL_CATEGORIES_DATA.find(
+                              (cat) => cat.id === tutorial.category,
+                            )?.color,
+                          }}
+                        >
+                          {
+                            TUTORIAL_CATEGORIES_DATA.find(
+                              (cat) => cat.id === tutorial.category,
+                            )?.name
+                          }
+                        </Badge>
+                        {false && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Edit Tutorial"
+                              onClick={() => handleEditTutorial(tutorial)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Delete Tutorial"
+                              onClick={() => handleDeleteTutorial(tutorial)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -1129,25 +1196,21 @@ export default function Tutorial() {
               {/* Video Player Section */}
               <div className="lg:col-span-2 space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>{selectedTutorial.title}</CardTitle>
-                    <CardDescription>
-                      {selectedTutorial.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4 pt-6">
                     <VideoPlayer
                       src={selectedTutorial.videoUrl}
                       title={selectedTutorial.title}
                       onTimeUpdate={(time) => {
-                        // Track video progress for analytics
                         console.log("Video time:", time);
                       }}
                       onProgress={(progress) => {
-                        // Update user progress
                         console.log("Video progress:", progress);
                       }}
                     />
+                    <div>
+                      <h2 className="text-xl font-semibold">{selectedTutorial.title}</h2>
+                      <p className="text-muted-foreground mt-1">{selectedTutorial.description}</p>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -1199,51 +1262,6 @@ export default function Tutorial() {
                   </CardContent>
                 </Card>
 
-                {/* Progress and Actions */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your Progress</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span>Completion</span>
-                        <span>60%</span>
-                      </div>
-                      <Progress value={60} />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Button className="w-full">
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Mark as Complete
-                      </Button>
-                      <Button variant="outline" className="w-full">
-                        <BookmarkIcon className="h-4 w-4 mr-2" />
-                        Bookmark Tutorial
-                      </Button>
-                    </div>
-
-                    {/* Rating */}
-                    <div className="pt-4 border-t">
-                      <Label className="text-sm font-medium">
-                        Rate this tutorial
-                      </Label>
-                      <div className="flex gap-1 mt-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Button
-                            key={star}
-                            variant="ghost"
-                            size="sm"
-                            className="p-0 h-6 w-6"
-                          >
-                            <Star className="h-4 w-4" />
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </div>
           ) : (
@@ -1262,7 +1280,7 @@ export default function Tutorial() {
         </TabsContent>
 
         {/* Manage Tutorials Tab (Admin/PM only) */}
-        {canManageTutorials && (
+        {false && (
           <TabsContent value="manage" className="space-y-6">
             {/* Management Header */}
             <div className="flex items-center justify-between">
@@ -2510,8 +2528,7 @@ export default function Tutorial() {
             <Button
               onClick={handleVideoUpload}
               disabled={
-                (!(videoUpload as any).tutorialId &&
-                  !(videoUpload as any).tutorialName) ||
+                !(videoUpload as any).title ||
                 !videoUpload.file ||
                 videoUpload.isUploading
               }
