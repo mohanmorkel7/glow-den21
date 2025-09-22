@@ -1541,7 +1541,8 @@ export default function Tutorial() {
                         onClick={() => {
                           setVideoUpload({
                             ...videoUpload,
-                            tutorialId: tutorial.id,
+                            title: tutorial.title,
+                            description: tutorial.description,
                           });
                           setIsUploadVideoOpen(true);
                         }}
