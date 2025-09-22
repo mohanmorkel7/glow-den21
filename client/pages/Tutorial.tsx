@@ -698,7 +698,7 @@ export default function Tutorial() {
   };
 
   const canManageTutorials =
-    user?.role === "super_admin" || user?.role === "project_manager";
+    user?.role === "super_admin" || user?.role === "project_manager" || user?.role === "admin";
 
   // Helper function to handle file selection
   const handleFileSelect = (file: File) => {
