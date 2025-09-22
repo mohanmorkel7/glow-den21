@@ -47,6 +47,15 @@ import {
   ResponsiveContainer,
   ComposedChart,
 } from "recharts";
+import { apiClient } from "@/lib/api";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -55,38 +64,115 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  // User-specific performance data
-  const userPerformanceData = {
+  // Load real-time data for user dashboard
+  const [userSummary, setUserSummary] = React.useState<{
     today: {
-      target: 20000,
-      completed: 18500,
-      remaining: 1500,
-      efficiency: 92.5,
-    },
-    weekly: {
-      target: 140000,
-      completed: 131500,
-      avgPerDay: 18786,
-      efficiency: 93.9,
-    },
-    monthly: {
-      target: 600000,
-      completed: 545250,
-      avgPerDay: 17588,
-      efficiency: 90.9,
-      grade: "A-",
-    },
-  };
+      target: number;
+      completed: number;
+      remaining: number;
+      efficiency: number;
+    };
+    weekly: { target: number; completed: number; efficiency: number };
+    monthly: { target: number; completed: number; efficiency: number };
+    assignedProjects: number;
+  } | null>(null);
+  const [weeklyChartData, setWeeklyChartData] = React.useState<
+    { day: string; completed: number; target: number }[]
+  >([]);
+  // Role-based data
+  const [myRequests, setMyRequests] = React.useState<any[]>([]);
+  const [teamPerformance, setTeamPerformance] = React.useState<any[]>([]);
+  const [pmFileRequests, setPmFileRequests] = React.useState<any[]>([]);
+  const [fileProcesses, setFileProcesses] = React.useState<any[]>([]);
+  const [usersTotal, setUsersTotal] = React.useState<number | null>(null);
+  const [billingSummary, setBillingSummary] = React.useState<any | null>(null);
 
-  const weeklyChartData = [
-    { day: "Mon", completed: 19200, target: 20000 },
-    { day: "Tue", completed: 18800, target: 20000 },
-    { day: "Wed", completed: 19500, target: 20000 },
-    { day: "Thu", completed: 17900, target: 20000 },
-    { day: "Fri", completed: 19100, target: 20000 },
-    { day: "Sat", completed: 18500, target: 20000 },
-    { day: "Today", completed: 18500, target: 20000 },
-  ];
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const summary = await apiClient.getUserDashboard();
+        setUserSummary(summary as any);
+      } catch (e) {
+        console.warn("Failed to load user summary", e);
+      }
+      try {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 6);
+        const to = end.toISOString().slice(0, 10);
+        const from = start.toISOString().slice(0, 10);
+        const data: any[] = (await apiClient.getProductivityTrend({
+          from,
+          to,
+          groupBy: "day",
+          userId: user.id,
+        })) as any[];
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const chart = (Array.isArray(data) ? data : []).map((d: any) => {
+          const dt = new Date(d.date);
+          const isToday =
+            dt.toISOString().slice(0, 10) ===
+            new Date().toISOString().slice(0, 10);
+          return {
+            day: isToday ? "Today" : days[dt.getDay()],
+            completed: Number(d.actual || 0),
+            target: Number(d.target || 0),
+          };
+        });
+        setWeeklyChartData(chart);
+      } catch (e) {
+        console.warn("Failed to load trend", e);
+      }
+
+      if (user.role === "user") {
+        apiClient
+          .getFileRequests({ userId: user.id, limit: 100 })
+          .then((res: any) => {
+            const list = Array.isArray(res) ? res : (res?.data as any[]) || [];
+            setMyRequests(list);
+          })
+          .catch(() => undefined);
+      }
+
+      if (user.role === "project_manager" || user.role === "super_admin") {
+        try {
+          const [tp, fr, fp] = await Promise.all([
+            apiClient.getTeamPerformance("week"),
+            apiClient.getFileRequests({ limit: 200 }),
+            apiClient.getFileProcesses({ limit: 200 }),
+          ]);
+          setTeamPerformance(
+            (Array.isArray(tp) ? tp : (tp as any) || []) as any,
+          );
+          setPmFileRequests(
+            (Array.isArray(fr) ? fr : (fr as any) || []) as any,
+          );
+          setFileProcesses((Array.isArray(fp) ? fp : (fp as any) || []) as any);
+        } catch (e) {
+          console.warn("Failed to load PM/Admin data", e);
+        }
+        if (user.role === "super_admin") {
+          try {
+            const users = await apiClient.getUsers({ page: 1, limit: 1 });
+            const total =
+              (users as any)?.pagination?.total ??
+              (users as any)?.data?.pagination?.total ??
+              null;
+            setUsersTotal(total);
+          } catch (e) {
+            setUsersTotal(null);
+          }
+          try {
+            const bs = await apiClient.getBillingSummary();
+            setBillingSummary(bs as any);
+          } catch (e) {
+            setBillingSummary(null);
+          }
+        }
+      }
+    };
+    load();
+  }, [user.id, user.role]);
 
   // Admin dashboard data
   const dashboardStats = {
@@ -107,18 +193,17 @@ export default function Dashboard() {
     }
   };
 
-  // Render simplified user dashboard
+  // User dashboard: only 7-day chart + own file requests
   if (user.role === "user") {
     return (
       <div className="space-y-6">
-        {/* Welcome Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
               Welcome back, {user.name}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Track your daily performance and file processing progress.
+              Your personal performance and requests
             </p>
           </div>
           <Badge variant="secondary" className="capitalize">
@@ -126,70 +211,10 @@ export default function Dashboard() {
           </Badge>
         </div>
 
-        {/* Today's Performance Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-600">
-                <Target className="h-5 w-5" />
-                Today's Target
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {userPerformanceData.today.target.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">files to process</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-5 w-5" />
-                Completed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
-                {userPerformanceData.today.completed.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">files processed</p>
-              <div className="mt-2">
-                <Progress
-                  value={userPerformanceData.today.efficiency}
-                  className="h-2"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {userPerformanceData.today.efficiency}% complete
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-orange-600">
-                <Clock className="h-5 w-5" />
-                Remaining
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">
-                {userPerformanceData.today.remaining.toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">files left</p>
-              <p className="text-xs text-blue-600 mt-1">~1.5 hrs to complete</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Weekly Performance Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Your 7-Day Performance
+              <TrendingUp className="h-5 w-5" /> Your 7-Day Performance
             </CardTitle>
             <CardDescription>
               Daily file processing over the last 7 days
@@ -203,7 +228,7 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
-                    value.toLocaleString() + " files",
+                    (Number(value) || 0).toLocaleString() + " files",
                     name === "completed" ? "Completed" : "Target",
                   ]}
                 />
@@ -229,44 +254,208 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Performance Summary */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Performance Summary
+              <FileText className="h-5 w-5" /> Your File Requests
             </CardTitle>
-            <CardDescription>
-              Your week and month performance metrics
-            </CardDescription>
+            <CardDescription>Only your requests are shown here</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">7</div>
-                <div className="text-sm text-blue-700">Working Days</div>
-                <div className="text-xs text-muted-foreground">This week</div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Process</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {myRequests.map((r: any) => (
+                  <TableRow key={r.id}>
+                    <TableCell>
+                      {r.file_process_name ||
+                        r.fileProcessName ||
+                        "File Request"}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {String(r.status || "").replace("_", " ")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(
+                        r.assigned_count ?? r.requested_count ?? 0,
+                      ).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {myRequests.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      No requests yet
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // PM dashboard
+  if (user.role === "project_manager") {
+    const active = fileProcesses.filter(
+      (p: any) => p.status === "active",
+    ).length;
+    const inProgress = fileProcesses.filter(
+      (p: any) => p.status === "in_progress",
+    ).length;
+    const completed = fileProcesses.filter(
+      (p: any) => p.status === "completed",
+    ).length;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Project Manager Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Team performance, requests, and process overview
+            </p>
+          </div>
+          <Badge variant="secondary" className="capitalize">
+            {user.role.replace("_", " ")}
+          </Badge>
+        </div>
+
+        {/* File Processes Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Processes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{active}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>In Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">
+                {inProgress}
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">6</div>
-                <div className="text-sm text-green-700">Target Met</div>
-                <div className="text-xs text-muted-foreground">Days</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">
+                {completed}
               </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {userPerformanceData.weekly.efficiency}%
-                </div>
-                <div className="text-sm text-purple-700">Efficiency</div>
-                <div className="text-xs text-muted-foreground">This week</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">
-                  {userPerformanceData.monthly.grade}
-                </div>
-                <div className="text-sm text-orange-700">Grade</div>
-                <div className="text-xs text-muted-foreground">Performance</div>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Team Performance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" /> Team Performance (7 days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead className="text-right">Submitted</TableHead>
+                  <TableHead className="text-right">
+                    Completed Requests
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(teamPerformance as any[]).map((u: any) => (
+                  <TableRow key={u.id}>
+                    <TableCell>{u.name || u.id}</TableCell>
+                    <TableCell className="text-right">
+                      {Number(u.submitted || 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(u.completedRequests || 0).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {teamPerformance.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      No data
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* File Requests (managed) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> File Requests
+            </CardTitle>
+            <CardDescription>Recent requests from your team</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Process</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(pmFileRequests as any[]).slice(0, 50).map((r: any) => (
+                  <TableRow key={r.id}>
+                    <TableCell>{r.user_name || r.userName || "-"}</TableCell>
+                    <TableCell>
+                      {r.file_process_name || r.fileProcessName || "-"}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {String(r.status || "").replace("_", " ")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(
+                        r.assigned_count ?? r.requested_count ?? 0,
+                      ).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {pmFileRequests.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground"
+                    >
+                      No requests
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
@@ -378,79 +567,63 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Key Metrics Overview */}
+      {/* Key Metrics Overview (Admin) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium">Users</CardTitle>
+            <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
-              {formatCurrency(1245680, "USD")}
+              {usersTotal ?? "-"}
             </div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from last quarter
-            </p>
-            <div className="flex items-center mt-2 text-xs">
-              <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">+8.2% this month</span>
-            </div>
+            <p className="text-xs text-muted-foreground">Total users</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Files Processed
-            </CardTitle>
-            <FileText className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium">Billing (USD)</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {(15420000).toLocaleString()}
+              {billingSummary?.totalAmountUSD != null
+                ? `$${Number(billingSummary.totalAmountUSD).toLocaleString()}`
+                : "-"}
             </div>
-            <p className="text-xs text-muted-foreground">This month</p>
-            <Progress value={87.5} className="mt-2 h-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              87.5% of monthly target
-            </p>
+            <p className="text-xs text-muted-foreground">This period</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Teams</CardTitle>
-            <Users className="h-4 w-4 text-purple-500" />
+            <CardTitle className="text-sm font-medium">
+              Files Completed
+            </CardTitle>
+            <FileText className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-600">
-              {dashboardStats.activeUsers}
+              {billingSummary?.totalFilesCompleted != null
+                ? Number(billingSummary.totalFilesCompleted).toLocaleString()
+                : "-"}
             </div>
-            <p className="text-xs text-muted-foreground">Across 8 projects</p>
-            <div className="flex items-center mt-2 text-xs">
-              <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">98.2% attendance</span>
-            </div>
+            <p className="text-xs text-muted-foreground">Billing files</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Overall Efficiency
-            </CardTitle>
-            <Target className="h-4 w-4 text-orange-500" />
+            <CardTitle className="text-sm font-medium">Projects</CardTitle>
+            <FolderOpen className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-600">94.7%</div>
-            <p className="text-xs text-muted-foreground">
-              Average team performance
-            </p>
-            <div className="flex items-center mt-2 text-xs">
-              <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">+2.1% improvement</span>
+            <div className="text-3xl font-bold text-orange-600">
+              {(billingSummary?.projectsCount ?? 0).toString()}
             </div>
+            <p className="text-xs text-muted-foreground">In billing summary</p>
           </CardContent>
         </Card>
       </div>

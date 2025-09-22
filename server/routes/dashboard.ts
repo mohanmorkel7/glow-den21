@@ -127,48 +127,100 @@ const mockProductivityData: ProductivityData[] = [
 export const getDashboardSummary: RequestHandler = async (req, res) => {
   try {
     const currentUser: AuthUser = (req as any).user;
-    const { period = "week" } = req.query;
+    const { period = "week" } = req.query as any;
 
-    // Calculate role-specific summary
+    // Default base values
     let summary: any = {
-      overallEfficiency: mockDashboardStats.overallEfficiency,
-      totalCompleted: mockDashboardStats.todaySubmitted,
-      activeProjects: mockDashboardStats.activeProjects,
-      teamPerformance: "Excellent",
+      overallEfficiency: 0,
+      totalCompleted: 0,
+      activeProjects: 0,
+      teamPerformance: "",
     };
 
-    // Add role-specific metrics
-    if (
-      currentUser.role === "super_admin" ||
-      currentUser.role === "project_manager"
-    ) {
-      summary = {
-        ...summary,
-        totalUsers: mockDashboardStats.totalUsers,
-        activeUsers: mockDashboardStats.activeUsers,
-        pendingTasks: mockDashboardStats.pendingTasks,
-        unreadNotifications: mockDashboardStats.unreadNotifications,
-        growthRate: 18.5,
-        capacityUtilization: 94.2,
-        qualityScore: 9.1,
-      };
-    }
-
-    // User-specific metrics
     if (currentUser.role === "user") {
-      // In production, query user's specific data
+      // Compute real-time user metrics from file_requests
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      // Today's target: sum of assigned_count for requests assigned today for this user
+      const todayTargetRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests
+         WHERE user_id = $1 AND DATE(assigned_date) = $2`,
+        [currentUser.id, todayStr],
+      );
+      const todayTarget = Number(todayTargetRes.rows?.[0]?.target || 0);
+
+      // Today's completed: sum of assigned_count/requested_count completed today
+      const todayCompletedRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests
+         WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = $2`,
+        [currentUser.id, todayStr],
+      );
+      const todaySubmitted = Number(
+        todayCompletedRes.rows?.[0]?.completed || 0,
+      );
+
+      const remaining = Math.max(0, todayTarget - todaySubmitted);
+      const userEfficiency =
+        todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
+
+      // Active projects for this user (any requests in non-completed statuses)
+      const activeProjRes = await query(
+        `SELECT COUNT(DISTINCT COALESCE(file_process_id, 'na')) AS cnt
+         FROM file_requests
+         WHERE user_id = $1 AND status IN ('pending','assigned','in_progress','in_review','rework')`,
+        [currentUser.id],
+      );
+      const assignedProjects = Number(activeProjRes.rows?.[0]?.cnt || 0);
+
       summary = {
-        ...summary,
-        todayTarget: 100,
-        todaySubmitted: 85,
-        userEfficiency: 85.0,
-        assignedProjects: 2,
+        todayTarget,
+        todaySubmitted,
+        remaining,
+        userEfficiency,
+        assignedProjects,
+        overallEfficiency: userEfficiency,
+        totalCompleted: todaySubmitted,
+        activeProjects: assignedProjects,
+        teamPerformance: "",
+      };
+    } else {
+      // Admin/PM overview from existing tables
+      const completedRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests
+         WHERE status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = CURRENT_DATE`,
+      );
+      const activeProjectsRes = await query(
+        `SELECT COUNT(*) AS cnt FROM file_processes WHERE status IN ('active','in_progress')`,
+      );
+      const todayTargetRes = await query(
+        `SELECT COALESCE(SUM(daily_target),0) AS target FROM file_processes WHERE status = 'active'`,
+      );
+      const totalCompleted = Number(completedRes.rows?.[0]?.completed || 0);
+      const target = Number(todayTargetRes.rows?.[0]?.target || 0);
+      const overallEfficiency =
+        target > 0 ? (totalCompleted / target) * 100 : 0;
+      summary = {
+        overallEfficiency,
+        totalCompleted,
+        activeProjects: Number(activeProjectsRes.rows?.[0]?.cnt || 0),
+        teamPerformance:
+          overallEfficiency >= 100
+            ? "Excellent"
+            : overallEfficiency >= 90
+              ? "Good"
+              : overallEfficiency >= 80
+                ? "Average"
+                : "Needs Improvement",
+        growthRate: 0,
+        capacityUtilization: null,
+        qualityScore: null,
       };
     }
 
-    res.json({
-      data: summary,
-    } as ApiResponse<DashboardSummary>);
+    res.json({ data: summary } as ApiResponse<DashboardSummary>);
   } catch (error) {
     console.error("Get dashboard summary error:", error);
     res.status(500).json({
@@ -330,7 +382,8 @@ export const getRecentAlerts: RequestHandler = async (req, res) => {
 
 export const getProductivityTrend: RequestHandler = async (req, res) => {
   try {
-    const { from, to, groupBy = "day" } = req.query as any;
+    const currentUser: AuthUser = (req as any).user;
+    const { from, to, groupBy = "day", userId } = req.query as any;
 
     // Dates
     const endDate = to ? new Date(String(to)) : new Date();
@@ -346,37 +399,101 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
     const startStr = startDate.toISOString().slice(0, 10);
     const endStr = endDate.toISOString().slice(0, 10);
 
-    // Aggregate from file_requests joined with file_processes to split manual vs automation
-    const rows = await query(
-      `SELECT
-         DATE(fr.completed_date) as date,
-         SUM(COALESCE(fr.assigned_count, fr.requested_count, 0))::bigint as actual,
-         SUM(CASE WHEN fp.type = 'automation' THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as automation,
-         SUM(CASE WHEN fp.type <> 'automation' OR fp.type IS NULL THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as manual
-       FROM file_requests fr
-       LEFT JOIN file_processes fp ON fp.id = fr.file_process_id
-       WHERE fr.status = 'completed' AND fr.completed_date IS NOT NULL
-         AND DATE(fr.completed_date) BETWEEN $1 AND $2
-       GROUP BY DATE(fr.completed_date)
-       ORDER BY DATE(fr.completed_date) ASC`,
-      [startStr, endStr],
-    );
+    // Optional user filter: users can only request their own data
+    const targetUserId =
+      currentUser.role === "user" ? currentUser.id : userId || null;
 
-    // Compute target as sum of current daily_target across all active processes (simple approximation)
-    const tgtRes = await query(
-      `SELECT COALESCE(SUM(daily_target),0) as target FROM file_processes WHERE status = 'active'`,
-    );
-    const dailyTarget = Number(tgtRes.rows?.[0]?.target || 0);
+    // Aggregate completions from file_requests (split manual vs automation)
+    const whereParts: string[] = [
+      `fr.status = 'completed' AND fr.completed_date IS NOT NULL`,
+      `DATE(fr.completed_date) BETWEEN $1 AND $2`,
+    ];
+    const params: any[] = [startStr, endStr];
+    if (targetUserId) {
+      whereParts.push(`fr.user_id = $${params.length + 1}`);
+      params.push(targetUserId);
+    }
 
-    let data = (rows.rows || []).map((r: any) => ({
-      date: r.date,
-      target: dailyTarget,
-      actual: Number(r.actual || 0),
-      efficiency: dailyTarget
-        ? (Number(r.actual || 0) / dailyTarget) * 100
-        : null,
-      automation: Number(r.automation || 0),
-      manual: Number(r.manual || 0),
+    const completeSql = `
+      SELECT
+        DATE(fr.completed_date) as date,
+        SUM(COALESCE(fr.assigned_count, fr.requested_count, 0))::bigint as actual,
+        SUM(CASE WHEN fp.type = 'automation' THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as automation,
+        SUM(CASE WHEN (fp.type <> 'automation' OR fp.type IS NULL) THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as manual
+      FROM file_requests fr
+      LEFT JOIN file_processes fp ON fp.id = fr.file_process_id
+      WHERE ${whereParts.join(" AND ")}
+      GROUP BY DATE(fr.completed_date)
+      ORDER BY DATE(fr.completed_date) ASC`;
+
+    const rows = await query(completeSql, params);
+
+    let targetsByDate: Record<string, number> = {};
+
+    if (targetUserId) {
+      // For user-specific view: compute per-day target from assignments
+      const assignSql = `
+        SELECT DATE(assigned_date) AS date, SUM(COALESCE(assigned_count, requested_count, 0))::bigint AS target
+        FROM file_requests
+        WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) BETWEEN $2 AND $3
+        GROUP BY DATE(assigned_date)
+        ORDER BY DATE(assigned_date)`;
+      const tgtRes = await query(assignSql, [targetUserId, startStr, endStr]);
+      for (const r of tgtRes.rows || [])
+        targetsByDate[r.date] = Number(r.target || 0);
+    } else {
+      // Global view: use sum of daily_target across active processes (same for each day)
+      const tgtRes = await query(
+        `SELECT COALESCE(SUM(daily_target),0) as target FROM file_processes WHERE status = 'active'`,
+      );
+      const dailyTarget = Number(tgtRes.rows?.[0]?.target || 0);
+      // Apply same target to all dates present; also ensure date coverage
+      targetsByDate = {};
+      for (
+        let d = new Date(startStr);
+        d <= new Date(endStr);
+        d.setDate(d.getDate() + 1)
+      ) {
+        const key = d.toISOString().slice(0, 10);
+        targetsByDate[key] = dailyTarget;
+      }
+    }
+
+    // Merge actuals with targets
+    const map = new Map<string, any>();
+    for (
+      let d = new Date(startStr);
+      d <= new Date(endStr);
+      d.setDate(d.getDate() + 1)
+    ) {
+      const key = d.toISOString().slice(0, 10);
+      map.set(key, {
+        date: key,
+        target: Number(targetsByDate[key] || 0),
+        actual: 0,
+        automation: 0,
+        manual: 0,
+      });
+    }
+
+    for (const r of rows.rows || []) {
+      const key = r.date;
+      const item = map.get(key) || {
+        date: key,
+        target: Number(targetsByDate[key] || 0),
+        actual: 0,
+        automation: 0,
+        manual: 0,
+      };
+      item.actual = Number(r.actual || 0);
+      item.automation = Number(r.automation || 0);
+      item.manual = Number(r.manual || 0);
+      map.set(key, item);
+    }
+
+    let data = Array.from(map.values()).map((d: any) => ({
+      ...d,
+      efficiency: d.target ? (d.actual / d.target) * 100 : null,
     }));
 
     if (groupBy === "week") data = groupByWeek(data as any) as any;
@@ -407,45 +524,105 @@ export const getUserDashboard: RequestHandler = async (req, res) => {
   try {
     const currentUser: AuthUser = (req as any).user;
 
-    // User-specific dashboard data
-    const userDashboard = {
-      todayTarget: 100,
-      todaySubmitted: 85,
-      efficiency: 85.0,
-      assignedProjects: 2,
-      completedThisWeek: 450,
-      weeklyTarget: 500,
-      rank: 3,
-      totalUsers: 12,
-      recentSubmissions: [
-        {
-          date: "2024-01-15",
-          projectName: "Data Entry Alpha",
-          submitted: 85,
-          target: 100,
-          status: "submitted",
-        },
-        {
-          date: "2024-01-14",
-          projectName: "Data Entry Alpha",
-          submitted: 95,
-          target: 100,
-          status: "approved",
-        },
-      ],
-      achievements: [
-        {
-          id: "1",
-          title: "Weekly Goal Achieved",
-          description: "Completed 100% of weekly target",
-          earnedAt: "2024-01-14T00:00:00Z",
-          icon: "target",
-        },
-      ],
-    };
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - 6);
+    const weekStr = startOfWeek.toISOString().slice(0, 10);
+
+    const startOfMonth = `${yyyy}-${mm}-01`;
+
+    // Today metrics
+    const [todayTargetRes, todayCompletedRes] = await Promise.all([
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) = $2`,
+        [currentUser.id, todayStr],
+      ),
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = $2`,
+        [currentUser.id, todayStr],
+      ),
+    ]);
+
+    const todayTarget = Number(todayTargetRes.rows?.[0]?.target || 0);
+    const todaySubmitted = Number(todayCompletedRes.rows?.[0]?.completed || 0);
+    const todayRemaining = Math.max(0, todayTarget - todaySubmitted);
+    const todayEfficiency =
+      todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
+
+    // Weekly metrics
+    const [weekTargetRes, weekCompletedRes] = await Promise.all([
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) BETWEEN $2 AND $3`,
+        [currentUser.id, weekStr, todayStr],
+      ),
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) BETWEEN $2 AND $3`,
+        [currentUser.id, weekStr, todayStr],
+      ),
+    ]);
+
+    const weeklyTarget = Number(weekTargetRes.rows?.[0]?.target || 0);
+    const weeklyCompleted = Number(weekCompletedRes.rows?.[0]?.completed || 0);
+    const weeklyEfficiency =
+      weeklyTarget > 0 ? (weeklyCompleted / weeklyTarget) * 100 : 0;
+
+    // Monthly metrics
+    const [monthTargetRes, monthCompletedRes] = await Promise.all([
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) BETWEEN $2 AND $3`,
+        [currentUser.id, startOfMonth, todayStr],
+      ),
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) BETWEEN $2 AND $3`,
+        [currentUser.id, startOfMonth, todayStr],
+      ),
+    ]);
+
+    const monthlyTarget = Number(monthTargetRes.rows?.[0]?.target || 0);
+    const monthlyCompleted = Number(
+      monthCompletedRes.rows?.[0]?.completed || 0,
+    );
+    const monthlyEfficiency =
+      monthlyTarget > 0 ? (monthlyCompleted / monthlyTarget) * 100 : 0;
+
+    // Assigned projects (open requests)
+    const activeProjRes = await query(
+      `SELECT COUNT(DISTINCT COALESCE(file_process_id, 'na')) AS cnt
+       FROM file_requests WHERE user_id = $1 AND status IN ('pending','assigned','in_progress','in_review','rework')`,
+      [currentUser.id],
+    );
 
     res.json({
-      data: userDashboard,
+      data: {
+        today: {
+          target: todayTarget,
+          completed: todaySubmitted,
+          remaining: todayRemaining,
+          efficiency: todayEfficiency,
+        },
+        weekly: {
+          target: weeklyTarget,
+          completed: weeklyCompleted,
+          efficiency: weeklyEfficiency,
+        },
+        monthly: {
+          target: monthlyTarget,
+          completed: monthlyCompleted,
+          efficiency: monthlyEfficiency,
+        },
+        assignedProjects: Number(activeProjRes.rows?.[0]?.cnt || 0),
+      },
     } as ApiResponse);
   } catch (error) {
     console.error("Get user dashboard error:", error);

@@ -143,16 +143,10 @@ const mockFileRequests: FileRequest[] = [
   },
 ];
 
-const mockDailyStats: DailyStats[] = [
-  { date: "2024-01-20", completedCount: 1000, totalAssigned: 1000 },
-  { date: "2024-01-19", completedCount: 800, totalAssigned: 800 },
-  { date: "2024-01-18", completedCount: 1200, totalAssigned: 1200 },
-];
-
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
-  const [dailyStats, setDailyStats] = useState<DailyStats[]>(mockDailyStats);
+  const [dailyStats, setDailyStats] = useState<DailyStats[]>([]);
   const [todayCompleted, setTodayCompleted] = useState<number>(0);
   const [monthCompleted, setMonthCompleted] = useState<number>(0);
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
@@ -284,6 +278,47 @@ export default function RequestFiles() {
 
           setTodayCompleted(todaySum || fallbackSum(todayStr, todayStr));
           setMonthCompleted(monthSum || fallbackSum(monthStartStr, todayStr));
+
+          // Build last 14 days Daily Performance stats from daily_counts
+          try {
+            const fourteenStart = new Date();
+            fourteenStart.setDate(fourteenStart.getDate() - 13);
+            const from14 = fourteenStart.toISOString().slice(0, 10);
+            const resp14 = await apiClient.getDailyCounts({
+              from: from14,
+              to: todayStr,
+              status: "approved",
+              page: 1,
+              limit: 5000,
+            });
+            const list14: any[] = extract(resp14);
+            const byDate = new Map<string, number>();
+            for (const dc of list14) {
+              const date = (dc.date || "").slice(0, 10);
+              const submitted = Number(
+                dc.submittedCount ?? dc.submitted_count ?? 0,
+              );
+              byDate.set(date, (byDate.get(date) || 0) + submitted);
+            }
+            const statsArr: DailyStats[] = [];
+            for (
+              let d = new Date(from14);
+              d <= new Date(todayStr);
+              d.setDate(d.getDate() + 1)
+            ) {
+              const key = d.toISOString().slice(0, 10);
+              statsArr.push({
+                date: key,
+                completedCount: byDate.get(key) || 0,
+                totalAssigned: 0,
+              });
+            }
+            // Most recent first
+            statsArr.sort((a, b) => b.date.localeCompare(a.date));
+            setDailyStats(statsArr);
+          } catch (e) {
+            console.warn("Failed to load daily performance 14-day stats", e);
+          }
         } catch (err) {
           console.warn("Failed to load daily count stats", err);
         }

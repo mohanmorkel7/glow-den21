@@ -390,6 +390,7 @@ class ApiClient {
     from?: string;
     to?: string;
     groupBy?: string;
+    userId?: string;
   }) {
     const queryString = params
       ? `?${new URLSearchParams(params as any).toString()}`
