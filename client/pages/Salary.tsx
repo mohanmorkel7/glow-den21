@@ -91,8 +91,8 @@ interface SalaryBreakdown {
   // tier2Amount: number;
   // totalAmount: number;
 
-  dateIST: string;           // used in all cases
-  weekRange?: string;        // used only for weekly
+  dateIST: string; // used in all cases
+  weekRange?: string; // used only for weekly
   files: number;
   tier1Files: number;
   tier1Rate: number;
@@ -110,7 +110,6 @@ interface SalaryBreakdownResponse {
   timezone: string;
   data: SalaryBreakdown[];
 }
-
 
 interface ProjectManagerSalaryData {
   id: string;
@@ -1142,11 +1141,20 @@ export default function Salary() {
                   Times shown in IST (UTC+05:30)
                   <span className="ml-2">• Based on verified_at</span>
                 </div>
-                <Tabs value={breakdownPeriod} onValueChange={(v) => setBreakdownPeriod(v as BreakdownPeriod)}>
+                <Tabs
+                  value={breakdownPeriod}
+                  onValueChange={(v) =>
+                    setBreakdownPeriod(v as BreakdownPeriod)
+                  }
+                >
                   <TabsList>
                     <TabsTrigger value="daily">Daily (Today)</TabsTrigger>
-                    <TabsTrigger value="weekly">Weekly (Last 7 Days)</TabsTrigger>
-                    <TabsTrigger value="monthly">Monthly (This Month)</TabsTrigger>
+                    <TabsTrigger value="weekly">
+                      Weekly (Last 7 Days)
+                    </TabsTrigger>
+                    <TabsTrigger value="monthly">
+                      Monthly (This Month)
+                    </TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
@@ -1211,13 +1219,19 @@ export default function Salary() {
                       const label = item.dateIST;
 
                       const tz = "Asia/Kolkata";
-                      const nowIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+                      const nowIST = new Date(
+                        new Date().toLocaleString("en-US", { timeZone: tz }),
+                      );
                       const todayISTStr = nowIST.toISOString().slice(0, 10);
                       const isToday = item.dateIST === todayISTStr;
-                      const day = new Date(item.dateIST + "T00:00:00+05:30").getDay();
+                      const day = new Date(
+                        item.dateIST + "T00:00:00+05:30",
+                      ).getDay();
                       const isWeekend = day === 0 || day === 6;
-                      const isFuture = new Date(item.dateIST + "T23:59:59+05:30") > nowIST;
-                      const isAbsentDay = item.files === 0 && !isFuture && !isWeekend;
+                      const isFuture =
+                        new Date(item.dateIST + "T23:59:59+05:30") > nowIST;
+                      const isAbsentDay =
+                        item.files === 0 && !isFuture && !isWeekend;
 
                       return (
                         <TableRow

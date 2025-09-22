@@ -1488,7 +1488,7 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 //               SUM(COALESCE(assigned_count, requested_count, 0)) AS files
 //         FROM file_requests
 //         WHERE user_id::text = $1
-         
+
 //         GROUP BY 1
 //         ORDER BY 1`,
 //       [String(userId)]
@@ -1538,7 +1538,6 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 //     });
 //   }
 // });
-
 
 // router.get("/salary/breakdown", async (req: Request, res: Response) => {
 //   try {
@@ -1660,7 +1659,6 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 //     });
 //   }
 // });
-
 
 // Helper function to get date in YYYY-MM-DD format
 const toISODate = (d: Date) => d.toISOString().slice(0, 10);
@@ -1870,8 +1868,6 @@ function getWeekStartDate(d: Date) {
 //   }
 // });
 
-
-
 router.get("/salary/breakdown", async (req: Request, res: Response) => {
   try {
     // Prevent caching
@@ -1906,7 +1902,9 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const tz = "Asia/Kolkata";
     const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
-    const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+    const todayIST = new Date(
+      new Date().toLocaleString("en-US", { timeZone: tz }),
+    );
 
     let fromDate: Date;
     let toDate: Date;
@@ -1916,7 +1914,9 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       fromDate = new Date(toDate);
       fromDate.setDate(toDate.getDate() - 6); // ✅ last 7 days only
     } else if (period === "monthly") {
-      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
+      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split(
+        "-",
+      );
       fromDate = new Date(Number(year), Number(mon) - 1, 1);
       toDate = new Date(fromDate);
       toDate.setMonth(toDate.getMonth() + 1);
@@ -1926,15 +1926,23 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       toDate = new Date(todayIST);
     }
 
-    const fromDateTime = new Date(fromDate.toLocaleString("en-US", { timeZone: tz }));
+    const fromDateTime = new Date(
+      fromDate.toLocaleString("en-US", { timeZone: tz }),
+    );
     fromDateTime.setHours(0, 0, 0, 0);
 
-    const toDateTime = new Date(toDate.toLocaleString("en-US", { timeZone: tz }));
+    const toDateTime = new Date(
+      toDate.toLocaleString("en-US", { timeZone: tz }),
+    );
     toDateTime.setHours(23, 59, 59, 999);
 
     // Convert to UTC for querying the database
-    const fromISO = new Date(fromDateTime.getTime() - fromDateTime.getTimezoneOffset() * 60000).toISOString();
-    const toISO = new Date(toDateTime.getTime() - toDateTime.getTimezoneOffset() * 60000).toISOString();
+    const fromISO = new Date(
+      fromDateTime.getTime() - fromDateTime.getTimezoneOffset() * 60000,
+    ).toISOString();
+    const toISO = new Date(
+      toDateTime.getTime() - toDateTime.getTimezoneOffset() * 60000,
+    ).toISOString();
 
     const rowsRes = await query(
       `
@@ -1947,7 +1955,7 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       GROUP BY d
       ORDER BY d
       `,
-      [String(userId), fromISO, toISO]
+      [String(userId), fromISO, toISO],
     );
 
     // Map date string -> file count
@@ -2000,7 +2008,6 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
 
     // Default: daily response (today only)
     res.json({ period, timezone: tz, data: items });
-
   } catch (error) {
     console.error("Error fetching salary breakdown:", error);
     res.status(500).json({
@@ -2011,12 +2018,6 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     });
   }
 });
-
-
-
-
-
-
 
 // POST /api/expenses/salary/project-managers - Create or update PM salary by name/email
 router.post("/salary/project-managers", async (req: Request, res: Response) => {
