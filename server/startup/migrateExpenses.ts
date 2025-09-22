@@ -28,6 +28,8 @@ export async function ensureExpenseTables(): Promise<void> {
 
     // Ensure legacy deployments that missed the 'date' column get the column added
     await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS date DATE");
+    // Ensure legacy deployments that missed the 'receipt' column get the column added
+    await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt TEXT");
     await query(
       `CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`,
     );
