@@ -127,48 +127,89 @@ const mockProductivityData: ProductivityData[] = [
 export const getDashboardSummary: RequestHandler = async (req, res) => {
   try {
     const currentUser: AuthUser = (req as any).user;
-    const { period = "week" } = req.query;
+    const { period = "week" } = req.query as any;
 
-    // Calculate role-specific summary
+    // Default base values
     let summary: any = {
-      overallEfficiency: mockDashboardStats.overallEfficiency,
-      totalCompleted: mockDashboardStats.todaySubmitted,
-      activeProjects: mockDashboardStats.activeProjects,
-      teamPerformance: "Excellent",
+      overallEfficiency: 0,
+      totalCompleted: 0,
+      activeProjects: 0,
+      teamPerformance: "",
     };
 
-    // Add role-specific metrics
-    if (
-      currentUser.role === "super_admin" ||
-      currentUser.role === "project_manager"
-    ) {
-      summary = {
-        ...summary,
-        totalUsers: mockDashboardStats.totalUsers,
-        activeUsers: mockDashboardStats.activeUsers,
-        pendingTasks: mockDashboardStats.pendingTasks,
-        unreadNotifications: mockDashboardStats.unreadNotifications,
-        growthRate: 18.5,
-        capacityUtilization: 94.2,
-        qualityScore: 9.1,
-      };
-    }
-
-    // User-specific metrics
     if (currentUser.role === "user") {
-      // In production, query user's specific data
+      // Compute real-time user metrics from file_requests
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      // Today's target: sum of assigned_count for requests assigned today for this user
+      const todayTargetRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests
+         WHERE user_id = $1 AND DATE(assigned_date) = $2`,
+        [currentUser.id, todayStr],
+      );
+      const todayTarget = Number(todayTargetRes.rows?.[0]?.target || 0);
+
+      // Today's completed: sum of assigned_count/requested_count completed today
+      const todayCompletedRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests
+         WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = $2`,
+        [currentUser.id, todayStr],
+      );
+      const todaySubmitted = Number(todayCompletedRes.rows?.[0]?.completed || 0);
+
+      const remaining = Math.max(0, todayTarget - todaySubmitted);
+      const userEfficiency = todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
+
+      // Active projects for this user (any requests in non-completed statuses)
+      const activeProjRes = await query(
+        `SELECT COUNT(DISTINCT COALESCE(file_process_id, 'na')) AS cnt
+         FROM file_requests
+         WHERE user_id = $1 AND status IN ('pending','assigned','in_progress','in_review','rework')`,
+        [currentUser.id],
+      );
+      const assignedProjects = Number(activeProjRes.rows?.[0]?.cnt || 0);
+
       summary = {
-        ...summary,
-        todayTarget: 100,
-        todaySubmitted: 85,
-        userEfficiency: 85.0,
-        assignedProjects: 2,
+        todayTarget,
+        todaySubmitted,
+        remaining,
+        userEfficiency,
+        assignedProjects,
+        overallEfficiency: userEfficiency,
+        totalCompleted: todaySubmitted,
+        activeProjects: assignedProjects,
+        teamPerformance: "",
+      };
+    } else {
+      // Admin/PM overview from existing tables
+      const completedRes = await query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests
+         WHERE status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = CURRENT_DATE`,
+      );
+      const activeProjectsRes = await query(
+        `SELECT COUNT(*) AS cnt FROM file_processes WHERE status IN ('active','in_progress')`,
+      );
+      const todayTargetRes = await query(
+        `SELECT COALESCE(SUM(daily_target),0) AS target FROM file_processes WHERE status = 'active'`,
+      );
+      const totalCompleted = Number(completedRes.rows?.[0]?.completed || 0);
+      const target = Number(todayTargetRes.rows?.[0]?.target || 0);
+      const overallEfficiency = target > 0 ? (totalCompleted / target) * 100 : 0;
+      summary = {
+        overallEfficiency,
+        totalCompleted,
+        activeProjects: Number(activeProjectsRes.rows?.[0]?.cnt || 0),
+        teamPerformance: overallEfficiency >= 100 ? "Excellent" : overallEfficiency >= 90 ? "Good" : overallEfficiency >= 80 ? "Average" : "Needs Improvement",
+        growthRate: 0,
+        capacityUtilization: null,
+        qualityScore: null,
       };
     }
 
-    res.json({
-      data: summary,
-    } as ApiResponse<DashboardSummary>);
+    res.json({ data: summary } as ApiResponse<DashboardSummary>);
   } catch (error) {
     console.error("Get dashboard summary error:", error);
     res.status(500).json({
