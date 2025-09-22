@@ -214,7 +214,7 @@ export default function Dashboard() {
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
-                    value.toLocaleString() + " files",
+                    (Number(value) || 0).toLocaleString() + " files",
                     name === "completed" ? "Completed" : "Target",
                   ]}
                 />
@@ -252,32 +252,37 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">7</div>
-                <div className="text-sm text-blue-700">Working Days</div>
-                <div className="text-xs text-muted-foreground">This week</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">6</div>
-                <div className="text-sm text-green-700">Target Met</div>
-                <div className="text-xs text-muted-foreground">Days</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {userPerformanceData.weekly.efficiency}%
+            {(() => {
+              const workingDays = weeklyChartData.filter((d) => (d.target || d.completed)).length;
+              const targetMetDays = weeklyChartData.filter((d) => d.target > 0 && d.completed >= d.target).length;
+              const weeklyEff = Math.round(Number(userSummary?.weekly.efficiency ?? 0));
+              const monthlyEff = Math.round(Number(userSummary?.monthly.efficiency ?? 0));
+              const grade = monthlyEff >= 100 ? "A+" : monthlyEff >= 95 ? "A" : monthlyEff >= 90 ? "A-" : monthlyEff >= 80 ? "B" : monthlyEff >= 70 ? "C" : "D";
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{workingDays}</div>
+                    <div className="text-sm text-blue-700">Working Days</div>
+                    <div className="text-xs text-muted-foreground">This week</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{targetMetDays}</div>
+                    <div className="text-sm text-green-700">Target Met</div>
+                    <div className="text-xs text-muted-foreground">Days</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{weeklyEff}%</div>
+                    <div className="text-sm text-purple-700">Efficiency</div>
+                    <div className="text-xs text-muted-foreground">This week</div>
+                  </div>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-600">{grade}</div>
+                    <div className="text-sm text-orange-700">Grade</div>
+                    <div className="text-xs text-muted-foreground">Performance</div>
+                  </div>
                 </div>
-                <div className="text-sm text-purple-700">Efficiency</div>
-                <div className="text-xs text-muted-foreground">This week</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">
-                  {userPerformanceData.monthly.grade}
-                </div>
-                <div className="text-sm text-orange-700">Grade</div>
-                <div className="text-xs text-muted-foreground">Performance</div>
-              </div>
-            </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
