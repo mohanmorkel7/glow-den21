@@ -409,7 +409,12 @@ class ApiClient {
     return this.request(`/tutorials${qs}`);
   }
 
-  async uploadTutorialVideo(file: Blob, name: string, category?: string, description?: string) {
+  async uploadTutorialVideo(
+    file: Blob,
+    name: string,
+    category?: string,
+    description?: string,
+  ) {
     const headers: Record<string, string> = {
       ...(this.getAuthHeaders() as any),
       "x-file-name": (file as any).name || "video.mp4",

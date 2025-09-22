@@ -62,60 +62,64 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // POST /api/tutorials - create tutorial with metadata and optional steps
-router.post("/", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
-  try {
-    const currentUser: any = (req as any).user;
-    const b = req.body || {};
-    const id = `tut_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+router.post(
+  "/",
+  requireRole(["project_manager", "super_admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const currentUser: any = (req as any).user;
+      const b = req.body || {};
+      const id = `tut_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
-    const insert = `INSERT INTO tutorials (id, title, description, category, status, instructions, target_roles, is_required, tags, "order", created_by_user_id, created_at, updated_at)
+      const insert = `INSERT INTO tutorials (id, title, description, category, status, instructions, target_roles, is_required, tags, "order", created_by_user_id, created_at, updated_at)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,COALESCE($10,0),$11,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`;
 
-    await query(insert, [
-      id,
-      b.title,
-      b.description || null,
-      b.category || "getting_started",
-      b.status || "published",
-      b.instructions || null,
-      Array.isArray(b.targetRoles) ? b.targetRoles : ["user"],
-      !!b.isRequired,
-      Array.isArray(b.tags) ? b.tags : [],
-      Number.isFinite(b.order) ? Number(b.order) : 0,
-      currentUser?.id || null,
-    ]);
+      await query(insert, [
+        id,
+        b.title,
+        b.description || null,
+        b.category || "getting_started",
+        b.status || "published",
+        b.instructions || null,
+        Array.isArray(b.targetRoles) ? b.targetRoles : ["user"],
+        !!b.isRequired,
+        Array.isArray(b.tags) ? b.tags : [],
+        Number.isFinite(b.order) ? Number(b.order) : 0,
+        currentUser?.id || null,
+      ]);
 
-    if (Array.isArray(b.steps) && b.steps.length) {
-      for (const s of b.steps) {
-        const sid = `tstep_${Math.random().toString(36).slice(2, 10)}`;
-        await query(
-          `INSERT INTO tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required)
+      if (Array.isArray(b.steps) && b.steps.length) {
+        for (const s of b.steps) {
+          const sid = `tstep_${Math.random().toString(36).slice(2, 10)}`;
+          await query(
+            `INSERT INTO tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [
-            sid,
-            id,
-            s.stepNumber || 1,
-            s.title || "",
-            s.description || null,
-            s.imageUrl || null,
-            s.videoTimestamp || null,
-            !!s.isRequired,
-          ],
-        );
+            [
+              sid,
+              id,
+              s.stepNumber || 1,
+              s.title || "",
+              s.description || null,
+              s.imageUrl || null,
+              s.videoTimestamp || null,
+              !!s.isRequired,
+            ],
+          );
+        }
       }
-    }
 
-    res.status(201).json({ data: { id } });
-  } catch (error) {
-    console.error("Create tutorial error:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create tutorial",
-      },
-    });
-  }
-});
+      res.status(201).json({ data: { id } });
+    } catch (error) {
+      console.error("Create tutorial error:", error);
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create tutorial",
+        },
+      });
+    }
+  },
+);
 
 // GET /api/tutorials/:id - get tutorial with steps
 router.get("/:id", async (req: Request, res: Response) => {
@@ -176,219 +180,239 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // PUT /api/tutorials/:id - update tutorial (metadata and optionally replace steps)
-router.put("/:id", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const body = req.body || {};
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
+router.put(
+  "/:id",
+  requireRole(["project_manager", "super_admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const body = req.body || {};
+      const fields: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
 
-    const updatable = [
-      "title",
-      "description",
-      "category",
-      "status",
-      "instructions",
-      "target_roles",
-      "is_required",
-      "tags",
-      "order",
-    ];
+      const updatable = [
+        "title",
+        "description",
+        "category",
+        "status",
+        "instructions",
+        "target_roles",
+        "is_required",
+        "tags",
+        "order",
+      ];
 
-    const mapKey = (k: string) =>
-      k === "targetRoles"
-        ? "target_roles"
-        : k === "isRequired"
-          ? "is_required"
-          : k;
+      const mapKey = (k: string) =>
+        k === "targetRoles"
+          ? "target_roles"
+          : k === "isRequired"
+            ? "is_required"
+            : k;
 
-    for (const [k, v] of Object.entries(body)) {
-      const col = mapKey(k);
-      if (updatable.includes(col)) {
-        fields.push(`${col} = $${idx++}`);
-        values.push(col === "order" ? Number(v) : v);
+      for (const [k, v] of Object.entries(body)) {
+        const col = mapKey(k);
+        if (updatable.includes(col)) {
+          fields.push(`${col} = $${idx++}`);
+          values.push(col === "order" ? Number(v) : v);
+        }
       }
-    }
 
-    if (!fields.length) {
-      return res.status(400).json({
-        error: {
-          code: "VALIDATION_ERROR",
-          message: "No updatable fields provided",
-        },
-      });
-    }
+      if (!fields.length) {
+        return res.status(400).json({
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "No updatable fields provided",
+          },
+        });
+      }
 
-    values.push(id);
-    const sql = `UPDATE tutorials SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING id, title, description, category, status, instructions, target_roles, is_required, tags, "order", video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`;
-    const result = await query(sql, values);
-    if (!result.rows.length) {
-      return res
-        .status(404)
-        .json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
-    }
+      values.push(id);
+      const sql = `UPDATE tutorials SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING id, title, description, category, status, instructions, target_roles, is_required, tags, "order", video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`;
+      const result = await query(sql, values);
+      if (!result.rows.length) {
+        return res
+          .status(404)
+          .json({
+            error: { code: "NOT_FOUND", message: "Tutorial not found" },
+          });
+      }
 
-    // Optionally replace steps
-    if (Array.isArray(body.steps)) {
-      await query(`DELETE FROM tutorial_steps WHERE tutorial_id = $1`, [id]);
-      for (const s of body.steps) {
-        const sid = `tstep_${Math.random().toString(36).slice(2, 10)}`;
-        await query(
-          `INSERT INTO tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required)
+      // Optionally replace steps
+      if (Array.isArray(body.steps)) {
+        await query(`DELETE FROM tutorial_steps WHERE tutorial_id = $1`, [id]);
+        for (const s of body.steps) {
+          const sid = `tstep_${Math.random().toString(36).slice(2, 10)}`;
+          await query(
+            `INSERT INTO tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-          [
-            sid,
-            id,
-            s.stepNumber || 1,
-            s.title || "",
-            s.description || null,
-            s.imageUrl || null,
-            s.videoTimestamp || null,
-            !!s.isRequired,
-          ],
-        );
+            [
+              sid,
+              id,
+              s.stepNumber || 1,
+              s.title || "",
+              s.description || null,
+              s.imageUrl || null,
+              s.videoTimestamp || null,
+              !!s.isRequired,
+            ],
+          );
+        }
       }
-    }
 
-    const r = result.rows[0];
-    res.json({
-      data: {
-        id: r.id,
-        title: r.title,
-        description: r.description || "",
-        category: r.category || "getting_started",
-        status: r.status || "published",
-        instructions: r.instructions || "",
-        targetRoles: Array.isArray(r.target_roles) ? r.target_roles : ["user"],
-        isRequired: !!r.is_required,
-        tags: Array.isArray(r.tags) ? r.tags : [],
-        order: r.order ?? 0,
-        videoUrl: r.video_file_path ? `/api/tutorials/${r.id}/video` : null,
-        videoFileName: r.video_file_name || null,
-        createdAt: r.created_at,
-        updatedAt: r.updated_at,
-      },
-    });
-  } catch (error) {
-    console.error("Update tutorial error:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to update tutorial",
-      },
-    });
-  }
-});
-
-// DELETE /api/tutorials/:id - delete tutorial and associated files
-router.delete("/:id", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    // Fetch to know file path
-    const result = await query(
-      `DELETE FROM tutorials WHERE id = $1 RETURNING video_file_path`,
-      [id],
-    );
-    // Remove storage dir if exists
-    const dir = path.join(STORAGE_ROOT, id);
-    if (fs.existsSync(dir)) {
-      try {
-        fs.rmSync(dir, { recursive: true, force: true });
-      } catch (e) {
-        console.warn("Failed to cleanup tutorial storage for", id, e);
-      }
-    }
-    if (!result.rowCount) {
-      return res
-        .status(404)
-        .json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
-    }
-    res.status(204).send();
-  } catch (error) {
-    console.error("Delete tutorial error:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to delete tutorial",
-      },
-    });
-  }
-});
-
-// POST /api/tutorials/upload - create tutorial and upload video (raw bytes)
-router.post("/upload", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
-  try {
-    const currentUser: any = (req as any).user;
-    const titleHeader =
-      (req.headers["x-tutorial-name"] as string) || "Untitled Tutorial";
-    const categoryHeader =
-      (req.headers["x-tutorial-category"] as string) || "getting_started";
-    const descriptionHeader = (req.headers["x-tutorial-description"] as string) || null;
-    const originalName = (req.headers["x-file-name"] as string) || "video.mp4";
-    const mime =
-      (req.headers["content-type"] as string) || "application/octet-stream";
-
-    const safeName = originalName.replace(/[^a-zA-Z0-9_.\-]/g, "_");
-    const id = `tut_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-
-    ensureDir(STORAGE_ROOT);
-    const tutDir = path.join(STORAGE_ROOT, id);
-    ensureDir(tutDir);
-    const destPath = path.join(tutDir, safeName);
-
-    const ws = fs.createWriteStream(destPath);
-    req.pipe(ws);
-
-    ws.on("finish", async () => {
-      await query(
-        `INSERT INTO tutorials (id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
-        [
-          id,
-          titleHeader,
-          descriptionHeader,
-          categoryHeader,
-          "published",
-          safeName,
-          destPath.replace(process.cwd() + path.sep, ""),
-          mime,
-          currentUser?.id || null,
-        ],
-      );
-
-      res.status(201).json({
+      const r = result.rows[0];
+      res.json({
         data: {
-          id,
-          title: titleHeader,
-          description: "",
-          category: categoryHeader,
-          status: "published",
-          videoUrl: `/api/tutorials/${id}/video`,
-          videoFileName: safeName,
+          id: r.id,
+          title: r.title,
+          description: r.description || "",
+          category: r.category || "getting_started",
+          status: r.status || "published",
+          instructions: r.instructions || "",
+          targetRoles: Array.isArray(r.target_roles)
+            ? r.target_roles
+            : ["user"],
+          isRequired: !!r.is_required,
+          tags: Array.isArray(r.tags) ? r.tags : [],
+          order: r.order ?? 0,
+          videoUrl: r.video_file_path ? `/api/tutorials/${r.id}/video` : null,
+          videoFileName: r.video_file_name || null,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
         },
       });
-    });
-
-    ws.on("error", (err) => {
-      console.error("Tutorial upload write error:", err);
+    } catch (error) {
+      console.error("Update tutorial error:", error);
       res.status(500).json({
         error: {
-          code: "WRITE_ERROR",
-          message: "Failed to save uploaded video",
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update tutorial",
         },
       });
-    });
-  } catch (error) {
-    console.error("Upload tutorial error:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to upload tutorial video",
-      },
-    });
-  }
-});
+    }
+  },
+);
+
+// DELETE /api/tutorials/:id - delete tutorial and associated files
+router.delete(
+  "/:id",
+  requireRole(["project_manager", "super_admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      // Fetch to know file path
+      const result = await query(
+        `DELETE FROM tutorials WHERE id = $1 RETURNING video_file_path`,
+        [id],
+      );
+      // Remove storage dir if exists
+      const dir = path.join(STORAGE_ROOT, id);
+      if (fs.existsSync(dir)) {
+        try {
+          fs.rmSync(dir, { recursive: true, force: true });
+        } catch (e) {
+          console.warn("Failed to cleanup tutorial storage for", id, e);
+        }
+      }
+      if (!result.rowCount) {
+        return res
+          .status(404)
+          .json({
+            error: { code: "NOT_FOUND", message: "Tutorial not found" },
+          });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete tutorial error:", error);
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to delete tutorial",
+        },
+      });
+    }
+  },
+);
+
+// POST /api/tutorials/upload - create tutorial and upload video (raw bytes)
+router.post(
+  "/upload",
+  requireRole(["project_manager", "super_admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const currentUser: any = (req as any).user;
+      const titleHeader =
+        (req.headers["x-tutorial-name"] as string) || "Untitled Tutorial";
+      const categoryHeader =
+        (req.headers["x-tutorial-category"] as string) || "getting_started";
+      const descriptionHeader =
+        (req.headers["x-tutorial-description"] as string) || null;
+      const originalName =
+        (req.headers["x-file-name"] as string) || "video.mp4";
+      const mime =
+        (req.headers["content-type"] as string) || "application/octet-stream";
+
+      const safeName = originalName.replace(/[^a-zA-Z0-9_.\-]/g, "_");
+      const id = `tut_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+      ensureDir(STORAGE_ROOT);
+      const tutDir = path.join(STORAGE_ROOT, id);
+      ensureDir(tutDir);
+      const destPath = path.join(tutDir, safeName);
+
+      const ws = fs.createWriteStream(destPath);
+      req.pipe(ws);
+
+      ws.on("finish", async () => {
+        await query(
+          `INSERT INTO tutorials (id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+          [
+            id,
+            titleHeader,
+            descriptionHeader,
+            categoryHeader,
+            "published",
+            safeName,
+            destPath.replace(process.cwd() + path.sep, ""),
+            mime,
+            currentUser?.id || null,
+          ],
+        );
+
+        res.status(201).json({
+          data: {
+            id,
+            title: titleHeader,
+            description: "",
+            category: categoryHeader,
+            status: "published",
+            videoUrl: `/api/tutorials/${id}/video`,
+            videoFileName: safeName,
+          },
+        });
+      });
+
+      ws.on("error", (err) => {
+        console.error("Tutorial upload write error:", err);
+        res.status(500).json({
+          error: {
+            code: "WRITE_ERROR",
+            message: "Failed to save uploaded video",
+          },
+        });
+      });
+    } catch (error) {
+      console.error("Upload tutorial error:", error);
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to upload tutorial video",
+        },
+      });
+    }
+  },
+);
 
 // GET /api/tutorials/:id/video - stream video file
 router.get("/:id/video", async (req: Request, res: Response) => {
@@ -453,43 +477,79 @@ router.get("/:id/video", async (req: Request, res: Response) => {
 });
 
 // POST /api/tutorials/:id/upload - upload or replace video for an existing tutorial
-router.post("/:id/upload", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const currentUser: any = (req as any).user;
-    const originalName = (req.headers["x-file-name"] as string) || "video.mp4";
-    const mime = (req.headers["content-type"] as string) || "application/octet-stream";
-    const safeName = originalName.replace(/[^a-zA-Z0-9_.\\-]/g, "_");
+router.post(
+  "/:id/upload",
+  requireRole(["project_manager", "super_admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const currentUser: any = (req as any).user;
+      const originalName =
+        (req.headers["x-file-name"] as string) || "video.mp4";
+      const mime =
+        (req.headers["content-type"] as string) || "application/octet-stream";
+      const safeName = originalName.replace(/[^a-zA-Z0-9_.\\-]/g, "_");
 
-    ensureDir(STORAGE_ROOT);
-    const tutDir = path.join(STORAGE_ROOT, id);
-    ensureDir(tutDir);
-    const destPath = path.join(tutDir, safeName);
+      ensureDir(STORAGE_ROOT);
+      const tutDir = path.join(STORAGE_ROOT, id);
+      ensureDir(tutDir);
+      const destPath = path.join(tutDir, safeName);
 
-    const ws = fs.createWriteStream(destPath);
-    req.pipe(ws);
+      const ws = fs.createWriteStream(destPath);
+      req.pipe(ws);
 
-    ws.on("finish", async () => {
-      const relPath = destPath.replace(process.cwd() + path.sep, "");
-      const result = await query(
-        `UPDATE tutorials SET video_file_name = $1, video_file_path = $2, video_mime = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`,
-        [safeName, relPath, mime, id],
-      );
-      if (!result.rows.length) {
-        return res.status(404).json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
-      }
-      const r = result.rows[0];
-      res.status(200).json({ data: { id: r.id, title: r.title, description: r.description || "", category: r.category, status: r.status, videoUrl: `/api/tutorials/${r.id}/video`, videoFileName: r.video_file_name } });
-    });
+      ws.on("finish", async () => {
+        const relPath = destPath.replace(process.cwd() + path.sep, "");
+        const result = await query(
+          `UPDATE tutorials SET video_file_name = $1, video_file_path = $2, video_mime = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`,
+          [safeName, relPath, mime, id],
+        );
+        if (!result.rows.length) {
+          return res
+            .status(404)
+            .json({
+              error: { code: "NOT_FOUND", message: "Tutorial not found" },
+            });
+        }
+        const r = result.rows[0];
+        res
+          .status(200)
+          .json({
+            data: {
+              id: r.id,
+              title: r.title,
+              description: r.description || "",
+              category: r.category,
+              status: r.status,
+              videoUrl: `/api/tutorials/${r.id}/video`,
+              videoFileName: r.video_file_name,
+            },
+          });
+      });
 
-    ws.on("error", (err) => {
-      console.error("Tutorial upload write error:", err);
-      res.status(500).json({ error: { code: "WRITE_ERROR", message: "Failed to save uploaded video" } });
-    });
-  } catch (error) {
-    console.error("Upload tutorial error:", error);
-    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to upload tutorial video" } });
-  }
-});
+      ws.on("error", (err) => {
+        console.error("Tutorial upload write error:", err);
+        res
+          .status(500)
+          .json({
+            error: {
+              code: "WRITE_ERROR",
+              message: "Failed to save uploaded video",
+            },
+          });
+      });
+    } catch (error) {
+      console.error("Upload tutorial error:", error);
+      res
+        .status(500)
+        .json({
+          error: {
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to upload tutorial video",
+          },
+        });
+    }
+  },
+);
 
 export default router;
