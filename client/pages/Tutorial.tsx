@@ -2359,13 +2359,13 @@ export default function Tutorial() {
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Tutorial Selection */}
+            {/* Tutorial Selection or New Tutorial */}
             <div>
-              <Label htmlFor="tutorial-select">Select Tutorial *</Label>
+              <Label htmlFor="tutorial-select">Select Tutorial (or create new)</Label>
               <Select
-                value={videoUpload.tutorialId}
+                value={(videoUpload as any).tutorialId || ""}
                 onValueChange={(value) =>
-                  setVideoUpload({ ...videoUpload, tutorialId: value })
+                  setVideoUpload({ ...videoUpload, tutorialId: value, tutorialName: "" })
                 }
                 disabled={videoUpload.isUploading}
               >
@@ -2397,6 +2397,30 @@ export default function Tutorial() {
                   first.
                 </p>
               )}
+
+              <div className="mt-4">
+                <Label>Or create new tutorial</Label>
+                <Input
+                  placeholder="Enter tutorial title"
+                  value={(videoUpload as any).tutorialName || ""}
+                  onChange={(e) =>
+                    setVideoUpload({ ...videoUpload, tutorialName: e.target.value, tutorialId: "" })
+                  }
+                  disabled={videoUpload.isUploading}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Provide a title if you want to create a new tutorial with this video.
+                </p>
+              </div>
+
+              <div className="mt-4">
+                <Label>Description (optional)</Label>
+                <RichTextEditor
+                  value={(videoUpload as any).description || ""}
+                  onChange={(value) => setVideoUpload({ ...videoUpload, description: value })}
+                  minHeight={120}
+                />
+              </div>
             </div>
 
             {/* File Upload Area */}
