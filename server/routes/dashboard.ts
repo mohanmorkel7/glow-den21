@@ -157,10 +157,13 @@ export const getDashboardSummary: RequestHandler = async (req, res) => {
          WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = $2`,
         [currentUser.id, todayStr],
       );
-      const todaySubmitted = Number(todayCompletedRes.rows?.[0]?.completed || 0);
+      const todaySubmitted = Number(
+        todayCompletedRes.rows?.[0]?.completed || 0,
+      );
 
       const remaining = Math.max(0, todayTarget - todaySubmitted);
-      const userEfficiency = todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
+      const userEfficiency =
+        todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
 
       // Active projects for this user (any requests in non-completed statuses)
       const activeProjRes = await query(
@@ -197,12 +200,20 @@ export const getDashboardSummary: RequestHandler = async (req, res) => {
       );
       const totalCompleted = Number(completedRes.rows?.[0]?.completed || 0);
       const target = Number(todayTargetRes.rows?.[0]?.target || 0);
-      const overallEfficiency = target > 0 ? (totalCompleted / target) * 100 : 0;
+      const overallEfficiency =
+        target > 0 ? (totalCompleted / target) * 100 : 0;
       summary = {
         overallEfficiency,
         totalCompleted,
         activeProjects: Number(activeProjectsRes.rows?.[0]?.cnt || 0),
-        teamPerformance: overallEfficiency >= 100 ? "Excellent" : overallEfficiency >= 90 ? "Good" : overallEfficiency >= 80 ? "Average" : "Needs Improvement",
+        teamPerformance:
+          overallEfficiency >= 100
+            ? "Excellent"
+            : overallEfficiency >= 90
+              ? "Good"
+              : overallEfficiency >= 80
+                ? "Average"
+                : "Needs Improvement",
         growthRate: 0,
         capacityUtilization: null,
         qualityScore: null,
@@ -389,7 +400,8 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
     const endStr = endDate.toISOString().slice(0, 10);
 
     // Optional user filter: users can only request their own data
-    const targetUserId = currentUser.role === "user" ? currentUser.id : userId || null;
+    const targetUserId =
+      currentUser.role === "user" ? currentUser.id : userId || null;
 
     // Aggregate completions from file_requests (split manual vs automation)
     const whereParts: string[] = [
@@ -427,7 +439,8 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
         GROUP BY DATE(assigned_date)
         ORDER BY DATE(assigned_date)`;
       const tgtRes = await query(assignSql, [targetUserId, startStr, endStr]);
-      for (const r of tgtRes.rows || []) targetsByDate[r.date] = Number(r.target || 0);
+      for (const r of tgtRes.rows || [])
+        targetsByDate[r.date] = Number(r.target || 0);
     } else {
       // Global view: use sum of daily_target across active processes (same for each day)
       const tgtRes = await query(
@@ -436,7 +449,11 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
       const dailyTarget = Number(tgtRes.rows?.[0]?.target || 0);
       // Apply same target to all dates present; also ensure date coverage
       targetsByDate = {};
-      for (let d = new Date(startStr); d <= new Date(endStr); d.setDate(d.getDate() + 1)) {
+      for (
+        let d = new Date(startStr);
+        d <= new Date(endStr);
+        d.setDate(d.getDate() + 1)
+      ) {
         const key = d.toISOString().slice(0, 10);
         targetsByDate[key] = dailyTarget;
       }
@@ -444,7 +461,11 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
 
     // Merge actuals with targets
     const map = new Map<string, any>();
-    for (let d = new Date(startStr); d <= new Date(endStr); d.setDate(d.getDate() + 1)) {
+    for (
+      let d = new Date(startStr);
+      d <= new Date(endStr);
+      d.setDate(d.getDate() + 1)
+    ) {
       const key = d.toISOString().slice(0, 10);
       map.set(key, {
         date: key,
@@ -457,7 +478,13 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
 
     for (const r of rows.rows || []) {
       const key = r.date;
-      const item = map.get(key) || { date: key, target: Number(targetsByDate[key] || 0), actual: 0, automation: 0, manual: 0 };
+      const item = map.get(key) || {
+        date: key,
+        target: Number(targetsByDate[key] || 0),
+        actual: 0,
+        automation: 0,
+        manual: 0,
+      };
       item.actual = Number(r.actual || 0);
       item.automation = Number(r.automation || 0);
       item.manual = Number(r.manual || 0);
@@ -475,7 +502,9 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
     const dataWithMetrics = (data as any[]).map((d: any) => ({
       ...d,
       variance: (d.actual ?? 0) - (d.target ?? 0),
-      variancePercentage: d.target ? (((d.actual ?? 0) - d.target) / d.target) * 100 : null,
+      variancePercentage: d.target
+        ? (((d.actual ?? 0) - d.target) / d.target) * 100
+        : null,
       performanceLevel: d.efficiency ? getPerformanceLevel(d.efficiency) : null,
     }));
 
@@ -524,7 +553,8 @@ export const getUserDashboard: RequestHandler = async (req, res) => {
     const todayTarget = Number(todayTargetRes.rows?.[0]?.target || 0);
     const todaySubmitted = Number(todayCompletedRes.rows?.[0]?.completed || 0);
     const todayRemaining = Math.max(0, todayTarget - todaySubmitted);
-    const todayEfficiency = todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
+    const todayEfficiency =
+      todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
 
     // Weekly metrics
     const [weekTargetRes, weekCompletedRes] = await Promise.all([
@@ -542,7 +572,8 @@ export const getUserDashboard: RequestHandler = async (req, res) => {
 
     const weeklyTarget = Number(weekTargetRes.rows?.[0]?.target || 0);
     const weeklyCompleted = Number(weekCompletedRes.rows?.[0]?.completed || 0);
-    const weeklyEfficiency = weeklyTarget > 0 ? (weeklyCompleted / weeklyTarget) * 100 : 0;
+    const weeklyEfficiency =
+      weeklyTarget > 0 ? (weeklyCompleted / weeklyTarget) * 100 : 0;
 
     // Monthly metrics
     const [monthTargetRes, monthCompletedRes] = await Promise.all([
@@ -559,8 +590,11 @@ export const getUserDashboard: RequestHandler = async (req, res) => {
     ]);
 
     const monthlyTarget = Number(monthTargetRes.rows?.[0]?.target || 0);
-    const monthlyCompleted = Number(monthCompletedRes.rows?.[0]?.completed || 0);
-    const monthlyEfficiency = monthlyTarget > 0 ? (monthlyCompleted / monthlyTarget) * 100 : 0;
+    const monthlyCompleted = Number(
+      monthCompletedRes.rows?.[0]?.completed || 0,
+    );
+    const monthlyEfficiency =
+      monthlyTarget > 0 ? (monthlyCompleted / monthlyTarget) * 100 : 0;
 
     // Assigned projects (open requests)
     const activeProjRes = await query(

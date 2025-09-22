@@ -58,7 +58,12 @@ export default function Dashboard() {
 
   // Load real-time data for user dashboard
   const [userSummary, setUserSummary] = React.useState<{
-    today: { target: number; completed: number; remaining: number; efficiency: number };
+    today: {
+      target: number;
+      completed: number;
+      remaining: number;
+      efficiency: number;
+    };
     weekly: { target: number; completed: number; efficiency: number };
     monthly: { target: number; completed: number; efficiency: number };
     assignedProjects: number;
@@ -81,11 +86,18 @@ export default function Dashboard() {
         start.setDate(end.getDate() - 6);
         const to = end.toISOString().slice(0, 10);
         const from = start.toISOString().slice(0, 10);
-        const data: any[] = (await apiClient.getProductivityTrend({ from, to, groupBy: "day", userId: user.id })) as any[];
-        const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        const data: any[] = (await apiClient.getProductivityTrend({
+          from,
+          to,
+          groupBy: "day",
+          userId: user.id,
+        })) as any[];
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const chart = (Array.isArray(data) ? data : []).map((d: any) => {
           const dt = new Date(d.date);
-          const isToday = dt.toISOString().slice(0,10) === new Date().toISOString().slice(0,10);
+          const isToday =
+            dt.toISOString().slice(0, 10) ===
+            new Date().toISOString().slice(0, 10);
           return {
             day: isToday ? "Today" : days[dt.getDay()],
             completed: Number(d.actual || 0),
@@ -173,7 +185,8 @@ export default function Dashboard() {
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {Math.round(Number(userSummary?.today.efficiency ?? 0))}% complete
+                  {Math.round(Number(userSummary?.today.efficiency ?? 0))}%
+                  complete
                 </p>
               </div>
             </CardContent>
@@ -254,32 +267,65 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {(() => {
-              const workingDays = weeklyChartData.filter((d) => (d.target || d.completed)).length;
-              const targetMetDays = weeklyChartData.filter((d) => d.target > 0 && d.completed >= d.target).length;
-              const weeklyEff = Math.round(Number(userSummary?.weekly.efficiency ?? 0));
-              const monthlyEff = Math.round(Number(userSummary?.monthly.efficiency ?? 0));
-              const grade = monthlyEff >= 100 ? "A+" : monthlyEff >= 95 ? "A" : monthlyEff >= 90 ? "A-" : monthlyEff >= 80 ? "B" : monthlyEff >= 70 ? "C" : "D";
+              const workingDays = weeklyChartData.filter(
+                (d) => d.target || d.completed,
+              ).length;
+              const targetMetDays = weeklyChartData.filter(
+                (d) => d.target > 0 && d.completed >= d.target,
+              ).length;
+              const weeklyEff = Math.round(
+                Number(userSummary?.weekly.efficiency ?? 0),
+              );
+              const monthlyEff = Math.round(
+                Number(userSummary?.monthly.efficiency ?? 0),
+              );
+              const grade =
+                monthlyEff >= 100
+                  ? "A+"
+                  : monthlyEff >= 95
+                    ? "A"
+                    : monthlyEff >= 90
+                      ? "A-"
+                      : monthlyEff >= 80
+                        ? "B"
+                        : monthlyEff >= 70
+                          ? "C"
+                          : "D";
               return (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{workingDays}</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {workingDays}
+                    </div>
                     <div className="text-sm text-blue-700">Working Days</div>
-                    <div className="text-xs text-muted-foreground">This week</div>
+                    <div className="text-xs text-muted-foreground">
+                      This week
+                    </div>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{targetMetDays}</div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {targetMetDays}
+                    </div>
                     <div className="text-sm text-green-700">Target Met</div>
                     <div className="text-xs text-muted-foreground">Days</div>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">{weeklyEff}%</div>
+                    <div className="text-2xl font-bold text-purple-600">
+                      {weeklyEff}%
+                    </div>
                     <div className="text-sm text-purple-700">Efficiency</div>
-                    <div className="text-xs text-muted-foreground">This week</div>
+                    <div className="text-xs text-muted-foreground">
+                      This week
+                    </div>
                   </div>
                   <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">{grade}</div>
+                    <div className="text-2xl font-bold text-orange-600">
+                      {grade}
+                    </div>
                     <div className="text-sm text-orange-700">Grade</div>
-                    <div className="text-xs text-muted-foreground">Performance</div>
+                    <div className="text-xs text-muted-foreground">
+                      Performance
+                    </div>
                   </div>
                 </div>
               );

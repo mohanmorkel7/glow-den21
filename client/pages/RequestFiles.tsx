@@ -143,7 +143,6 @@ const mockFileRequests: FileRequest[] = [
   },
 ];
 
-
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
@@ -296,13 +295,23 @@ export default function RequestFiles() {
             const byDate = new Map<string, number>();
             for (const dc of list14) {
               const date = (dc.date || "").slice(0, 10);
-              const submitted = Number(dc.submittedCount ?? dc.submitted_count ?? 0);
+              const submitted = Number(
+                dc.submittedCount ?? dc.submitted_count ?? 0,
+              );
               byDate.set(date, (byDate.get(date) || 0) + submitted);
             }
             const statsArr: DailyStats[] = [];
-            for (let d = new Date(from14); d <= new Date(todayStr); d.setDate(d.getDate() + 1)) {
+            for (
+              let d = new Date(from14);
+              d <= new Date(todayStr);
+              d.setDate(d.getDate() + 1)
+            ) {
               const key = d.toISOString().slice(0, 10);
-              statsArr.push({ date: key, completedCount: byDate.get(key) || 0, totalAssigned: 0 });
+              statsArr.push({
+                date: key,
+                completedCount: byDate.get(key) || 0,
+                totalAssigned: 0,
+              });
             }
             // Most recent first
             statsArr.sort((a, b) => b.date.localeCompare(a.date));
