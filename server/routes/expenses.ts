@@ -819,7 +819,7 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
     const currentUser: any = (req as any).user;
 
     const sql = `UPDATE expenses SET status = $1, approved_by = $2, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $3
-                 RETURNING id, category, description, amount::FLOAT8 AS amount, TO_CHAR(date,'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
+                 RETURNING id, category, description, amount::FLOAT8 AS amount, TO_CHAR(expense_date,'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
                    COALESCE(approved_by,'') AS approved_by,
                    TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
                    TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
