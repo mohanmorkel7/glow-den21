@@ -1082,45 +1082,49 @@ export default function Tutorial() {
 
           {/* Category Overview (hidden for regular users) */}
           {canManageTutorials && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableCategories.map((category) => {
-              const categoryTutorials = filteredTutorials.filter(
-                (t) => t.category === category.id,
-              );
-              const completedCount = Math.floor(categoryTutorials.length * 0.7); // Mock completion
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {availableCategories.map((category) => {
+                const categoryTutorials = filteredTutorials.filter(
+                  (t) => t.category === category.id,
+                );
+                const completedCount = Math.floor(
+                  categoryTutorials.length * 0.7,
+                ); // Mock completion
 
-              return (
-                <Card
-                  key={category.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => setSelectedCategory(category.id)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <div
-                        className="p-2 rounded-lg text-white"
-                        style={{ backgroundColor: category.color }}
-                      >
-                        {getCategoryIcon(category.id)}
+                return (
+                  <Card
+                    key={category.id}
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => setSelectedCategory(category.id)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <div
+                          className="p-2 rounded-lg text-white"
+                          style={{ backgroundColor: category.color }}
+                        >
+                          {getCategoryIcon(category.id)}
+                        </div>
+                        {category.name}
+                      </CardTitle>
+                      <CardDescription>{category.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex justify-between text-sm text-muted-foreground">
+                        <span>{categoryTutorials.length} tutorials</span>
+                        <span>{completedCount} completed</span>
                       </div>
-                      {category.name}
-                    </CardTitle>
-                    <CardDescription>{category.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{categoryTutorials.length} tutorials</span>
-                      <span>{completedCount} completed</span>
-                    </div>
-                    <Progress
-                      value={(completedCount / categoryTutorials.length) * 100}
-                      className="mt-2"
-                    />
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+                      <Progress
+                        value={
+                          (completedCount / categoryTutorials.length) * 100
+                        }
+                        className="mt-2"
+                      />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
 
           {/* Tutorials List */}
