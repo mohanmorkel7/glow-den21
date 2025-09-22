@@ -495,45 +495,100 @@ export const getUserDashboard: RequestHandler = async (req, res) => {
   try {
     const currentUser: AuthUser = (req as any).user;
 
-    // User-specific dashboard data
-    const userDashboard = {
-      todayTarget: 100,
-      todaySubmitted: 85,
-      efficiency: 85.0,
-      assignedProjects: 2,
-      completedThisWeek: 450,
-      weeklyTarget: 500,
-      rank: 3,
-      totalUsers: 12,
-      recentSubmissions: [
-        {
-          date: "2024-01-15",
-          projectName: "Data Entry Alpha",
-          submitted: 85,
-          target: 100,
-          status: "submitted",
-        },
-        {
-          date: "2024-01-14",
-          projectName: "Data Entry Alpha",
-          submitted: 95,
-          target: 100,
-          status: "approved",
-        },
-      ],
-      achievements: [
-        {
-          id: "1",
-          title: "Weekly Goal Achieved",
-          description: "Completed 100% of weekly target",
-          earnedAt: "2024-01-14T00:00:00Z",
-          icon: "target",
-        },
-      ],
-    };
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - 6);
+    const weekStr = startOfWeek.toISOString().slice(0, 10);
+
+    const startOfMonth = `${yyyy}-${mm}-01`;
+
+    // Today metrics
+    const [todayTargetRes, todayCompletedRes] = await Promise.all([
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) = $2`,
+        [currentUser.id, todayStr],
+      ),
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) = $2`,
+        [currentUser.id, todayStr],
+      ),
+    ]);
+
+    const todayTarget = Number(todayTargetRes.rows?.[0]?.target || 0);
+    const todaySubmitted = Number(todayCompletedRes.rows?.[0]?.completed || 0);
+    const todayRemaining = Math.max(0, todayTarget - todaySubmitted);
+    const todayEfficiency = todayTarget > 0 ? (todaySubmitted / todayTarget) * 100 : 0;
+
+    // Weekly metrics
+    const [weekTargetRes, weekCompletedRes] = await Promise.all([
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) BETWEEN $2 AND $3`,
+        [currentUser.id, weekStr, todayStr],
+      ),
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) BETWEEN $2 AND $3`,
+        [currentUser.id, weekStr, todayStr],
+      ),
+    ]);
+
+    const weeklyTarget = Number(weekTargetRes.rows?.[0]?.target || 0);
+    const weeklyCompleted = Number(weekCompletedRes.rows?.[0]?.completed || 0);
+    const weeklyEfficiency = weeklyTarget > 0 ? (weeklyCompleted / weeklyTarget) * 100 : 0;
+
+    // Monthly metrics
+    const [monthTargetRes, monthCompletedRes] = await Promise.all([
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS target
+         FROM file_requests WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) BETWEEN $2 AND $3`,
+        [currentUser.id, startOfMonth, todayStr],
+      ),
+      query(
+        `SELECT COALESCE(SUM(COALESCE(assigned_count, requested_count, 0)),0) AS completed
+         FROM file_requests WHERE user_id = $1 AND status = 'completed' AND completed_date IS NOT NULL AND DATE(completed_date) BETWEEN $2 AND $3`,
+        [currentUser.id, startOfMonth, todayStr],
+      ),
+    ]);
+
+    const monthlyTarget = Number(monthTargetRes.rows?.[0]?.target || 0);
+    const monthlyCompleted = Number(monthCompletedRes.rows?.[0]?.completed || 0);
+    const monthlyEfficiency = monthlyTarget > 0 ? (monthlyCompleted / monthlyTarget) * 100 : 0;
+
+    // Assigned projects (open requests)
+    const activeProjRes = await query(
+      `SELECT COUNT(DISTINCT COALESCE(file_process_id, 'na')) AS cnt
+       FROM file_requests WHERE user_id = $1 AND status IN ('pending','assigned','in_progress','in_review','rework')`,
+      [currentUser.id],
+    );
 
     res.json({
-      data: userDashboard,
+      data: {
+        today: {
+          target: todayTarget,
+          completed: todaySubmitted,
+          remaining: todayRemaining,
+          efficiency: todayEfficiency,
+        },
+        weekly: {
+          target: weeklyTarget,
+          completed: weeklyCompleted,
+          efficiency: weeklyEfficiency,
+        },
+        monthly: {
+          target: monthlyTarget,
+          completed: monthlyCompleted,
+          efficiency: monthlyEfficiency,
+        },
+        assignedProjects: Number(activeProjRes.rows?.[0]?.cnt || 0),
+      },
     } as ApiResponse);
   } catch (error) {
     console.error("Get user dashboard error:", error);
