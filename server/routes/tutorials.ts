@@ -62,7 +62,7 @@ router.get("/", async (req: Request, res: Response) => {
 });
 
 // POST /api/tutorials - create tutorial with metadata and optional steps
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
   try {
     const currentUser: any = (req as any).user;
     const b = req.body || {};
@@ -176,7 +176,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 });
 
 // PUT /api/tutorials/:id - update tutorial (metadata and optionally replace steps)
-router.put("/:id", async (req: Request, res: Response) => {
+router.put("/:id", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const body = req.body || {};
@@ -282,7 +282,7 @@ router.put("/:id", async (req: Request, res: Response) => {
 });
 
 // DELETE /api/tutorials/:id - delete tutorial and associated files
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     // Fetch to know file path
@@ -317,7 +317,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/tutorials/upload - create tutorial and upload video (raw bytes)
-router.post("/upload", async (req: Request, res: Response) => {
+router.post("/upload", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
   try {
     const currentUser: any = (req as any).user;
     const titleHeader =
