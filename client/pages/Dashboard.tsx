@@ -55,38 +55,49 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  // User-specific performance data
-  const userPerformanceData = {
-    today: {
-      target: 20000,
-      completed: 18500,
-      remaining: 1500,
-      efficiency: 92.5,
-    },
-    weekly: {
-      target: 140000,
-      completed: 131500,
-      avgPerDay: 18786,
-      efficiency: 93.9,
-    },
-    monthly: {
-      target: 600000,
-      completed: 545250,
-      avgPerDay: 17588,
-      efficiency: 90.9,
-      grade: "A-",
-    },
-  };
+  // Load real-time data for user dashboard
+  const [userSummary, setUserSummary] = React.useState<{
+    today: { target: number; completed: number; remaining: number; efficiency: number };
+    weekly: { target: number; completed: number; efficiency: number };
+    monthly: { target: number; completed: number; efficiency: number };
+    assignedProjects: number;
+  } | null>(null);
+  const [weeklyChartData, setWeeklyChartData] = React.useState<
+    { day: string; completed: number; target: number }[]
+  >([]);
 
-  const weeklyChartData = [
-    { day: "Mon", completed: 19200, target: 20000 },
-    { day: "Tue", completed: 18800, target: 20000 },
-    { day: "Wed", completed: 19500, target: 20000 },
-    { day: "Thu", completed: 17900, target: 20000 },
-    { day: "Fri", completed: 19100, target: 20000 },
-    { day: "Sat", completed: 18500, target: 20000 },
-    { day: "Today", completed: 18500, target: 20000 },
-  ];
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const summary = await apiClient.getUserDashboard();
+        setUserSummary(summary as any);
+      } catch (e) {
+        console.warn("Failed to load user summary", e);
+      }
+      try {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 6);
+        const to = end.toISOString().slice(0, 10);
+        const from = start.toISOString().slice(0, 10);
+        const data: any[] = (await apiClient.getProductivityTrend({ from, to, groupBy: "day", userId: user.id })) as any[];
+        const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+        const chart = (Array.isArray(data) ? data : []).map((d: any) => {
+          const dt = new Date(d.date);
+          const isToday = dt.toISOString().slice(0,10) === new Date().toISOString().slice(0,10);
+          return {
+            day: isToday ? "Today" : days[dt.getDay()],
+            completed: Number(d.actual || 0),
+            target: Number(d.target || 0),
+          };
+        });
+        setWeeklyChartData(chart);
+      } catch (e) {
+        console.warn("Failed to load trend", e);
+      }
+    };
+    load();
+  }, [user.id]);
 
   // Admin dashboard data
   const dashboardStats = {
