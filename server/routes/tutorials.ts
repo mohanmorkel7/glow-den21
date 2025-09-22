@@ -3,6 +3,7 @@ import { Router } from "express";
 import path from "path";
 import fs from "fs";
 import { query } from "../db/connection";
+import { requireRole } from "./auth";
 
 const router = Router();
 
