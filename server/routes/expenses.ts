@@ -1948,7 +1948,7 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     // Map date string -> file count
     const byDate = new Map<string, number>();
     for (const row of rowsRes.rows) {
-      const d = row.d.toISOString().slice(0, 10); // d is in IST already
+      const d = String(row.d);
       byDate.set(d, Number(row.files) || 0);
     }
 
