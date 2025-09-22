@@ -987,7 +987,7 @@ export default function Tutorial() {
             guides
           </p>
         </div>
-        {false && (
+        {canManageTutorials && (
           <div className="flex gap-2">
             <Button onClick={() => setIsUploadVideoOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />
@@ -1126,7 +1126,7 @@ export default function Tutorial() {
                             )?.name
                           }
                         </Badge>
-                        {false && (
+                        {canManageTutorials && (
                           <>
                             <Button
                               variant="ghost"
