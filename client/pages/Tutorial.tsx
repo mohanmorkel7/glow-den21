@@ -2565,7 +2565,7 @@ export default function Tutorial() {
             <Button
               onClick={handleVideoUpload}
               disabled={
-                !videoUpload.tutorialId ||
+                (!((videoUpload as any).tutorialId) && !((videoUpload as any).tutorialName)) ||
                 !videoUpload.file ||
                 videoUpload.isUploading
               }
