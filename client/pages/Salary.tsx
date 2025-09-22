@@ -1121,7 +1121,7 @@ export default function Salary() {
         open={isBreakdownDialogOpen}
         onOpenChange={setIsBreakdownDialogOpen}
       >
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[1100px] md:max-w-[1200px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5" />
