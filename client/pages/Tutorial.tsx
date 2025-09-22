@@ -3,6 +3,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -120,7 +130,9 @@ function VideoPlayer({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(src);
+  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(() =>
+    src && !src.startsWith("/api/") ? src : undefined,
+  );
 
   useEffect(() => {
     let revokedUrl: string | null = null;
@@ -156,6 +168,16 @@ function VideoPlayer({
       if (revokedUrl) URL.revokeObjectURL(revokedUrl);
     };
   }, [src]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch {}
+      videoRef.current.load();
+      setIsPlaying(false);
+    }
+  }, [resolvedSrc]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -239,6 +261,8 @@ function VideoPlayer({
           <video
             ref={videoRef}
             className="w-full h-auto max-h-96"
+            src={resolvedSrc}
+            key={resolvedSrc || "no-src"}
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onPlay={() => setIsPlaying(true)}
@@ -246,7 +270,6 @@ function VideoPlayer({
             onEnded={() => setIsPlaying(false)}
             playsInline
           >
-            <source src={resolvedSrc} />
             Your browser does not support the video tag.
           </video>
 
