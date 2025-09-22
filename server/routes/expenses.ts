@@ -1902,7 +1902,9 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const tz = "Asia/Kolkata";
     const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
-    const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+    const todayIST = new Date(
+      new Date().toLocaleString("en-US", { timeZone: tz }),
+    );
 
     let fromDate: Date;
     let toDate: Date;
@@ -1912,7 +1914,9 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       fromDate = new Date(toDate);
       fromDate.setDate(toDate.getDate() - 6);
     } else if (period === "monthly") {
-      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
+      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split(
+        "-",
+      );
       fromDate = new Date(Number(year), Number(mon) - 1, 1);
       toDate = new Date(fromDate);
       toDate.setMonth(toDate.getMonth() + 1);
@@ -1923,9 +1927,13 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     }
 
     // Normalize to IST date boundaries and produce YYYY-MM-DD strings
-    const fromDateIST = new Date(fromDate.toLocaleString("en-US", { timeZone: tz }));
+    const fromDateIST = new Date(
+      fromDate.toLocaleString("en-US", { timeZone: tz }),
+    );
     fromDateIST.setHours(0, 0, 0, 0);
-    const toDateIST = new Date(toDate.toLocaleString("en-US", { timeZone: tz }));
+    const toDateIST = new Date(
+      toDate.toLocaleString("en-US", { timeZone: tz }),
+    );
     toDateIST.setHours(23, 59, 59, 999);
 
     const fromDateStr = toISODate(fromDateIST);
