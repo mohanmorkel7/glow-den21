@@ -2318,14 +2318,14 @@ export default function Tutorial() {
           if (!open) {
             // Reset upload state when dialog closes
             setVideoUpload({
-          title: "",
-          description: "",
-          file: null,
-          uploadProgress: 0,
-          isUploading: false,
-          previewUrl: "",
-          dragActive: false,
-        });
+              title: "",
+              description: "",
+              file: null,
+              uploadProgress: 0,
+              isUploading: false,
+              previewUrl: "",
+              dragActive: false,
+            });
           }
         }}
       >
@@ -2345,7 +2345,9 @@ export default function Tutorial() {
               <Input
                 placeholder="Enter tutorial title"
                 value={(videoUpload as any).title || ""}
-                onChange={(e) => setVideoUpload({ ...videoUpload, title: e.target.value })}
+                onChange={(e) =>
+                  setVideoUpload({ ...videoUpload, title: e.target.value })
+                }
                 disabled={videoUpload.isUploading}
               />
 
@@ -2354,7 +2356,12 @@ export default function Tutorial() {
                 <Textarea
                   placeholder="Enter a brief description"
                   value={(videoUpload as any).description || ""}
-                  onChange={(e) => setVideoUpload({ ...videoUpload, description: e.target.value })}
+                  onChange={(e) =>
+                    setVideoUpload({
+                      ...videoUpload,
+                      description: e.target.value,
+                    })
+                  }
                   rows={3}
                   disabled={videoUpload.isUploading}
                 />
