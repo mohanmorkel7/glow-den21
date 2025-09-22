@@ -120,6 +120,42 @@ function VideoPlayer({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(src);
+
+  useEffect(() => {
+    let revokedUrl: string | null = null;
+    let cancelled = false;
+
+    const resolve = async () => {
+      if (!src) {
+        setResolvedSrc(undefined);
+        return;
+      }
+      try {
+        if (src.startsWith("/api/")) {
+          const token = localStorage.getItem("authToken");
+          const resp = await fetch(src, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!resp.ok) throw new Error(`Video load failed (${resp.status})`);
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          revokedUrl = url;
+          if (!cancelled) setResolvedSrc(url);
+        } else {
+          setResolvedSrc(src);
+        }
+      } catch (e) {
+        setResolvedSrc(undefined);
+      }
+    };
+
+    resolve();
+    return () => {
+      cancelled = true;
+      if (revokedUrl) URL.revokeObjectURL(revokedUrl);
+    };
+  }, [src]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -210,7 +246,7 @@ function VideoPlayer({
             onEnded={() => setIsPlaying(false)}
             playsInline
           >
-            <source src={src} />
+            <source src={resolvedSrc} />
             Your browser does not support the video tag.
           </video>
 
@@ -1044,7 +1080,8 @@ export default function Tutorial() {
             </Select>
           </div>
 
-          {/* Category Overview */}
+          {/* Category Overview (hidden for regular users) */}
+          {canManageTutorials && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {availableCategories.map((category) => {
               const categoryTutorials = filteredTutorials.filter(
@@ -1084,6 +1121,7 @@ export default function Tutorial() {
               );
             })}
           </div>
+          )}
 
           {/* Tutorials List */}
           <div className="space-y-4">
