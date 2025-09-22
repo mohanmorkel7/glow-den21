@@ -186,94 +186,22 @@ export default function Dashboard() {
     }
   };
 
-  // Render simplified user dashboard
+  // User dashboard: only 7-day chart + own file requests
   if (user.role === "user") {
     return (
       <div className="space-y-6">
-        {/* Welcome Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Welcome back, {user.name}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Track your daily performance and file processing progress.
-            </p>
+            <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
+            <p className="text-muted-foreground mt-1">Your personal performance and requests</p>
           </div>
-          <Badge variant="secondary" className="capitalize">
-            {user.role.replace("_", " ")}
-          </Badge>
+          <Badge variant="secondary" className="capitalize">{user.role.replace("_", " ")}</Badge>
         </div>
 
-        {/* Today's Performance Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-600">
-                <Target className="h-5 w-5" />
-                Today's Target
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {(userSummary?.today.target ?? 0).toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">files to process</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-600">
-                <CheckCircle className="h-5 w-5" />
-                Completed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
-                {(userSummary?.today.completed ?? 0).toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">files processed</p>
-              <div className="mt-2">
-                <Progress
-                  value={Number(userSummary?.today.efficiency ?? 0)}
-                  className="h-2"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {Math.round(Number(userSummary?.today.efficiency ?? 0))}%
-                  complete
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-orange-600">
-                <Clock className="h-5 w-5" />
-                Remaining
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">
-                {(userSummary?.today.remaining ?? 0).toLocaleString()}
-              </div>
-              <p className="text-sm text-muted-foreground">files left</p>
-              <p className="text-xs text-blue-600 mt-1">&nbsp;</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Weekly Performance Chart */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Your 7-Day Performance
-            </CardTitle>
-            <CardDescription>
-              Daily file processing over the last 7 days
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Your 7-Day Performance</CardTitle>
+            <CardDescription>Daily file processing over the last 7 days</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -281,110 +209,44 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
-                <Tooltip
-                  formatter={(value, name) => [
-                    (Number(value) || 0).toLocaleString() + " files",
-                    name === "completed" ? "Completed" : "Target",
-                  ]}
-                />
+                <Tooltip formatter={(value, name) => [(Number(value) || 0).toLocaleString() + " files", name === "completed" ? "Completed" : "Target"]} />
                 <Legend />
-                <Area
-                  type="monotone"
-                  dataKey="target"
-                  stroke="#94a3b8"
-                  fill="#e2e8f0"
-                  fillOpacity={0.3}
-                  name="Target"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="completed"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.6}
-                  name="Completed"
-                />
+                <Area type="monotone" dataKey="target" stroke="#94a3b8" fill="#e2e8f0" fillOpacity={0.3} name="Target" />
+                <Area type="monotone" dataKey="completed" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Completed" />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Performance Summary */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Performance Summary
-            </CardTitle>
-            <CardDescription>
-              Your week and month performance metrics
-            </CardDescription>
+            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Your File Requests</CardTitle>
+            <CardDescription>Only your requests are shown here</CardDescription>
           </CardHeader>
           <CardContent>
-            {(() => {
-              const workingDays = weeklyChartData.filter(
-                (d) => d.target || d.completed,
-              ).length;
-              const targetMetDays = weeklyChartData.filter(
-                (d) => d.target > 0 && d.completed >= d.target,
-              ).length;
-              const weeklyEff = Math.round(
-                Number(userSummary?.weekly.efficiency ?? 0),
-              );
-              const monthlyEff = Math.round(
-                Number(userSummary?.monthly.efficiency ?? 0),
-              );
-              const grade =
-                monthlyEff >= 100
-                  ? "A+"
-                  : monthlyEff >= 95
-                    ? "A"
-                    : monthlyEff >= 90
-                      ? "A-"
-                      : monthlyEff >= 80
-                        ? "B"
-                        : monthlyEff >= 70
-                          ? "C"
-                          : "D";
-              return (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {workingDays}
-                    </div>
-                    <div className="text-sm text-blue-700">Working Days</div>
-                    <div className="text-xs text-muted-foreground">
-                      This week
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      {targetMetDays}
-                    </div>
-                    <div className="text-sm text-green-700">Target Met</div>
-                    <div className="text-xs text-muted-foreground">Days</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {weeklyEff}%
-                    </div>
-                    <div className="text-sm text-purple-700">Efficiency</div>
-                    <div className="text-xs text-muted-foreground">
-                      This week
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {grade}
-                    </div>
-                    <div className="text-sm text-orange-700">Grade</div>
-                    <div className="text-xs text-muted-foreground">
-                      Performance
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Process</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {myRequests.map((r: any) => (
+                  <TableRow key={r.id}>
+                    <TableCell>{r.file_process_name || r.fileProcessName || "File Request"}</TableCell>
+                    <TableCell className="capitalize">{String(r.status || "").replace("_", " ")}</TableCell>
+                    <TableCell className="text-right">{Number(r.assigned_count ?? r.requested_count ?? 0).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+                {myRequests.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">No requests yet</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
