@@ -148,7 +148,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {userPerformanceData.today.target.toLocaleString()}
+                {(userSummary?.today.target ?? 0).toLocaleString()}
               </div>
               <p className="text-sm text-muted-foreground">files to process</p>
             </CardContent>
@@ -163,16 +163,16 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">
-                {userPerformanceData.today.completed.toLocaleString()}
+                {(userSummary?.today.completed ?? 0).toLocaleString()}
               </div>
               <p className="text-sm text-muted-foreground">files processed</p>
               <div className="mt-2">
                 <Progress
-                  value={userPerformanceData.today.efficiency}
+                  value={Number(userSummary?.today.efficiency ?? 0)}
                   className="h-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {userPerformanceData.today.efficiency}% complete
+                  {Math.round(Number(userSummary?.today.efficiency ?? 0))}% complete
                 </p>
               </div>
             </CardContent>
@@ -187,10 +187,10 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-orange-600">
-                {userPerformanceData.today.remaining.toLocaleString()}
+                {(userSummary?.today.remaining ?? 0).toLocaleString()}
               </div>
               <p className="text-sm text-muted-foreground">files left</p>
-              <p className="text-xs text-blue-600 mt-1">~1.5 hrs to complete</p>
+              <p className="text-xs text-blue-600 mt-1">&nbsp;</p>
             </CardContent>
           </Card>
         </div>
