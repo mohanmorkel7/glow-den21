@@ -141,8 +141,12 @@ export default function Dashboard() {
             apiClient.getFileRequests({ limit: 200 }),
             apiClient.getFileProcesses({ limit: 200 }),
           ]);
-          setTeamPerformance((Array.isArray(tp) ? tp : (tp as any) || []) as any);
-          setPmFileRequests((Array.isArray(fr) ? fr : (fr as any) || []) as any);
+          setTeamPerformance(
+            (Array.isArray(tp) ? tp : (tp as any) || []) as any,
+          );
+          setPmFileRequests(
+            (Array.isArray(fr) ? fr : (fr as any) || []) as any,
+          );
           setFileProcesses((Array.isArray(fp) ? fp : (fp as any) || []) as any);
         } catch (e) {
           console.warn("Failed to load PM/Admin data", e);
@@ -150,7 +154,10 @@ export default function Dashboard() {
         if (user.role === "super_admin") {
           try {
             const users = await apiClient.getUsers({ page: 1, limit: 1 });
-            const total = (users as any)?.pagination?.total ?? (users as any)?.data?.pagination?.total ?? null;
+            const total =
+              (users as any)?.pagination?.total ??
+              (users as any)?.data?.pagination?.total ??
+              null;
             setUsersTotal(total);
           } catch (e) {
             setUsersTotal(null);
@@ -192,16 +199,26 @@ export default function Dashboard() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Welcome back, {user.name}</h1>
-            <p className="text-muted-foreground mt-1">Your personal performance and requests</p>
+            <h1 className="text-3xl font-bold text-foreground">
+              Welcome back, {user.name}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Your personal performance and requests
+            </p>
           </div>
-          <Badge variant="secondary" className="capitalize">{user.role.replace("_", " ")}</Badge>
+          <Badge variant="secondary" className="capitalize">
+            {user.role.replace("_", " ")}
+          </Badge>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><TrendingUp className="h-5 w-5" /> Your 7-Day Performance</CardTitle>
-            <CardDescription>Daily file processing over the last 7 days</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" /> Your 7-Day Performance
+            </CardTitle>
+            <CardDescription>
+              Daily file processing over the last 7 days
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -209,10 +226,29 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
-                <Tooltip formatter={(value, name) => [(Number(value) || 0).toLocaleString() + " files", name === "completed" ? "Completed" : "Target"]} />
+                <Tooltip
+                  formatter={(value, name) => [
+                    (Number(value) || 0).toLocaleString() + " files",
+                    name === "completed" ? "Completed" : "Target",
+                  ]}
+                />
                 <Legend />
-                <Area type="monotone" dataKey="target" stroke="#94a3b8" fill="#e2e8f0" fillOpacity={0.3} name="Target" />
-                <Area type="monotone" dataKey="completed" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} name="Completed" />
+                <Area
+                  type="monotone"
+                  dataKey="target"
+                  stroke="#94a3b8"
+                  fill="#e2e8f0"
+                  fillOpacity={0.3}
+                  name="Target"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="completed"
+                  stroke="#3b82f6"
+                  fill="#3b82f6"
+                  fillOpacity={0.6}
+                  name="Completed"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -220,7 +256,9 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Your File Requests</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Your File Requests
+            </CardTitle>
             <CardDescription>Only your requests are shown here</CardDescription>
           </CardHeader>
           <CardContent>
@@ -235,14 +273,29 @@ export default function Dashboard() {
               <TableBody>
                 {myRequests.map((r: any) => (
                   <TableRow key={r.id}>
-                    <TableCell>{r.file_process_name || r.fileProcessName || "File Request"}</TableCell>
-                    <TableCell className="capitalize">{String(r.status || "").replace("_", " ")}</TableCell>
-                    <TableCell className="text-right">{Number(r.assigned_count ?? r.requested_count ?? 0).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {r.file_process_name ||
+                        r.fileProcessName ||
+                        "File Request"}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {String(r.status || "").replace("_", " ")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(
+                        r.assigned_count ?? r.requested_count ?? 0,
+                      ).toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {myRequests.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">No requests yet</TableCell>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      No requests yet
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -255,31 +308,68 @@ export default function Dashboard() {
 
   // PM dashboard
   if (user.role === "project_manager") {
-    const active = fileProcesses.filter((p: any) => p.status === "active").length;
-    const inProgress = fileProcesses.filter((p: any) => p.status === "in_progress").length;
-    const completed = fileProcesses.filter((p: any) => p.status === "completed").length;
+    const active = fileProcesses.filter(
+      (p: any) => p.status === "active",
+    ).length;
+    const inProgress = fileProcesses.filter(
+      (p: any) => p.status === "in_progress",
+    ).length;
+    const completed = fileProcesses.filter(
+      (p: any) => p.status === "completed",
+    ).length;
 
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Project Manager Dashboard</h1>
-            <p className="text-muted-foreground mt-1">Team performance, requests, and process overview</p>
+            <p className="text-muted-foreground mt-1">
+              Team performance, requests, and process overview
+            </p>
           </div>
-          <Badge variant="secondary" className="capitalize">{user.role.replace("_", " ")}</Badge>
+          <Badge variant="secondary" className="capitalize">
+            {user.role.replace("_", " ")}
+          </Badge>
         </div>
 
         {/* File Processes Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card><CardHeader><CardTitle>Active Processes</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold text-blue-600">{active}</div></CardContent></Card>
-          <Card><CardHeader><CardTitle>In Progress</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold text-orange-600">{inProgress}</div></CardContent></Card>
-          <Card><CardHeader><CardTitle>Completed</CardTitle></CardHeader><CardContent><div className="text-3xl font-bold text-green-600">{completed}</div></CardContent></Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Processes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{active}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>In Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-orange-600">
+                {inProgress}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Completed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-600">
+                {completed}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Team Performance */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Team Performance (7 days)</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" /> Team Performance (7 days)
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -287,19 +377,32 @@ export default function Dashboard() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead className="text-right">Submitted</TableHead>
-                  <TableHead className="text-right">Completed Requests</TableHead>
+                  <TableHead className="text-right">
+                    Completed Requests
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(teamPerformance as any[]).map((u: any) => (
                   <TableRow key={u.id}>
                     <TableCell>{u.name || u.id}</TableCell>
-                    <TableCell className="text-right">{Number(u.submitted || 0).toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{Number(u.completedRequests || 0).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      {Number(u.submitted || 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(u.completedRequests || 0).toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {teamPerformance.length === 0 && (
-                  <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground">No data</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      No data
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -309,7 +412,9 @@ export default function Dashboard() {
         {/* File Requests (managed) */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> File Requests</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> File Requests
+            </CardTitle>
             <CardDescription>Recent requests from your team</CardDescription>
           </CardHeader>
           <CardContent>
@@ -326,13 +431,28 @@ export default function Dashboard() {
                 {(pmFileRequests as any[]).slice(0, 50).map((r: any) => (
                   <TableRow key={r.id}>
                     <TableCell>{r.user_name || r.userName || "-"}</TableCell>
-                    <TableCell>{r.file_process_name || r.fileProcessName || "-"}</TableCell>
-                    <TableCell className="capitalize">{String(r.status || "").replace("_", " ")}</TableCell>
-                    <TableCell className="text-right">{Number(r.assigned_count ?? r.requested_count ?? 0).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {r.file_process_name || r.fileProcessName || "-"}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {String(r.status || "").replace("_", " ")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(
+                        r.assigned_count ?? r.requested_count ?? 0,
+                      ).toLocaleString()}
+                    </TableCell>
                   </TableRow>
                 ))}
                 {pmFileRequests.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No requests</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-muted-foreground"
+                    >
+                      No requests
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -455,7 +575,9 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{usersTotal ?? "-"}</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {usersTotal ?? "-"}
+            </div>
             <p className="text-xs text-muted-foreground">Total users</p>
           </CardContent>
         </Card>
@@ -467,7 +589,9 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {billingSummary?.totalAmountUSD != null ? `$${Number(billingSummary.totalAmountUSD).toLocaleString()}` : "-"}
+              {billingSummary?.totalAmountUSD != null
+                ? `$${Number(billingSummary.totalAmountUSD).toLocaleString()}`
+                : "-"}
             </div>
             <p className="text-xs text-muted-foreground">This period</p>
           </CardContent>
@@ -475,11 +599,17 @@ export default function Dashboard() {
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Files Completed</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Files Completed
+            </CardTitle>
             <FileText className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">{billingSummary?.totalFilesCompleted != null ? Number(billingSummary.totalFilesCompleted).toLocaleString() : '-'}</div>
+            <div className="text-3xl font-bold text-purple-600">
+              {billingSummary?.totalFilesCompleted != null
+                ? Number(billingSummary.totalFilesCompleted).toLocaleString()
+                : "-"}
+            </div>
             <p className="text-xs text-muted-foreground">Billing files</p>
           </CardContent>
         </Card>
@@ -490,7 +620,9 @@ export default function Dashboard() {
             <FolderOpen className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-600">{(billingSummary?.projectsCount ?? 0).toString()}</div>
+            <div className="text-3xl font-bold text-orange-600">
+              {(billingSummary?.projectsCount ?? 0).toString()}
+            </div>
             <p className="text-xs text-muted-foreground">In billing summary</p>
           </CardContent>
         </Card>
