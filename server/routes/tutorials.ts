@@ -452,4 +452,44 @@ router.get("/:id/video", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/tutorials/:id/upload - upload or replace video for an existing tutorial
+router.post("/:id/upload", requireRole(["project_manager","super_admin"]), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const currentUser: any = (req as any).user;
+    const originalName = (req.headers["x-file-name"] as string) || "video.mp4";
+    const mime = (req.headers["content-type"] as string) || "application/octet-stream";
+    const safeName = originalName.replace(/[^a-zA-Z0-9_.\\-]/g, "_");
+
+    ensureDir(STORAGE_ROOT);
+    const tutDir = path.join(STORAGE_ROOT, id);
+    ensureDir(tutDir);
+    const destPath = path.join(tutDir, safeName);
+
+    const ws = fs.createWriteStream(destPath);
+    req.pipe(ws);
+
+    ws.on("finish", async () => {
+      const relPath = destPath.replace(process.cwd() + path.sep, "");
+      const result = await query(
+        `UPDATE tutorials SET video_file_name = $1, video_file_path = $2, video_mime = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`,
+        [safeName, relPath, mime, id],
+      );
+      if (!result.rows.length) {
+        return res.status(404).json({ error: { code: "NOT_FOUND", message: "Tutorial not found" } });
+      }
+      const r = result.rows[0];
+      res.status(200).json({ data: { id: r.id, title: r.title, description: r.description || "", category: r.category, status: r.status, videoUrl: `/api/tutorials/${r.id}/video`, videoFileName: r.video_file_name } });
+    });
+
+    ws.on("error", (err) => {
+      console.error("Tutorial upload write error:", err);
+      res.status(500).json({ error: { code: "WRITE_ERROR", message: "Failed to save uploaded video" } });
+    });
+  } catch (error) {
+    console.error("Upload tutorial error:", error);
+    res.status(500).json({ error: { code: "INTERNAL_SERVER_ERROR", message: "Failed to upload tutorial video" } });
+  }
+});
+
 export default router;
