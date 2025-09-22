@@ -447,79 +447,51 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Key Metrics Overview */}
+      {/* Key Metrics Overview (Admin) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium">Users</CardTitle>
+            <Users className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">
-              {formatCurrency(1245680, "USD")}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              +12.5% from last quarter
-            </p>
-            <div className="flex items-center mt-2 text-xs">
-              <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">+8.2% this month</span>
-            </div>
+            <div className="text-3xl font-bold text-blue-600">{usersTotal ?? "-"}</div>
+            <p className="text-xs text-muted-foreground">Total users</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Files Processed
-            </CardTitle>
-            <FileText className="h-4 w-4 text-green-500" />
+            <CardTitle className="text-sm font-medium">Billing (USD)</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {(15420000).toLocaleString()}
+              {billingSummary?.totalAmountUSD != null ? `$${Number(billingSummary.totalAmountUSD).toLocaleString()}` : "-"}
             </div>
-            <p className="text-xs text-muted-foreground">This month</p>
-            <Progress value={87.5} className="mt-2 h-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              87.5% of monthly target
-            </p>
+            <p className="text-xs text-muted-foreground">This period</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Teams</CardTitle>
-            <Users className="h-4 w-4 text-purple-500" />
+            <CardTitle className="text-sm font-medium">Files Completed</CardTitle>
+            <FileText className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
-              {dashboardStats.activeUsers}
-            </div>
-            <p className="text-xs text-muted-foreground">Across 8 projects</p>
-            <div className="flex items-center mt-2 text-xs">
-              <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">98.2% attendance</span>
-            </div>
+            <div className="text-3xl font-bold text-purple-600">{billingSummary?.totalFilesCompleted != null ? Number(billingSummary.totalFilesCompleted).toLocaleString() : '-'}</div>
+            <p className="text-xs text-muted-foreground">Billing files</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Overall Efficiency
-            </CardTitle>
-            <Target className="h-4 w-4 text-orange-500" />
+            <CardTitle className="text-sm font-medium">Projects</CardTitle>
+            <FolderOpen className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-600">94.7%</div>
-            <p className="text-xs text-muted-foreground">
-              Average team performance
-            </p>
-            <div className="flex items-center mt-2 text-xs">
-              <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              <span className="text-green-500">+2.1% improvement</span>
-            </div>
+            <div className="text-3xl font-bold text-orange-600">{(billingSummary?.projectsCount ?? 0).toString()}</div>
+            <p className="text-xs text-muted-foreground">In billing summary</p>
           </CardContent>
         </Card>
       </div>
