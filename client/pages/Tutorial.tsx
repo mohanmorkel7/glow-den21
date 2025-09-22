@@ -328,7 +328,10 @@ function VideoPlayer({
 export default function Tutorial() {
   const stripHtml = (str: string) => {
     if (!str) return "";
-    return str.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return str
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   };
   const { user } = useAuth();
   const { toast } = useToast();
@@ -870,7 +873,7 @@ export default function Tutorial() {
         order: idx + 1,
         tags: t.tags || [],
         createdBy: { id: t.createdBy || "", name: "" },
-               createdAt: t.createdAt || new Date().toISOString(),
+        createdAt: t.createdAt || new Date().toISOString(),
         updatedAt: t.updatedAt || new Date().toISOString(),
         viewCount: t.viewCount || 0,
         completionCount: t.completionCount || 0,
@@ -1003,9 +1006,7 @@ export default function Tutorial() {
         <TabsList>
           <TabsTrigger value="browse">Browse Tutorials</TabsTrigger>
           <TabsTrigger value="watch">Watch Tutorial</TabsTrigger>
-          {false && (
-            <TabsTrigger value="manage">Manage Tutorials</TabsTrigger>
-          )}
+          {false && <TabsTrigger value="manage">Manage Tutorials</TabsTrigger>}
         </TabsList>
 
         {/* Browse Tutorials Tab */}
@@ -1208,8 +1209,12 @@ export default function Tutorial() {
                       }}
                     />
                     <div>
-                      <h2 className="text-xl font-semibold">{selectedTutorial.title}</h2>
-                      <p className="text-muted-foreground mt-1">{selectedTutorial.description}</p>
+                      <h2 className="text-xl font-semibold">
+                        {selectedTutorial.title}
+                      </h2>
+                      <p className="text-muted-foreground mt-1">
+                        {selectedTutorial.description}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1261,7 +1266,6 @@ export default function Tutorial() {
                     </div>
                   </CardContent>
                 </Card>
-
               </div>
             </div>
           ) : (
