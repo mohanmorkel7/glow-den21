@@ -30,16 +30,21 @@ export async function ensureExpenseTables(): Promise<void> {
     await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS date DATE");
     // Ensure legacy deployments that missed the 'receipt' column get the column added
     await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS receipt TEXT");
+
+    // Ensure expense_date exists (newer schema) and migrate values from date if needed
+    await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS expense_date DATE");
+    // Copy any existing 'date' values into 'expense_date'
+    await query("UPDATE expenses SET expense_date = date WHERE expense_date IS NULL AND date IS NOT NULL");
+    // If still null, fallback to created_at date
+    await query("UPDATE expenses SET expense_date = (created_at AT TIME ZONE 'UTC')::date WHERE expense_date IS NULL AND created_at IS NOT NULL");
+    // Make column NOT NULL if all rows now populated
+    await query("DO $$ BEGIN IF (SELECT COUNT(*) FROM expenses WHERE expense_date IS NULL) = 0 THEN ALTER TABLE expenses ALTER COLUMN expense_date SET NOT NULL; END IF; END $$;");
+
     // Ensure approved_by/approved_at exist for older DBs
-    await query(
-      "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_by TEXT",
-    );
-    await query(
-      "ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE",
-    );
-    await query(
-      `CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`,
-    );
+    await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_by TEXT");
+    await query("ALTER TABLE expenses ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE");
+
+    await query(`CREATE INDEX IF NOT EXISTS idx_expenses_type ON expenses(type)`);
     await query(
       `CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status)`,
     );
