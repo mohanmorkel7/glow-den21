@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -151,7 +153,41 @@ export default function Reports() {
     }
   };
 
-  const currentData = getCurrentData();
+  const [serverData, setServerData] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (isAdmin) {
+          // Fetch productivity trend for current timePeriod
+          const now = new Date();
+          const from = new Date(now);
+          if (timePeriod === 'daily') from.setDate(now.getDate() - 7);
+          if (timePeriod === 'weekly') from.setDate(now.getDate() - 28);
+          if (timePeriod === 'monthly') from.setMonth(now.getMonth() - 6);
+          const data = await apiClient.getProductivityTrend({ from: from.toISOString().slice(0,10), to: now.toISOString().slice(0,10), groupBy: timePeriod === 'daily' ? 'day' : timePeriod });
+          const mapped = (data as any[]).map((d: any) => ({
+            date: d.date || d.period,
+            week: d.week,
+            month: d.month,
+            target: Number(d.target || 0),
+            actual: Number(d.actual || d.completed || 0),
+            automation: Number(d.automation || 0),
+            manual: Number(d.manual || 0),
+          }));
+          setServerData(mapped);
+        } else {
+          setServerData(null);
+        }
+      } catch (e) {
+        setServerData(null);
+      }
+    };
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, timePeriod]);
+
+  const currentData = serverData ?? getCurrentData();
   
   // Calculate current period metrics
   const currentMetrics = isAdmin ? {
