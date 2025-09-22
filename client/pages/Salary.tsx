@@ -1484,7 +1484,7 @@ export default function Salary() {
       </Dialog>
 
       <Dialog open={pmPerfDialogOpen} onOpenChange={setPmPerfDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] md:max-w-[1100px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Automation Performance - {selectedPM?.name}
