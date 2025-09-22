@@ -79,6 +79,13 @@ export default function Dashboard() {
   const [weeklyChartData, setWeeklyChartData] = React.useState<
     { day: string; completed: number; target: number }[]
   >([]);
+  // Role-based data
+  const [myRequests, setMyRequests] = React.useState<any[]>([]);
+  const [teamPerformance, setTeamPerformance] = React.useState<any[]>([]);
+  const [pmFileRequests, setPmFileRequests] = React.useState<any[]>([]);
+  const [fileProcesses, setFileProcesses] = React.useState<any[]>([]);
+  const [usersTotal, setUsersTotal] = React.useState<number | null>(null);
+  const [billingSummary, setBillingSummary] = React.useState<any | null>(null);
 
   React.useEffect(() => {
     const load = async () => {
