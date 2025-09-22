@@ -1986,61 +1986,19 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
 
     // Handle weekly and monthly aggregation
     if (period === "weekly") {
-      const weekStart = items[0].dateIST;
-      const weekEnd = items[items.length - 1].dateIST;
-
-      const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
-      const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
-      const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
-      const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
-      const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
-
-      return res.json({
-        period,
-        timezone: tz,
-        data: [
-          {
-            dateIST: weekStart,
-            weekRange: `${weekStart} to ${weekEnd}`,
-            files: totalFiles,
-            tier1Files,
-            tier1Rate: firstTierRate,
-            tier1Amount,
-            tier2Files,
-            tier2Rate: secondTierRate,
-            tier2Amount,
-            totalAmount: tier1Amount + tier2Amount,
-          },
-        ],
-      });
+      // Return last 7 days as daily rows (no aggregation)
+      return res.json({ period, timezone: tz, data: items });
     } else if (period === "monthly") {
-      const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
-      const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
-      const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
-      const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
-      const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
-
+      // Return all dates in the month as daily rows (including zero-file days)
       return res.json({
         period,
         timezone: tz,
         month: fromDate.toISOString().slice(0, 7),
-        data: [
-          {
-            dateIST: fromDate.toISOString().slice(0, 7),
-            files: totalFiles,
-            tier1Files,
-            tier1Rate: firstTierRate,
-            tier1Amount,
-            tier2Files,
-            tier2Rate: secondTierRate,
-            tier2Amount,
-            totalAmount: tier1Amount + tier2Amount,
-          },
-        ],
+        data: items,
       });
     }
 
-    // Default: daily response
+    // Default: daily response (today only)
     res.json({ period, timezone: tz, data: items });
 
   } catch (error) {
