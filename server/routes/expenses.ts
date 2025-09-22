@@ -1902,9 +1902,7 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const tz = "Asia/Kolkata";
     const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
-    const todayIST = new Date(
-      new Date().toLocaleString("en-US", { timeZone: tz }),
-    );
+    const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
 
     let fromDate: Date;
     let toDate: Date;
@@ -1912,11 +1910,9 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     if (period === "weekly") {
       toDate = new Date(todayIST);
       fromDate = new Date(toDate);
-      fromDate.setDate(toDate.getDate() - 6); // ✅ last 7 days only
+      fromDate.setDate(toDate.getDate() - 6);
     } else if (period === "monthly") {
-      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split(
-        "-",
-      );
+      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
       fromDate = new Date(Number(year), Number(mon) - 1, 1);
       toDate = new Date(fromDate);
       toDate.setMonth(toDate.getMonth() + 1);
@@ -1926,36 +1922,27 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       toDate = new Date(todayIST);
     }
 
-    const fromDateTime = new Date(
-      fromDate.toLocaleString("en-US", { timeZone: tz }),
-    );
-    fromDateTime.setHours(0, 0, 0, 0);
+    // Normalize to IST date boundaries and produce YYYY-MM-DD strings
+    const fromDateIST = new Date(fromDate.toLocaleString("en-US", { timeZone: tz }));
+    fromDateIST.setHours(0, 0, 0, 0);
+    const toDateIST = new Date(toDate.toLocaleString("en-US", { timeZone: tz }));
+    toDateIST.setHours(23, 59, 59, 999);
 
-    const toDateTime = new Date(
-      toDate.toLocaleString("en-US", { timeZone: tz }),
-    );
-    toDateTime.setHours(23, 59, 59, 999);
-
-    // Convert to UTC for querying the database
-    const fromISO = new Date(
-      fromDateTime.getTime() - fromDateTime.getTimezoneOffset() * 60000,
-    ).toISOString();
-    const toISO = new Date(
-      toDateTime.getTime() - toDateTime.getTimezoneOffset() * 60000,
-    ).toISOString();
+    const fromDateStr = toISODate(fromDateIST);
+    const toDateStr = toISODate(toDateIST);
 
     const rowsRes = await query(
       `
       SELECT
-        (verified_at AT TIME ZONE 'Asia/Kolkata')::date AS d,
+        TO_CHAR((verified_at AT TIME ZONE 'Asia/Kolkata')::date, 'YYYY-MM-DD') AS d,
         SUM(COALESCE(assigned_count, requested_count, 0)) AS files
       FROM file_requests
       WHERE user_id::text = $1
-        AND verified_at BETWEEN $2 AND $3
+        AND (verified_at AT TIME ZONE 'Asia/Kolkata')::date BETWEEN $2::date AND $3::date
       GROUP BY d
       ORDER BY d
       `,
-      [String(userId), fromISO, toISO],
+      [String(userId), fromDateStr, toDateStr],
     );
 
     // Map date string -> file count
