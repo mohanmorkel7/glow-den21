@@ -324,6 +324,7 @@ router.post("/upload", requireRole(["project_manager","super_admin"]), async (re
       (req.headers["x-tutorial-name"] as string) || "Untitled Tutorial";
     const categoryHeader =
       (req.headers["x-tutorial-category"] as string) || "getting_started";
+    const descriptionHeader = (req.headers["x-tutorial-description"] as string) || null;
     const originalName = (req.headers["x-file-name"] as string) || "video.mp4";
     const mime =
       (req.headers["content-type"] as string) || "application/octet-stream";
@@ -346,7 +347,7 @@ router.post("/upload", requireRole(["project_manager","super_admin"]), async (re
         [
           id,
           titleHeader,
-          null,
+          descriptionHeader,
           categoryHeader,
           "published",
           safeName,
