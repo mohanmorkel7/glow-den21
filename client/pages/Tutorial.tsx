@@ -120,7 +120,9 @@ function VideoPlayer({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(src);
+  const [resolvedSrc, setResolvedSrc] = useState<string | undefined>(() =>
+    src && !src.startsWith("/api/") ? src : undefined,
+  );
 
   useEffect(() => {
     let revokedUrl: string | null = null;
