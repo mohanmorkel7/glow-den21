@@ -143,11 +143,6 @@ const mockFileRequests: FileRequest[] = [
   },
 ];
 
-const mockDailyStats: DailyStats[] = [
-  { date: "2024-01-20", completedCount: 1000, totalAssigned: 1000 },
-  { date: "2024-01-19", completedCount: 800, totalAssigned: 800 },
-  { date: "2024-01-18", completedCount: 1200, totalAssigned: 1200 },
-];
 
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
