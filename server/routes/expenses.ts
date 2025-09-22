@@ -366,7 +366,7 @@ router.get("/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const r = await query(
       `SELECT id, category, description, amount::FLOAT8 AS amount,
-              TO_CHAR(date, 'YYYY-MM-DD') AS expense_date,
+              TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
               month, type, frequency, receipt, status,
               COALESCE(approved_by,'') AS approved_by,
               TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
@@ -491,7 +491,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     const sql = `
       INSERT INTO expenses (
-        category, description, amount, date, month, type, frequency, receipt,
+        category, description, amount, expense_date, month, type, frequency, receipt,
         status, approved_by, approved_at, created_by_user_id
       )
       VALUES (
@@ -499,7 +499,7 @@ router.post("/", async (req: Request, res: Response) => {
         'pending', '', NULL, $9
       )
       RETURNING id, category, description, amount::FLOAT8 AS amount,
-        TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt,
+        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt,
         status, approved_by,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
@@ -819,7 +819,7 @@ router.post("/:id/approve", async (req: Request, res: Response) => {
     const currentUser: any = (req as any).user;
 
     const sql = `UPDATE expenses SET status = $1, approved_by = $2, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $3
-                 RETURNING id, category, description, amount::FLOAT8 AS amount, TO_CHAR(date,'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
+                 RETURNING id, category, description, amount::FLOAT8 AS amount, TO_CHAR(expense_date,'YYYY-MM-DD') AS date, month, type, frequency, receipt, status,
                    COALESCE(approved_by,'') AS approved_by,
                    TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
                    TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
@@ -1488,7 +1488,7 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 //               SUM(COALESCE(assigned_count, requested_count, 0)) AS files
 //         FROM file_requests
 //         WHERE user_id::text = $1
-         
+
 //         GROUP BY 1
 //         ORDER BY 1`,
 //       [String(userId)]
@@ -1538,7 +1538,6 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 //     });
 //   }
 // });
-
 
 // router.get("/salary/breakdown", async (req: Request, res: Response) => {
 //   try {
@@ -1660,7 +1659,6 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
 //     });
 //   }
 // });
-
 
 // Helper function to get date in YYYY-MM-DD format
 const toISODate = (d: Date) => d.toISOString().slice(0, 10);
@@ -1870,8 +1868,6 @@ function getWeekStartDate(d: Date) {
 //   }
 // });
 
-
-
 router.get("/salary/breakdown", async (req: Request, res: Response) => {
   try {
     // Prevent caching
@@ -1906,7 +1902,9 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     const tz = "Asia/Kolkata";
     const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 
-    const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+    const todayIST = new Date(
+      new Date().toLocaleString("en-US", { timeZone: tz }),
+    );
 
     let fromDate: Date;
     let toDate: Date;
@@ -1914,9 +1912,11 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     if (period === "weekly") {
       toDate = new Date(todayIST);
       fromDate = new Date(toDate);
-      fromDate.setDate(toDate.getDate() - 6); // ✅ last 7 days only
+      fromDate.setDate(toDate.getDate() - 6);
     } else if (period === "monthly") {
-      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
+      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split(
+        "-",
+      );
       fromDate = new Date(Number(year), Number(mon) - 1, 1);
       toDate = new Date(fromDate);
       toDate.setMonth(toDate.getMonth() + 1);
@@ -1926,34 +1926,37 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
       toDate = new Date(todayIST);
     }
 
-    const fromDateTime = new Date(fromDate.toLocaleString("en-US", { timeZone: tz }));
-    fromDateTime.setHours(0, 0, 0, 0);
+    // Normalize to IST date boundaries and produce YYYY-MM-DD strings
+    const fromDateIST = new Date(
+      fromDate.toLocaleString("en-US", { timeZone: tz }),
+    );
+    fromDateIST.setHours(0, 0, 0, 0);
+    const toDateIST = new Date(
+      toDate.toLocaleString("en-US", { timeZone: tz }),
+    );
+    toDateIST.setHours(23, 59, 59, 999);
 
-    const toDateTime = new Date(toDate.toLocaleString("en-US", { timeZone: tz }));
-    toDateTime.setHours(23, 59, 59, 999);
-
-    // Convert to UTC for querying the database
-    const fromISO = new Date(fromDateTime.getTime() - fromDateTime.getTimezoneOffset() * 60000).toISOString();
-    const toISO = new Date(toDateTime.getTime() - toDateTime.getTimezoneOffset() * 60000).toISOString();
+    const fromDateStr = toISODate(fromDateIST);
+    const toDateStr = toISODate(toDateIST);
 
     const rowsRes = await query(
       `
       SELECT
-        (verified_at AT TIME ZONE 'Asia/Kolkata')::date AS d,
+        TO_CHAR((verified_at AT TIME ZONE 'Asia/Kolkata')::date, 'YYYY-MM-DD') AS d,
         SUM(COALESCE(assigned_count, requested_count, 0)) AS files
       FROM file_requests
       WHERE user_id::text = $1
-        AND verified_at BETWEEN $2 AND $3
+        AND (verified_at AT TIME ZONE 'Asia/Kolkata')::date BETWEEN $2::date AND $3::date
       GROUP BY d
       ORDER BY d
       `,
-      [String(userId), fromISO, toISO]
+      [String(userId), fromDateStr, toDateStr],
     );
 
     // Map date string -> file count
     const byDate = new Map<string, number>();
     for (const row of rowsRes.rows) {
-      const d = row.d.toISOString().slice(0, 10); // d is in IST already
+      const d = String(row.d);
       byDate.set(d, Number(row.files) || 0);
     }
 
@@ -1986,63 +1989,20 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
 
     // Handle weekly and monthly aggregation
     if (period === "weekly") {
-      const weekStart = items[0].dateIST;
-      const weekEnd = items[items.length - 1].dateIST;
-
-      const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
-      const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
-      const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
-      const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
-      const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
-
-      return res.json({
-        period,
-        timezone: tz,
-        data: [
-          {
-            dateIST: weekStart,
-            weekRange: `${weekStart} to ${weekEnd}`,
-            files: totalFiles,
-            tier1Files,
-            tier1Rate: firstTierRate,
-            tier1Amount,
-            tier2Files,
-            tier2Rate: secondTierRate,
-            tier2Amount,
-            totalAmount: tier1Amount + tier2Amount,
-          },
-        ],
-      });
+      // Return last 7 days as daily rows (no aggregation)
+      return res.json({ period, timezone: tz, data: items });
     } else if (period === "monthly") {
-      const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
-      const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
-      const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
-      const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
-      const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
-
+      // Return all dates in the month as daily rows (including zero-file days)
       return res.json({
         period,
         timezone: tz,
         month: fromDate.toISOString().slice(0, 7),
-        data: [
-          {
-            dateIST: fromDate.toISOString().slice(0, 7),
-            files: totalFiles,
-            tier1Files,
-            tier1Rate: firstTierRate,
-            tier1Amount,
-            tier2Files,
-            tier2Rate: secondTierRate,
-            tier2Amount,
-            totalAmount: tier1Amount + tier2Amount,
-          },
-        ],
+        data: items,
       });
     }
 
-    // Default: daily response
+    // Default: daily response (today only)
     res.json({ period, timezone: tz, data: items });
-
   } catch (error) {
     console.error("Error fetching salary breakdown:", error);
     res.status(500).json({
@@ -2053,12 +2013,6 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     });
   }
 });
-
-
-
-
-
-
 
 // POST /api/expenses/salary/project-managers - Create or update PM salary by name/email
 router.post("/salary/project-managers", async (req: Request, res: Response) => {

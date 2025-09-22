@@ -97,30 +97,6 @@ const TUTORIAL_CATEGORIES_DATA: TutorialCategoryInfo[] = [
     order: 3,
     requiredForRoles: ["project_manager"],
   },
-  {
-    id: "reports",
-    name: "Reports & Analytics",
-    description: "Understanding reports, analytics, and data insights",
-    icon: "Settings",
-    color: "#8b5cf6",
-    order: 4,
-  },
-  {
-    id: "advanced",
-    name: "Advanced Features",
-    description: "Advanced functionality and power user features",
-    icon: "Settings",
-    color: "#6b7280",
-    order: 5,
-  },
-  {
-    id: "troubleshooting",
-    name: "Troubleshooting",
-    description: "Common issues and how to resolve them",
-    icon: "AlertCircle",
-    color: "#ef4444",
-    order: 6,
-  },
 ];
 
 interface VideoPlayerProps {
@@ -755,22 +731,43 @@ export default function Tutorial() {
     });
   };
 
-  // Upload tutorial video with name -> creates a new tutorial on server
+  // Upload tutorial video: either attach to existing tutorial (tutorialId) or create a new tutorial with title/description
   const handleVideoUpload = async () => {
-    if (!videoUpload.file || !videoUpload.tutorialName) return;
+    if (!videoUpload.file) return;
 
     setVideoUpload({ ...videoUpload, isUploading: true });
 
     try {
-      await apiClient.uploadTutorialVideo(
-        videoUpload.file,
-        videoUpload.tutorialName,
-        "getting_started",
-      );
-      toast({
-        title: "Upload successful",
-        description: `Video uploaded successfully for tutorial: ${videoUpload.tutorialName}`,
-      });
+      if ((videoUpload as any).tutorialId) {
+        await apiClient.uploadVideoForTutorial(
+          (videoUpload as any).tutorialId,
+          videoUpload.file,
+        );
+        toast({
+          title: "Upload successful",
+          description: `Video uploaded successfully`,
+        });
+      } else if ((videoUpload as any).tutorialName) {
+        await apiClient.uploadTutorialVideo(
+          videoUpload.file,
+          (videoUpload as any).tutorialName,
+          "getting_started",
+          (videoUpload as any).description,
+        );
+        toast({
+          title: "Upload successful",
+          description: `Video uploaded successfully for tutorial: ${(videoUpload as any).tutorialName}`,
+        });
+      } else {
+        toast({
+          title: "Missing tutorial",
+          description:
+            "Please provide a tutorial title or select an existing tutorial",
+          variant: "destructive",
+        });
+        setVideoUpload({ ...videoUpload, isUploading: false });
+        return;
+      }
 
       // Reload tutorials
       const list: any[] = (await apiClient.getTutorials()) as any[];
@@ -782,17 +779,17 @@ export default function Tutorial() {
         status: (t.status || "published") as any,
         videoUrl: t.videoUrl || undefined,
         videoDuration: undefined as any,
-        instructions: "",
-        steps: [],
-        targetRoles: ["user", "project_manager", "super_admin"] as any,
-        isRequired: false,
+        instructions: t.instructions || "",
+        steps: t.steps || [],
+        targetRoles: t.targetRoles || ["user"],
+        isRequired: t.isRequired || false,
         order: idx + 1,
-        tags: [],
+        tags: t.tags || [],
         createdBy: { id: t.createdBy || "", name: "" },
         createdAt: t.createdAt || new Date().toISOString(),
         updatedAt: t.updatedAt || new Date().toISOString(),
-        viewCount: 0,
-        completionCount: 0,
+        viewCount: t.viewCount || 0,
+        completionCount: t.completionCount || 0,
       }));
       setTutorials(mapped);
 
@@ -947,10 +944,6 @@ export default function Tutorial() {
             <Button onClick={() => setIsUploadVideoOpen(true)}>
               <Upload className="h-4 w-4 mr-2" />
               Upload Video
-            </Button>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Tutorial
             </Button>
           </div>
         )}
@@ -1537,7 +1530,7 @@ export default function Tutorial() {
                         variant="ghost"
                         size="sm"
                         title="Edit Tutorial"
-                        onClick={() => handleEditTutorial(tutorial)}
+                        disabled
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -1548,7 +1541,8 @@ export default function Tutorial() {
                         onClick={() => {
                           setVideoUpload({
                             ...videoUpload,
-                            tutorialId: tutorial.id,
+                            title: tutorial.title,
+                            description: tutorial.description,
                           });
                           setIsUploadVideoOpen(true);
                         }}
@@ -1585,15 +1579,7 @@ export default function Tutorial() {
                         variant="ghost"
                         size="sm"
                         title="Delete Tutorial"
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Are you sure you want to delete "${tutorial.title}"?`,
-                            )
-                          ) {
-                            handleDeleteTutorial(tutorial);
-                          }
-                        }}
+                        disabled
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -2332,7 +2318,8 @@ export default function Tutorial() {
           if (!open) {
             // Reset upload state when dialog closes
             setVideoUpload({
-              tutorialId: "",
+              title: "",
+              description: "",
               file: null,
               uploadProgress: 0,
               isUploading: false,
@@ -2342,7 +2329,7 @@ export default function Tutorial() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload Tutorial Video</DialogTitle>
             <DialogDescription>
@@ -2352,44 +2339,33 @@ export default function Tutorial() {
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Tutorial Selection */}
+            {/* Tutorial Selection or New Tutorial */}
             <div>
-              <Label htmlFor="tutorial-select">Select Tutorial *</Label>
-              <Select
-                value={videoUpload.tutorialId}
-                onValueChange={(value) =>
-                  setVideoUpload({ ...videoUpload, tutorialId: value })
+              <Label>Title *</Label>
+              <Input
+                placeholder="Enter tutorial title"
+                value={(videoUpload as any).title || ""}
+                onChange={(e) =>
+                  setVideoUpload({ ...videoUpload, title: e.target.value })
                 }
                 disabled={videoUpload.isUploading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a tutorial to add video to" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mockTutorials
-                    .filter((t) => !t.videoUrl)
-                    .map((tutorial) => (
-                      <SelectItem key={tutorial.id} value={tutorial.id}>
-                        <div>
-                          <div className="font-medium">{tutorial.title}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {
-                              TUTORIAL_CATEGORIES_DATA.find(
-                                (cat) => cat.id === tutorial.category,
-                              )?.name
-                            }
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              {mockTutorials.filter((t) => !t.videoUrl).length === 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  All tutorials already have videos. Create a new tutorial
-                  first.
-                </p>
-              )}
+              />
+
+              <div className="mt-4">
+                <Label>Description (optional)</Label>
+                <Textarea
+                  placeholder="Enter a brief description"
+                  value={(videoUpload as any).description || ""}
+                  onChange={(e) =>
+                    setVideoUpload({
+                      ...videoUpload,
+                      description: e.target.value,
+                    })
+                  }
+                  rows={3}
+                  disabled={videoUpload.isUploading}
+                />
+              </div>
             </div>
 
             {/* File Upload Area */}
@@ -2534,7 +2510,8 @@ export default function Tutorial() {
             <Button
               onClick={handleVideoUpload}
               disabled={
-                !videoUpload.tutorialId ||
+                (!(videoUpload as any).tutorialId &&
+                  !(videoUpload as any).tutorialName) ||
                 !videoUpload.file ||
                 videoUpload.isUploading
               }

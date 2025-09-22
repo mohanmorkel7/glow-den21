@@ -1895,6 +1895,7 @@ export default function FileProcess() {
                                   {fileProcesses
                                     .filter(
                                       (p) =>
+                                        p.type === "manual" &&
                                         (p.status === "active" ||
                                           p.status === "in_progress") &&
                                         p.availableRows > 0,

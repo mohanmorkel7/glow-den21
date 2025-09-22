@@ -91,8 +91,8 @@ interface SalaryBreakdown {
   // tier2Amount: number;
   // totalAmount: number;
 
-  dateIST: string;           // used in all cases
-  weekRange?: string;        // used only for weekly
+  dateIST: string; // used in all cases
+  weekRange?: string; // used only for weekly
   files: number;
   tier1Files: number;
   tier1Rate: number;
@@ -110,7 +110,6 @@ interface SalaryBreakdownResponse {
   timezone: string;
   data: SalaryBreakdown[];
 }
-
 
 interface ProjectManagerSalaryData {
   id: string;
@@ -439,24 +438,25 @@ export default function Salary() {
   const loadBreakdown = async (userId: string, period: BreakdownPeriod) => {
     try {
       const resp: any = await apiClient.getSalaryUserBreakdown(userId, period);
-      const data = (resp && resp.data) || resp || [];
-      const mapped = (data as any[]).map((d) => ({
-        period: d.period,
-        files: d.files,
-        tier1Files: d.tier1Files,
-        tier1Rate: d.tier1Rate,
-        tier1Amount: d.tier1Amount,
-        tier2Files: d.tier2Files,
-        tier2Rate: d.tier2Rate,
-        tier2Amount: d.tier2Amount,
-        totalAmount: d.totalAmount,
+      const payload = resp && resp.data ? resp.data : resp;
+      const items: any[] = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+          ? payload
+          : [];
+      const mapped: SalaryBreakdown[] = items.map((d: any) => ({
+        dateIST: d.dateIST,
+        weekRange: d.weekRange,
+        files: Number(d.files || 0),
+        tier1Files: Number(d.tier1Files || 0),
+        tier1Rate: Number(d.tier1Rate || 0),
+        tier1Amount: Number(d.tier1Amount || 0),
+        tier2Files: Number(d.tier2Files || 0),
+        tier2Rate: Number(d.tier2Rate || 0),
+        tier2Amount: Number(d.tier2Amount || 0),
+        totalAmount: Number(d.totalAmount || 0),
       }));
-      if (mapped.length === 0) {
-        const user = userSalaryData.find((u) => u.id === userId);
-        setBreakdownData(user ? generateSalaryBreakdown(user, period) : []);
-      } else {
-        setBreakdownData(mapped);
-      }
+      setBreakdownData(mapped);
     } catch (e) {
       console.warn("Failed to load breakdown", e);
       const user = userSalaryData.find((u) => u.id === userId);
@@ -1121,7 +1121,7 @@ export default function Salary() {
         open={isBreakdownDialogOpen}
         onOpenChange={setIsBreakdownDialogOpen}
       >
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[1100px] md:max-w-[1200px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5" />
@@ -1135,26 +1135,28 @@ export default function Salary() {
 
           {selectedUser && (
             <div className="space-y-6">
-              {/* Period Selection */}
-              <div className="flex items-center gap-4">
-                <Label>View Period:</Label>
-                <Select
+              {/* Period Selection + IST info */}
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="text-xs text-muted-foreground">
+                  Times shown in IST (UTC+05:30)
+                  <span className="ml-2">• Based on verified_at</span>
+                </div>
+                <Tabs
                   value={breakdownPeriod}
-                  onValueChange={(value) =>
-                    setBreakdownPeriod(value as BreakdownPeriod)
+                  onValueChange={(v) =>
+                    setBreakdownPeriod(v as BreakdownPeriod)
                   }
                 >
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily (Today)</SelectItem>
-                    <SelectItem value="weekly">Weekly (Last 7 Days)</SelectItem>
-                    <SelectItem value="monthly">
-                      Monthly (All Dates + Absent Days)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                  <TabsList>
+                    <TabsTrigger value="daily">Daily (Today)</TabsTrigger>
+                    <TabsTrigger value="weekly">
+                      Weekly (Last 7 Days)
+                    </TabsTrigger>
+                    <TabsTrigger value="monthly">
+                      Monthly (This Month)
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
 
               {/* Current Configuration Display */}
@@ -1214,16 +1216,22 @@ export default function Salary() {
                   </TableHeader>
                   <TableBody>
                     {getBreakdownData().map((item, index) => {
-                      const label = item.weekRange ?? item.dateIST;
+                      const label = item.dateIST;
 
-                      const isToday = new Date(item.dateIST).toDateString() === new Date().toDateString();
-                      const isWeekend = (() => {
-                        const d = new Date(item.dateIST);
-                        const day = d.getDay();
-                        return day === 0 || day === 6;
-                      })();
-                      const isFuture = new Date(item.dateIST) > new Date();
-                      const isAbsentDay = item.files === 0 && !isFuture && !isWeekend;
+                      const tz = "Asia/Kolkata";
+                      const nowIST = new Date(
+                        new Date().toLocaleString("en-US", { timeZone: tz }),
+                      );
+                      const todayISTStr = nowIST.toISOString().slice(0, 10);
+                      const isToday = item.dateIST === todayISTStr;
+                      const day = new Date(
+                        item.dateIST + "T00:00:00+05:30",
+                      ).getDay();
+                      const isWeekend = day === 0 || day === 6;
+                      const isFuture =
+                        new Date(item.dateIST + "T23:59:59+05:30") > nowIST;
+                      const isAbsentDay =
+                        item.files === 0 && !isFuture && !isWeekend;
 
                       return (
                         <TableRow
@@ -1476,7 +1484,7 @@ export default function Salary() {
       </Dialog>
 
       <Dialog open={pmPerfDialogOpen} onOpenChange={setPmPerfDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] md:max-w-[1100px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Automation Performance - {selectedPM?.name}
