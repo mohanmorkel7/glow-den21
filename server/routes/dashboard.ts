@@ -371,7 +371,8 @@ export const getRecentAlerts: RequestHandler = async (req, res) => {
 
 export const getProductivityTrend: RequestHandler = async (req, res) => {
   try {
-    const { from, to, groupBy = "day" } = req.query as any;
+    const currentUser: AuthUser = (req as any).user;
+    const { from, to, groupBy = "day", userId } = req.query as any;
 
     // Dates
     const endDate = to ? new Date(String(to)) : new Date();
@@ -387,37 +388,85 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
     const startStr = startDate.toISOString().slice(0, 10);
     const endStr = endDate.toISOString().slice(0, 10);
 
-    // Aggregate from file_requests joined with file_processes to split manual vs automation
-    const rows = await query(
-      `SELECT
-         DATE(fr.completed_date) as date,
-         SUM(COALESCE(fr.assigned_count, fr.requested_count, 0))::bigint as actual,
-         SUM(CASE WHEN fp.type = 'automation' THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as automation,
-         SUM(CASE WHEN fp.type <> 'automation' OR fp.type IS NULL THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as manual
-       FROM file_requests fr
-       LEFT JOIN file_processes fp ON fp.id = fr.file_process_id
-       WHERE fr.status = 'completed' AND fr.completed_date IS NOT NULL
-         AND DATE(fr.completed_date) BETWEEN $1 AND $2
-       GROUP BY DATE(fr.completed_date)
-       ORDER BY DATE(fr.completed_date) ASC`,
-      [startStr, endStr],
-    );
+    // Optional user filter: users can only request their own data
+    const targetUserId = currentUser.role === "user" ? currentUser.id : userId || null;
 
-    // Compute target as sum of current daily_target across all active processes (simple approximation)
-    const tgtRes = await query(
-      `SELECT COALESCE(SUM(daily_target),0) as target FROM file_processes WHERE status = 'active'`,
-    );
-    const dailyTarget = Number(tgtRes.rows?.[0]?.target || 0);
+    // Aggregate completions from file_requests (split manual vs automation)
+    const whereParts: string[] = [
+      `fr.status = 'completed' AND fr.completed_date IS NOT NULL`,
+      `DATE(fr.completed_date) BETWEEN $1 AND $2`,
+    ];
+    const params: any[] = [startStr, endStr];
+    if (targetUserId) {
+      whereParts.push(`fr.user_id = $${params.length + 1}`);
+      params.push(targetUserId);
+    }
 
-    let data = (rows.rows || []).map((r: any) => ({
-      date: r.date,
-      target: dailyTarget,
-      actual: Number(r.actual || 0),
-      efficiency: dailyTarget
-        ? (Number(r.actual || 0) / dailyTarget) * 100
-        : null,
-      automation: Number(r.automation || 0),
-      manual: Number(r.manual || 0),
+    const completeSql = `
+      SELECT
+        DATE(fr.completed_date) as date,
+        SUM(COALESCE(fr.assigned_count, fr.requested_count, 0))::bigint as actual,
+        SUM(CASE WHEN fp.type = 'automation' THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as automation,
+        SUM(CASE WHEN (fp.type <> 'automation' OR fp.type IS NULL) THEN COALESCE(fr.assigned_count, fr.requested_count, 0) ELSE 0 END)::bigint as manual
+      FROM file_requests fr
+      LEFT JOIN file_processes fp ON fp.id = fr.file_process_id
+      WHERE ${whereParts.join(" AND ")}
+      GROUP BY DATE(fr.completed_date)
+      ORDER BY DATE(fr.completed_date) ASC`;
+
+    const rows = await query(completeSql, params);
+
+    let targetsByDate: Record<string, number> = {};
+
+    if (targetUserId) {
+      // For user-specific view: compute per-day target from assignments
+      const assignSql = `
+        SELECT DATE(assigned_date) AS date, SUM(COALESCE(assigned_count, requested_count, 0))::bigint AS target
+        FROM file_requests
+        WHERE user_id = $1 AND assigned_date IS NOT NULL AND DATE(assigned_date) BETWEEN $2 AND $3
+        GROUP BY DATE(assigned_date)
+        ORDER BY DATE(assigned_date)`;
+      const tgtRes = await query(assignSql, [targetUserId, startStr, endStr]);
+      for (const r of tgtRes.rows || []) targetsByDate[r.date] = Number(r.target || 0);
+    } else {
+      // Global view: use sum of daily_target across active processes (same for each day)
+      const tgtRes = await query(
+        `SELECT COALESCE(SUM(daily_target),0) as target FROM file_processes WHERE status = 'active'`,
+      );
+      const dailyTarget = Number(tgtRes.rows?.[0]?.target || 0);
+      // Apply same target to all dates present; also ensure date coverage
+      targetsByDate = {};
+      for (let d = new Date(startStr); d <= new Date(endStr); d.setDate(d.getDate() + 1)) {
+        const key = d.toISOString().slice(0, 10);
+        targetsByDate[key] = dailyTarget;
+      }
+    }
+
+    // Merge actuals with targets
+    const map = new Map<string, any>();
+    for (let d = new Date(startStr); d <= new Date(endStr); d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().slice(0, 10);
+      map.set(key, {
+        date: key,
+        target: Number(targetsByDate[key] || 0),
+        actual: 0,
+        automation: 0,
+        manual: 0,
+      });
+    }
+
+    for (const r of rows.rows || []) {
+      const key = r.date;
+      const item = map.get(key) || { date: key, target: Number(targetsByDate[key] || 0), actual: 0, automation: 0, manual: 0 };
+      item.actual = Number(r.actual || 0);
+      item.automation = Number(r.automation || 0);
+      item.manual = Number(r.manual || 0);
+      map.set(key, item);
+    }
+
+    let data = Array.from(map.values()).map((d: any) => ({
+      ...d,
+      efficiency: d.target ? (d.actual / d.target) * 100 : null,
     }));
 
     if (groupBy === "week") data = groupByWeek(data as any) as any;
@@ -426,9 +475,7 @@ export const getProductivityTrend: RequestHandler = async (req, res) => {
     const dataWithMetrics = (data as any[]).map((d: any) => ({
       ...d,
       variance: (d.actual ?? 0) - (d.target ?? 0),
-      variancePercentage: d.target
-        ? (((d.actual ?? 0) - d.target) / d.target) * 100
-        : null,
+      variancePercentage: d.target ? (((d.actual ?? 0) - d.target) / d.target) * 100 : null,
       performanceLevel: d.efficiency ? getPerformanceLevel(d.efficiency) : null,
     }));
 
