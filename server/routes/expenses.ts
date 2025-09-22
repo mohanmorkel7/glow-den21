@@ -366,7 +366,7 @@ router.get("/:id", async (req: Request, res: Response) => {
     const { id } = req.params;
     const r = await query(
       `SELECT id, category, description, amount::FLOAT8 AS amount,
-              TO_CHAR(date, 'YYYY-MM-DD') AS expense_date,
+              TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date,
               month, type, frequency, receipt, status,
               COALESCE(approved_by,'') AS approved_by,
               TO_CHAR(approved_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS approved_at,
@@ -499,7 +499,7 @@ router.post("/", async (req: Request, res: Response) => {
         'pending', '', NULL, $9
       )
       RETURNING id, category, description, amount::FLOAT8 AS amount,
-        TO_CHAR(date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt,
+        TO_CHAR(expense_date, 'YYYY-MM-DD') AS expense_date, month, type, frequency, receipt,
         status, approved_by,
         TO_CHAR(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at,
         TO_CHAR(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS updated_at,
