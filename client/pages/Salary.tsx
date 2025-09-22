@@ -81,7 +81,18 @@ interface UserSalaryData {
 }
 
 interface SalaryBreakdown {
-  period: string;
+  // dateIST: string;
+  // files: number;
+  // tier1Files: number;
+  // tier1Rate: number;
+  // tier1Amount: number;
+  // tier2Files: number;
+  // tier2Rate: number;
+  // tier2Amount: number;
+  // totalAmount: number;
+
+  dateIST: string;           // used in all cases
+  weekRange?: string;        // used only for weekly
   files: number;
   tier1Files: number;
   tier1Rate: number;
@@ -93,6 +104,13 @@ interface SalaryBreakdown {
 }
 
 type BreakdownPeriod = "daily" | "weekly" | "monthly";
+
+interface SalaryBreakdownResponse {
+  period: "daily" | "weekly" | "monthly";
+  timezone: string;
+  data: SalaryBreakdown[];
+}
+
 
 interface ProjectManagerSalaryData {
   id: string;
@@ -1196,11 +1214,16 @@ export default function Salary() {
                   </TableHeader>
                   <TableBody>
                     {getBreakdownData().map((item, index) => {
-                      const isAbsentDay =
-                        item.files === 0 && item.period.includes("(Absent)");
-                      const isWeekend = item.period.includes("(Weekend)");
-                      const isFuture = item.period.includes("(Future)");
-                      const isToday = item.period.includes("(Today)");
+                      const label = item.weekRange ?? item.dateIST;
+
+                      const isToday = new Date(item.dateIST).toDateString() === new Date().toDateString();
+                      const isWeekend = (() => {
+                        const d = new Date(item.dateIST);
+                        const day = d.getDay();
+                        return day === 0 || day === 6;
+                      })();
+                      const isFuture = new Date(item.dateIST) > new Date();
+                      const isAbsentDay = item.files === 0 && !isFuture && !isWeekend;
 
                       return (
                         <TableRow
@@ -1230,7 +1253,7 @@ export default function Salary() {
                                       : ""
                             }`}
                           >
-                            {item.period}
+                            {label}
                           </TableCell>
                           <TableCell>
                             <Badge

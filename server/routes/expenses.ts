@@ -1070,6 +1070,13 @@ router.put("/salary/config", async (req: Request, res: Response) => {
 // GET /api/expenses/salary/users - Get user salary data from file_requests (completed)
 router.get("/salary/users", async (req: Request, res: Response) => {
   try {
+    // Prevent cache for dynamic salary user aggregates
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     const { month } = req.query as any;
     const targetMonth = month || new Date().toISOString().substring(0, 7);
     const monthStart = `${targetMonth}-01`;
@@ -1397,84 +1404,573 @@ router.get("/salary/project-managers", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/expenses/salary/breakdown - Per-user salary breakdown for a period
+// // GET /api/expenses/salary/breakdown - Per-user salary breakdown for a period
+// router.get("/salary/breakdown", async (req: Request, res: Response) => {
+//   try {
+//     // Prevent cache for fresh salary breakdowns
+//     res.setHeader(
+//       "Cache-Control",
+//       "no-store, no-cache, must-revalidate, proxy-revalidate",
+//     );
+//     res.setHeader("Pragma", "no-cache");
+//     res.setHeader("Expires", "0");
+//     const { userId, period = "daily", month } = req.query as any;
+//     if (!userId) {
+//       return res.status(400).json({
+//         error: { code: "VALIDATION_ERROR", message: "userId is required" },
+//       });
+//     }
+
+//     // Load salary configuration
+//     const cfgRes = await query(
+//       `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
+//     );
+//     const cfg = cfgRes.rows[0] || {
+//       first_tier_rate: 0.5,
+//       second_tier_rate: 0.6,
+//       first_tier_limit: 500,
+//     };
+//     const firstTierRate = Number(cfg.first_tier_rate || 0);
+//     const secondTierRate = Number(cfg.second_tier_rate || 0);
+//     const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+//     // Determine date range
+//     const tz = "Asia/Kolkata";
+//     const fmt = new Intl.DateTimeFormat("en-CA", {
+//       timeZone: tz,
+//       year: "numeric",
+//       month: "2-digit",
+//       day: "2-digit",
+//     });
+//     const todayIST = fmt.format(new Date()); // YYYY-MM-DD in IST
+//     const parseISTStart = (d: string) => new Date(`${d}T00:00:00+05:30`);
+
+//     let fromStr = "";
+//     let toNextStr = "";
+
+//     if (period === "weekly") {
+//       const start = parseISTStart(todayIST);
+//       start.setDate(start.getDate() - 6);
+//       fromStr = fmt.format(start);
+//       const tomorrow = parseISTStart(todayIST);
+//       tomorrow.setDate(tomorrow.getDate() + 1);
+//       toNextStr = fmt.format(tomorrow);
+//     } else if (period === "monthly") {
+//       const target = (month as string) || todayIST.substring(0, 7);
+//       fromStr = `${target}-01`;
+//       const nextMonth = new Date(`${target}-01T00:00:00+05:30`);
+//       nextMonth.setMonth(nextMonth.getMonth() + 1);
+//       toNextStr = fmt.format(nextMonth);
+//     } else {
+//       fromStr = todayIST;
+//       const tomorrow = parseISTStart(todayIST);
+//       tomorrow.setDate(tomorrow.getDate() + 1);
+//       toNextStr = fmt.format(tomorrow);
+//     }
+
+//     // Query completed files per day in range for the user
+//     const fromIso = `${fromStr}T00:00:00Z`;
+//     const toNextIso = `${toNextStr}T00:00:00Z`;
+//     // const rowsRes = await query(
+//     //   `SELECT ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) AS d,
+//     //           SUM(COALESCE(assigned_count, requested_count, 0)) AS files
+//     //      FROM file_requests
+//     //     WHERE user_id::text = $1
+//     //       AND ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) >= $2::date
+//     //       AND ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) < $3::date
+//     //     GROUP BY 1
+//     //     ORDER BY 1`,
+//     //   [String(userId), fromStr, toNextStr],
+//     // );
+
+//     const rowsRes = await query(
+//       `SELECT ((COALESCE(completed_date, verified_at) + INTERVAL '5 hours 30 minutes')::date) AS d,
+//               SUM(COALESCE(assigned_count, requested_count, 0)) AS files
+//         FROM file_requests
+//         WHERE user_id::text = $1
+         
+//         GROUP BY 1
+//         ORDER BY 1`,
+//       [String(userId)]
+//     );
+
+//     // Build a map for quick lookup
+//     const byDate = new Map<string, number>();
+//     for (const r of rowsRes.rows) {
+//       const d = (r as any).d as string;
+//       byDate.set(d, Number((r as any).files || 0));
+//     }
+
+//     const to = new Date(toNextStr);
+//     to.setDate(to.getDate() - 1);
+
+//     // Iterate each day in range to build breakdown, including zero-file days
+//     const items: any[] = [];
+//     for (let dt = new Date(fromStr); dt <= to; dt.setDate(dt.getDate() + 1)) {
+//       const dStr = dt.toISOString().substring(0, 10);
+//       const files = byDate.get(dStr) || 0;
+//       const tier1Files = Math.min(files, firstTierLimit);
+//       const tier2Files = Math.max(0, files - firstTierLimit);
+//       const tier1Amount = tier1Files * firstTierRate;
+//       const tier2Amount = tier2Files * secondTierRate;
+
+//       items.push({
+//         period: dStr,
+//         files,
+//         tier1Files,
+//         tier1Rate: firstTierRate,
+//         tier1Amount,
+//         tier2Files,
+//         tier2Rate: secondTierRate,
+//         tier2Amount,
+//         totalAmount: tier1Amount + tier2Amount,
+//       });
+//     }
+
+//     res.json({ data: items });
+//   } catch (error) {
+//     console.error("Error fetching salary breakdown:", error);
+//     res.status(500).json({
+//       error: {
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to fetch salary breakdown",
+//       },
+//     });
+//   }
+// });
+
+
+// router.get("/salary/breakdown", async (req: Request, res: Response) => {
+//   try {
+//     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+//     res.setHeader("Pragma", "no-cache");
+//     res.setHeader("Expires", "0");
+
+//     const { userId, period = "daily", month } = req.query as any;
+
+//     if (!userId) {
+//       return res.status(400).json({
+//         error: { code: "VALIDATION_ERROR", message: "userId is required" },
+//       });
+//     }
+
+//     // Load salary config
+//     const cfgRes = await query(
+//       `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`
+//     );
+//     const cfg = cfgRes.rows[0] || {
+//       first_tier_rate: 0.5,
+//       second_tier_rate: 0.6,
+//       first_tier_limit: 500,
+//     };
+
+//     const firstTierRate = Number(cfg.first_tier_rate || 0);
+//     const secondTierRate = Number(cfg.second_tier_rate || 0);
+//     const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+//     // Get today's date in IST
+//     const tz = "Asia/Kolkata";
+//     const today = new Date();
+//     const todayIST = new Date(today.toLocaleString("en-US", { timeZone: tz }));
+
+//     let fromDate: Date;
+//     let toDate: Date;
+
+//     if (period === "weekly") {
+//       toDate = new Date(todayIST);
+//       fromDate = new Date(todayIST);
+//       fromDate.setDate(toDate.getDate() - 6); // Last 7 days
+//     } else if (period === "monthly") {
+//       const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
+//       fromDate = new Date(Number(year), Number(mon) - 1, 1); // 1st of the month
+//       toDate = new Date(fromDate);
+//       toDate.setMonth(toDate.getMonth() + 1);
+//       toDate.setDate(toDate.getDate() - 1); // Last day of the month
+//     } else {
+//       // Daily
+//       fromDate = new Date(todayIST);
+//       toDate = new Date(todayIST);
+//     }
+
+//     //const toISODate = (d: Date) => d.toISOString().split("T")[0];
+
+//     const toISODate = (d: Date) => d.toISOString().slice(0, 10);
+
+//     const fromStr = toISODate(fromDate);
+//     const toStr = toISODate(toDate);
+
+//     console.log("From:", fromStr, "To:", toStr);
+
+//     // Query verified file requests using only verified_at
+//     const rowsRes = await query(
+//       `SELECT
+//          (verified_at AT TIME ZONE 'Asia/Kolkata')::date AS d,
+//          SUM(COALESCE(assigned_count, requested_count, 0)) AS files
+//        FROM file_requests
+//        WHERE user_id::text = $1
+//          AND (verified_at AT TIME ZONE 'Asia/Kolkata')::date BETWEEN $2::date AND $3::date
+//        GROUP BY 1
+//        ORDER BY 1`,
+//       [String(userId), fromStr, toStr]
+//     );
+
+//     console.log("Query result:", rowsRes.rows);
+
+//     // Map: date string (YYYY-MM-DD) -> file count
+//     const byDate = new Map<string, number>();
+//     for (const row of rowsRes.rows) {
+//       const d = row.d.toISOString().slice(0, 10); // Correct IST date
+//       byDate.set(d, Number(row.files) || 0);
+//     }
+
+//     // Build breakdown response
+//     const items: any[] = [];
+//     const loopDate = new Date(fromDate);
+//     while (loopDate <= toDate) {
+//       const dStr = toISODate(loopDate);
+//       const files = byDate.get(dStr) || 0;
+//       const tier1Files = Math.min(files, firstTierLimit);
+//       const tier2Files = Math.max(0, files - firstTierLimit);
+//       const tier1Amount = tier1Files * firstTierRate;
+//       const tier2Amount = tier2Files * secondTierRate;
+
+//       items.push({
+//         period: dStr,
+//         files,
+//         tier1Files,
+//         tier1Rate: firstTierRate,
+//         tier1Amount,
+//         tier2Files,
+//         tier2Rate: secondTierRate,
+//         tier2Amount,
+//         totalAmount: tier1Amount + tier2Amount,
+//       });
+
+//       loopDate.setDate(loopDate.getDate() + 1);
+//     }
+
+//     res.json({ data: items });
+//   } catch (error) {
+//     console.error("Error fetching salary breakdown:", error);
+//     res.status(500).json({
+//       error: {
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to fetch salary breakdown",
+//       },
+//     });
+//   }
+// });
+
+
+// Helper function to get date in YYYY-MM-DD format
+const toISODate = (d: Date) => d.toISOString().slice(0, 10);
+
+// Helper function to get Monday of a given week (for weekly grouping)
+function getWeekStartDate(d: Date) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1) - day; // Adjust Sunday(0) to Monday(-6)
+  date.setDate(date.getDate() + diff);
+  return date;
+}
+
+// router.get("/salary/breakdown", async (req: Request, res: Response) => {
+//   try {
+//     // Prevent caching
+//     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+//     res.setHeader("Pragma", "no-cache");
+//     res.setHeader("Expires", "0");
+
+//     const { userId, period = "daily", month } = req.query as any;
+
+//     if (!userId) {
+//       return res.status(400).json({
+//         error: { code: "VALIDATION_ERROR", message: "userId is required" },
+//       });
+//     }
+
+//     // Load salary config with fallback defaults
+//     const cfgRes = await query(
+//       `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`
+//     );
+//     const cfg = cfgRes.rows[0] || {
+//       first_tier_rate: 0.5,
+//       second_tier_rate: 0.6,
+//       first_tier_limit: 500,
+//     };
+
+//     const firstTierRate = Number(cfg.first_tier_rate || 0);
+//     const secondTierRate = Number(cfg.second_tier_rate || 0);
+//     const firstTierLimit = Number(cfg.first_tier_limit || 0);
+
+//     // Timezone & date helpers
+//     const tz = "Asia/Kolkata";
+
+//     // Helper to get IST date string YYYY-MM-DD
+//     const toISODate = (d: Date) => d.toISOString().slice(0, 10);
+
+//     // Get today's date in IST
+//     const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+
+//     // Calculate fromDate and toDate based on period
+//     let fromDate: Date;
+//     let toDate: Date;
+
+//     if (period === "weekly") {
+//       // Weekly: Last 7 days including today
+//       toDate = new Date(todayIST);
+//       fromDate = new Date(toDate);
+//       fromDate.setDate(toDate.getDate() - 6);
+//     } else if (period === "monthly") {
+//       // Monthly: Use month query or current month
+//       const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
+//       fromDate = new Date(Number(year), Number(mon) - 1, 1);
+//       toDate = new Date(fromDate);
+//       toDate.setMonth(toDate.getMonth() + 1);
+//       toDate.setDate(toDate.getDate() - 1);
+//     } else {
+//       // Daily: just today
+//       fromDate = new Date(todayIST);
+//       toDate = new Date(todayIST);
+//     }
+
+//     // Set fromDateTime to start of day IST
+//     const fromDateTime = new Date(fromDate.toLocaleString("en-US", { timeZone: tz }));
+//     fromDateTime.setHours(0, 0, 0, 0);
+
+//     // Set toDateTime to end of day IST
+//     const toDateTime = new Date(toDate.toLocaleString("en-US", { timeZone: tz }));
+//     toDateTime.setHours(23, 59, 59, 999);
+
+//     // Convert fromDateTime and toDateTime back to UTC ISO strings for query
+//     const fromISO = new Date(fromDateTime.getTime() - fromDateTime.getTimezoneOffset() * 60000).toISOString();
+//     const toISO = new Date(toDateTime.getTime() - toDateTime.getTimezoneOffset() * 60000).toISOString();
+
+//     console.log("Filtering verified_at between:", fromISO, "and", toISO);
+
+//     // Query DB for file counts grouped by IST date
+//     const rowsRes = await query(
+//       `
+//       SELECT
+//         (verified_at AT TIME ZONE 'Asia/Kolkata')::date AS d,
+//         SUM(COALESCE(assigned_count, requested_count, 0)) AS files
+//       FROM file_requests
+//       WHERE user_id::text = $1
+//         AND verified_at BETWEEN $2 AND $3
+//       GROUP BY d
+//       ORDER BY d
+//       `,
+//       [String(userId), fromISO, toISO]
+//     );
+
+//     console.log("Query result rows:", rowsRes.rows);
+
+//     // Map date string -> file count
+//     const byDate = new Map<string, number>();
+//     for (const row of rowsRes.rows) {
+//       const d = row.d.toISOString().slice(0, 10);
+//       byDate.set(d, Number(row.files) || 0);
+//     }
+
+//     // Build daily breakdown items
+//     const items: any[] = [];
+//     const loopDate = new Date(fromDate);
+//     while (loopDate <= toDate) {
+//       const dStr = toISODate(loopDate);
+//       const files = byDate.get(dStr) || 0;
+
+//       const tier1Files = Math.min(files, firstTierLimit);
+//       const tier2Files = Math.max(0, files - firstTierLimit);
+//       const tier1Amount = tier1Files * firstTierRate;
+//       const tier2Amount = tier2Files * secondTierRate;
+
+//       items.push({
+//         period: dStr,
+//         files,
+//         tier1Files,
+//         tier1Rate: firstTierRate,
+//         tier1Amount,
+//         tier2Files,
+//         tier2Rate: secondTierRate,
+//         tier2Amount,
+//         totalAmount: tier1Amount + tier2Amount,
+//       });
+
+//       loopDate.setDate(loopDate.getDate() + 1);
+//     }
+
+//     // For weekly and monthly, aggregate daily items accordingly
+//     if (period === "weekly") {
+//       // Group days into weeks starting on Monday (or Sunday if you want)
+//       // Here, weeks start from fromDate, grouping every 7 days
+//       const weeklyItems: any[] = [];
+//       for (let i = 0; i < items.length; i += 7) {
+//         const weekSlice = items.slice(i, i + 7);
+//         const weekStart = weekSlice[0].period;
+//         const weekEnd = weekSlice[weekSlice.length - 1].period;
+
+//         const totalFiles = weekSlice.reduce((acc, x) => acc + x.files, 0);
+//         const tier1Files = weekSlice.reduce((acc, x) => acc + x.tier1Files, 0);
+//         const tier2Files = weekSlice.reduce((acc, x) => acc + x.tier2Files, 0);
+//         const tier1Amount = weekSlice.reduce((acc, x) => acc + x.tier1Amount, 0);
+//         const tier2Amount = weekSlice.reduce((acc, x) => acc + x.tier2Amount, 0);
+
+//         weeklyItems.push({
+//           period: weekStart,
+//           weekRange: `${weekStart} to ${weekEnd}`,
+//           files: totalFiles,
+//           tier1Files,
+//           tier1Rate: firstTierRate,
+//           tier1Amount,
+//           tier2Files,
+//           tier2Rate: secondTierRate,
+//           tier2Amount,
+//           totalAmount: tier1Amount + tier2Amount,
+//         });
+//       }
+
+//       return res.json({ period, data: weeklyItems });
+//     } else if (period === "monthly") {
+//       // Aggregate the whole month
+//       const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
+//       const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
+//       const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
+//       const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
+//       const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
+
+//       return res.json({
+//         period,
+//         month: fromDate.toISOString().slice(0, 7),
+//         data: [
+//           {
+//             period: fromDate.toISOString().slice(0, 7),
+//             files: totalFiles,
+//             tier1Files,
+//             tier1Rate: firstTierRate,
+//             tier1Amount,
+//             tier2Files,
+//             tier2Rate: secondTierRate,
+//             tier2Amount,
+//             totalAmount: tier1Amount + tier2Amount,
+//           },
+//         ],
+//       });
+//     }
+
+//     // Default: daily response
+//     res.json({ period, data: items });
+//   } catch (error) {
+//     console.error("Error fetching salary breakdown:", error);
+//     res.status(500).json({
+//       error: {
+//         code: "INTERNAL_SERVER_ERROR",
+//         message: "Failed to fetch salary breakdown",
+//       },
+//     });
+//   }
+// });
+
+
+
 router.get("/salary/breakdown", async (req: Request, res: Response) => {
   try {
+    // Prevent caching
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     const { userId, period = "daily", month } = req.query as any;
+
     if (!userId) {
       return res.status(400).json({
         error: { code: "VALIDATION_ERROR", message: "userId is required" },
       });
     }
 
-    // Load salary configuration
-    const cfgRes = await query(
-      `SELECT first_tier_rate, second_tier_rate, first_tier_limit FROM salary_config WHERE id = 1`,
-    );
+    // Load salary config with fallback defaults
+    const cfgRes = await query(`
+      SELECT first_tier_rate, second_tier_rate, first_tier_limit 
+      FROM salary_config 
+      WHERE id = 1
+    `);
     const cfg = cfgRes.rows[0] || {
       first_tier_rate: 0.5,
       second_tier_rate: 0.6,
       first_tier_limit: 500,
     };
+
     const firstTierRate = Number(cfg.first_tier_rate || 0);
     const secondTierRate = Number(cfg.second_tier_rate || 0);
     const firstTierLimit = Number(cfg.first_tier_limit || 0);
 
-    // Determine date range
-    const today = new Date();
-    let from: Date;
-    let to: Date;
+    const tz = "Asia/Kolkata";
+    const toISODate = (d: Date) => d.toISOString().slice(0, 10);
+
+    const todayIST = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+
+    let fromDate: Date;
+    let toDate: Date;
+
     if (period === "weekly") {
-      from = new Date(today);
-      from.setDate(today.getDate() - 6);
-      to = today;
+      toDate = new Date(todayIST);
+      fromDate = new Date(toDate);
+      fromDate.setDate(toDate.getDate() - 6); // ✅ last 7 days only
     } else if (period === "monthly") {
-      const target = (month as string) || today.toISOString().substring(0, 7);
-      const monthStart = new Date(`${target}-01T00:00:00Z`);
-      from = monthStart;
-      to = new Date(monthStart);
-      to.setMonth(to.getMonth() + 1);
-      to.setDate(to.getDate() - 1); // last day of month
+      const [year, mon] = (month || todayIST.toISOString().slice(0, 7)).split("-");
+      fromDate = new Date(Number(year), Number(mon) - 1, 1);
+      toDate = new Date(fromDate);
+      toDate.setMonth(toDate.getMonth() + 1);
+      toDate.setDate(toDate.getDate() - 1);
     } else {
-      from = new Date(today.toISOString().substring(0, 10));
-      to = new Date(today.toISOString().substring(0, 10));
+      fromDate = new Date(todayIST);
+      toDate = new Date(todayIST);
     }
 
-    const fromStr = from.toISOString().substring(0, 10);
-    // upper bound exclusive for query convenience
-    const toNext = new Date(to);
-    toNext.setDate(toNext.getDate() + 1);
-    const toNextStr = toNext.toISOString().substring(0, 10);
+    const fromDateTime = new Date(fromDate.toLocaleString("en-US", { timeZone: tz }));
+    fromDateTime.setHours(0, 0, 0, 0);
 
-    // Query completed files per day in range for the user
+    const toDateTime = new Date(toDate.toLocaleString("en-US", { timeZone: tz }));
+    toDateTime.setHours(23, 59, 59, 999);
+
+    // Convert to UTC for querying the database
+    const fromISO = new Date(fromDateTime.getTime() - fromDateTime.getTimezoneOffset() * 60000).toISOString();
+    const toISO = new Date(toDateTime.getTime() - toDateTime.getTimezoneOffset() * 60000).toISOString();
+
     const rowsRes = await query(
-      `SELECT DATE(completed_date) AS d, SUM(COALESCE(assigned_count, requested_count, 0)) AS files
-         FROM file_requests
-        WHERE user_id::text = $1 AND status = 'completed' AND completed_date >= $2 AND completed_date < $3
-        GROUP BY DATE(completed_date)
-        ORDER BY DATE(completed_date)`,
-      [String(userId), fromStr, toNextStr],
+      `
+      SELECT
+        (verified_at AT TIME ZONE 'Asia/Kolkata')::date AS d,
+        SUM(COALESCE(assigned_count, requested_count, 0)) AS files
+      FROM file_requests
+      WHERE user_id::text = $1
+        AND verified_at BETWEEN $2 AND $3
+      GROUP BY d
+      ORDER BY d
+      `,
+      [String(userId), fromISO, toISO]
     );
 
-    // Build a map for quick lookup
+    // Map date string -> file count
     const byDate = new Map<string, number>();
-    for (const r of rowsRes.rows) {
-      const d = (r as any).d as string;
-      byDate.set(d, Number((r as any).files || 0));
+    for (const row of rowsRes.rows) {
+      const d = row.d.toISOString().slice(0, 10); // d is in IST already
+      byDate.set(d, Number(row.files) || 0);
     }
 
-    // Iterate each day in range to build breakdown, including zero-file days
+    // Build daily breakdown items (with all dates present)
     const items: any[] = [];
-    for (let dt = new Date(fromStr); dt <= to; dt.setDate(dt.getDate() + 1)) {
-      const dStr = dt.toISOString().substring(0, 10);
+    const loopDate = new Date(fromDate);
+    while (loopDate <= toDate) {
+      const dStr = toISODate(loopDate);
       const files = byDate.get(dStr) || 0;
+
       const tier1Files = Math.min(files, firstTierLimit);
       const tier2Files = Math.max(0, files - firstTierLimit);
       const tier1Amount = tier1Files * firstTierRate;
       const tier2Amount = tier2Files * secondTierRate;
 
       items.push({
-        period: dStr,
+        dateIST: dStr,
         files,
         tier1Files,
         tier1Rate: firstTierRate,
@@ -1484,9 +1980,69 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
         tier2Amount,
         totalAmount: tier1Amount + tier2Amount,
       });
+
+      loopDate.setDate(loopDate.getDate() + 1);
     }
 
-    res.json({ data: items });
+    // Handle weekly and monthly aggregation
+    if (period === "weekly") {
+      const weekStart = items[0].dateIST;
+      const weekEnd = items[items.length - 1].dateIST;
+
+      const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
+      const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
+      const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
+      const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
+      const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
+
+      return res.json({
+        period,
+        timezone: tz,
+        data: [
+          {
+            dateIST: weekStart,
+            weekRange: `${weekStart} to ${weekEnd}`,
+            files: totalFiles,
+            tier1Files,
+            tier1Rate: firstTierRate,
+            tier1Amount,
+            tier2Files,
+            tier2Rate: secondTierRate,
+            tier2Amount,
+            totalAmount: tier1Amount + tier2Amount,
+          },
+        ],
+      });
+    } else if (period === "monthly") {
+      const totalFiles = items.reduce((acc, x) => acc + x.files, 0);
+      const tier1Files = items.reduce((acc, x) => acc + x.tier1Files, 0);
+      const tier2Files = items.reduce((acc, x) => acc + x.tier2Files, 0);
+      const tier1Amount = items.reduce((acc, x) => acc + x.tier1Amount, 0);
+      const tier2Amount = items.reduce((acc, x) => acc + x.tier2Amount, 0);
+
+      return res.json({
+        period,
+        timezone: tz,
+        month: fromDate.toISOString().slice(0, 7),
+        data: [
+          {
+            dateIST: fromDate.toISOString().slice(0, 7),
+            files: totalFiles,
+            tier1Files,
+            tier1Rate: firstTierRate,
+            tier1Amount,
+            tier2Files,
+            tier2Rate: secondTierRate,
+            tier2Amount,
+            totalAmount: tier1Amount + tier2Amount,
+          },
+        ],
+      });
+    }
+
+    // Default: daily response
+    res.json({ period, timezone: tz, data: items });
+
   } catch (error) {
     console.error("Error fetching salary breakdown:", error);
     res.status(500).json({
@@ -1497,6 +2053,12 @@ router.get("/salary/breakdown", async (req: Request, res: Response) => {
     });
   }
 });
+
+
+
+
+
+
 
 // POST /api/expenses/salary/project-managers - Create or update PM salary by name/email
 router.post("/salary/project-managers", async (req: Request, res: Response) => {
@@ -1568,11 +2130,9 @@ router.get(
       const { userId } = req.params as any;
       const { month } = req.query as any;
       if (!userId) {
-        return res
-          .status(400)
-          .json({
-            error: { code: "VALIDATION_ERROR", message: "userId is required" },
-          });
+        return res.status(400).json({
+          error: { code: "VALIDATION_ERROR", message: "userId is required" },
+        });
       }
       const targetMonth =
         (month as string) || new Date().toISOString().substring(0, 7);
@@ -1672,14 +2232,12 @@ router.get(
       });
     } catch (error) {
       console.error("Error fetching PM automation details:", error);
-      res
-        .status(500)
-        .json({
-          error: {
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch PM automation details",
-          },
-        });
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch PM automation details",
+        },
+      });
     }
   },
 );
