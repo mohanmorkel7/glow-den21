@@ -48,6 +48,14 @@ import {
   ComposedChart,
 } from "recharts";
 import { apiClient } from "@/lib/api";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function Dashboard() {
   const { user } = useAuth();
