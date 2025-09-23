@@ -383,7 +383,7 @@ export default function RequestFiles() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
       // Optimistically reflect in UI; server also updates status
       setFileRequests((prev) =>

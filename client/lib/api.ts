@@ -731,8 +731,13 @@ class ApiClient {
       const text = await resp.text().catch(() => resp.statusText);
       throw new Error(text || `Export failed (${resp.status})`);
     }
+    const cd = resp.headers.get("Content-Disposition") || "";
+    const match = cd.match(/filename=?"?([^";]+)"?/i);
+    const filename = match
+      ? match[1]
+      : `billing_${month || "summary"}.${format === "excel" ? "xlsx" : format === "pdf" ? "pdf" : "csv"}`;
     const blob = await resp.blob();
-    return blob;
+    return { blob, filename };
   }
 
   async updateSalaryConfig(config: any) {

@@ -2819,7 +2819,8 @@ export default function FileProcess() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  {request.downloadLink && (
+                                  {(request.downloadLink ||
+                                    (request.startRow && request.endRow)) && (
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -2837,11 +2838,16 @@ export default function FileProcess() {
                                           document.body.appendChild(link);
                                           link.click();
                                           link.remove();
-                                          URL.revokeObjectURL(url);
-                                        } catch (e) {
-                                          alert(
-                                            "Download failed. Ensure a CSV was uploaded for this process.",
+                                          setTimeout(
+                                            () => URL.revokeObjectURL(url),
+                                            1000,
                                           );
+                                        } catch (e: any) {
+                                          const msg =
+                                            (e && e.message) ||
+                                            (e && e.toString && e.toString()) ||
+                                            "Download failed. Ensure a CSV was uploaded for this process.";
+                                          alert(msg);
                                         }
                                       }}
                                     >
@@ -3113,7 +3119,10 @@ export default function FileProcess() {
                                     link.href = url;
                                     link.download = filename;
                                     link.click();
-                                    URL.revokeObjectURL(url);
+                                    setTimeout(
+                                      () => URL.revokeObjectURL(url),
+                                      1000,
+                                    );
                                   } catch (e) {
                                     alert("Failed to download uploaded file");
                                   }
@@ -4286,7 +4295,7 @@ export default function FileProcess() {
                             link.href = url;
                             link.download = filename;
                             link.click();
-                            URL.revokeObjectURL(url);
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
                           } catch (e) {
                             alert("Failed to download uploaded file");
                           }

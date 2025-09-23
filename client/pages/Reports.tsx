@@ -464,6 +464,8 @@ export default function Reports() {
   };
 
   const [serverData, setServerData] = useState<any[] | null>(null);
+  const [teamPerformanceData, setTeamPerformanceData] = useState<any[]>([]);
+  const [individualMetrics, setIndividualMetrics] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -490,6 +492,24 @@ export default function Reports() {
             manual: Number(d.manual || 0),
           }));
           setServerData(mapped);
+          try {
+            const tp: any = await apiClient.getTeamPerformance("week");
+            const list = Array.isArray(tp) ? tp : (tp as any) || [];
+            const mappedTeam = list.map((u: any) => ({
+              id: String(u.id || u.user_id || u.userId || u.name || "unknown"),
+              name: u.name || u.id || "Unknown",
+              submitted: Number(u.submitted || 0),
+              completedRequests: Number(
+                u.completedRequests || u.completed_requests || 0,
+              ),
+              efficiency: u.efficiency || null,
+              lastCompletedAt: u.last_completed_at || u.lastCompletedAt || null,
+            }));
+            setTeamPerformanceData(mappedTeam);
+            setIndividualMetrics(mappedTeam);
+          } catch (e) {
+            setTeamPerformanceData([]);
+          }
         } else {
           setServerData(null);
         }
@@ -502,32 +522,131 @@ export default function Reports() {
   }, [isAdmin, timePeriod]);
 
   const currentData = serverData ?? getCurrentData();
+  // Project overview fallback (server data may not include project-level info)
+  const projectOverview =
+    serverData && serverData.length > 0
+      ? (serverData as any[])
+      : (projectPerformanceData as any[]);
 
-  // Calculate current period metrics
+  // Sanitize numeric fields used in charts to avoid NaN errors
+  const safeNumber = (v: any) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const safeCurrentData = (currentData || []).map((d: any) => {
+    const actual = safeNumber(d.actual ?? d.completed);
+    const target = safeNumber(d.target);
+    const automation = safeNumber(d.automation);
+    const manual = safeNumber(d.manual);
+    const hours = safeNumber(d.hours);
+    const efficiency = Number.isFinite(Number(d.efficiency))
+      ? Number(d.efficiency)
+      : target > 0
+        ? (actual / target) * 100
+        : 0;
+    return {
+      ...d,
+      actual,
+      completed: actual,
+      target,
+      automation,
+      manual,
+      hours,
+      efficiency,
+    };
+  });
+
+  const safeTeamPerformanceData = (teamPerformanceData || []).map((u: any) => ({
+    ...u,
+    submitted: safeNumber(u.submitted),
+    completedRequests: safeNumber(u.completedRequests),
+    efficiency: Number.isFinite(Number(u.efficiency))
+      ? Number(u.efficiency)
+      : 0,
+  }));
+
+  const safeIndividualMetrics = (individualMetrics || []).map((u: any) => ({
+    ...u,
+    submitted: safeNumber(u.submitted),
+    completedRequests: safeNumber(u.completedRequests),
+    efficiency: Number.isFinite(Number(u.efficiency))
+      ? Number(u.efficiency)
+      : 0,
+  }));
+
+  const safeProjectOverview = (projectOverview || []).map((p: any) => ({
+    ...p,
+    completed: safeNumber(p.completed),
+    target: safeNumber(p.target),
+    activeUsers: safeNumber(p.activeUsers),
+    status: p.status || "",
+  }));
+
+  // Use safe data in charts
+  const chartCurrentData = safeCurrentData;
+  const chartTeamData = safeTeamPerformanceData;
+  const chartUserPerformanceData = (userPerformanceData || []).map(
+    (u: any) => ({
+      ...u,
+      efficiency: safeNumber(u.efficiency),
+    }),
+  );
+
+  // Prepare BarChart data and domain to avoid NaN tick calculation in Recharts
+  const barChartData = isAdmin ? chartTeamData : chartUserPerformanceData;
+  const barChartKey = isAdmin ? "submitted" : "efficiency";
+  const barValues = (barChartData || []).map((d: any) =>
+    safeNumber(d[barChartKey]),
+  );
+  const barMin = barValues.length ? Math.min(...barValues) : 0;
+  const barMax = barValues.length ? Math.max(...barValues) : 0;
+  let barChartDomain: (number | string)[] = [0, 120];
+  if (Number.isFinite(barMin) && Number.isFinite(barMax)) {
+    if (barMin === barMax) {
+      const delta = Math.abs(barMax) > 0 ? Math.abs(barMax * 0.1) : 1;
+      barChartDomain = [Math.max(0, barMin - delta), barMax + delta];
+    } else {
+      barChartDomain = [
+        Math.max(0, Math.floor(barMin)),
+        Math.ceil(barMax * 1.1),
+      ];
+    }
+  } else {
+    barChartDomain = [0, 120];
+  }
+
+  // Calculate current period metrics (use sanitized data)
   const currentMetrics = isAdmin
     ? {
-        totalCompleted: currentData.reduce(
+        totalCompleted: chartCurrentData.reduce(
           (sum, item) => sum + (item.actual || item.completed),
           0,
         ),
-        totalTarget: currentData.reduce((sum, item) => sum + item.target, 0),
+        totalTarget: chartCurrentData.reduce(
+          (sum, item) => sum + item.target,
+          0,
+        ),
         averageEfficiency:
-          currentData.reduce((sum, item) => sum + item.efficiency, 0) /
-          currentData.length,
+          chartCurrentData.reduce((sum, item) => sum + item.efficiency, 0) /
+          Math.max(1, chartCurrentData.length),
         activeUsers: isAdmin
-          ? currentData[0]?.activeUsers || currentData[0]?.users || 48
+          ? chartCurrentData[0]?.activeUsers || chartCurrentData[0]?.users || 48
           : 1,
       }
     : {
-        totalCompleted: currentData.reduce(
+        totalCompleted: chartCurrentData.reduce(
           (sum, item) => sum + item.completed,
           0,
         ),
-        totalTarget: currentData.reduce((sum, item) => sum + item.target, 0),
+        totalTarget: chartCurrentData.reduce(
+          (sum, item) => sum + item.target,
+          0,
+        ),
         averageEfficiency:
-          currentData.reduce((sum, item) => sum + item.efficiency, 0) /
-          currentData.length,
-        totalHours: currentData.reduce(
+          chartCurrentData.reduce((sum, item) => sum + item.efficiency, 0) /
+          Math.max(1, chartCurrentData.length),
+        totalHours: chartCurrentData.reduce(
           (sum, item) => sum + (item.hours || 0),
           0,
         ),
@@ -769,7 +888,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -824,7 +943,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -921,7 +1040,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={currentData}>
+                    <LineChart data={chartCurrentData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey={
@@ -978,7 +1097,7 @@ export default function Reports() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="text-center p-3 bg-purple-50 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600">
-                        {currentData
+                        {chartCurrentData
                           .reduce(
                             (sum, item) => sum + (item.automation || 0),
                             0,
@@ -991,7 +1110,7 @@ export default function Reports() {
                     </div>
                     <div className="text-center p-3 bg-blue-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">
-                        {currentData
+                        {chartCurrentData
                           .reduce((sum, item) => sum + (item.manual || 0), 0)
                           .toLocaleString()}
                       </div>
@@ -1000,11 +1119,11 @@ export default function Reports() {
                     <div className="text-center p-3 bg-green-50 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">
                         {(
-                          (currentData.reduce(
+                          (chartCurrentData.reduce(
                             (sum, item) => sum + (item.automation || 0),
                             0,
                           ) /
-                            currentData.reduce(
+                            chartCurrentData.reduce(
                               (sum, item) =>
                                 sum + (item.actual || item.completed || 0),
                               0,
@@ -1020,10 +1139,10 @@ export default function Reports() {
                     <div className="text-center p-3 bg-orange-50 rounded-lg">
                       <div className="text-2xl font-bold text-orange-600">
                         {(
-                          currentData.reduce(
+                          chartCurrentData.reduce(
                             (sum, item) => sum + (item.automation || 0),
                             0,
-                          ) / currentData.length
+                          ) / Math.max(1, chartCurrentData.length)
                         ).toFixed(0)}
                       </div>
                       <div className="text-xs text-orange-700">
@@ -1055,7 +1174,7 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(individualMetrics || []).map(
+                      {(safeIndividualMetrics || []).map(
                         (user: any, index: number) => (
                           <TableRow key={user.id || index}>
                             <TableCell className="font-medium">
@@ -1089,14 +1208,21 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={userPerformanceData} layout="horizontal">
+                    <BarChart data={barChartData} layout="horizontal">
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" domain={[0, 120]} />
+                      <XAxis type="number" domain={barChartDomain} />
                       <YAxis dataKey="name" type="category" width={100} />
                       <Tooltip
-                        formatter={(value) => [`${value}%`, "Efficiency"]}
+                        formatter={(value) =>
+                          isAdmin
+                            ? [`${value.toLocaleString()}`, "Submitted"]
+                            : [`${value}%`, "Efficiency"]
+                        }
                       />
-                      <Bar dataKey="efficiency" fill="#10b981" />
+                      <Bar
+                        dataKey={isAdmin ? "submitted" : "efficiency"}
+                        fill="#10b981"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -1124,7 +1250,7 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(projectOverview || []).map(
+                      {(safeProjectOverview || []).map(
                         (project: any, index: number) => (
                           <TableRow key={project.id || index}>
                             <TableCell className="font-medium">
@@ -1133,12 +1259,15 @@ export default function Reports() {
                             <TableCell>
                               <Badge
                                 variant={
-                                  project.status === "on track"
+                                  String(project.status || "").toLowerCase() ===
+                                  "on track"
                                     ? "secondary"
                                     : "outline"
                                 }
                               >
-                                {project.status.toUpperCase()}
+                                {project.status
+                                  ? String(project.status).toUpperCase()
+                                  : "-"}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -1180,10 +1309,10 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={projectOverview}>
+                    <BarChart data={safeProjectOverview}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis />
+                      <YAxis domain={[0, "dataMax"]} />
                       <Tooltip />
                       <Bar
                         dataKey="completed"
@@ -1303,7 +1432,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -1355,7 +1484,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={currentData}>
+                      <LineChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -1402,7 +1531,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey="date"
