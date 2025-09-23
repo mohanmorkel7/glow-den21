@@ -411,7 +411,7 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
         const items: string[] = [];
         for (let idx = 1; idx < parts.length; idx++) {
           const line = parts[idx].replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "").trim();
-          if (line) items.push(`<li>${line}</li>`);
+          if (line) items.push(`<li>${escapeHtml(line)}</li>`);
         }
         if (items.length) {
           const ul = doc.createElement("ul");
