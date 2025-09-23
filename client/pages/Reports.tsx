@@ -465,6 +465,7 @@ export default function Reports() {
 
   const [serverData, setServerData] = useState<any[] | null>(null);
   const [teamPerformanceData, setTeamPerformanceData] = useState<any[]>([]);
+  const [individualMetrics, setIndividualMetrics] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
