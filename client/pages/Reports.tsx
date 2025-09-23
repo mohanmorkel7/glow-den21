@@ -523,9 +523,10 @@ export default function Reports() {
 
   const currentData = serverData ?? getCurrentData();
   // Project overview fallback (server data may not include project-level info)
-  const projectOverview = (serverData && serverData.length > 0)
-    ? (serverData as any[])
-    : (projectPerformanceData as any[]);
+  const projectOverview =
+    serverData && serverData.length > 0
+      ? (serverData as any[])
+      : (projectPerformanceData as any[]);
 
   // Calculate current period metrics
   const currentMetrics = isAdmin
@@ -1127,7 +1128,10 @@ export default function Reports() {
                             : [`${value}%`, "Efficiency"]
                         }
                       />
-                      <Bar dataKey={isAdmin ? "submitted" : "efficiency"} fill="#10b981" />
+                      <Bar
+                        dataKey={isAdmin ? "submitted" : "efficiency"}
+                        fill="#10b981"
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
