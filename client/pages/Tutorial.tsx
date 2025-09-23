@@ -2465,8 +2465,7 @@ export default function Tutorial() {
               onClick={handleSaveEditedTutorial}
               disabled={
                 !newTutorial.title ||
-                !newTutorial.description ||
-                !newTutorial.instructions
+                !newTutorial.description
               }
             >
               Save Changes
