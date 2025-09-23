@@ -1106,70 +1106,33 @@ export default function Reports() {
                       <TableRow>
                         <TableHead>Project Name</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Completed / Active Users</TableHead>
                         <TableHead>Progress</TableHead>
-                        <TableHead>Efficiency</TableHead>
                         <TableHead>Completion</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {projectPerformanceData.map((project, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {project.name}
-                          </TableCell>
+                      {(projectOverview || []).map((project: any, index: number) => (
+                        <TableRow key={project.id || index}>
+                          <TableCell className="font-medium">{project.name}</TableCell>
                           <TableCell>
-                            <Badge
-                              variant={
-                                project.status === "completed"
-                                  ? "default"
-                                  : project.status === "active"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                            >
+                            <Badge variant={project.status === "on track" ? "secondary" : "outline"}>
                               {project.status.toUpperCase()}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
                               <div className="flex justify-between text-sm">
-                                <span>
-                                  {project.completed.toLocaleString()}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  / {project.target.toLocaleString()}
-                                </span>
+                                <span>{(project.completed ?? 0).toLocaleString()}</span>
+                                <span className="text-muted-foreground">Active Users: {project.activeUsers ?? 0}</span>
                               </div>
-                              <Progress
-                                value={
-                                  (project.completed / project.target) * 100
-                                }
-                              />
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div
-                              className={`font-medium ${
-                                project.efficiency >= 100
-                                  ? "text-green-600"
-                                  : project.efficiency >= 80
-                                    ? "text-blue-600"
-                                    : project.efficiency >= 60
-                                      ? "text-orange-600"
-                                      : "text-red-600"
-                              }`}
-                            >
-                              {project.efficiency}%
-                            </div>
+                            <Progress value={project.completed > 0 ? 100 : 0} />
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm">
-                              {(
-                                (project.completed / project.target) *
-                                100
-                              ).toFixed(1)}
-                              %
-                            </div>
+                            <div className="text-sm">{project.completed > 0 ? "100%" : "0%"}</div>
                           </TableCell>
                         </TableRow>
                       ))}
