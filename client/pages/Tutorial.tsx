@@ -128,7 +128,8 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
     doc.querySelectorAll("*").forEach((el) => {
       Array.from(el.attributes).forEach((a) => {
-        if (a.name.startsWith("data-") || /^on/i.test(a.name)) el.removeAttribute(a.name);
+        if (a.name.startsWith("data-") || /^on/i.test(a.name))
+          el.removeAttribute(a.name);
       });
     });
 
@@ -153,20 +154,35 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       const out: string[] = [];
       let inList = false;
       for (const line of lines) {
-        const isNumberHeading = /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(line);
+        const isNumberHeading =
+          /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(line);
         const isBullet = /^[-*•]\s+/.test(line);
         if (isNumberHeading) {
-          if (inList) { out.push("</ul>"); inList = false; }
-          const title = line.replace(/^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s*/, "");
-          out.push(`<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`);
+          if (inList) {
+            out.push("</ul>");
+            inList = false;
+          }
+          const title = line.replace(
+            /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s*/,
+            "",
+          );
+          out.push(
+            `<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`,
+          );
           continue;
         }
         if (isBullet) {
-          if (!inList) { out.push("<ul>"); inList = true; }
+          if (!inList) {
+            out.push("<ul>");
+            inList = true;
+          }
           out.push(`<li>${escapeHtml(line.replace(/^[-*•]\s+/, ""))}</li>`);
           continue;
         }
-        if (inList) { out.push("</ul>"); inList = false; }
+        if (inList) {
+          out.push("</ul>");
+          inList = false;
+        }
         out.push(`<p>${escapeHtml(line)}</p>`);
       }
       if (inList) out.push("</ul>");
@@ -177,7 +193,10 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
     const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
     const textNodes: Node[] = [];
     let n: Node | null = walker.nextNode();
-    while (n) { textNodes.push(n); n = walker.nextNode(); }
+    while (n) {
+      textNodes.push(n);
+      n = walker.nextNode();
+    }
     textNodes.forEach((tn) => {
       if (tn.nodeValue && tn.nodeValue.indexOf("\n") !== -1) {
         const parent = tn.parentNode as Element | null;
@@ -1435,7 +1454,9 @@ export default function Tutorial() {
                       <div
                         className="text-muted-foreground mt-1 prose max-w-none"
                         dangerouslySetInnerHTML={{
-                          __html: sanitizeAndFormatHtml(selectedTutorial.description),
+                          __html: sanitizeAndFormatHtml(
+                            selectedTutorial.description,
+                          ),
                         }}
                       />
                     </div>
@@ -1451,7 +1472,9 @@ export default function Tutorial() {
                     <div
                       className="prose max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: sanitizeAndFormatHtml(selectedTutorial.instructions),
+                        __html: sanitizeAndFormatHtml(
+                          selectedTutorial.instructions,
+                        ),
                       }}
                     />
                   </CardContent>
