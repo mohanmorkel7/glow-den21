@@ -1279,7 +1279,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={projectOverview}>
+                    <BarChart data={safeProjectOverview}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
