@@ -663,6 +663,51 @@ export default function UserManagement() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Password Update Section */}
+            {editingUser && (
+              <div className="mt-2 p-3 border rounded-md space-y-3">
+                <div className="text-sm font-medium">Update Password</div>
+                {editingUser.id === currentUser?.id && (
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Current Password</Label>
+                    <Input id="current-password" type="password" value={(newUser as any).currentPassword || ""} onChange={(e) => setNewUser({ ...(newUser as any), currentPassword: e.target.value })} placeholder="Enter current password" />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input id="new-password" type="password" value={(newUser as any).newPassword || ""} onChange={(e) => setNewUser({ ...(newUser as any), newPassword: e.target.value })} placeholder="Enter new password (min 8 chars)" />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      if (!(newUser as any).newPassword || String((newUser as any).newPassword).length < 8) {
+                        toast.error("New password must be at least 8 characters");
+                        return;
+                      }
+                      try {
+                        setSubmitting(true);
+                        await apiClient.changePassword(
+                          editingUser.id,
+                          editingUser.id === currentUser?.id ? (newUser as any).currentPassword || "" : "",
+                          (newUser as any).newPassword || "",
+                        );
+                        (newUser as any).currentPassword = "";
+                        (newUser as any).newPassword = "";
+                        toast.success("Password updated");
+                      } catch (e: any) {
+                        toast.error(e?.message || "Failed to update password");
+                      } finally {
+                        setSubmitting(false);
+                      }
+                    }}
+                  >
+                    Update Password
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>
