@@ -928,7 +928,7 @@ export default function Billing() {
                           size="sm"
                           variant="outline"
                           onClick={() =>
-                            handleExportBilling("pdf", billing.month)
+                            handleExportBilling("csv", billing.month)
                           }
                         >
                           <Download className="h-3 w-3 mr-1" />
