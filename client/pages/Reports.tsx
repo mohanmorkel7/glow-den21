@@ -1062,7 +1062,7 @@ export default function Reports() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="text-center p-3 bg-purple-50 rounded-lg">
                       <div className="text-2xl font-bold text-purple-600">
-                        {currentData
+                        {chartCurrentData
                           .reduce(
                             (sum, item) => sum + (item.automation || 0),
                             0,
