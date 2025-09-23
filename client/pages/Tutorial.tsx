@@ -392,7 +392,7 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
         parts.forEach((line) => {
           // remove numeric prefix or bullet markers
           const cleaned = line.replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "").trim();
-          lis.push(`<li>${cleaned}</li>`);
+          lis.push(`<li>${escapeHtml(cleaned)}</li>`);
         });
         const ul = doc.createElement("ul");
         ul.innerHTML = lis.join("\n");
