@@ -43,6 +43,30 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
+
+// Sanitize HTML by removing data-* attributes and script/style tags
+const sanitizeHtml = (html: string | undefined | null) => {
+  if (!html) return "";
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(String(html), "text/html");
+    // remove script and style tags
+    doc.querySelectorAll("script,style").forEach((el) => el.remove());
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, null);
+    let node: Node | null = walker.currentNode;
+    while ((node = walker.nextNode())) {
+      const el = node as Element;
+      // remove attributes starting with data-
+      Array.from(el.attributes).forEach((a) => {
+        if (a.name.startsWith("data-")) el.removeAttribute(a.name);
+      });
+    }
+    return doc.body.innerHTML;
+  } catch (e) {
+    console.warn("sanitizeHtml failed", e);
+    return String(html);
+  }
+};
 import { cn } from "@/lib/utils";
 import {
   PlayCircle,
