@@ -1986,18 +1986,18 @@ export default function FileProcess() {
                               {process.type === "automation" ? (
                                 <Badge
                                   variant="outline"
-                                  className="text-purple-600 border-purple-300"
+                                  className="flex items-center gap-1 text-purple-600 border-purple-300"
                                 >
-                                  <Bot className="h-3 w-3 mr-1" />
-                                  AUTO
+                                  <Bot className="h-4 w-4" />
+                                  <span className="text-xs font-medium">Auto</span>
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-blue-600 border-blue-300"
+                                  className="flex items-center gap-1 text-blue-600 border-blue-300"
                                 >
-                                  <User className="h-3 w-3 mr-1" />
-                                  MANUAL
+                                  <User className="h-4 w-4" />
+                                  <span className="text-xs font-medium">Manual</span>
                                 </Badge>
                               )}
                             </div>
