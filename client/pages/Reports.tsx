@@ -1139,7 +1139,7 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(individualMetrics || []).map(
+                      {(safeIndividualMetrics || []).map(
                         (user: any, index: number) => (
                           <TableRow key={user.id || index}>
                             <TableCell className="font-medium">
