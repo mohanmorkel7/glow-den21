@@ -568,7 +568,9 @@ export default function Billing() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename || `billing_${month || "summary"}.${format === "excel" ? "xlsx" : format === "pdf" ? "pdf" : "csv"}`;
+      a.download =
+        filename ||
+        `billing_${month || "summary"}.${format === "excel" ? "xlsx" : format === "pdf" ? "pdf" : "csv"}`;
       document.body.appendChild(a);
       a.click();
       a.remove();

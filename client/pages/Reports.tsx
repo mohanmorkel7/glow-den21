@@ -497,7 +497,9 @@ export default function Reports() {
             const mappedTeam = list.map((u: any) => ({
               name: u.name || u.id,
               submitted: Number(u.submitted || 0),
-              completedRequests: Number(u.completedRequests || u.completed_requests || 0),
+              completedRequests: Number(
+                u.completedRequests || u.completed_requests || 0,
+              ),
               efficiency: u.efficiency || null,
             }));
             setTeamPerformanceData(mappedTeam);
@@ -1103,12 +1105,19 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={isAdmin ? teamPerformanceData : userPerformanceData} layout="horizontal">
+                    <BarChart
+                      data={isAdmin ? teamPerformanceData : userPerformanceData}
+                      layout="horizontal"
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" domain={[0, 120]} />
                       <YAxis dataKey="name" type="category" width={100} />
                       <Tooltip
-                        formatter={(value) => isAdmin ? [`${value.toLocaleString()}`, "Submitted"] : [`${value}%`, "Efficiency"]}
+                        formatter={(value) =>
+                          isAdmin
+                            ? [`${value.toLocaleString()}`, "Submitted"]
+                            : [`${value}%`, "Efficiency"]
+                        }
                       />
                       <Bar dataKey="efficiency" fill="#10b981" />
                     </BarChart>
