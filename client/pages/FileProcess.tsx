@@ -1989,7 +1989,9 @@ export default function FileProcess() {
                                   className="flex items-center gap-1 text-purple-600 border-purple-300"
                                 >
                                   <Bot className="h-4 w-4" />
-                                  <span className="text-xs font-medium">Auto</span>
+                                  <span className="text-xs font-medium">
+                                    Auto
+                                  </span>
                                 </Badge>
                               ) : (
                                 <Badge
@@ -1997,7 +1999,9 @@ export default function FileProcess() {
                                   className="flex items-center gap-1 text-blue-600 border-blue-300"
                                 >
                                   <User className="h-4 w-4" />
-                                  <span className="text-xs font-medium">Manual</span>
+                                  <span className="text-xs font-medium">
+                                    Manual
+                                  </span>
                                 </Badge>
                               )}
                             </div>
