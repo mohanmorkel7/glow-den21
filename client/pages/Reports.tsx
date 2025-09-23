@@ -491,6 +491,19 @@ export default function Reports() {
             manual: Number(d.manual || 0),
           }));
           setServerData(mapped);
+          try {
+            const tp: any = await apiClient.getTeamPerformance("week");
+            const list = Array.isArray(tp) ? tp : (tp as any) || [];
+            const mappedTeam = list.map((u: any) => ({
+              name: u.name || u.id,
+              submitted: Number(u.submitted || 0),
+              completedRequests: Number(u.completedRequests || u.completed_requests || 0),
+              efficiency: u.efficiency || null,
+            }));
+            setTeamPerformanceData(mappedTeam);
+          } catch (e) {
+            setTeamPerformanceData([]);
+          }
         } else {
           setServerData(null);
         }
