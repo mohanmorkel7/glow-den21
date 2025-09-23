@@ -496,14 +496,17 @@ export default function Reports() {
             const tp: any = await apiClient.getTeamPerformance("week");
             const list = Array.isArray(tp) ? tp : (tp as any) || [];
             const mappedTeam = list.map((u: any) => ({
-              name: u.name || u.id,
+              id: String(u.id || u.user_id || u.userId || u.name || "unknown"),
+              name: u.name || u.id || "Unknown",
               submitted: Number(u.submitted || 0),
               completedRequests: Number(
                 u.completedRequests || u.completed_requests || 0,
               ),
               efficiency: u.efficiency || null,
+              lastCompletedAt: u.last_completed_at || u.lastCompletedAt || null,
             }));
             setTeamPerformanceData(mappedTeam);
+            setIndividualMetrics(mappedTeam);
           } catch (e) {
             setTeamPerformanceData([]);
           }
