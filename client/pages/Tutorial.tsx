@@ -2463,10 +2463,7 @@ export default function Tutorial() {
             </Button>
             <Button
               onClick={handleSaveEditedTutorial}
-              disabled={
-                !newTutorial.title ||
-                !newTutorial.description
-              }
+              disabled={!newTutorial.title || !newTutorial.description}
             >
               Save Changes
             </Button>

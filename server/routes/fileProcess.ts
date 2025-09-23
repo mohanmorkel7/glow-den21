@@ -670,10 +670,14 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     if (!fs.existsSync(srcPath)) {
       // Fallback: if configured filename missing on disk, try to find any CSV in the process directory
       if (fs.existsSync(procDir)) {
-        const files = fs.readdirSync(procDir).filter((f) => f.toLowerCase().endsWith(".csv"));
+        const files = fs
+          .readdirSync(procDir)
+          .filter((f) => f.toLowerCase().endsWith(".csv"));
         if (files.length > 0) {
           const fallback = path.join(procDir, files[0]);
-          console.warn(`Source file not found at ${srcPath}, falling back to ${fallback}`);
+          console.warn(
+            `Source file not found at ${srcPath}, falling back to ${fallback}`,
+          );
           srcPath = fallback;
         } else {
           return res.status(404).json({
