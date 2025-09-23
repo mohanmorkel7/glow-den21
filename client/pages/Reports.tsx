@@ -1103,7 +1103,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={userPerformanceData} layout="horizontal">
+                    <BarChart data={isAdmin ? teamPerformanceData : userPerformanceData} layout="horizontal">
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" domain={[0, 120]} />
                       <YAxis dataKey="name" type="category" width={100} />
