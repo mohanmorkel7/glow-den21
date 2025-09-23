@@ -560,11 +560,11 @@ export default function Billing() {
     month?: string,
   ) => {
     try {
-      const blob = await apiClient.exportBilling(format, month);
+      const blob = await apiClient.exportBilling(format, month, usdToInrRate);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `billing_${month || "summary"}.csv`;
+      a.download = `billing_${month || "summary"}.${format === "excel" ? "xlsx" : format === "pdf" ? "pdf" : "csv"}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -635,10 +635,6 @@ export default function Billing() {
               >
                 <Download className="h-4 w-4 mr-2" />
                 Export Excel
-              </Button>
-              <Button onClick={() => handleExportBilling("pdf")}>
-                <Receipt className="h-4 w-4 mr-2" />
-                Generate Report
               </Button>
             </div>
           </div>

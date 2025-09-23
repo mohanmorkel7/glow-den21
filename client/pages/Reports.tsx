@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -1050,53 +1050,31 @@ export default function Reports() {
                       <TableRow>
                         <TableHead>Team Member</TableHead>
                         <TableHead>Completed</TableHead>
-                        <TableHead>Target</TableHead>
-                        <TableHead>Efficiency</TableHead>
-                        <TableHead>Projects</TableHead>
-                        <TableHead>Rating</TableHead>
+                        <TableHead>Completed Requests</TableHead>
+                        <TableHead>Last Completed</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {userPerformanceData.map((user, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {user.name}
-                          </TableCell>
-                          <TableCell>
-                            {user.completed.toLocaleString()}
-                          </TableCell>
-                          <TableCell>{user.target.toLocaleString()}</TableCell>
-                          <TableCell>
-                            <div
-                              className={`font-medium ${
-                                user.efficiency >= 100
-                                  ? "text-green-600"
-                                  : user.efficiency >= 90
-                                    ? "text-blue-600"
-                                    : user.efficiency >= 80
-                                      ? "text-orange-600"
-                                      : "text-red-600"
-                              }`}
-                            >
-                              {user.efficiency}%
-                            </div>
-                          </TableCell>
-                          <TableCell>{user.projects}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                user.rating === "Outstanding"
-                                  ? "default"
-                                  : user.rating === "Excellent"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                            >
-                              {user.rating}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {(individualMetrics || []).map(
+                        (user: any, index: number) => (
+                          <TableRow key={user.id || index}>
+                            <TableCell className="font-medium">
+                              {user.name}
+                            </TableCell>
+                            <TableCell>
+                              {(user.submitted ?? 0).toLocaleString()}
+                            </TableCell>
+                            <TableCell>{user.completedRequests ?? 0}</TableCell>
+                            <TableCell>
+                              {user.lastCompletedAt
+                                ? new Date(
+                                    user.lastCompletedAt,
+                                  ).toLocaleString()
+                                : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -1140,73 +1118,54 @@ export default function Reports() {
                       <TableRow>
                         <TableHead>Project Name</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Completed / Active Users</TableHead>
                         <TableHead>Progress</TableHead>
-                        <TableHead>Efficiency</TableHead>
                         <TableHead>Completion</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {projectPerformanceData.map((project, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {project.name}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                project.status === "completed"
-                                  ? "default"
-                                  : project.status === "active"
+                      {(projectOverview || []).map(
+                        (project: any, index: number) => (
+                          <TableRow key={project.id || index}>
+                            <TableCell className="font-medium">
+                              {project.name}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  project.status === "on track"
                                     ? "secondary"
                                     : "outline"
-                              }
-                            >
-                              {project.status.toUpperCase()}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span>
-                                  {project.completed.toLocaleString()}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  / {project.target.toLocaleString()}
-                                </span>
-                              </div>
-                              <Progress
-                                value={
-                                  (project.completed / project.target) * 100
                                 }
+                              >
+                                {project.status.toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span>
+                                    {(project.completed ?? 0).toLocaleString()}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    Active Users: {project.activeUsers ?? 0}
+                                  </span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Progress
+                                value={project.completed > 0 ? 100 : 0}
                               />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div
-                              className={`font-medium ${
-                                project.efficiency >= 100
-                                  ? "text-green-600"
-                                  : project.efficiency >= 80
-                                    ? "text-blue-600"
-                                    : project.efficiency >= 60
-                                      ? "text-orange-600"
-                                      : "text-red-600"
-                              }`}
-                            >
-                              {project.efficiency}%
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {(
-                                (project.completed / project.target) *
-                                100
-                              ).toFixed(1)}
-                              %
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {project.completed > 0 ? "100%" : "0%"}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -1221,7 +1180,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={projectPerformanceData}>
+                    <BarChart data={projectOverview}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />

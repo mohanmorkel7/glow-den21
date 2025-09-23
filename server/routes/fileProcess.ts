@@ -1004,18 +1004,45 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
 
         const dateStr = now.substring(0, 10);
         if (r.project_id) {
-          await client.query(
-            `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id)
-             VALUES ($1,$2,$3,0,$4,'rejected',$5,CURRENT_TIMESTAMP,$6)`,
-            [
-              r.user_id,
-              r.project_id,
-              dateStr,
-              Number(r.assigned_count || 0),
-              notes || "Rework required",
-              currentUser?.id || null,
-            ],
+          const existing = await client.query(
+            `SELECT id, submitted_count FROM daily_counts WHERE user_id = $1 AND project_id = $2 AND date = $3`,
+            [r.user_id, r.project_id, dateStr],
           );
+          if (existing.rows.length) {
+            const dc = existing.rows[0];
+            await client.query(
+              `UPDATE daily_counts
+                 SET submitted_count = $1,
+                     status = 'rejected',
+                     notes = COALESCE($2, notes),
+                     rejection_reason = COALESCE($3, rejection_reason),
+                     approved_by_user_id = $4,
+                     approved_at = CURRENT_TIMESTAMP,
+                     updated_at = CURRENT_TIMESTAMP
+               WHERE id = $5`,
+              [
+                Number(dc.submitted_count || 0) + Number(r.assigned_count || 0),
+                notes || null,
+                notes || "Rework required",
+                currentUser?.id || null,
+                dc.id,
+              ],
+            );
+          } else {
+            await client.query(
+              `INSERT INTO daily_counts (user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id, rejection_reason)
+               VALUES ($1,$2,$3,0,$4,'rejected',$5,CURRENT_TIMESTAMP,$6,$7)`,
+              [
+                r.user_id,
+                r.project_id,
+                dateStr,
+                Number(r.assigned_count || 0),
+                notes || "Rework required",
+                currentUser?.id || null,
+                notes || "Rework required",
+              ],
+            );
+          }
         }
       });
     }
