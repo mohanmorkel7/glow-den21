@@ -1168,12 +1168,12 @@ export default function Reports() {
                             <TableCell>
                               <Badge
                                 variant={
-                                  project.status === "on track"
+                                  String(project.status || "").toLowerCase() === "on track"
                                     ? "secondary"
                                     : "outline"
                                 }
                               >
-                                {project.status.toUpperCase()}
+                                {project.status ? String(project.status).toUpperCase() : "-"}
                               </Badge>
                             </TableCell>
                             <TableCell>
