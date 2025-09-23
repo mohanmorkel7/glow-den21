@@ -666,14 +666,31 @@ export const downloadAssignedSlice: RequestHandler = async (req, res) => {
     }
 
     const procDir = path.join(STORAGE_ROOT, r.file_process_id);
-    const srcPath = path.join(procDir, r.file_name);
+    let srcPath = path.join(procDir, r.file_name);
     if (!fs.existsSync(srcPath)) {
-      return res.status(404).json({
-        error: {
-          code: "SOURCE_NOT_FOUND",
-          message: "Source file not found on server",
-        },
-      });
+      // Fallback: if configured filename missing on disk, try to find any CSV in the process directory
+      if (fs.existsSync(procDir)) {
+        const files = fs.readdirSync(procDir).filter((f) => f.toLowerCase().endsWith(".csv"));
+        if (files.length > 0) {
+          const fallback = path.join(procDir, files[0]);
+          console.warn(`Source file not found at ${srcPath}, falling back to ${fallback}`);
+          srcPath = fallback;
+        } else {
+          return res.status(404).json({
+            error: {
+              code: "SOURCE_NOT_FOUND",
+              message: "Source file not found on server",
+            },
+          });
+        }
+      } else {
+        return res.status(404).json({
+          error: {
+            code: "SOURCE_NOT_FOUND",
+            message: "Source file not found on server",
+          },
+        });
+      }
     }
 
     const startRow = Number(r.start_row || 0);
