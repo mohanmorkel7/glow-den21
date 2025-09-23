@@ -1307,9 +1307,12 @@ export default function Tutorial() {
                       <h2 className="text-xl font-semibold">
                         {selectedTutorial.title}
                       </h2>
-                      <p className="text-muted-foreground mt-1">
-                        {selectedTutorial.description}
-                      </p>
+                      <div
+                        className="text-muted-foreground mt-1 prose max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeHtml(selectedTutorial.description),
+                        }}
+                      />
                     </div>
                   </CardContent>
                 </Card>
