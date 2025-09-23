@@ -522,6 +522,10 @@ export default function Reports() {
   }, [isAdmin, timePeriod]);
 
   const currentData = serverData ?? getCurrentData();
+  // Project overview fallback (server data may not include project-level info)
+  const projectOverview = (serverData && serverData.length > 0)
+    ? (serverData as any[])
+    : (projectPerformanceData as any[]);
 
   // Calculate current period metrics
   const currentMetrics = isAdmin
