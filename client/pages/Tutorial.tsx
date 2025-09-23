@@ -352,6 +352,31 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       }
     });
 
+    // Unwrap <p> inside <li> (convert <li><p>text</p></li> to <li>text</li>)
+    doc.querySelectorAll("li").forEach((li) => {
+      const ps = Array.from(li.querySelectorAll("p"));
+      if (ps.length) {
+        const combined = ps.map((p) => p.innerHTML).join(" ");
+        // Remove existing children and set innerHTML to combined content
+        li.innerHTML = combined;
+      }
+    });
+
+    // Remove empty <p> elements
+    doc.querySelectorAll("p").forEach((p) => {
+      if ((p.textContent || "").trim() === "") p.remove();
+    });
+
+    // Remove consecutive <br> tags
+    doc.querySelectorAll("br").forEach((br) => {
+      let next = br.nextSibling as Element | null;
+      while (next && next.nodeType === 1 && next.tagName === "BR") {
+        const dup = next as Element;
+        next = dup.nextSibling as Element | null;
+        dup.remove();
+      }
+    });
+
     return doc.body.innerHTML;
   } catch (e) {
     console.warn("sanitizeAndFormatHtml failed", e);
