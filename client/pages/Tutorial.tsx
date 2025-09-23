@@ -52,7 +52,11 @@ const sanitizeHtml = (html: string | undefined | null) => {
     const doc = parser.parseFromString(String(html), "text/html");
     // remove script and style tags
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
-    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, null);
+    const walker = doc.createTreeWalker(
+      doc.body,
+      NodeFilter.SHOW_ELEMENT,
+      null,
+    );
     let node: Node | null = walker.currentNode;
     while ((node = walker.nextNode())) {
       const el = node as Element;
