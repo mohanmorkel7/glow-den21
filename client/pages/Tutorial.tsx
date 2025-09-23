@@ -1174,9 +1174,6 @@ export default function Tutorial() {
                             <Badge variant="secondary">Required</Badge>
                           )}
                         </CardTitle>
-                        <CardDescription className="mt-1">
-                          {stripHtml(tutorial.description)}
-                        </CardDescription>
                       </div>
                       <div className="flex items-center gap-1">
                         <Badge
