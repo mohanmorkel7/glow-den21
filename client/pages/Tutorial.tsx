@@ -134,12 +134,26 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
     doc.querySelectorAll("*").forEach((el) => {
       Array.from(el.attributes).forEach((a) => {
-        if (a.name.startsWith("data-") || /^on/i.test(a.name)) el.removeAttribute(a.name);
+        if (a.name.startsWith("data-") || /^on/i.test(a.name))
+          el.removeAttribute(a.name);
       });
     });
 
     // Remove stray <br> tags that were inserted between blocks or as direct body children
-    const blockTags = new Set(["P", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "LI", "HR", "DIV"]);
+    const blockTags = new Set([
+      "P",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "UL",
+      "OL",
+      "LI",
+      "HR",
+      "DIV",
+    ]);
     doc.querySelectorAll("br").forEach((br) => {
       const parent = br.parentElement;
       if (!parent) {
@@ -152,8 +166,10 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       }
       const prev = br.previousSibling;
       const next = br.nextSibling;
-      const prevIsBlock = prev && prev.nodeType === 1 && blockTags.has((prev as Element).tagName);
-      const nextIsBlock = next && next.nodeType === 1 && blockTags.has((next as Element).tagName);
+      const prevIsBlock =
+        prev && prev.nodeType === 1 && blockTags.has((prev as Element).tagName);
+      const nextIsBlock =
+        next && next.nodeType === 1 && blockTags.has((next as Element).tagName);
       if (prevIsBlock || nextIsBlock) {
         br.remove();
         return;
