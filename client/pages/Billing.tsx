@@ -560,15 +560,19 @@ export default function Billing() {
     month?: string,
   ) => {
     try {
-      const blob = await apiClient.exportBilling(format, month, usdToInrRate);
+      const { blob, filename } = await apiClient.exportBilling(
+        format,
+        month,
+        usdToInrRate,
+      );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `billing_${month || "summary"}.${format === "excel" ? "xlsx" : format === "pdf" ? "pdf" : "csv"}`;
+      a.download = filename || `billing_${month || "summary"}.${format === "excel" ? "xlsx" : format === "pdf" ? "pdf" : "csv"}`;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
       console.error("Export failed", e);
     }
