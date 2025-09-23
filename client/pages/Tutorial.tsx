@@ -382,16 +382,24 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
     doc.querySelectorAll("p").forEach((p) => {
       const html = p.innerHTML || "";
       // Split on <br> tags (handle variations) and also on LF if present
-      const parts = html.split(/<br\s*\/?\s*>|\r?\n/).map((s) => s.trim()).filter(Boolean);
+      const parts = html
+        .split(/<br\s*\/?\s*>|\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (parts.length <= 1) return;
 
       // If most lines look like bullets or start with bullet markers, convert to <ul>
-      const bulletLikeCount = parts.filter((line) => /^[-*•\u2022\u25E6\u25CF]\s*/.test(line) || /^\d+\.\s*/.test(line)).length;
+      const bulletLikeCount = parts.filter(
+        (line) =>
+          /^[-*•\u2022\u25E6\u25CF]\s*/.test(line) || /^\d+\.\s*/.test(line),
+      ).length;
       if (bulletLikeCount >= Math.ceil(parts.length / 2)) {
         const lis: string[] = [];
         parts.forEach((line) => {
           // remove numeric prefix or bullet markers
-          const cleaned = line.replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "").trim();
+          const cleaned = line
+            .replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "")
+            .trim();
           lis.push(`<li>${escapeHtml(cleaned)}</li>`);
         });
         const ul = doc.createElement("ul");
@@ -402,7 +410,9 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
 
       // If first part looks like a heading and following parts are short, treat as heading + list
       const first = parts[0];
-      const headingMatch = first.match(/^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u);
+      const headingMatch = first.match(
+        /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u,
+      );
       if (headingMatch && parts.length > 1) {
         const title = headingMatch[2] || first;
         const h = doc.createElement("h3");
@@ -410,7 +420,9 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
         h.innerHTML = `<strong>${escapeHtml(title)}</strong>`;
         const items: string[] = [];
         for (let idx = 1; idx < parts.length; idx++) {
-          const line = parts[idx].replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "").trim();
+          const line = parts[idx]
+            .replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "")
+            .trim();
           if (line) items.push(`<li>${escapeHtml(line)}</li>`);
         }
         if (items.length) {
