@@ -94,55 +94,6 @@ interface DailyStats {
   totalAssigned: number;
 }
 
-const mockFileRequests: FileRequest[] = [
-  {
-    id: "1",
-    userId: "3",
-    userName: "Sarah Johnson",
-    requestedCount: 1000,
-    requestedDate: "2024-01-20T10:30:00Z",
-    status: "assigned",
-    fileProcessId: "fp_1",
-    fileProcessName: "Aug-2025-File",
-    assignedBy: "John Smith",
-    assignedDate: "2024-01-20T11:00:00Z",
-    downloadLink: "/downloads/sarah_johnson_aug_2025_1001_2000.csv",
-    startRow: 1001,
-    endRow: 2000,
-  },
-  {
-    id: "2",
-    userId: "3",
-    userName: "Sarah Johnson",
-    requestedCount: 800,
-    requestedDate: "2024-01-19T14:20:00Z",
-    status: "completed",
-    fileProcessId: "fp_1",
-    fileProcessName: "Aug-2025-File",
-    assignedBy: "Emily Wilson",
-    assignedDate: "2024-01-19T15:00:00Z",
-    downloadLink: "/downloads/sarah_johnson_aug_2025_1_800.csv",
-    completedDate: "2024-01-19T18:30:00Z",
-    startRow: 1,
-    endRow: 800,
-  },
-  {
-    id: "3",
-    userId: "3",
-    userName: "Sarah Johnson",
-    requestedCount: 1200,
-    requestedDate: "2024-01-18T09:15:00Z",
-    status: "in_progress",
-    fileProcessId: "fp_1",
-    fileProcessName: "Aug-2025-File",
-    assignedBy: "John Smith",
-    assignedDate: "2024-01-18T10:00:00Z",
-    downloadLink: "/downloads/sarah_johnson_aug_2025_2001_3200.csv",
-    startRow: 2001,
-    endRow: 3200,
-  },
-];
-
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
@@ -232,6 +183,7 @@ export default function RequestFiles() {
 
           const [todayResp, monthResp] = await Promise.all([
             apiClient.getDailyCounts({
+              userId: currentUser.id,
               from: todayStr,
               to: todayStr,
               status: "approved",
@@ -239,6 +191,7 @@ export default function RequestFiles() {
               limit: 1000,
             }),
             apiClient.getDailyCounts({
+              userId: currentUser.id,
               from: monthStartStr,
               to: todayStr,
               status: "approved",
@@ -285,6 +238,7 @@ export default function RequestFiles() {
             fourteenStart.setDate(fourteenStart.getDate() - 13);
             const from14 = fourteenStart.toISOString().slice(0, 10);
             const resp14 = await apiClient.getDailyCounts({
+              userId: currentUser.id,
               from: from14,
               to: todayStr,
               status: "approved",
@@ -293,12 +247,28 @@ export default function RequestFiles() {
             });
             const list14: any[] = extract(resp14);
             const byDate = new Map<string, number>();
-            for (const dc of list14) {
-              const date = (dc.date || "").slice(0, 10);
-              const submitted = Number(
-                dc.submittedCount ?? dc.submitted_count ?? 0,
-              );
-              byDate.set(date, (byDate.get(date) || 0) + submitted);
+            if (list14.length > 0) {
+              for (const dc of list14) {
+                const date = (dc.date || "").slice(0, 10);
+                const submitted = Number(
+                  dc.submittedCount ?? dc.submitted_count ?? 0,
+                );
+                byDate.set(date, (byDate.get(date) || 0) + submitted);
+              }
+            } else {
+              // Fallback: derive per-day from user's completed requests
+              for (const r of userList) {
+                if (r.status === "completed" || r.status === "verified") {
+                  const cd = r.completedDate ? new Date(r.completedDate) : null;
+                  if (cd) {
+                    const key = cd.toISOString().slice(0, 10);
+                    const count = Number(
+                      r.assignedCount || r.requestedCount || 0,
+                    );
+                    byDate.set(key, (byDate.get(key) || 0) + count);
+                  }
+                }
+              }
             }
             const statsArr: DailyStats[] = [];
             for (
@@ -313,7 +283,6 @@ export default function RequestFiles() {
                 totalAssigned: 0,
               });
             }
-            // Most recent first
             statsArr.sort((a, b) => b.date.localeCompare(a.date));
             setDailyStats(statsArr);
           } catch (e) {

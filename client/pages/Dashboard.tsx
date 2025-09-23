@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3,
@@ -86,6 +85,16 @@ export default function Dashboard() {
   const [fileProcesses, setFileProcesses] = React.useState<any[]>([]);
   const [usersTotal, setUsersTotal] = React.useState<number | null>(null);
   const [billingSummary, setBillingSummary] = React.useState<any | null>(null);
+
+  // Admin analytics states (live data)
+  const [profitLoss, setProfitLoss] = React.useState<any[]>([]); // last 6 months
+  const [expenseAnalytics, setExpenseAnalytics] = React.useState<any | null>(
+    null,
+  );
+  const [adminTrends, setAdminTrends] = React.useState<
+    { day: string; manual: number; automation: number; total: number }[]
+  >([]);
+  const [alerts, setAlerts] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     const load = async () => {
@@ -168,30 +177,53 @@ export default function Dashboard() {
           } catch (e) {
             setBillingSummary(null);
           }
+
+          // Admin-only analytics
+          try {
+            const [pl, ea] = await Promise.all([
+              apiClient.getExpenseProfitLoss(),
+              apiClient.getExpenseAnalyticsDashboard(),
+            ]);
+            setProfitLoss((Array.isArray(pl) ? pl : []) as any[]);
+            setExpenseAnalytics(ea as any);
+          } catch (e) {
+            console.warn("Failed to load financial analytics", e);
+          }
+          try {
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - 6);
+            const to = end.toISOString().slice(0, 10);
+            const from = start.toISOString().slice(0, 10);
+            const trend: any[] = (await apiClient.getProductivityTrend({
+              from,
+              to,
+              groupBy: "day",
+            })) as any[];
+            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const mapped = (Array.isArray(trend) ? trend : []).map((d: any) => {
+              const dt = new Date(d.date);
+              const label = days[dt.getDay()];
+              const manual = Number(d.manual || 0);
+              const automation = Number(d.automation || 0);
+              const total = Number(d.actual || manual + automation || 0);
+              return { day: label, manual, automation, total };
+            });
+            setAdminTrends(mapped);
+          } catch (e) {
+            console.warn("Failed to load org trends", e);
+          }
+          try {
+            const recents = await apiClient.getRecentAlerts(10);
+            setAlerts((Array.isArray(recents) ? recents : []) as any[]);
+          } catch (e) {
+            setAlerts([]);
+          }
         }
       }
     };
     load();
   }, [user.id, user.role]);
-
-  // Admin dashboard data
-  const dashboardStats = {
-    totalProjects: 8,
-    activeUsers: 45,
-    todayTargetFiles: 125000,
-    todayCompletedFiles: 108500,
-    totalEarningsUSD: 65420.5,
-    totalEarningsINR: 5429881.5,
-    pendingApprovals: 12,
-  };
-
-  const formatCurrency = (amount: number, currency: "USD" | "INR") => {
-    if (currency === "USD") {
-      return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-    } else {
-      return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-    }
-  };
 
   // User dashboard: only 7-day chart + own file requests
   if (user.role === "user") {
@@ -462,86 +494,11 @@ export default function Dashboard() {
     );
   }
 
-  // Enhanced mock data for admin dashboard
-  const monthlyPerformanceData = [
-    {
-      month: "Jan",
-      completed: 2450000,
-      target: 2500000,
-      revenue: 98000,
-      efficiency: 98,
-    },
-    {
-      month: "Feb",
-      completed: 2680000,
-      target: 2700000,
-      revenue: 107200,
-      efficiency: 99.3,
-    },
-    {
-      month: "Mar",
-      completed: 2890000,
-      target: 2800000,
-      revenue: 115600,
-      efficiency: 103.2,
-    },
-    {
-      month: "Apr",
-      completed: 2750000,
-      target: 2900000,
-      revenue: 110000,
-      efficiency: 94.8,
-    },
-    {
-      month: "May",
-      completed: 3120000,
-      target: 3000000,
-      revenue: 124800,
-      efficiency: 104,
-    },
-    {
-      month: "Jun",
-      completed: 2980000,
-      target: 3100000,
-      revenue: 119200,
-      efficiency: 96.1,
-    },
-  ];
+  // Render comprehensive admin dashboard with live data
+  const weeklyTotalFiles = adminTrends.reduce((s, d) => s + (d.total || 0), 0);
+  const activeContributors = teamPerformance.length;
+  const latestPL = profitLoss[profitLoss.length - 1] || null;
 
-  const teamPerformanceData = [
-    { name: "Team Alpha", files: 450000, efficiency: 96.5, projects: 3 },
-    { name: "Team Beta", files: 420000, efficiency: 94.2, projects: 2 },
-    { name: "Team Gamma", files: 380000, efficiency: 92.8, projects: 3 },
-    { name: "Team Delta", files: 310000, efficiency: 89.5, projects: 2 },
-    { name: "Team Echo", files: 290000, efficiency: 88.1, projects: 1 },
-  ];
-
-  const projectDistributionData = [
-    { name: "MO Projects", value: 35, files: 1200000, color: "#0088FE" },
-    { name: "Data Entry", value: 25, files: 850000, color: "#00C49F" },
-    { name: "Document Processing", value: 20, files: 680000, color: "#FFBB28" },
-    { name: "Quality Check", value: 12, files: 410000, color: "#FF8042" },
-    { name: "Others", value: 8, files: 270000, color: "#8884D8" },
-  ];
-
-  const dailyTrendsData = [
-    { day: "Mon", files: 18500, users: 42, efficiency: 92.5 },
-    { day: "Tue", files: 19200, users: 44, efficiency: 94.8 },
-    { day: "Wed", files: 17800, users: 41, efficiency: 89.7 },
-    { day: "Thu", files: 20100, users: 45, efficiency: 96.2 },
-    { day: "Fri", files: 19800, users: 43, efficiency: 95.1 },
-    { day: "Sat", files: 16500, users: 38, efficiency: 88.3 },
-    { day: "Sun", files: 15200, users: 35, efficiency: 86.8 },
-  ];
-
-  const revenueData = [
-    { quarter: "Q1", revenue: 320800, expenses: 245600, profit: 75200 },
-    { quarter: "Q2", revenue: 345600, expenses: 258400, profit: 87200 },
-    { quarter: "Q3", revenue: 398200, expenses: 284800, profit: 113400 },
-    { quarter: "Q4", revenue: 412800, expenses: 295200, profit: 117600 },
-  ];
-
-  // Render comprehensive admin dashboard
   return (
     <div className="space-y-6">
       {/* Enhanced Header */}
@@ -600,50 +557,48 @@ export default function Dashboard() {
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Files Completed
+              Files Completed (7 days)
             </CardTitle>
             <FileText className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-600">
-              {billingSummary?.totalFilesCompleted != null
-                ? Number(billingSummary.totalFilesCompleted).toLocaleString()
-                : "-"}
+              {weeklyTotalFiles.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Billing files</p>
+            <p className="text-xs text-muted-foreground">Org total</p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projects</CardTitle>
-            <FolderOpen className="h-4 w-4 text-orange-500" />
+            <CardTitle className="text-sm font-medium">
+              Active Contributors
+            </CardTitle>
+            <Users className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-600">
-              {(billingSummary?.projectsCount ?? 0).toString()}
+              {activeContributors}
             </div>
-            <p className="text-xs text-muted-foreground">In billing summary</p>
+            <p className="text-xs text-muted-foreground">Last 7 days</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Charts and Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Performance Chart */}
+        {/* Monthly Performance Chart (Profit & Loss) */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Monthly Performance Trends
+              Profit & Loss (6 months)
             </CardTitle>
-            <CardDescription>
-              Files processed vs targets over time
-            </CardDescription>
+            <CardDescription>Revenue, expenses and profit</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={monthlyPerformanceData}>
+              <ComposedChart data={profitLoss}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis yAxisId="left" />
@@ -651,66 +606,78 @@ export default function Dashboard() {
                 <Tooltip
                   formatter={(value, name) => [
                     typeof value === "number" ? value.toLocaleString() : value,
-                    name === "completed"
-                      ? "Files Completed"
-                      : name === "target"
-                        ? "Target"
-                        : name === "revenue"
-                          ? "Revenue ($)"
+                    name === "revenue"
+                      ? "Revenue (₹)"
+                      : name === "totalExpense"
+                        ? "Expenses (₹)"
+                        : name === "netProfit"
+                          ? "Net Profit (₹)"
                           : name,
                   ]}
                 />
                 <Legend />
                 <Bar
                   yAxisId="left"
-                  dataKey="completed"
+                  dataKey="revenue"
                   fill="#3b82f6"
-                  name="Completed"
+                  name="Revenue"
                 />
                 <Bar
                   yAxisId="left"
-                  dataKey="target"
-                  fill="#e5e7eb"
-                  name="Target"
+                  dataKey="totalExpense"
+                  fill="#ef4444"
+                  name="Expenses"
                 />
                 <Line
                   yAxisId="right"
                   type="monotone"
-                  dataKey="revenue"
+                  dataKey="netProfit"
                   stroke="#10b981"
                   strokeWidth={3}
-                  name="Revenue"
+                  name="Net Profit"
                 />
               </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Project Distribution Pie Chart */}
+        {/* Expense Distribution Pie Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChart className="h-5 w-5 text-primary" />
-              Project Distribution
+              Expense Distribution (this month)
             </CardTitle>
-            <CardDescription>Current workload by project type</CardDescription>
+            <CardDescription>Breakdown by category</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <RechartsPieChart>
                 <Pie
-                  data={projectDistributionData}
+                  data={expenseAnalytics?.topExpenseCategories || []}
                   cx="50%"
                   cy="50%"
-                  outerRadius={80}
+                  outerRadius={90}
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
+                  label={({ name, value }) =>
+                    `${name}: ${Number(value).toLocaleString()}`
+                  }
                 >
-                  {projectDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
+                  {(expenseAnalytics?.topExpenseCategories || []).map(
+                    (entry: any, index: number) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.fill || "#8884D8"}
+                      />
+                    ),
+                  )}
                 </Pie>
-                <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                <Tooltip
+                  formatter={(value, name) => [
+                    typeof value === "number" ? value.toLocaleString() : value,
+                    name,
+                  ]}
+                />
                 <Legend />
               </RechartsPieChart>
             </ResponsiveContainer>
@@ -725,33 +692,47 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              Team Performance Analysis
+              Team Performance (7 days)
             </CardTitle>
             <CardDescription>
               Current team productivity and efficiency metrics
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={teamPerformanceData} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={80} />
-                <Tooltip
-                  formatter={(value, name) => [
-                    typeof value === "number" ? value.toLocaleString() : value,
-                    name === "files"
-                      ? "Files Processed"
-                      : name === "efficiency"
-                        ? "Efficiency (%)"
-                        : name,
-                  ]}
-                />
-                <Legend />
-                <Bar dataKey="files" fill="#3b82f6" name="Files Processed" />
-                <Bar dataKey="efficiency" fill="#10b981" name="Efficiency %" />
-              </BarChart>
-            </ResponsiveContainer>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead className="text-right">Submitted</TableHead>
+                  <TableHead className="text-right">
+                    Completed Requests
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(teamPerformance as any[]).map((u: any) => (
+                  <TableRow key={u.id}>
+                    <TableCell>{u.name || u.id}</TableCell>
+                    <TableCell className="text-right">
+                      {Number(u.submitted || 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {Number(u.completedRequests || 0).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {teamPerformance.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
+                      No data
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
@@ -770,7 +751,9 @@ export default function Dashboard() {
                   <p className="text-sm font-medium text-blue-900">
                     Total Files
                   </p>
-                  <p className="text-2xl font-bold text-blue-600">127K</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {weeklyTotalFiles.toLocaleString()}
+                  </p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-500" />
               </div>
@@ -778,17 +761,29 @@ export default function Dashboard() {
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium text-green-900">
-                    Avg Efficiency
+                    Net Profit (₹)
                   </p>
-                  <p className="text-2xl font-bold text-green-600">92.1%</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {latestPL
+                      ? Number(latestPL.netProfit || 0).toLocaleString()
+                      : "-"}
+                  </p>
                 </div>
                 <Target className="h-8 w-8 text-green-500" />
               </div>
 
               <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-purple-900">Revenue</p>
-                  <p className="text-2xl font-bold text-purple-600">$45.2K</p>
+                  <p className="text-sm font-medium text-purple-900">
+                    Revenue (₹)
+                  </p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {expenseAnalytics?.currentMonth?.totalRevenue != null
+                      ? Number(
+                          expenseAnalytics.currentMonth.totalRevenue,
+                        ).toLocaleString()
+                      : "-"}
+                  </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-purple-500" />
               </div>
@@ -796,9 +791,11 @@ export default function Dashboard() {
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium text-orange-900">
-                    Active Users
+                    Active Contributors
                   </p>
-                  <p className="text-2xl font-bold text-orange-600">42</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {activeContributors}
+                  </p>
                 </div>
                 <Activity className="h-8 w-8 text-orange-500" />
               </div>
@@ -807,103 +804,59 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Daily Trends and Revenue Analysis */}
+      {/* Daily Trends and Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Daily Trends */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-primary" />
-              Daily Productivity Trends
+              Daily Productivity Trends (7 days)
             </CardTitle>
-            <CardDescription>
-              Week-over-week daily performance patterns
-            </CardDescription>
+            <CardDescription>Manual vs Automation</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={dailyTrendsData}>
+              <AreaChart data={adminTrends}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
                 <YAxis />
                 <Tooltip
                   formatter={(value, name) => [
                     typeof value === "number" ? value.toLocaleString() : value,
-                    name === "files"
-                      ? "Files"
-                      : name === "users"
-                        ? "Active Users"
-                        : name === "efficiency"
-                          ? "Efficiency %"
-                          : name,
+                    name === "manual"
+                      ? "Manual"
+                      : name === "automation"
+                        ? "Automation"
+                        : name,
                   ]}
                 />
                 <Legend />
                 <Area
                   type="monotone"
-                  dataKey="files"
+                  dataKey="manual"
                   stackId="1"
                   stroke="#3b82f6"
                   fill="#3b82f6"
                   fillOpacity={0.6}
-                  name="Files"
+                  name="Manual"
                 />
                 <Area
                   type="monotone"
-                  dataKey="efficiency"
-                  stackId="2"
+                  dataKey="automation"
+                  stackId="1"
                   stroke="#10b981"
                   fill="#10b981"
                   fillOpacity={0.4}
-                  name="Efficiency %"
+                  name="Automation"
                 />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Revenue Analysis */}
+        {/* Real-time Alerts */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
-              Revenue & Profit Analysis
-            </CardTitle>
-            <CardDescription>
-              Quarterly financial performance breakdown
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="quarter" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value, name) => [
-                    `$${typeof value === "number" ? value.toLocaleString() : value}`,
-                    name === "revenue"
-                      ? "Revenue"
-                      : name === "expenses"
-                        ? "Expenses"
-                        : name === "profit"
-                          ? "Profit"
-                          : name,
-                  ]}
-                />
-                <Legend />
-                <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" />
-                <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
-                <Bar dataKey="profit" fill="#10b981" name="Profit" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Real-time Alerts and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -912,147 +865,133 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-red-900">
-                    Critical: Server Load High
-                  </p>
-                  <p className="text-xs text-red-700">
-                    Processing server at 89% capacity - consider load balancing
-                  </p>
+              {alerts.map((a: any, idx: number) => (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-3 p-4 rounded-lg border ${a.type === "error" ? "bg-red-50 border-red-200" : a.type === "warning" ? "bg-yellow-50 border-yellow-200" : "bg-blue-50 border-blue-200"}`}
+                >
+                  {a.type === "error" ? (
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                  ) : a.type === "warning" ? (
+                    <Timer className="h-5 w-5 text-yellow-600" />
+                  ) : (
+                    <Users className="h-5 w-5 text-blue-600" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      {a.title || a.message || "Alert"}
+                    </p>
+                    {a.description && (
+                      <p className="text-xs text-muted-foreground">
+                        {a.description}
+                      </p>
+                    )}
+                  </div>
+                  {a.time && (
+                    <span className="text-xs text-muted-foreground">
+                      {a.time}
+                    </span>
+                  )}
                 </div>
-                <span className="text-xs text-red-600">2 min ago</span>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <Timer className="h-5 w-5 text-yellow-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-yellow-900">
-                    Daily Target Alert
-                  </p>
-                  <p className="text-xs text-yellow-700">
-                    3 teams are 15% below daily processing targets
-                  </p>
-                </div>
-                <span className="text-xs text-yellow-600">15 min ago</span>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-green-900">
-                    Milestone Achieved
-                  </p>
-                  <p className="text-xs text-green-700">
-                    Project Alpha reached 500K files processed milestone
-                  </p>
-                </div>
-                <span className="text-xs text-green-600">1 hour ago</span>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <Users className="h-5 w-5 text-blue-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900">
-                    New Team Member
-                  </p>
-                  <p className="text-xs text-blue-700">
-                    Sarah Johnson joined Team Beta - pending orientation
-                  </p>
-                </div>
-                <span className="text-xs text-blue-600">3 hours ago</span>
-              </div>
+              ))}
+              {alerts.length === 0 && (
+                <div className="text-sm text-muted-foreground">No alerts</div>
+              )}
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <Button
-                className="w-full justify-start hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "Navigating to User Management",
-                    description:
-                      "Opening team and user management interface...",
-                  });
-                  navigate("/users");
-                }}
-              >
-                <Users className="h-4 w-4 mr-2" />
-                Manage Teams
-              </Button>
-              <Button
-                className="w-full justify-start hover:bg-green-50 hover:border-green-300 transition-colors"
-                variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "Opening Project Management",
-                    description:
-                      "Accessing project overview and management tools...",
-                  });
-                  navigate("/projects");
-                }}
-              >
-                <FolderOpen className="h-4 w-4 mr-2" />
-                View Projects
-              </Button>
-              <Button
-                className="w-full justify-start hover:bg-purple-50 hover:border-purple-300 transition-colors"
-                variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "Opening Reports & Analytics",
-                    description: "Loading comprehensive business reports...",
-                  });
-                  navigate("/reports");
-                }}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Generate Reports
-              </Button>
-              <Button
-                className="w-full justify-start hover:bg-orange-50 hover:border-orange-300 transition-colors"
-                variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "Opening File Process Management",
-                    description:
-                      "Accessing target settings and file processing controls...",
-                  });
-                  navigate("/file-process");
-                }}
-              >
-                <Target className="h-4 w-4 mr-2" />
-                Set Targets
-              </Button>
-              <Button
-                className="w-full justify-start hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
-                variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "Advanced Analytics",
-                    description:
-                      "Opening detailed performance analytics dashboard...",
-                  });
-                  navigate("/reports");
-                }}
-              >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                View Analytics
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button
+                  className="w-full justify-start hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Navigating to User Management",
+                      description:
+                        "Opening team and user management interface...",
+                    });
+                    navigate("/users");
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Manage Teams
+                </Button>
+                <Button
+                  className="w-full justify-start hover:bg-green-50 hover:border-green-300 transition-colors"
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Opening Project Management",
+                      description:
+                        "Accessing project overview and management tools...",
+                    });
+                    navigate("/projects");
+                  }}
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  View Projects
+                </Button>
+                <Button
+                  className="w-full justify-start hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Opening Reports & Analytics",
+                      description: "Loading comprehensive business reports...",
+                    });
+                    navigate("/reports");
+                  }}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Generate Reports
+                </Button>
+                <Button
+                  className="w-full justify-start hover:bg-orange-50 hover:border-orange-300 transition-colors"
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Opening File Process Management",
+                      description:
+                        "Accessing target settings and file processing controls...",
+                    });
+                    navigate("/file-process");
+                  }}
+                >
+                  <Target className="h-4 w-4 mr-2" />
+                  Set Targets
+                </Button>
+                <Button
+                  className="w-full justify-start hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+                  variant="outline"
+                  onClick={() => {
+                    toast({
+                      title: "Advanced Analytics",
+                      description:
+                        "Opening detailed performance analytics dashboard...",
+                    });
+                    navigate("/reports");
+                  }}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Analytics
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
