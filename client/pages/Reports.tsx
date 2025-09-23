@@ -1221,7 +1221,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={projectPerformanceData}>
+                    <BarChart data={projectOverview}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis />
