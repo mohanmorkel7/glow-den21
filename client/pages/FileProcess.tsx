@@ -2819,7 +2819,8 @@ export default function FileProcess() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  {(request.downloadLink || (request.startRow && request.endRow)) && (
+                                  {(request.downloadLink ||
+                                    (request.startRow && request.endRow)) && (
                                     <Button
                                       size="sm"
                                       variant="outline"
