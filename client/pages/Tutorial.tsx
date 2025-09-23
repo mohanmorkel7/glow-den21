@@ -460,8 +460,9 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       // Otherwise, keep as-is (multiple lines in a paragraph). Do not remove meaningful <br> here.
     });
 
-    // After converting br-separated paragraphs into proper lists/headings, remove remaining stray <br> children of body
-    doc.body.querySelectorAll(":scope > br").forEach((br) => br.remove());
+    // After converting br-separated paragraphs into proper lists/headings, remove any remaining <br> elements anywhere in the document
+    // This final aggressive pass ensures no <br> tags are left in the UI output
+    doc.querySelectorAll("br").forEach((br) => br.remove());
 
     return doc.body.innerHTML;
   } catch (e) {
