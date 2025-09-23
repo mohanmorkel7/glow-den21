@@ -1023,7 +1023,7 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
               [
                 Number(dc.submitted_count || 0) + Number(r.assigned_count || 0),
                 notes || null,
-                notes || 'Rework required',
+                notes || "Rework required",
                 currentUser?.id || null,
                 dc.id,
               ],
@@ -1037,9 +1037,9 @@ export const verifyCompletedRequest: RequestHandler = async (req, res) => {
                 r.project_id,
                 dateStr,
                 Number(r.assigned_count || 0),
-                notes || 'Rework required',
+                notes || "Rework required",
                 currentUser?.id || null,
-                notes || 'Rework required',
+                notes || "Rework required",
               ],
             );
           }
