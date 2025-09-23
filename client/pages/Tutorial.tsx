@@ -2514,17 +2514,14 @@ export default function Tutorial() {
 
               <div className="mt-4">
                 <Label>Description (optional)</Label>
-                <Textarea
-                  placeholder="Enter a brief description"
+                <RichTextEditor
                   value={(videoUpload as any).description || ""}
-                  onChange={(e) =>
-                    setVideoUpload({
-                      ...videoUpload,
-                      description: e.target.value,
-                    })
+                  onChange={(val) =>
+                    setVideoUpload({ ...videoUpload, description: val })
                   }
-                  rows={3}
-                  disabled={videoUpload.isUploading}
+                  placeholder="Enter a brief description"
+                  readOnly={videoUpload.isUploading}
+                  className="min-h-[120px]"
                 />
               </div>
             </div>
