@@ -128,7 +128,9 @@
 
   .prose strong,
   .prose b {
-    @apply font-semibold;
+    /* Use explicit font-weight to ensure bold displays across fonts */
+    font-weight: 700;
+    font-weight: bolder;
   }
 
   .prose ul,
