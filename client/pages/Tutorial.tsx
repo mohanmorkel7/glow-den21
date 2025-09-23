@@ -136,8 +136,14 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
     // If parsed document body has no element children but contains escaped HTML
     // (e.g. the input was wrapped in a <p> with literal "&lt;div...&gt;"), try decoding the
     // body text and reparsing so the contained HTML structures are recognized.
-    const bodyText = (doc.body && doc.body.textContent) ? doc.body.textContent.trim() : "";
-    if ((doc.body.children.length === 0 || doc.body.children.length === 1 && doc.body.children[0].tagName === 'P') && /^\s*(?:&lt;|<)/.test(bodyText)) {
+    const bodyText =
+      doc.body && doc.body.textContent ? doc.body.textContent.trim() : "";
+    if (
+      (doc.body.children.length === 0 ||
+        (doc.body.children.length === 1 &&
+          doc.body.children[0].tagName === "P")) &&
+      /^\s*(?:&lt;|<)/.test(bodyText)
+    ) {
       const decoder = document.createElement("div");
       decoder.innerHTML = bodyText;
       const redecoded = decoder.textContent || decoder.innerText || bodyText;
