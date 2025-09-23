@@ -377,6 +377,9 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       }
     });
 
+    // Final pass: remove any remaining <br> elements to avoid inline breaks in UI
+    doc.querySelectorAll("br").forEach((br) => br.remove());
+
     return doc.body.innerHTML;
   } catch (e) {
     console.warn("sanitizeAndFormatHtml failed", e);
