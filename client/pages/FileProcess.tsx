@@ -1962,7 +1962,7 @@ export default function FileProcess() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
                 {fileProcesses.map((process) => {
                   const progress =
                     process.totalRows > 0
@@ -1976,9 +1976,9 @@ export default function FileProcess() {
                   return (
                     <Card
                       key={process.id}
-                      className="hover:shadow-md transition-shadow"
+                      className="hover:shadow-md transition-shadow h-full flex flex-col"
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-4 flex-1 flex flex-col">
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2">
@@ -1986,18 +1986,22 @@ export default function FileProcess() {
                               {process.type === "automation" ? (
                                 <Badge
                                   variant="outline"
-                                  className="text-purple-600 border-purple-300"
+                                  className="flex items-center gap-1 text-purple-600 border-purple-300"
                                 >
-                                  <Bot className="h-3 w-3 mr-1" />
-                                  AUTO
+                                  <Bot className="h-4 w-4" />
+                                  <span className="text-xs font-medium">
+                                    Auto
+                                  </span>
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-blue-600 border-blue-300"
+                                  className="flex items-center gap-1 text-blue-600 border-blue-300"
                                 >
-                                  <User className="h-3 w-3 mr-1" />
-                                  MANUAL
+                                  <User className="h-4 w-4" />
+                                  <span className="text-xs font-medium">
+                                    Manual
+                                  </span>
                                 </Badge>
                               )}
                             </div>
@@ -2078,23 +2082,26 @@ export default function FileProcess() {
                               <span>Progress</span>
                               <span>{progress.toFixed(1)}%</span>
                             </div>
-                            <Progress value={progress} className="h-2" />
+                            <Progress
+                              value={progress}
+                              className="h-3 rounded"
+                            />
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
+                            <div className="p-3 bg-white border rounded text-center shadow-sm">
                               <div className="text-xs text-muted-foreground">
                                 Processed
                               </div>
-                              <div className="font-medium text-green-600">
+                              <div className="font-medium text-green-600 mt-1">
                                 {process.processedRows.toLocaleString()}
                               </div>
                             </div>
-                            <div>
+                            <div className="p-3 bg-white border rounded text-center shadow-sm">
                               <div className="text-xs text-muted-foreground">
                                 Available
                               </div>
-                              <div className="font-medium text-blue-600">
+                              <div className="font-medium text-blue-600 mt-1">
                                 {process.availableRows.toLocaleString()}
                               </div>
                             </div>
@@ -2128,20 +2135,20 @@ export default function FileProcess() {
                             )}
 
                           {/* User Status Counts */}
-                          <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div className="text-center p-2 bg-green-50 rounded">
+                          <div className="grid grid-cols-3 gap-3 text-xs">
+                            <div className="flex flex-col items-center justify-center p-2 bg-green-50 rounded min-h-[56px]">
                               <div className="font-medium text-green-600">
                                 {statusCounts.completed}
                               </div>
                               <div className="text-green-700">Completed</div>
                             </div>
-                            <div className="text-center p-2 bg-orange-50 rounded">
+                            <div className="flex flex-col items-center justify-center p-2 bg-orange-50 rounded min-h-[56px]">
                               <div className="font-medium text-orange-600">
                                 {statusCounts.inProgress}
                               </div>
                               <div className="text-orange-700">In Progress</div>
                             </div>
-                            <div className="text-center p-2 bg-yellow-50 rounded">
+                            <div className="flex flex-col items-center justify-center p-2 bg-yellow-50 rounded min-h-[56px]">
                               <div className="font-medium text-yellow-600">
                                 {statusCounts.pending + statusCounts.assigned}
                               </div>
@@ -2826,22 +2833,90 @@ export default function FileProcess() {
                                       variant="outline"
                                       onClick={async () => {
                                         try {
-                                          const { blob, filename } =
-                                            await apiClient.downloadFileRequest(
-                                              request.id,
+                                          const dl =
+                                            (request as any).downloadLink ||
+                                            (request as any).download_link ||
+                                            "";
+                                          if (dl) {
+                                            if (/^https?:/i.test(dl)) {
+                                              window.open(
+                                                dl,
+                                                "_blank",
+                                                "noopener",
+                                              );
+                                            } else {
+                                              const token =
+                                                localStorage.getItem(
+                                                  "authToken",
+                                                );
+                                              const apiPath = dl.startsWith(
+                                                "/api/",
+                                              )
+                                                ? dl
+                                                : `/api${dl.startsWith("/") ? "" : "/"}${dl}`;
+                                              const resp = await fetch(
+                                                apiPath,
+                                                {
+                                                  headers: token
+                                                    ? {
+                                                        Authorization: `Bearer ${token}`,
+                                                      }
+                                                    : {},
+                                                },
+                                              );
+                                              if (!resp.ok) {
+                                                const text = await resp
+                                                  .text()
+                                                  .catch(() => resp.statusText);
+                                                throw new Error(
+                                                  text ||
+                                                    `Download failed (${resp.status})`,
+                                                );
+                                              }
+                                              const cd =
+                                                resp.headers.get(
+                                                  "Content-Disposition",
+                                                ) || "";
+                                              const match = cd.match(
+                                                /filename=\"?([^\";]+)\"?/i,
+                                              );
+                                              const filename = match
+                                                ? match[1]
+                                                : `request_${request.id}.csv`;
+                                              const blob = await resp.blob();
+                                              const url =
+                                                URL.createObjectURL(blob);
+                                              const link =
+                                                document.createElement("a");
+                                              link.href = url;
+                                              link.download = filename;
+                                              document.body.appendChild(link);
+                                              link.click();
+                                              link.remove();
+                                              setTimeout(
+                                                () => URL.revokeObjectURL(url),
+                                                1000,
+                                              );
+                                            }
+                                          } else {
+                                            const { blob, filename } =
+                                              await apiClient.downloadFileRequest(
+                                                request.id,
+                                              );
+                                            const url =
+                                              URL.createObjectURL(blob);
+                                            const link =
+                                              document.createElement("a");
+                                            link.href = url;
+                                            link.download = filename;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            link.remove();
+                                            setTimeout(
+                                              () => URL.revokeObjectURL(url),
+                                              1000,
                                             );
-                                          const url = URL.createObjectURL(blob);
-                                          const link =
-                                            document.createElement("a");
-                                          link.href = url;
-                                          link.download = filename;
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          link.remove();
-                                          setTimeout(
-                                            () => URL.revokeObjectURL(url),
-                                            1000,
-                                          );
+                                          }
                                         } catch (e: any) {
                                           const msg =
                                             (e && e.message) ||

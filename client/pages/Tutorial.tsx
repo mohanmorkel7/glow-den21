@@ -43,6 +43,439 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
+
+// Sanitize HTML by decoding entities, removing data-* attributes and script/style tags
+// Also preserves plain-text newlines by converting them into paragraphs or <br />
+const sanitizeHtml = (html: string | undefined | null) => {
+  if (!html) return "";
+  try {
+    // Decode HTML entities first in case content is escaped (e.g. &lt;h3&gt;...)
+    const decoder = document.createElement("div");
+    decoder.innerHTML = String(html);
+    const decoded = decoder.textContent || decoder.innerText || String(html);
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(decoded, "text/html");
+
+    // remove script and style tags
+    doc.querySelectorAll("script,style").forEach((el) => el.remove());
+
+    // Remove data-* attributes, inline event handlers and inline styles from all elements
+    const all = doc.querySelectorAll("*");
+    all.forEach((el) => {
+      Array.from(el.attributes).forEach((a) => {
+        if (a.name.startsWith("data-")) el.removeAttribute(a.name);
+        if (/^on/i.test(a.name)) el.removeAttribute(a.name);
+        if (a.name === "style") el.removeAttribute(a.name);
+      });
+    });
+
+    // If the user entered plain text with newlines (no tags), convert into paragraphs
+    const bodyHTML = doc.body.innerHTML.trim();
+    const looksLikeHtmlTag = /<\s*[a-zA-Z][^>]*>/m.test(bodyHTML);
+    if (!looksLikeHtmlTag) {
+      // Split on double newlines for paragraphs, single newline -> <br>
+      const paragraphs = decoded
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .map((p) => `<p>${p.replace(/\n/g, "<br />")}</p>`)
+        .join("\n");
+      return paragraphs;
+    }
+
+    // For mixed HTML where some text nodes include newlines, replace \n in text nodes with <br>
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+    const textNodes: Node[] = [];
+    let n: Node | null = walker.nextNode();
+    while (n) {
+      textNodes.push(n);
+      n = walker.nextNode();
+    }
+
+    textNodes.forEach((tn) => {
+      if (tn.nodeValue && tn.nodeValue.indexOf("\n") !== -1) {
+        const parent = tn.parentNode as Element | null;
+        if (!parent) return;
+        const parts = (tn.nodeValue || "").split(/\n+/);
+        const frag = doc.createDocumentFragment();
+        parts.forEach((part, idx) => {
+          frag.appendChild(doc.createTextNode(part));
+          if (idx < parts.length - 1) {
+            frag.appendChild(doc.createElement("br"));
+          }
+        });
+        parent.replaceChild(frag, tn);
+      }
+    });
+
+    return doc.body.innerHTML;
+  } catch (e) {
+    console.warn("sanitizeHtml failed", e);
+    return String(html);
+  }
+};
+
+// Enhanced sanitizer + formatter: preserves HTML, or converts plain text into headings/lists
+const sanitizeAndFormatHtml = (html: string | undefined | null) => {
+  if (!html) return "";
+  try {
+    const input = String(html);
+    // Only decode HTML entities if the input contains escaped entities like &lt; or &gt;
+    // but avoid decoding when the string already contains real HTML tags (we don't want to strip them)
+    const hasLiteralTag = /<\s*[a-zA-Z][^>]*>/m.test(input);
+    const needsDecode = /&lt;|&gt;|&amp;/.test(input) && !hasLiteralTag;
+    let decoded = input;
+    if (needsDecode) {
+      const decoder = document.createElement("div");
+      decoder.innerHTML = input;
+      decoded = decoder.textContent || decoder.innerText || input;
+    }
+    const parser = new DOMParser();
+    let doc = parser.parseFromString(decoded, "text/html");
+
+    // If parsed document body has no element children but contains escaped HTML
+    // (e.g. the input was wrapped in a <p> with literal "&lt;div...&gt;"), try decoding the
+    // body text and reparsing so the contained HTML structures are recognized.
+    const bodyText =
+      doc.body && doc.body.textContent ? doc.body.textContent.trim() : "";
+    if (
+      (doc.body.children.length === 0 ||
+        (doc.body.children.length === 1 &&
+          doc.body.children[0].tagName === "P")) &&
+      /^\s*(?:&lt;|<)/.test(bodyText)
+    ) {
+      const decoder = document.createElement("div");
+      decoder.innerHTML = bodyText;
+      const redecoded = decoder.textContent || decoder.innerText || bodyText;
+      const maybeDoc = parser.parseFromString(redecoded, "text/html");
+      // if reparse yields element children, use it
+      if (maybeDoc.body && maybeDoc.body.children.length > 0) {
+        doc = maybeDoc;
+      }
+    }
+
+    // strip scripts/styles and data-/on*/style attributes
+    doc.querySelectorAll("script,style").forEach((el) => el.remove());
+    doc.querySelectorAll("*").forEach((el) => {
+      Array.from(el.attributes).forEach((a) => {
+        if (
+          a.name.startsWith("data-") ||
+          /^on/i.test(a.name) ||
+          a.name === "style"
+        )
+          el.removeAttribute(a.name);
+      });
+    });
+
+    // Remove stray <br> tags that were inserted between blocks or as direct body children
+    const blockTags = new Set([
+      "P",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "UL",
+      "OL",
+      "LI",
+      "HR",
+      "DIV",
+    ]);
+    doc.querySelectorAll("br").forEach((br) => {
+      const parent = br.parentElement;
+      if (!parent) {
+        br.remove();
+        return;
+      }
+      if (parent.tagName === "BODY") {
+        br.remove();
+        return;
+      }
+      const prev = br.previousSibling;
+      const next = br.nextSibling;
+      const prevIsBlock =
+        prev && prev.nodeType === 1 && blockTags.has((prev as Element).tagName);
+      const nextIsBlock =
+        next && next.nodeType === 1 && blockTags.has((next as Element).tagName);
+      if (prevIsBlock || nextIsBlock) {
+        br.remove();
+        return;
+      }
+      if (parent.tagName === "LI") {
+        br.remove();
+        return;
+      }
+      // collapse consecutive BRs
+      if (next && next.nodeType === 1 && (next as Element).tagName === "BR") {
+        br.remove();
+        return;
+      }
+    });
+
+    const bodyHTML = doc.body.innerHTML.trim();
+    const hasStructural = /<(h[1-6]|ul|ol|li|strong|b|p)\b/i.test(bodyHTML);
+
+    function escapeHtml(str: string) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // If document consists only of <p> children, convert them into semantic blocks
+    const children = Array.from(doc.body.children || []);
+    if (
+      children.length > 0 &&
+      children.every((c) => c.tagName.toLowerCase() === "p")
+    ) {
+      const out: string[] = [];
+      let i = 0;
+      while (i < children.length) {
+        const p = children[i] as HTMLParagraphElement;
+        const text = (p.textContent || "").trim();
+        if (!text) {
+          i++;
+          continue;
+        }
+
+        // Heading pattern: optional emoji(s) then number + dot (e.g. "🏠 1. Title" or "1. Title")
+        const headingMatch = text.match(
+          /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u,
+        );
+        if (headingMatch) {
+          const title = headingMatch[2] || text;
+          out.push(
+            `<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`,
+          );
+          i++;
+          continue;
+        }
+
+        // If this paragraph ends with ':' or contains 'here' intro, treat subsequent short paragraphs as a list
+        const isListIntro =
+          /:\s*$/.test(text) || /here[,\s]+you will see[:]?$/i.test(text);
+        if (isListIntro) {
+          // Start collecting subsequent short paragraphs as list items
+          i++;
+          const items: string[] = [];
+          while (i < children.length) {
+            const nxt = (children[i] as HTMLParagraphElement).textContent || "";
+            const nxtTrim = nxt.trim();
+            if (!nxtTrim) {
+              i++;
+              continue;
+            }
+            // Stop if next paragraph looks like a numbered heading
+            if (
+              /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(
+                nxtTrim,
+              )
+            )
+              break;
+            // Stop if next paragraph is long (> 200 chars) — heuristic
+            if (nxtTrim.length > 200) break;
+            items.push(`<li>${escapeHtml(nxtTrim)}</li>`);
+            i++;
+          }
+          if (items.length > 0) {
+            out.push("<ul>");
+            out.push(...items);
+            out.push("</ul>");
+            continue;
+          }
+          // if no items found, fallthrough to render paragraph
+        }
+
+        // Bullet detection in paragraph
+        if (/^[-*•]\s+/.test(text)) {
+          // collect consecutive bullets
+          out.push("<ul>");
+          while (
+            i < children.length &&
+            /^[-*•]\s+/.test((children[i] as HTMLElement).textContent || "")
+          ) {
+            const t = ((children[i] as HTMLElement).textContent || "")
+              .replace(/^[-*•]\s+/, "")
+              .trim();
+            out.push(`<li>${escapeHtml(t)}</li>`);
+            i++;
+          }
+          out.push("</ul>");
+          continue;
+        }
+
+        // Default paragraph
+        out.push(`<p>${escapeHtml(text)}</p>`);
+        i++;
+      }
+      return out.join("\n");
+    }
+
+    if (!hasStructural) {
+      const lines = decoded
+        .split(/\n+/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+
+      const out: string[] = [];
+      let inList = false;
+      for (const line of lines) {
+        const isNumberHeading =
+          /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(line);
+        const isBullet = /^[-*•]\s+/.test(line);
+        if (isNumberHeading) {
+          if (inList) {
+            out.push("</ul>");
+            inList = false;
+          }
+          const title = line.replace(
+            /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s*/,
+            "",
+          );
+          out.push(
+            `<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`,
+          );
+          continue;
+        }
+        if (isBullet) {
+          if (!inList) {
+            out.push("<ul>");
+            inList = true;
+          }
+          out.push(`<li>${escapeHtml(line.replace(/^[-*•]\s+/, ""))}</li>`);
+          continue;
+        }
+        if (inList) {
+          out.push("</ul>");
+          inList = false;
+        }
+        out.push(`<p>${escapeHtml(line)}</p>`);
+      }
+      if (inList) out.push("</ul>");
+      return out.join("\n");
+    }
+
+    // normalize newlines inside text nodes
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+    const textNodes: Node[] = [];
+    let n: Node | null = walker.nextNode();
+    while (n) {
+      textNodes.push(n);
+      n = walker.nextNode();
+    }
+    textNodes.forEach((tn) => {
+      if (tn.nodeValue && tn.nodeValue.indexOf("\n") !== -1) {
+        const parent = tn.parentNode as Element | null;
+        if (!parent) return;
+        const parts = (tn.nodeValue || "").split(/\n+/);
+        const frag = doc.createDocumentFragment();
+        parts.forEach((part, idx) => {
+          frag.appendChild(doc.createTextNode(part));
+          if (idx < parts.length - 1) frag.appendChild(doc.createElement("br"));
+        });
+        parent.replaceChild(frag, tn);
+      }
+    });
+
+    // Unwrap <p> inside <li> (convert <li><p>text</p></li> to <li>text</li>)
+    doc.querySelectorAll("li").forEach((li) => {
+      const ps = Array.from(li.querySelectorAll("p"));
+      if (ps.length) {
+        const combined = ps.map((p) => p.innerHTML).join(" ");
+        // Remove existing children and set innerHTML to combined content
+        li.innerHTML = combined;
+      }
+    });
+
+    // Remove empty <p> elements
+    doc.querySelectorAll("p").forEach((p) => {
+      if ((p.textContent || "").trim() === "") p.remove();
+    });
+
+    // Remove consecutive <br> tags
+    doc.querySelectorAll("br").forEach((br) => {
+      let next = br.nextSibling as Element | null;
+      while (next && next.nodeType === 1 && next.tagName === "BR") {
+        const dup = next as Element;
+        next = dup.nextSibling as Element | null;
+        dup.remove();
+      }
+    });
+
+    // Convert paragraphs that use <br> as line separators into lists when appropriate.
+    // Example: a single <p> containing multiple bullets separated by <br> should become a <ul>.
+    doc.querySelectorAll("p").forEach((p) => {
+      const html = p.innerHTML || "";
+      // Split on <br> tags (handle variations) and also on LF if present
+      const parts = html
+        .split(/<br\s*\/?\s*>|\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (parts.length <= 1) return;
+
+      // If most lines look like bullets or start with bullet markers, convert to <ul>
+      const bulletLikeCount = parts.filter(
+        (line) =>
+          /^[-*•\u2022\u25E6\u25CF]\s*/.test(line) || /^\d+\.\s*/.test(line),
+      ).length;
+      if (bulletLikeCount >= Math.ceil(parts.length / 2)) {
+        const lis: string[] = [];
+        parts.forEach((line) => {
+          // remove numeric prefix or bullet markers
+          const cleaned = line
+            .replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "")
+            .trim();
+          lis.push(`<li>${escapeHtml(cleaned)}</li>`);
+        });
+        const ul = doc.createElement("ul");
+        ul.innerHTML = lis.join("\n");
+        p.replaceWith(ul);
+        return;
+      }
+
+      // If first part looks like a heading and following parts are short, treat as heading + list
+      const first = parts[0];
+      const headingMatch = first.match(
+        /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u,
+      );
+      if (headingMatch && parts.length > 1) {
+        const title = headingMatch[2] || first;
+        const h = doc.createElement("h3");
+        h.className = "text-base font-semibold";
+        h.innerHTML = `<strong>${escapeHtml(title)}</strong>`;
+        const items: string[] = [];
+        for (let idx = 1; idx < parts.length; idx++) {
+          const line = parts[idx]
+            .replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "")
+            .trim();
+          if (line) items.push(`<li>${escapeHtml(line)}</li>`);
+        }
+        if (items.length) {
+          const ul = doc.createElement("ul");
+          ul.innerHTML = items.join("\n");
+          p.replaceWith(h, ul);
+          return;
+        }
+      }
+
+      // Otherwise, keep as-is (multiple lines in a paragraph). Do not remove meaningful <br> here.
+    });
+
+    // After converting br-separated paragraphs into proper lists/headings, remove any remaining <br> elements anywhere in the document
+    // This final aggressive pass ensures no <br> tags are left in the UI output
+    doc.querySelectorAll("br").forEach((br) => br.remove());
+
+    return doc.body.innerHTML;
+  } catch (e) {
+    console.warn("sanitizeAndFormatHtml failed", e);
+    return String(html);
+  }
+};
+
 import { cn } from "@/lib/utils";
 import {
   PlayCircle,
@@ -1174,9 +1607,6 @@ export default function Tutorial() {
                             <Badge variant="secondary">Required</Badge>
                           )}
                         </CardTitle>
-                        <CardDescription className="mt-1">
-                          {stripHtml(tutorial.description)}
-                        </CardDescription>
                       </div>
                       <div className="flex items-center gap-1">
                         <Badge
@@ -1279,9 +1709,14 @@ export default function Tutorial() {
                       <h2 className="text-xl font-semibold">
                         {selectedTutorial.title}
                       </h2>
-                      <p className="text-muted-foreground mt-1">
-                        {selectedTutorial.description}
-                      </p>
+                      <div
+                        className="text-muted-foreground mt-1 prose max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeAndFormatHtml(
+                            selectedTutorial.description,
+                          ),
+                        }}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -1295,7 +1730,9 @@ export default function Tutorial() {
                     <div
                       className="prose max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: selectedTutorial.instructions,
+                        __html: sanitizeAndFormatHtml(
+                          selectedTutorial.instructions,
+                        ),
                       }}
                     />
                   </CardContent>
@@ -1513,9 +1950,6 @@ export default function Tutorial() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-muted-foreground mt-1">
-                            {tutorial.description}
-                          </p>
                         </div>
                       </div>
 
@@ -1763,17 +2197,13 @@ export default function Tutorial() {
 
               <div>
                 <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Brief description of what users will learn"
+                <RichTextEditor
                   value={newTutorial.description}
-                  onChange={(e) =>
-                    setNewTutorial({
-                      ...newTutorial,
-                      description: e.target.value,
-                    })
+                  onChange={(val) =>
+                    setNewTutorial({ ...newTutorial, description: val })
                   }
-                  rows={3}
+                  placeholder="Brief description of what users will learn"
+                  minHeight={120}
                 />
               </div>
 
@@ -2060,10 +2490,8 @@ export default function Tutorial() {
           </DialogHeader>
 
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="content">Content & Instructions</TabsTrigger>
-              <TabsTrigger value="steps">Steps</TabsTrigger>
             </TabsList>
 
             {/* Basic Information Tab */}
@@ -2107,17 +2535,13 @@ export default function Tutorial() {
 
               <div>
                 <Label htmlFor="edit-description">Description *</Label>
-                <Textarea
-                  id="edit-description"
-                  placeholder="Brief description of what users will learn"
+                <RichTextEditor
                   value={newTutorial.description}
-                  onChange={(e) =>
-                    setNewTutorial({
-                      ...newTutorial,
-                      description: e.target.value,
-                    })
+                  onChange={(val) =>
+                    setNewTutorial({ ...newTutorial, description: val })
                   }
-                  rows={3}
+                  placeholder="Brief description of what users will learn"
+                  minHeight={120}
                 />
               </div>
 
@@ -2194,10 +2618,9 @@ export default function Tutorial() {
                   <Label>Attached Video</Label>
                   {editingTutorial.videoUrl ? (
                     <div className="space-y-2">
-                      <video
-                        src={editingTutorial.videoUrl}
-                        controls
-                        className="w-full max-h-56 rounded"
+                      <VideoPlayer
+                        src={editingTutorial.videoUrl || undefined}
+                        title={editingTutorial.title}
                       />
                       <div className="flex gap-2">
                         <Button
@@ -2466,11 +2889,7 @@ export default function Tutorial() {
             </Button>
             <Button
               onClick={handleSaveEditedTutorial}
-              disabled={
-                !newTutorial.title ||
-                !newTutorial.description ||
-                !newTutorial.instructions
-              }
+              disabled={!newTutorial.title || !newTutorial.description}
             >
               Save Changes
             </Button>
@@ -2521,17 +2940,14 @@ export default function Tutorial() {
 
               <div className="mt-4">
                 <Label>Description (optional)</Label>
-                <Textarea
-                  placeholder="Enter a brief description"
+                <RichTextEditor
                   value={(videoUpload as any).description || ""}
-                  onChange={(e) =>
-                    setVideoUpload({
-                      ...videoUpload,
-                      description: e.target.value,
-                    })
+                  onChange={(val) =>
+                    setVideoUpload({ ...videoUpload, description: val })
                   }
-                  rows={3}
-                  disabled={videoUpload.isUploading}
+                  placeholder="Enter a brief description"
+                  readOnly={videoUpload.isUploading}
+                  className="min-h-[120px]"
                 />
               </div>
             </div>
