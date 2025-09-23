@@ -581,39 +581,37 @@ export default function Reports() {
 
   // Use safe data in charts
   const chartCurrentData = safeCurrentData;
-  const chartTeamData = isAdmin ? safeTeamPerformanceData : null;
-  const chartUserPerformanceData = !isAdmin
-    ? (userPerformanceData || []).map((u: any) => ({
-        ...u,
-        efficiency: safeNumber(u.efficiency),
-      }))
-    : null;
+  const chartTeamData = safeTeamPerformanceData;
+  const chartUserPerformanceData = (userPerformanceData || []).map((u: any) => ({
+    ...u,
+    efficiency: safeNumber(u.efficiency),
+  }));
 
-  // Calculate current period metrics
+  // Calculate current period metrics (use sanitized data)
   const currentMetrics = isAdmin
     ? {
-        totalCompleted: currentData.reduce(
+        totalCompleted: chartCurrentData.reduce(
           (sum, item) => sum + (item.actual || item.completed),
           0,
         ),
-        totalTarget: currentData.reduce((sum, item) => sum + item.target, 0),
+        totalTarget: chartCurrentData.reduce((sum, item) => sum + item.target, 0),
         averageEfficiency:
-          currentData.reduce((sum, item) => sum + item.efficiency, 0) /
-          currentData.length,
+          chartCurrentData.reduce((sum, item) => sum + item.efficiency, 0) /
+          Math.max(1, chartCurrentData.length),
         activeUsers: isAdmin
-          ? currentData[0]?.activeUsers || currentData[0]?.users || 48
+          ? chartCurrentData[0]?.activeUsers || chartCurrentData[0]?.users || 48
           : 1,
       }
     : {
-        totalCompleted: currentData.reduce(
+        totalCompleted: chartCurrentData.reduce(
           (sum, item) => sum + item.completed,
           0,
         ),
-        totalTarget: currentData.reduce((sum, item) => sum + item.target, 0),
+        totalTarget: chartCurrentData.reduce((sum, item) => sum + item.target, 0),
         averageEfficiency:
-          currentData.reduce((sum, item) => sum + item.efficiency, 0) /
-          currentData.length,
-        totalHours: currentData.reduce(
+          chartCurrentData.reduce((sum, item) => sum + item.efficiency, 0) /
+          Math.max(1, chartCurrentData.length),
+        totalHours: chartCurrentData.reduce(
           (sum, item) => sum + (item.hours || 0),
           0,
         ),
