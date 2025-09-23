@@ -44,27 +44,30 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
 
-// Sanitize HTML by removing data-* attributes and script/style tags
+// Sanitize HTML by decoding entities, removing data-* attributes and script/style tags
 const sanitizeHtml = (html: string | undefined | null) => {
   if (!html) return "";
   try {
+    // Decode HTML entities first in case content is escaped (e.g. &lt;h3&gt;...)
+    const decoder = document.createElement("div");
+    decoder.innerHTML = String(html);
+    const decoded = decoder.textContent || decoder.innerText || String(html);
+
     const parser = new DOMParser();
-    const doc = parser.parseFromString(String(html), "text/html");
+    const doc = parser.parseFromString(decoded, "text/html");
+
     // remove script and style tags
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
-    const walker = doc.createTreeWalker(
-      doc.body,
-      NodeFilter.SHOW_ELEMENT,
-      null,
-    );
-    let node: Node | null = walker.currentNode;
-    while ((node = walker.nextNode())) {
-      const el = node as Element;
-      // remove attributes starting with data-
+
+    // Remove data-* attributes and inline event handlers from all elements
+    const all = doc.querySelectorAll("*");
+    all.forEach((el) => {
       Array.from(el.attributes).forEach((a) => {
         if (a.name.startsWith("data-")) el.removeAttribute(a.name);
+        if (/^on/i.test(a.name)) el.removeAttribute(a.name);
       });
-    }
+    });
+
     return doc.body.innerHTML;
   } catch (e) {
     console.warn("sanitizeHtml failed", e);
