@@ -855,7 +855,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -910,7 +910,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -1402,7 +1402,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
@@ -1501,7 +1501,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <AreaChart data={currentData}>
+                      <AreaChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey="date"
