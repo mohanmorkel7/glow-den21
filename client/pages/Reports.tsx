@@ -1108,7 +1108,7 @@ export default function Reports() {
                       <XAxis type="number" domain={[0, 120]} />
                       <YAxis dataKey="name" type="category" width={100} />
                       <Tooltip
-                        formatter={(value) => [`${value}%`, "Efficiency"]}
+                        formatter={(value) => isAdmin ? [`${value.toLocaleString()}`, "Submitted"] : [`${value}%`, "Efficiency"]}
                       />
                       <Bar dataKey="efficiency" fill="#10b981" />
                     </BarChart>
