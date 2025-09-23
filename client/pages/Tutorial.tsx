@@ -159,7 +159,11 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
     doc.querySelectorAll("*").forEach((el) => {
       Array.from(el.attributes).forEach((a) => {
-        if (a.name.startsWith("data-") || /^on/i.test(a.name) || a.name === "style")
+        if (
+          a.name.startsWith("data-") ||
+          /^on/i.test(a.name) ||
+          a.name === "style"
+        )
           el.removeAttribute(a.name);
       });
     });
