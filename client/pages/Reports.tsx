@@ -1292,7 +1292,7 @@ export default function Reports() {
                     <BarChart data={safeProjectOverview}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis />
+                      <YAxis domain={[0, 'dataMax']} />
                       <Tooltip />
                       <Bar
                         dataKey="completed"
