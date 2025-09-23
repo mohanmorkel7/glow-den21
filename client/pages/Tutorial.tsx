@@ -121,7 +121,9 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
   try {
     const input = String(html);
     // Only decode HTML entities if the input contains escaped entities like &lt; or &gt;
-    const needsDecode = /&lt;|&gt;|&amp;/.test(input);
+    // but avoid decoding when the string already contains real HTML tags (we don't want to strip them)
+    const hasLiteralTag = /<\s*[a-zA-Z][^>]*>/m.test(input);
+    const needsDecode = /&lt;|&gt;|&amp;/.test(input) && !hasLiteralTag;
     let decoded = input;
     if (needsDecode) {
       const decoder = document.createElement("div");
@@ -129,7 +131,29 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       decoded = decoder.textContent || decoder.innerText || input;
     }
     const parser = new DOMParser();
-    const doc = parser.parseFromString(decoded, "text/html");
+    let doc = parser.parseFromString(decoded, "text/html");
+
+    // If parsed document body has no element children but contains escaped HTML
+    // (e.g. the input was wrapped in a <p> with literal "&lt;div...&gt;"), try decoding the
+    // body text and reparsing so the contained HTML structures are recognized.
+    const bodyText =
+      doc.body && doc.body.textContent ? doc.body.textContent.trim() : "";
+    if (
+      (doc.body.children.length === 0 ||
+        (doc.body.children.length === 1 &&
+          doc.body.children[0].tagName === "P")) &&
+      /^\s*(?:&lt;|<)/.test(bodyText)
+    ) {
+      const decoder = document.createElement("div");
+      decoder.innerHTML = bodyText;
+      const redecoded = decoder.textContent || decoder.innerText || bodyText;
+      const maybeDoc = parser.parseFromString(redecoded, "text/html");
+      // if reparse yields element children, use it
+      if (maybeDoc.body && maybeDoc.body.children.length > 0) {
+        doc = maybeDoc;
+      }
+    }
+
     // strip scripts/styles and data-/on* attributes
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
     doc.querySelectorAll("*").forEach((el) => {
@@ -377,8 +401,67 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       }
     });
 
-    // Final pass: remove any remaining <br> elements to avoid inline breaks in UI
-    doc.querySelectorAll("br").forEach((br) => br.remove());
+    // Convert paragraphs that use <br> as line separators into lists when appropriate.
+    // Example: a single <p> containing multiple bullets separated by <br> should become a <ul>.
+    doc.querySelectorAll("p").forEach((p) => {
+      const html = p.innerHTML || "";
+      // Split on <br> tags (handle variations) and also on LF if present
+      const parts = html
+        .split(/<br\s*\/?\s*>|\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (parts.length <= 1) return;
+
+      // If most lines look like bullets or start with bullet markers, convert to <ul>
+      const bulletLikeCount = parts.filter(
+        (line) =>
+          /^[-*•\u2022\u25E6\u25CF]\s*/.test(line) || /^\d+\.\s*/.test(line),
+      ).length;
+      if (bulletLikeCount >= Math.ceil(parts.length / 2)) {
+        const lis: string[] = [];
+        parts.forEach((line) => {
+          // remove numeric prefix or bullet markers
+          const cleaned = line
+            .replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "")
+            .trim();
+          lis.push(`<li>${escapeHtml(cleaned)}</li>`);
+        });
+        const ul = doc.createElement("ul");
+        ul.innerHTML = lis.join("\n");
+        p.replaceWith(ul);
+        return;
+      }
+
+      // If first part looks like a heading and following parts are short, treat as heading + list
+      const first = parts[0];
+      const headingMatch = first.match(
+        /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u,
+      );
+      if (headingMatch && parts.length > 1) {
+        const title = headingMatch[2] || first;
+        const h = doc.createElement("h3");
+        h.className = "text-base font-semibold";
+        h.innerHTML = `<strong>${escapeHtml(title)}</strong>`;
+        const items: string[] = [];
+        for (let idx = 1; idx < parts.length; idx++) {
+          const line = parts[idx]
+            .replace(/^\s*(?:[-*•\u2022\u25E6\u25CF]|\d+\.)\s*/, "")
+            .trim();
+          if (line) items.push(`<li>${escapeHtml(line)}</li>`);
+        }
+        if (items.length) {
+          const ul = doc.createElement("ul");
+          ul.innerHTML = items.join("\n");
+          p.replaceWith(h, ul);
+          return;
+        }
+      }
+
+      // Otherwise, keep as-is (multiple lines in a paragraph). Do not remove meaningful <br> here.
+    });
+
+    // After converting br-separated paragraphs into proper lists/headings, remove remaining stray <br> children of body
+    doc.body.querySelectorAll(":scope > br").forEach((br) => br.remove());
 
     return doc.body.innerHTML;
   } catch (e) {
