@@ -1084,11 +1084,11 @@ export default function Reports() {
                     <div className="text-center p-3 bg-green-50 rounded-lg">
                       <div className="text-2xl font-bold text-green-600">
                         {(
-                          (currentData.reduce(
+                          (chartCurrentData.reduce(
                             (sum, item) => sum + (item.automation || 0),
                             0,
                           ) /
-                            currentData.reduce(
+                            chartCurrentData.reduce(
                               (sum, item) =>
                                 sum + (item.actual || item.completed || 0),
                               0,
