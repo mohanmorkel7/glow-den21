@@ -543,8 +543,8 @@ export default function Reports() {
     const efficiency = Number.isFinite(Number(d.efficiency))
       ? Number(d.efficiency)
       : target > 0
-      ? (actual / target) * 100
-      : 0;
+        ? (actual / target) * 100
+        : 0;
     return {
       ...d,
       actual,
@@ -561,14 +561,18 @@ export default function Reports() {
     ...u,
     submitted: safeNumber(u.submitted),
     completedRequests: safeNumber(u.completedRequests),
-    efficiency: Number.isFinite(Number(u.efficiency)) ? Number(u.efficiency) : 0,
+    efficiency: Number.isFinite(Number(u.efficiency))
+      ? Number(u.efficiency)
+      : 0,
   }));
 
   const safeIndividualMetrics = (individualMetrics || []).map((u: any) => ({
     ...u,
     submitted: safeNumber(u.submitted),
     completedRequests: safeNumber(u.completedRequests),
-    efficiency: Number.isFinite(Number(u.efficiency)) ? Number(u.efficiency) : 0,
+    efficiency: Number.isFinite(Number(u.efficiency))
+      ? Number(u.efficiency)
+      : 0,
   }));
 
   const safeProjectOverview = (projectOverview || []).map((p: any) => ({
@@ -582,10 +586,12 @@ export default function Reports() {
   // Use safe data in charts
   const chartCurrentData = safeCurrentData;
   const chartTeamData = safeTeamPerformanceData;
-  const chartUserPerformanceData = (userPerformanceData || []).map((u: any) => ({
-    ...u,
-    efficiency: safeNumber(u.efficiency),
-  }));
+  const chartUserPerformanceData = (userPerformanceData || []).map(
+    (u: any) => ({
+      ...u,
+      efficiency: safeNumber(u.efficiency),
+    }),
+  );
 
   // Calculate current period metrics (use sanitized data)
   const currentMetrics = isAdmin
@@ -594,7 +600,10 @@ export default function Reports() {
           (sum, item) => sum + (item.actual || item.completed),
           0,
         ),
-        totalTarget: chartCurrentData.reduce((sum, item) => sum + item.target, 0),
+        totalTarget: chartCurrentData.reduce(
+          (sum, item) => sum + item.target,
+          0,
+        ),
         averageEfficiency:
           chartCurrentData.reduce((sum, item) => sum + item.efficiency, 0) /
           Math.max(1, chartCurrentData.length),
@@ -607,7 +616,10 @@ export default function Reports() {
           (sum, item) => sum + item.completed,
           0,
         ),
-        totalTarget: chartCurrentData.reduce((sum, item) => sum + item.target, 0),
+        totalTarget: chartCurrentData.reduce(
+          (sum, item) => sum + item.target,
+          0,
+        ),
         averageEfficiency:
           chartCurrentData.reduce((sum, item) => sum + item.efficiency, 0) /
           Math.max(1, chartCurrentData.length),
