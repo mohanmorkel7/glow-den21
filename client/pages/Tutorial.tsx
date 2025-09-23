@@ -147,25 +147,36 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
 
     // If document consists only of <p> children, convert them into semantic blocks
     const children = Array.from(doc.body.children || []);
-    if (children.length > 0 && children.every((c) => c.tagName.toLowerCase() === "p")) {
+    if (
+      children.length > 0 &&
+      children.every((c) => c.tagName.toLowerCase() === "p")
+    ) {
       const out: string[] = [];
       let i = 0;
       while (i < children.length) {
         const p = children[i] as HTMLParagraphElement;
         const text = (p.textContent || "").trim();
-        if (!text) { i++; continue; }
+        if (!text) {
+          i++;
+          continue;
+        }
 
         // Heading pattern: optional emoji(s) then number + dot (e.g. "🏠 1. Title" or "1. Title")
-        const headingMatch = text.match(/^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u);
+        const headingMatch = text.match(
+          /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?(\d+)\.\s+(.*)$/u,
+        );
         if (headingMatch) {
           const title = headingMatch[2] || text;
-          out.push(`<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`);
+          out.push(
+            `<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`,
+          );
           i++;
           continue;
         }
 
         // If this paragraph ends with ':' or contains 'here' intro, treat subsequent short paragraphs as a list
-        const isListIntro = /:\s*$/.test(text) || /here[,\s]+you will see[:]?$/i.test(text);
+        const isListIntro =
+          /:\s*$/.test(text) || /here[,\s]+you will see[:]?$/i.test(text);
         if (isListIntro) {
           // Start collecting subsequent short paragraphs as list items
           i++;
@@ -173,9 +184,17 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
           while (i < children.length) {
             const nxt = (children[i] as HTMLParagraphElement).textContent || "";
             const nxtTrim = nxt.trim();
-            if (!nxtTrim) { i++; continue; }
+            if (!nxtTrim) {
+              i++;
+              continue;
+            }
             // Stop if next paragraph looks like a numbered heading
-            if (/^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(nxtTrim)) break;
+            if (
+              /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(
+                nxtTrim,
+              )
+            )
+              break;
             // Stop if next paragraph is long (> 200 chars) — heuristic
             if (nxtTrim.length > 200) break;
             items.push(`<li>${escapeHtml(nxtTrim)}</li>`);
@@ -194,8 +213,13 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
         if (/^[-*•]\s+/.test(text)) {
           // collect consecutive bullets
           out.push("<ul>");
-          while (i < children.length && /^[-*•]\s+/.test((children[i] as HTMLElement).textContent || "")) {
-            const t = ((children[i] as HTMLElement).textContent || "").replace(/^[-*•]\s+/, "").trim();
+          while (
+            i < children.length &&
+            /^[-*•]\s+/.test((children[i] as HTMLElement).textContent || "")
+          ) {
+            const t = ((children[i] as HTMLElement).textContent || "")
+              .replace(/^[-*•]\s+/, "")
+              .trim();
             out.push(`<li>${escapeHtml(t)}</li>`);
             i++;
           }
@@ -223,17 +247,31 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
           /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s+/.test(line);
         const isBullet = /^[-*•]\s+/.test(line);
         if (isNumberHeading) {
-          if (inList) { out.push("</ul>"); inList = false; }
-          const title = line.replace(/^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s*/, "");
-          out.push(`<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`);
+          if (inList) {
+            out.push("</ul>");
+            inList = false;
+          }
+          const title = line.replace(
+            /^\s*(?:[\p{Extended_Pictographic}\uFE0F\s]*)?\d+\.\s*/,
+            "",
+          );
+          out.push(
+            `<h3 class=\"text-base font-semibold\"><strong>${escapeHtml(title)}</strong></h3>`,
+          );
           continue;
         }
         if (isBullet) {
-          if (!inList) { out.push("<ul>"); inList = true; }
+          if (!inList) {
+            out.push("<ul>");
+            inList = true;
+          }
           out.push(`<li>${escapeHtml(line.replace(/^[-*•]\s+/, ""))}</li>`);
           continue;
         }
-        if (inList) { out.push("</ul>"); inList = false; }
+        if (inList) {
+          out.push("</ul>");
+          inList = false;
+        }
         out.push(`<p>${escapeHtml(line)}</p>`);
       }
       if (inList) out.push("</ul>");
