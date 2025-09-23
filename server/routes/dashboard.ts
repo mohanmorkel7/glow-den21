@@ -338,12 +338,8 @@ export const getTeamPerformance: RequestHandler = async (req, res) => {
     res.json({ data: performanceData } as ApiResponse);
   } catch (error) {
     console.error("Get team performance error:", error);
-    res.status(500).json({
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "An error occurred while fetching team performance",
-      },
-    } as ApiResponse);
+    // Graceful fallback: return empty array instead of 500 so UI can render without crashing
+    return res.json({ data: [] } as ApiResponse);
   }
 };
 
