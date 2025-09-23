@@ -2060,10 +2060,8 @@ export default function Tutorial() {
           </DialogHeader>
 
           <Tabs defaultValue="basic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="content">Content & Instructions</TabsTrigger>
-              <TabsTrigger value="steps">Steps</TabsTrigger>
             </TabsList>
 
             {/* Basic Information Tab */}
@@ -2194,10 +2192,9 @@ export default function Tutorial() {
                   <Label>Attached Video</Label>
                   {editingTutorial.videoUrl ? (
                     <div className="space-y-2">
-                      <video
-                        src={editingTutorial.videoUrl}
-                        controls
-                        className="w-full max-h-56 rounded"
+                      <VideoPlayer
+                        src={editingTutorial.videoUrl || undefined}
+                        title={editingTutorial.title}
                       />
                       <div className="flex gap-2">
                         <Button
