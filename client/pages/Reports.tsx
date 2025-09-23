@@ -1055,14 +1055,26 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(individualMetrics || []).map((user: any, index: number) => (
-                        <TableRow key={user.id || index}>
-                          <TableCell className="font-medium">{user.name}</TableCell>
-                          <TableCell>{(user.submitted ?? 0).toLocaleString()}</TableCell>
-                          <TableCell>{user.completedRequests ?? 0}</TableCell>
-                          <TableCell>{user.lastCompletedAt ? new Date(user.lastCompletedAt).toLocaleString() : "-"}</TableCell>
-                        </TableRow>
-                      ))}
+                      {(individualMetrics || []).map(
+                        (user: any, index: number) => (
+                          <TableRow key={user.id || index}>
+                            <TableCell className="font-medium">
+                              {user.name}
+                            </TableCell>
+                            <TableCell>
+                              {(user.submitted ?? 0).toLocaleString()}
+                            </TableCell>
+                            <TableCell>{user.completedRequests ?? 0}</TableCell>
+                            <TableCell>
+                              {user.lastCompletedAt
+                                ? new Date(
+                                    user.lastCompletedAt,
+                                  ).toLocaleString()
+                                : "-"}
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>
@@ -1112,30 +1124,48 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(projectOverview || []).map((project: any, index: number) => (
-                        <TableRow key={project.id || index}>
-                          <TableCell className="font-medium">{project.name}</TableCell>
-                          <TableCell>
-                            <Badge variant={project.status === "on track" ? "secondary" : "outline"}>
-                              {project.status.toUpperCase()}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span>{(project.completed ?? 0).toLocaleString()}</span>
-                                <span className="text-muted-foreground">Active Users: {project.activeUsers ?? 0}</span>
+                      {(projectOverview || []).map(
+                        (project: any, index: number) => (
+                          <TableRow key={project.id || index}>
+                            <TableCell className="font-medium">
+                              {project.name}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  project.status === "on track"
+                                    ? "secondary"
+                                    : "outline"
+                                }
+                              >
+                                {project.status.toUpperCase()}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span>
+                                    {(project.completed ?? 0).toLocaleString()}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    Active Users: {project.activeUsers ?? 0}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Progress value={project.completed > 0 ? 100 : 0} />
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{project.completed > 0 ? "100%" : "0%"}</div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                            <TableCell>
+                              <Progress
+                                value={project.completed > 0 ? 100 : 0}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {project.completed > 0 ? "100%" : "0%"}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>

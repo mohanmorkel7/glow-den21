@@ -2708,9 +2708,9 @@ export default function FileProcess() {
                             <TableHead>Rows</TableHead>
                             <TableHead>Range</TableHead>
                             <TableHead>Status</TableHead>
-                          <TableHead>Assigned Date</TableHead>
-                          <TableHead>Duration</TableHead>
-                          <TableHead>Actions</TableHead>
+                            <TableHead>Assigned Date</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2793,15 +2793,20 @@ export default function FileProcess() {
                               <TableCell>
                                 {(() => {
                                   const start = new Date(
-                                    request.assignedDate || request.requestedDate || new Date().toISOString(),
+                                    request.assignedDate ||
+                                      request.requestedDate ||
+                                      new Date().toISOString(),
                                   ).getTime();
                                   const end = new Date(
-                                    request.completedDate || new Date().toISOString(),
+                                    request.completedDate ||
+                                      new Date().toISOString(),
                                   ).getTime();
                                   const diffMs = Math.max(0, end - start);
                                   const diffMins = Math.floor(diffMs / 60000);
                                   const days = Math.floor(diffMins / 1440);
-                                  const hours = Math.floor((diffMins % 1440) / 60);
+                                  const hours = Math.floor(
+                                    (diffMins % 1440) / 60,
+                                  );
                                   const mins = diffMins % 60;
                                   return (
                                     <span className="text-sm">
@@ -2820,9 +2825,13 @@ export default function FileProcess() {
                                       variant="outline"
                                       onClick={async () => {
                                         try {
-                                          const { blob, filename } = await apiClient.downloadFileRequest(request.id);
+                                          const { blob, filename } =
+                                            await apiClient.downloadFileRequest(
+                                              request.id,
+                                            );
                                           const url = URL.createObjectURL(blob);
-                                          const link = document.createElement("a");
+                                          const link =
+                                            document.createElement("a");
                                           link.href = url;
                                           link.download = filename;
                                           document.body.appendChild(link);
@@ -2830,7 +2839,9 @@ export default function FileProcess() {
                                           link.remove();
                                           URL.revokeObjectURL(url);
                                         } catch (e) {
-                                          alert("Download failed. Ensure a CSV was uploaded for this process.");
+                                          alert(
+                                            "Download failed. Ensure a CSV was uploaded for this process.",
+                                          );
                                         }
                                       }}
                                     >
