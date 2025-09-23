@@ -121,7 +121,9 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
   try {
     const input = String(html);
     // Only decode HTML entities if the input contains escaped entities like &lt; or &gt;
-    const needsDecode = /&lt;|&gt;|&amp;/.test(input);
+    // but avoid decoding when the string already contains real HTML tags (we don't want to strip them)
+    const hasLiteralTag = /<\s*[a-zA-Z][^>]*>/m.test(input);
+    const needsDecode = /&lt;|&gt;|&amp;/.test(input) && !hasLiteralTag;
     let decoded = input;
     if (needsDecode) {
       const decoder = document.createElement("div");
