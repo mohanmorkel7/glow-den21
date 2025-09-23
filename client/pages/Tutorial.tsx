@@ -1451,7 +1451,7 @@ export default function Tutorial() {
                     <div
                       className="prose max-w-none"
                       dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(selectedTutorial.instructions),
+                        __html: sanitizeAndFormatHtml(selectedTutorial.instructions),
                       }}
                     />
                   </CardContent>
