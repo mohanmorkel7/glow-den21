@@ -2095,17 +2095,13 @@ export default function Tutorial() {
 
               <div>
                 <Label htmlFor="edit-description">Description *</Label>
-                <Textarea
-                  id="edit-description"
-                  placeholder="Brief description of what users will learn"
+                <RichTextEditor
                   value={newTutorial.description}
-                  onChange={(e) =>
-                    setNewTutorial({
-                      ...newTutorial,
-                      description: e.target.value,
-                    })
+                  onChange={(val) =>
+                    setNewTutorial({ ...newTutorial, description: val })
                   }
-                  rows={3}
+                  placeholder="Brief description of what users will learn"
+                  minHeight={120}
                 />
               </div>
 
