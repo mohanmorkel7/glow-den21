@@ -1104,10 +1104,10 @@ export default function Reports() {
                     <div className="text-center p-3 bg-orange-50 rounded-lg">
                       <div className="text-2xl font-bold text-orange-600">
                         {(
-                          currentData.reduce(
+                          chartCurrentData.reduce(
                             (sum, item) => sum + (item.automation || 0),
                             0,
-                          ) / currentData.length
+                          ) / Math.max(1, chartCurrentData.length)
                         ).toFixed(0)}
                       </div>
                       <div className="text-xs text-orange-700">
