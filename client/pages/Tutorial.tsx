@@ -1435,7 +1435,7 @@ export default function Tutorial() {
                       <div
                         className="text-muted-foreground mt-1 prose max-w-none"
                         dangerouslySetInnerHTML={{
-                          __html: sanitizeHtml(selectedTutorial.description),
+                          __html: sanitizeAndFormatHtml(selectedTutorial.description),
                         }}
                       />
                     </div>
