@@ -596,7 +596,9 @@ export default function Reports() {
   // Prepare BarChart data and domain to avoid NaN tick calculation in Recharts
   const barChartData = isAdmin ? chartTeamData : chartUserPerformanceData;
   const barChartKey = isAdmin ? "submitted" : "efficiency";
-  const barValues = (barChartData || []).map((d: any) => safeNumber(d[barChartKey]));
+  const barValues = (barChartData || []).map((d: any) =>
+    safeNumber(d[barChartKey]),
+  );
   const barMin = barValues.length ? Math.min(...barValues) : 0;
   const barMax = barValues.length ? Math.max(...barValues) : 0;
   let barChartDomain: (number | string)[] = [0, 120];
@@ -605,7 +607,10 @@ export default function Reports() {
       const delta = Math.abs(barMax) > 0 ? Math.abs(barMax * 0.1) : 1;
       barChartDomain = [Math.max(0, barMin - delta), barMax + delta];
     } else {
-      barChartDomain = [Math.max(0, Math.floor(barMin)), Math.ceil(barMax * 1.1)];
+      barChartDomain = [
+        Math.max(0, Math.floor(barMin)),
+        Math.ceil(barMax * 1.1),
+      ];
     }
   } else {
     barChartDomain = [0, 120];
@@ -1203,10 +1208,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart
-                      data={barChartData}
-                      layout="horizontal"
-                    >
+                    <BarChart data={barChartData} layout="horizontal">
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" domain={barChartDomain} />
                       <YAxis dataKey="name" type="category" width={100} />
