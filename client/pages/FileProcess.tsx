@@ -2302,7 +2302,7 @@ export default function FileProcess() {
             open={isOverviewDialogOpen}
             onOpenChange={setIsOverviewDialogOpen}
           >
-            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{selectedProcess?.name} Overview</DialogTitle>
                 <DialogDescription>
@@ -2708,8 +2708,9 @@ export default function FileProcess() {
                             <TableHead>Rows</TableHead>
                             <TableHead>Range</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Assigned Date</TableHead>
-                            <TableHead>Actions</TableHead>
+                          <TableHead>Assigned Date</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Actions</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -2790,20 +2791,47 @@ export default function FileProcess() {
                                 </div>
                               </TableCell>
                               <TableCell>
+                                {(() => {
+                                  const start = new Date(
+                                    request.assignedDate || request.requestedDate || new Date().toISOString(),
+                                  ).getTime();
+                                  const end = new Date(
+                                    request.completedDate || new Date().toISOString(),
+                                  ).getTime();
+                                  const diffMs = Math.max(0, end - start);
+                                  const diffMins = Math.floor(diffMs / 60000);
+                                  const days = Math.floor(diffMins / 1440);
+                                  const hours = Math.floor((diffMins % 1440) / 60);
+                                  const mins = diffMins % 60;
+                                  return (
+                                    <span className="text-sm">
+                                      {days > 0 ? `${days}d ` : ""}
+                                      {hours > 0 ? `${hours}h ` : ""}
+                                      {mins}m
+                                    </span>
+                                  );
+                                })()}
+                              </TableCell>
+                              <TableCell>
                                 <div className="flex gap-2">
                                   {request.downloadLink && (
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      onClick={() => {
-                                        const link =
-                                          document.createElement("a");
-                                        link.href = request.downloadLink || "";
-                                        link.download =
-                                          request.downloadLink
-                                            ?.split("/")
-                                            .pop() || "file.csv";
-                                        link.click();
+                                      onClick={async () => {
+                                        try {
+                                          const { blob, filename } = await apiClient.downloadFileRequest(request.id);
+                                          const url = URL.createObjectURL(blob);
+                                          const link = document.createElement("a");
+                                          link.href = url;
+                                          link.download = filename;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          link.remove();
+                                          URL.revokeObjectURL(url);
+                                        } catch (e) {
+                                          alert("Download failed. Ensure a CSV was uploaded for this process.");
+                                        }
                                       }}
                                     >
                                       <Download className="h-3 w-3 mr-1" />
