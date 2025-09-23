@@ -1962,7 +1962,7 @@ export default function FileProcess() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
                 {fileProcesses.map((process) => {
                   const progress =
                     process.totalRows > 0
@@ -1976,9 +1976,9 @@ export default function FileProcess() {
                   return (
                     <Card
                       key={process.id}
-                      className="hover:shadow-md transition-shadow"
+                      className="hover:shadow-md transition-shadow h-full flex flex-col"
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-4 flex-1 flex flex-col">
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <div className="flex items-center gap-2">
@@ -2082,25 +2082,17 @@ export default function FileProcess() {
                               <span>Progress</span>
                               <span>{progress.toFixed(1)}%</span>
                             </div>
-                            <Progress value={progress} className="h-2" />
+                            <Progress value={progress} className="h-3 rounded" />
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <div className="text-xs text-muted-foreground">
-                                Processed
-                              </div>
-                              <div className="font-medium text-green-600">
-                                {process.processedRows.toLocaleString()}
-                              </div>
+                            <div className="p-3 bg-white border rounded text-center shadow-sm">
+                              <div className="text-xs text-muted-foreground">Processed</div>
+                              <div className="font-medium text-green-600 mt-1">{process.processedRows.toLocaleString()}</div>
                             </div>
-                            <div>
-                              <div className="text-xs text-muted-foreground">
-                                Available
-                              </div>
-                              <div className="font-medium text-blue-600">
-                                {process.availableRows.toLocaleString()}
-                              </div>
+                            <div className="p-3 bg-white border rounded text-center shadow-sm">
+                              <div className="text-xs text-muted-foreground">Available</div>
+                              <div className="font-medium text-blue-600 mt-1">{process.availableRows.toLocaleString()}</div>
                             </div>
                           </div>
 
@@ -2132,23 +2124,17 @@ export default function FileProcess() {
                             )}
 
                           {/* User Status Counts */}
-                          <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div className="text-center p-2 bg-green-50 rounded">
-                              <div className="font-medium text-green-600">
-                                {statusCounts.completed}
-                              </div>
+                          <div className="grid grid-cols-3 gap-3 text-xs">
+                            <div className="flex flex-col items-center justify-center p-2 bg-green-50 rounded min-h-[56px]">
+                              <div className="font-medium text-green-600">{statusCounts.completed}</div>
                               <div className="text-green-700">Completed</div>
                             </div>
-                            <div className="text-center p-2 bg-orange-50 rounded">
-                              <div className="font-medium text-orange-600">
-                                {statusCounts.inProgress}
-                              </div>
+                            <div className="flex flex-col items-center justify-center p-2 bg-orange-50 rounded min-h-[56px]">
+                              <div className="font-medium text-orange-600">{statusCounts.inProgress}</div>
                               <div className="text-orange-700">In Progress</div>
                             </div>
-                            <div className="text-center p-2 bg-yellow-50 rounded">
-                              <div className="font-medium text-yellow-600">
-                                {statusCounts.pending + statusCounts.assigned}
-                              </div>
+                            <div className="flex flex-col items-center justify-center p-2 bg-yellow-50 rounded min-h-[56px]">
+                              <div className="font-medium text-yellow-600">{statusCounts.pending + statusCounts.assigned}</div>
                               <div className="text-yellow-700">Pending</div>
                             </div>
                           </div>
