@@ -2819,7 +2819,7 @@ export default function FileProcess() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex gap-2">
-                                  {request.downloadLink && (
+                                  {(request.downloadLink || (request.startRow && request.endRow)) && (
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -2841,10 +2841,12 @@ export default function FileProcess() {
                                             () => URL.revokeObjectURL(url),
                                             1000,
                                           );
-                                        } catch (e) {
-                                          alert(
-                                            "Download failed. Ensure a CSV was uploaded for this process.",
-                                          );
+                                        } catch (e: any) {
+                                          const msg =
+                                            (e && e.message) ||
+                                            (e && e.toString && e.toString()) ||
+                                            "Download failed. Ensure a CSV was uploaded for this process.";
+                                          alert(msg);
                                         }
                                       }}
                                     >
