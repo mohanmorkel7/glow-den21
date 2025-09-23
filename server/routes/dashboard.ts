@@ -310,7 +310,7 @@ export const getTeamPerformance: RequestHandler = async (req, res) => {
         COUNT(*)::int AS completed_requests,
         MAX(fr.completed_date) AS last_completed_at
       FROM file_requests fr
-      LEFT JOIN users u ON u.id = fr.user_id
+      LEFT JOIN users u ON u.id::text = fr.user_id
       WHERE fr.status = 'completed' AND fr.completed_date IS NOT NULL
         AND DATE(fr.completed_date) BETWEEN $1 AND $2
       GROUP BY fr.user_id, COALESCE(fr.user_name, u.name)
