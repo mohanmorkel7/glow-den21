@@ -1217,7 +1217,7 @@ export default function Billing() {
             {selectedBilling && (
               <Button
                 onClick={() =>
-                  handleExportBilling("pdf", selectedBilling.month)
+                  handleExportBilling("csv", selectedBilling.month)
                 }
               >
                 <Download className="h-4 w-4 mr-2" />
