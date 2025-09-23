@@ -183,6 +183,7 @@ export default function RequestFiles() {
 
           const [todayResp, monthResp] = await Promise.all([
             apiClient.getDailyCounts({
+              userId: currentUser.id,
               from: todayStr,
               to: todayStr,
               status: "approved",
@@ -190,6 +191,7 @@ export default function RequestFiles() {
               limit: 1000,
             }),
             apiClient.getDailyCounts({
+              userId: currentUser.id,
               from: monthStartStr,
               to: todayStr,
               status: "approved",
@@ -236,6 +238,7 @@ export default function RequestFiles() {
             fourteenStart.setDate(fourteenStart.getDate() - 13);
             const from14 = fourteenStart.toISOString().slice(0, 10);
             const resp14 = await apiClient.getDailyCounts({
+              userId: currentUser.id,
               from: from14,
               to: todayStr,
               status: "approved",
@@ -244,12 +247,26 @@ export default function RequestFiles() {
             });
             const list14: any[] = extract(resp14);
             const byDate = new Map<string, number>();
-            for (const dc of list14) {
-              const date = (dc.date || "").slice(0, 10);
-              const submitted = Number(
-                dc.submittedCount ?? dc.submitted_count ?? 0,
-              );
-              byDate.set(date, (byDate.get(date) || 0) + submitted);
+            if (list14.length > 0) {
+              for (const dc of list14) {
+                const date = (dc.date || "").slice(0, 10);
+                const submitted = Number(
+                  dc.submittedCount ?? dc.submitted_count ?? 0,
+                );
+                byDate.set(date, (byDate.get(date) || 0) + submitted);
+              }
+            } else {
+              // Fallback: derive per-day from user's completed requests
+              for (const r of userList) {
+                if (r.status === "completed" || r.status === "verified") {
+                  const cd = r.completedDate ? new Date(r.completedDate) : null;
+                  if (cd) {
+                    const key = cd.toISOString().slice(0, 10);
+                    const count = Number(r.assignedCount || r.requestedCount || 0);
+                    byDate.set(key, (byDate.get(key) || 0) + count);
+                  }
+                }
+              }
             }
             const statsArr: DailyStats[] = [];
             for (
@@ -264,7 +281,6 @@ export default function RequestFiles() {
                 totalAssigned: 0,
               });
             }
-            // Most recent first
             statsArr.sort((a, b) => b.date.localeCompare(a.date));
             setDailyStats(statsArr);
           } catch (e) {
