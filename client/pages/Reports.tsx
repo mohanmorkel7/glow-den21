@@ -1220,7 +1220,7 @@ export default function Reports() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(projectOverview || []).map(
+                      {(safeProjectOverview || []).map(
                         (project: any, index: number) => (
                           <TableRow key={project.id || index}>
                             <TableCell className="font-medium">
