@@ -2082,17 +2082,28 @@ export default function FileProcess() {
                               <span>Progress</span>
                               <span>{progress.toFixed(1)}%</span>
                             </div>
-                            <Progress value={progress} className="h-3 rounded" />
+                            <Progress
+                              value={progress}
+                              className="h-3 rounded"
+                            />
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="p-3 bg-white border rounded text-center shadow-sm">
-                              <div className="text-xs text-muted-foreground">Processed</div>
-                              <div className="font-medium text-green-600 mt-1">{process.processedRows.toLocaleString()}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Processed
+                              </div>
+                              <div className="font-medium text-green-600 mt-1">
+                                {process.processedRows.toLocaleString()}
+                              </div>
                             </div>
                             <div className="p-3 bg-white border rounded text-center shadow-sm">
-                              <div className="text-xs text-muted-foreground">Available</div>
-                              <div className="font-medium text-blue-600 mt-1">{process.availableRows.toLocaleString()}</div>
+                              <div className="text-xs text-muted-foreground">
+                                Available
+                              </div>
+                              <div className="font-medium text-blue-600 mt-1">
+                                {process.availableRows.toLocaleString()}
+                              </div>
                             </div>
                           </div>
 
@@ -2126,15 +2137,21 @@ export default function FileProcess() {
                           {/* User Status Counts */}
                           <div className="grid grid-cols-3 gap-3 text-xs">
                             <div className="flex flex-col items-center justify-center p-2 bg-green-50 rounded min-h-[56px]">
-                              <div className="font-medium text-green-600">{statusCounts.completed}</div>
+                              <div className="font-medium text-green-600">
+                                {statusCounts.completed}
+                              </div>
                               <div className="text-green-700">Completed</div>
                             </div>
                             <div className="flex flex-col items-center justify-center p-2 bg-orange-50 rounded min-h-[56px]">
-                              <div className="font-medium text-orange-600">{statusCounts.inProgress}</div>
+                              <div className="font-medium text-orange-600">
+                                {statusCounts.inProgress}
+                              </div>
                               <div className="text-orange-700">In Progress</div>
                             </div>
                             <div className="flex flex-col items-center justify-center p-2 bg-yellow-50 rounded min-h-[56px]">
-                              <div className="font-medium text-yellow-600">{statusCounts.pending + statusCounts.assigned}</div>
+                              <div className="font-medium text-yellow-600">
+                                {statusCounts.pending + statusCounts.assigned}
+                              </div>
                               <div className="text-yellow-700">Pending</div>
                             </div>
                           </div>
