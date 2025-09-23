@@ -94,55 +94,6 @@ interface DailyStats {
   totalAssigned: number;
 }
 
-const mockFileRequests: FileRequest[] = [
-  {
-    id: "1",
-    userId: "3",
-    userName: "Sarah Johnson",
-    requestedCount: 1000,
-    requestedDate: "2024-01-20T10:30:00Z",
-    status: "assigned",
-    fileProcessId: "fp_1",
-    fileProcessName: "Aug-2025-File",
-    assignedBy: "John Smith",
-    assignedDate: "2024-01-20T11:00:00Z",
-    downloadLink: "/downloads/sarah_johnson_aug_2025_1001_2000.csv",
-    startRow: 1001,
-    endRow: 2000,
-  },
-  {
-    id: "2",
-    userId: "3",
-    userName: "Sarah Johnson",
-    requestedCount: 800,
-    requestedDate: "2024-01-19T14:20:00Z",
-    status: "completed",
-    fileProcessId: "fp_1",
-    fileProcessName: "Aug-2025-File",
-    assignedBy: "Emily Wilson",
-    assignedDate: "2024-01-19T15:00:00Z",
-    downloadLink: "/downloads/sarah_johnson_aug_2025_1_800.csv",
-    completedDate: "2024-01-19T18:30:00Z",
-    startRow: 1,
-    endRow: 800,
-  },
-  {
-    id: "3",
-    userId: "3",
-    userName: "Sarah Johnson",
-    requestedCount: 1200,
-    requestedDate: "2024-01-18T09:15:00Z",
-    status: "in_progress",
-    fileProcessId: "fp_1",
-    fileProcessName: "Aug-2025-File",
-    assignedBy: "John Smith",
-    assignedDate: "2024-01-18T10:00:00Z",
-    downloadLink: "/downloads/sarah_johnson_aug_2025_2001_3200.csv",
-    startRow: 2001,
-    endRow: 3200,
-  },
-];
-
 export default function RequestFiles() {
   const { user: currentUser } = useAuth();
   const [fileRequests, setFileRequests] = useState<FileRequest[]>([]);
@@ -821,20 +772,20 @@ export default function RequestFiles() {
                                 request.assignedCount !==
                                   request.requestedCount && (
                                   <span className="text-blue-600 ml-2">
-                                    ({request.assignedCount.toLocaleString()}{" "}
+                                    ({request.assignedCount.toLocaleString()} {" "}
                                     assigned)
                                   </span>
                                 )}
                             </p>
                             {request.startRow && request.endRow && (
                               <p className="text-xs text-muted-foreground">
-                                Data Range: {request.startRow.toLocaleString()}{" "}
+                                Data Range: {request.startRow.toLocaleString()} {" "}
                                 - {request.endRow.toLocaleString()}
                               </p>
                             )}
                             {request.assignedBy && (
                               <p className="text-xs text-blue-600">
-                                ✓ Assigned by {request.assignedBy} on{" "}
+                                ✓ Assigned by {request.assignedBy} on {" "}
                                 {new Date(
                                   request.assignedDate || "",
                                 ).toLocaleDateString()}
@@ -969,7 +920,7 @@ export default function RequestFiles() {
                         </div>
 
                         <div className="text-xs text-muted-foreground">
-                          Requested:{" "}
+                          Requested: {" "}
                           {new Date(request.requestedDate).toLocaleString()}
                           {request.assignedBy && (
                             <span className="ml-4">
@@ -1046,7 +997,7 @@ export default function RequestFiles() {
                       <TableCell>
                         {request.startRow && request.endRow ? (
                           <span className="text-sm">
-                            {request.startRow.toLocaleString()} -{" "}
+                            {request.startRow.toLocaleString()} - {" "}
                             {request.endRow.toLocaleString()}
                           </span>
                         ) : (
@@ -1057,8 +1008,8 @@ export default function RequestFiles() {
                         {request.completedDate
                           ? new Date(request.completedDate).toLocaleDateString()
                           : request.status === "in_progress"
-                            ? "In Progress"
-                            : "N/A"}
+                          ? "In Progress"
+                          : "N/A"}
                       </TableCell>
                       <TableCell>
                         {request.status === "in_progress" ? (
@@ -1169,11 +1120,11 @@ export default function RequestFiles() {
                         {stat.date === new Date().toISOString().split("T")[0]
                           ? "Today"
                           : stat.date ===
-                              new Date(Date.now() - 24 * 60 * 60 * 1000)
-                                .toISOString()
-                                .split("T")[0]
-                            ? "Yesterday"
-                            : format(new Date(stat.date), "EEEE")}
+                            new Date(Date.now() - 24 * 60 * 60 * 1000)
+                              .toISOString()
+                              .split("T")[0]
+                          ? "Yesterday"
+                          : format(new Date(stat.date), "EEEE")}
                       </div>
                     </div>
                     <div className="text-right">
@@ -1220,17 +1171,17 @@ export default function RequestFiles() {
                   return request ? (
                     <div className="text-xs text-blue-700 space-y-0.5">
                       <p>
-                        <strong>File Process:</strong>{" "}
+                        <strong>File Process:</strong> {" "}
                         {request.fileProcessName || "File Request"}
                       </p>
                       <p>
-                        <strong>File Count:</strong>{" "}
+                        <strong>File Count:</strong> {" "}
                         {request.requestedCount.toLocaleString()}
                       </p>
                       {request.startRow && request.endRow && (
                         <p>
-                          <strong>Row Range:</strong>{" "}
-                          {request.startRow.toLocaleString()} -{" "}
+                          <strong>Row Range:</strong> {" "}
+                          {request.startRow.toLocaleString()} - {" "}
                           {request.endRow.toLocaleString()}
                         </p>
                       )}
