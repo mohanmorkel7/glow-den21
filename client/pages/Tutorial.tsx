@@ -1510,9 +1510,6 @@ export default function Tutorial() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-muted-foreground mt-1">
-                            {tutorial.description}
-                          </p>
                         </div>
                       </div>
 
