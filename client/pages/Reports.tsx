@@ -1127,7 +1127,7 @@ export default function Reports() {
                             : [`${value}%`, "Efficiency"]
                         }
                       />
-                      <Bar dataKey="efficiency" fill="#10b981" />
+                      <Bar dataKey={isAdmin ? "submitted" : "efficiency"} fill="#10b981" />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
