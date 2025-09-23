@@ -1176,7 +1176,7 @@ export default function Reports() {
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart
-                      data={isAdmin ? teamPerformanceData : userPerformanceData}
+                      data={isAdmin ? chartTeamData : chartUserPerformanceData}
                       layout="horizontal"
                     >
                       <CartesianGrid strokeDasharray="3 3" />
