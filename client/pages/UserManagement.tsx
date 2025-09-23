@@ -671,26 +671,55 @@ export default function UserManagement() {
                 {editingUser.id === currentUser?.id && (
                   <div className="space-y-2">
                     <Label htmlFor="current-password">Current Password</Label>
-                    <Input id="current-password" type="password" value={(newUser as any).currentPassword || ""} onChange={(e) => setNewUser({ ...(newUser as any), currentPassword: e.target.value })} placeholder="Enter current password" />
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={(newUser as any).currentPassword || ""}
+                      onChange={(e) =>
+                        setNewUser({
+                          ...(newUser as any),
+                          currentPassword: e.target.value,
+                        })
+                      }
+                      placeholder="Enter current password"
+                    />
                   </div>
                 )}
                 <div className="space-y-2">
                   <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" value={(newUser as any).newPassword || ""} onChange={(e) => setNewUser({ ...(newUser as any), newPassword: e.target.value })} placeholder="Enter new password (min 8 chars)" />
+                  <Input
+                    id="new-password"
+                    type="password"
+                    value={(newUser as any).newPassword || ""}
+                    onChange={(e) =>
+                      setNewUser({
+                        ...(newUser as any),
+                        newPassword: e.target.value,
+                      })
+                    }
+                    placeholder="Enter new password (min 8 chars)"
+                  />
                 </div>
                 <div className="flex justify-end">
                   <Button
                     variant="outline"
                     onClick={async () => {
-                      if (!(newUser as any).newPassword || String((newUser as any).newPassword).length < 8) {
-                        toast.error("New password must be at least 8 characters");
+                      if (
+                        !(newUser as any).newPassword ||
+                        String((newUser as any).newPassword).length < 8
+                      ) {
+                        toast.error(
+                          "New password must be at least 8 characters",
+                        );
                         return;
                       }
                       try {
                         setSubmitting(true);
                         await apiClient.changePassword(
                           editingUser.id,
-                          editingUser.id === currentUser?.id ? (newUser as any).currentPassword || "" : "",
+                          editingUser.id === currentUser?.id
+                            ? (newUser as any).currentPassword || ""
+                            : "",
                           (newUser as any).newPassword || "",
                         );
                         (newUser as any).currentPassword = "";

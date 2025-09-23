@@ -262,7 +262,9 @@ export default function RequestFiles() {
                   const cd = r.completedDate ? new Date(r.completedDate) : null;
                   if (cd) {
                     const key = cd.toISOString().slice(0, 10);
-                    const count = Number(r.assignedCount || r.requestedCount || 0);
+                    const count = Number(
+                      r.assignedCount || r.requestedCount || 0,
+                    );
                     byDate.set(key, (byDate.get(key) || 0) + count);
                   }
                 }
