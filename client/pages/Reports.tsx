@@ -1075,7 +1075,7 @@ export default function Reports() {
                     </div>
                     <div className="text-center p-3 bg-blue-50 rounded-lg">
                       <div className="text-2xl font-bold text-blue-600">
-                        {currentData
+                        {chartCurrentData
                           .reduce((sum, item) => sum + (item.manual || 0), 0)
                           .toLocaleString()}
                       </div>
