@@ -119,9 +119,15 @@ const sanitizeHtml = (html: string | undefined | null) => {
 const sanitizeAndFormatHtml = (html: string | undefined | null) => {
   if (!html) return "";
   try {
-    const decoder = document.createElement("div");
-    decoder.innerHTML = String(html);
-    const decoded = decoder.textContent || decoder.innerText || String(html);
+    const input = String(html);
+    // Only decode HTML entities if the input contains escaped entities like &lt; or &gt;
+    const needsDecode = /&lt;|&gt;|&amp;/.test(input);
+    let decoded = input;
+    if (needsDecode) {
+      const decoder = document.createElement("div");
+      decoder.innerHTML = input;
+      decoded = decoder.textContent || decoder.innerText || input;
+    }
     const parser = new DOMParser();
     const doc = parser.parseFromString(decoded, "text/html");
     // strip scripts/styles and data-/on* attributes
