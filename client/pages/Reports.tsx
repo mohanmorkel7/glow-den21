@@ -528,6 +528,67 @@ export default function Reports() {
       ? (serverData as any[])
       : (projectPerformanceData as any[]);
 
+  // Sanitize numeric fields used in charts to avoid NaN errors
+  const safeNumber = (v: any) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const safeCurrentData = (currentData || []).map((d: any) => {
+    const actual = safeNumber(d.actual ?? d.completed);
+    const target = safeNumber(d.target);
+    const automation = safeNumber(d.automation);
+    const manual = safeNumber(d.manual);
+    const hours = safeNumber(d.hours);
+    const efficiency = Number.isFinite(Number(d.efficiency))
+      ? Number(d.efficiency)
+      : target > 0
+      ? (actual / target) * 100
+      : 0;
+    return {
+      ...d,
+      actual,
+      completed: actual,
+      target,
+      automation,
+      manual,
+      hours,
+      efficiency,
+    };
+  });
+
+  const safeTeamPerformanceData = (teamPerformanceData || []).map((u: any) => ({
+    ...u,
+    submitted: safeNumber(u.submitted),
+    completedRequests: safeNumber(u.completedRequests),
+    efficiency: Number.isFinite(Number(u.efficiency)) ? Number(u.efficiency) : 0,
+  }));
+
+  const safeIndividualMetrics = (individualMetrics || []).map((u: any) => ({
+    ...u,
+    submitted: safeNumber(u.submitted),
+    completedRequests: safeNumber(u.completedRequests),
+    efficiency: Number.isFinite(Number(u.efficiency)) ? Number(u.efficiency) : 0,
+  }));
+
+  const safeProjectOverview = (projectOverview || []).map((p: any) => ({
+    ...p,
+    completed: safeNumber(p.completed),
+    target: safeNumber(p.target),
+    activeUsers: safeNumber(p.activeUsers),
+    status: p.status || "",
+  }));
+
+  // Use safe data in charts
+  const chartCurrentData = safeCurrentData;
+  const chartTeamData = isAdmin ? safeTeamPerformanceData : null;
+  const chartUserPerformanceData = !isAdmin
+    ? (userPerformanceData || []).map((u: any) => ({
+        ...u,
+        efficiency: safeNumber(u.efficiency),
+      }))
+    : null;
+
   // Calculate current period metrics
   const currentMetrics = isAdmin
     ? {
