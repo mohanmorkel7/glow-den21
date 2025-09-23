@@ -571,7 +571,9 @@ export default function Dashboard() {
 
         <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Contributors</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Contributors
+            </CardTitle>
             <Users className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -607,14 +609,19 @@ export default function Dashboard() {
                     name === "revenue"
                       ? "Revenue (₹)"
                       : name === "totalExpense"
-                      ? "Expenses (₹)"
-                      : name === "netProfit"
-                      ? "Net Profit (₹)"
-                      : name,
+                        ? "Expenses (₹)"
+                        : name === "netProfit"
+                          ? "Net Profit (₹)"
+                          : name,
                   ]}
                 />
                 <Legend />
-                <Bar yAxisId="left" dataKey="revenue" fill="#3b82f6" name="Revenue" />
+                <Bar
+                  yAxisId="left"
+                  dataKey="revenue"
+                  fill="#3b82f6"
+                  name="Revenue"
+                />
                 <Bar
                   yAxisId="left"
                   dataKey="totalExpense"
@@ -652,11 +659,16 @@ export default function Dashboard() {
                   cy="50%"
                   outerRadius={90}
                   dataKey="value"
-                  label={({ name, value }) => `${name}: ${Number(value).toLocaleString()}`}
+                  label={({ name, value }) =>
+                    `${name}: ${Number(value).toLocaleString()}`
+                  }
                 >
                   {(expenseAnalytics?.topExpenseCategories || []).map(
                     (entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill || "#8884D8"} />
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.fill || "#8884D8"}
+                      />
                     ),
                   )}
                 </Pie>
@@ -692,7 +704,9 @@ export default function Dashboard() {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead className="text-right">Submitted</TableHead>
-                  <TableHead className="text-right">Completed Requests</TableHead>
+                  <TableHead className="text-right">
+                    Completed Requests
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -709,7 +723,10 @@ export default function Dashboard() {
                 ))}
                 {teamPerformance.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={3}
+                      className="text-center text-muted-foreground"
+                    >
                       No data
                     </TableCell>
                   </TableRow>
@@ -731,32 +748,54 @@ export default function Dashboard() {
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Total Files</p>
-                  <p className="text-2xl font-bold text-blue-600">{weeklyTotalFiles.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-blue-900">
+                    Total Files
+                  </p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {weeklyTotalFiles.toLocaleString()}
+                  </p>
                 </div>
                 <FileText className="h-8 w-8 text-blue-500" />
               </div>
 
               <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-green-900">Net Profit (₹)</p>
-                  <p className="text-2xl font-bold text-green-600">{latestPL ? Number(latestPL.netProfit || 0).toLocaleString() : "-"}</p>
+                  <p className="text-sm font-medium text-green-900">
+                    Net Profit (₹)
+                  </p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {latestPL
+                      ? Number(latestPL.netProfit || 0).toLocaleString()
+                      : "-"}
+                  </p>
                 </div>
                 <Target className="h-8 w-8 text-green-500" />
               </div>
 
               <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-purple-900">Revenue (₹)</p>
-                  <p className="text-2xl font-bold text-purple-600">{expenseAnalytics?.currentMonth?.totalRevenue != null ? Number(expenseAnalytics.currentMonth.totalRevenue).toLocaleString() : "-"}</p>
+                  <p className="text-sm font-medium text-purple-900">
+                    Revenue (₹)
+                  </p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {expenseAnalytics?.currentMonth?.totalRevenue != null
+                      ? Number(
+                          expenseAnalytics.currentMonth.totalRevenue,
+                        ).toLocaleString()
+                      : "-"}
+                  </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-purple-500" />
               </div>
 
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-orange-900">Active Contributors</p>
-                  <p className="text-2xl font-bold text-orange-600">{activeContributors}</p>
+                  <p className="text-sm font-medium text-orange-900">
+                    Active Contributors
+                  </p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {activeContributors}
+                  </p>
                 </div>
                 <Activity className="h-8 w-8 text-orange-500" />
               </div>
@@ -785,7 +824,11 @@ export default function Dashboard() {
                 <Tooltip
                   formatter={(value, name) => [
                     typeof value === "number" ? value.toLocaleString() : value,
-                    name === "manual" ? "Manual" : name === "automation" ? "Automation" : name,
+                    name === "manual"
+                      ? "Manual"
+                      : name === "automation"
+                        ? "Automation"
+                        : name,
                   ]}
                 />
                 <Legend />
@@ -839,11 +882,15 @@ export default function Dashboard() {
                       {a.title || a.message || "Alert"}
                     </p>
                     {a.description && (
-                      <p className="text-xs text-muted-foreground">{a.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {a.description}
+                      </p>
                     )}
                   </div>
                   {a.time && (
-                    <span className="text-xs text-muted-foreground">{a.time}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {a.time}
+                    </span>
                   )}
                 </div>
               ))}
@@ -873,7 +920,8 @@ export default function Dashboard() {
                   onClick={() => {
                     toast({
                       title: "Navigating to User Management",
-                      description: "Opening team and user management interface...",
+                      description:
+                        "Opening team and user management interface...",
                     });
                     navigate("/users");
                   }}
@@ -887,7 +935,8 @@ export default function Dashboard() {
                   onClick={() => {
                     toast({
                       title: "Opening Project Management",
-                      description: "Accessing project overview and management tools...",
+                      description:
+                        "Accessing project overview and management tools...",
                     });
                     navigate("/projects");
                   }}
@@ -915,7 +964,8 @@ export default function Dashboard() {
                   onClick={() => {
                     toast({
                       title: "Opening File Process Management",
-                      description: "Accessing target settings and file processing controls...",
+                      description:
+                        "Accessing target settings and file processing controls...",
                     });
                     navigate("/file-process");
                   }}
@@ -929,7 +979,8 @@ export default function Dashboard() {
                   onClick={() => {
                     toast({
                       title: "Advanced Analytics",
-                      description: "Opening detailed performance analytics dashboard...",
+                      description:
+                        "Opening detailed performance analytics dashboard...",
                     });
                     navigate("/reports");
                   }}
