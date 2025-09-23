@@ -131,7 +131,23 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       decoded = decoder.textContent || decoder.innerText || input;
     }
     const parser = new DOMParser();
-    const doc = parser.parseFromString(decoded, "text/html");
+    let doc = parser.parseFromString(decoded, "text/html");
+
+    // If parsed document body has no element children but contains escaped HTML
+    // (e.g. the input was wrapped in a <p> with literal "&lt;div...&gt;"), try decoding the
+    // body text and reparsing so the contained HTML structures are recognized.
+    const bodyText = (doc.body && doc.body.textContent) ? doc.body.textContent.trim() : "";
+    if ((doc.body.children.length === 0 || doc.body.children.length === 1 && doc.body.children[0].tagName === 'P') && /^\s*(?:&lt;|<)/.test(bodyText)) {
+      const decoder = document.createElement("div");
+      decoder.innerHTML = bodyText;
+      const redecoded = decoder.textContent || decoder.innerText || bodyText;
+      const maybeDoc = parser.parseFromString(redecoded, "text/html");
+      // if reparse yields element children, use it
+      if (maybeDoc.body && maybeDoc.body.children.length > 0) {
+        doc = maybeDoc;
+      }
+    }
+
     // strip scripts/styles and data-/on* attributes
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
     doc.querySelectorAll("*").forEach((el) => {
