@@ -45,6 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/RichTextEditor";
 
 // Sanitize HTML by decoding entities, removing data-* attributes and script/style tags
+// Also preserves plain-text newlines by converting them into paragraphs or <br />
 const sanitizeHtml = (html: string | undefined | null) => {
   if (!html) return "";
   try {
@@ -66,6 +67,45 @@ const sanitizeHtml = (html: string | undefined | null) => {
         if (a.name.startsWith("data-")) el.removeAttribute(a.name);
         if (/^on/i.test(a.name)) el.removeAttribute(a.name);
       });
+    });
+
+    // If the user entered plain text with newlines (no tags), convert into paragraphs
+    const bodyHTML = doc.body.innerHTML.trim();
+    const looksLikeHtmlTag = /<\s*[a-zA-Z][^>]*>/m.test(bodyHTML);
+    if (!looksLikeHtmlTag) {
+      // Split on double newlines for paragraphs, single newline -> <br>
+      const paragraphs = decoded
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0)
+        .map((p) => `<p>${p.replace(/\n/g, "<br />")}</p>`)
+        .join("\n");
+      return paragraphs;
+    }
+
+    // For mixed HTML where some text nodes include newlines, replace \n in text nodes with <br>
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+    const textNodes: Node[] = [];
+    let n: Node | null = walker.nextNode();
+    while (n) {
+      textNodes.push(n);
+      n = walker.nextNode();
+    }
+
+    textNodes.forEach((tn) => {
+      if (tn.nodeValue && tn.nodeValue.indexOf("\n") !== -1) {
+        const parent = tn.parentNode as Element | null;
+        if (!parent) return;
+        const parts = (tn.nodeValue || "").split(/\n+/);
+        const frag = doc.createDocumentFragment();
+        parts.forEach((part, idx) => {
+          frag.appendChild(doc.createTextNode(part));
+          if (idx < parts.length - 1) {
+            frag.appendChild(doc.createElement("br"));
+          }
+        });
+        parent.replaceChild(frag, tn);
+      }
     });
 
     return doc.body.innerHTML;
