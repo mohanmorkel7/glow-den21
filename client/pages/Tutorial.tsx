@@ -60,12 +60,13 @@ const sanitizeHtml = (html: string | undefined | null) => {
     // remove script and style tags
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
 
-    // Remove data-* attributes and inline event handlers from all elements
+    // Remove data-* attributes, inline event handlers and inline styles from all elements
     const all = doc.querySelectorAll("*");
     all.forEach((el) => {
       Array.from(el.attributes).forEach((a) => {
         if (a.name.startsWith("data-")) el.removeAttribute(a.name);
         if (/^on/i.test(a.name)) el.removeAttribute(a.name);
+        if (a.name === "style") el.removeAttribute(a.name);
       });
     });
 
@@ -154,11 +155,11 @@ const sanitizeAndFormatHtml = (html: string | undefined | null) => {
       }
     }
 
-    // strip scripts/styles and data-/on* attributes
+    // strip scripts/styles and data-/on*/style attributes
     doc.querySelectorAll("script,style").forEach((el) => el.remove());
     doc.querySelectorAll("*").forEach((el) => {
       Array.from(el.attributes).forEach((a) => {
-        if (a.name.startsWith("data-") || /^on/i.test(a.name))
+        if (a.name.startsWith("data-") || /^on/i.test(a.name) || a.name === "style")
           el.removeAttribute(a.name);
       });
     });
