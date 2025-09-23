@@ -2832,43 +2832,83 @@ export default function FileProcess() {
                                             "";
                                           if (dl) {
                                             if (/^https?:/i.test(dl)) {
-                                              window.open(dl, "_blank", "noopener");
+                                              window.open(
+                                                dl,
+                                                "_blank",
+                                                "noopener",
+                                              );
                                             } else {
-                                              const token = localStorage.getItem("authToken");
-                                              const apiPath = dl.startsWith("/api/")
+                                              const token =
+                                                localStorage.getItem(
+                                                  "authToken",
+                                                );
+                                              const apiPath = dl.startsWith(
+                                                "/api/",
+                                              )
                                                 ? dl
                                                 : `/api${dl.startsWith("/") ? "" : "/"}${dl}`;
-                                              const resp = await fetch(apiPath, {
-                                                headers: token ? { Authorization: `Bearer ${token}` } : {},
-                                              });
+                                              const resp = await fetch(
+                                                apiPath,
+                                                {
+                                                  headers: token
+                                                    ? {
+                                                        Authorization: `Bearer ${token}`,
+                                                      }
+                                                    : {},
+                                                },
+                                              );
                                               if (!resp.ok) {
-                                                const text = await resp.text().catch(() => resp.statusText);
-                                                throw new Error(text || `Download failed (${resp.status})`);
+                                                const text = await resp
+                                                  .text()
+                                                  .catch(() => resp.statusText);
+                                                throw new Error(
+                                                  text ||
+                                                    `Download failed (${resp.status})`,
+                                                );
                                               }
-                                              const cd = resp.headers.get("Content-Disposition") || "";
-                                              const match = cd.match(/filename=\"?([^\";]+)\"?/i);
-                                              const filename = match ? match[1] : `request_${request.id}.csv`;
+                                              const cd =
+                                                resp.headers.get(
+                                                  "Content-Disposition",
+                                                ) || "";
+                                              const match = cd.match(
+                                                /filename=\"?([^\";]+)\"?/i,
+                                              );
+                                              const filename = match
+                                                ? match[1]
+                                                : `request_${request.id}.csv`;
                                               const blob = await resp.blob();
-                                              const url = URL.createObjectURL(blob);
-                                              const link = document.createElement("a");
+                                              const url =
+                                                URL.createObjectURL(blob);
+                                              const link =
+                                                document.createElement("a");
                                               link.href = url;
                                               link.download = filename;
                                               document.body.appendChild(link);
                                               link.click();
                                               link.remove();
-                                              setTimeout(() => URL.revokeObjectURL(url), 1000);
+                                              setTimeout(
+                                                () => URL.revokeObjectURL(url),
+                                                1000,
+                                              );
                                             }
                                           } else {
                                             const { blob, filename } =
-                                              await apiClient.downloadFileRequest(request.id);
-                                            const url = URL.createObjectURL(blob);
-                                            const link = document.createElement("a");
+                                              await apiClient.downloadFileRequest(
+                                                request.id,
+                                              );
+                                            const url =
+                                              URL.createObjectURL(blob);
+                                            const link =
+                                              document.createElement("a");
                                             link.href = url;
                                             link.download = filename;
                                             document.body.appendChild(link);
                                             link.click();
                                             link.remove();
-                                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                                            setTimeout(
+                                              () => URL.revokeObjectURL(url),
+                                              1000,
+                                            );
                                           }
                                         } catch (e: any) {
                                           const msg =
