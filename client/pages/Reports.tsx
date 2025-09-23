@@ -1007,7 +1007,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={currentData}>
+                    <LineChart data={chartCurrentData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
                         dataKey={
@@ -1454,7 +1454,7 @@ export default function Reports() {
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={currentData}>
+                      <LineChart data={chartCurrentData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                           dataKey={
