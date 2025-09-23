@@ -2187,6 +2187,85 @@ export default function Tutorial() {
                   }}
                 />
               </div>
+
+              {/* Existing attached video for this tutorial (if any) */}
+              {editingTutorial && (
+                <div className="mt-4">
+                  <Label>Attached Video</Label>
+                  {editingTutorial.videoUrl ? (
+                    <div className="space-y-2">
+                      <video
+                        src={editingTutorial.videoUrl}
+                        controls
+                        className="w-full max-h-56 rounded"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            // Open upload dialog targeted to this tutorial to replace the video
+                            setVideoUpload({
+                              tutorialId: editingTutorial.id,
+                              tutorialName: editingTutorial.title,
+                              file: null,
+                              uploadProgress: 0,
+                              isUploading: false,
+                              previewUrl: "",
+                              dragActive: false,
+                            });
+                            setIsUploadVideoOpen(true);
+                          }}
+                        >
+                          Replace Video
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            // Open upload dialog to allow uploading (same as replace)
+                            setVideoUpload({
+                              tutorialId: editingTutorial.id,
+                              tutorialName: editingTutorial.title,
+                              file: null,
+                              uploadProgress: 0,
+                              isUploading: false,
+                              previewUrl: "",
+                              dragActive: false,
+                            });
+                            setIsUploadVideoOpen(true);
+                          }}
+                        >
+                          Upload New
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="text-sm text-muted-foreground">
+                        No video attached to this tutorial.
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setVideoUpload({
+                            tutorialId: editingTutorial.id,
+                            tutorialName: editingTutorial.title,
+                            file: null,
+                            uploadProgress: 0,
+                            isUploading: false,
+                            previewUrl: "",
+                            dragActive: false,
+                          });
+                          setIsUploadVideoOpen(true);
+                        }}
+                      >
+                        Upload Video
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             {/* Content & Instructions Tab */}
