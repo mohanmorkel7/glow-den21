@@ -2837,7 +2837,7 @@ export default function FileProcess() {
                                           document.body.appendChild(link);
                                           link.click();
                                           link.remove();
-                                          URL.revokeObjectURL(url);
+                                          setTimeout(() => URL.revokeObjectURL(url), 1000);
                                         } catch (e) {
                                           alert(
                                             "Download failed. Ensure a CSV was uploaded for this process.",
@@ -3113,7 +3113,7 @@ export default function FileProcess() {
                                     link.href = url;
                                     link.download = filename;
                                     link.click();
-                                    URL.revokeObjectURL(url);
+                                    setTimeout(() => URL.revokeObjectURL(url), 1000);
                                   } catch (e) {
                                     alert("Failed to download uploaded file");
                                   }
@@ -4286,7 +4286,7 @@ export default function FileProcess() {
                             link.href = url;
                             link.download = filename;
                             link.click();
-                            URL.revokeObjectURL(url);
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
                           } catch (e) {
                             alert("Failed to download uploaded file");
                           }
