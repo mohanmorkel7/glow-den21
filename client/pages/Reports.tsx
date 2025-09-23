@@ -1050,51 +1050,17 @@ export default function Reports() {
                       <TableRow>
                         <TableHead>Team Member</TableHead>
                         <TableHead>Completed</TableHead>
-                        <TableHead>Target</TableHead>
-                        <TableHead>Efficiency</TableHead>
-                        <TableHead>Projects</TableHead>
-                        <TableHead>Rating</TableHead>
+                        <TableHead>Completed Requests</TableHead>
+                        <TableHead>Last Completed</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {userPerformanceData.map((user, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">
-                            {user.name}
-                          </TableCell>
-                          <TableCell>
-                            {user.completed.toLocaleString()}
-                          </TableCell>
-                          <TableCell>{user.target.toLocaleString()}</TableCell>
-                          <TableCell>
-                            <div
-                              className={`font-medium ${
-                                user.efficiency >= 100
-                                  ? "text-green-600"
-                                  : user.efficiency >= 90
-                                    ? "text-blue-600"
-                                    : user.efficiency >= 80
-                                      ? "text-orange-600"
-                                      : "text-red-600"
-                              }`}
-                            >
-                              {user.efficiency}%
-                            </div>
-                          </TableCell>
-                          <TableCell>{user.projects}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                user.rating === "Outstanding"
-                                  ? "default"
-                                  : user.rating === "Excellent"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                            >
-                              {user.rating}
-                            </Badge>
-                          </TableCell>
+                      {(individualMetrics || []).map((user: any, index: number) => (
+                        <TableRow key={user.id || index}>
+                          <TableCell className="font-medium">{user.name}</TableCell>
+                          <TableCell>{(user.submitted ?? 0).toLocaleString()}</TableCell>
+                          <TableCell>{user.completedRequests ?? 0}</TableCell>
+                          <TableCell>{user.lastCompletedAt ? new Date(user.lastCompletedAt).toLocaleString() : "-"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
