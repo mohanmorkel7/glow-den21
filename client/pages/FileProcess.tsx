@@ -3270,6 +3270,7 @@ export default function FileProcess() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <VerifiedFilesTable files={getVerifiedFiles()} currentUser={currentUser} loadData={loadData} formatDuration={formatDuration} />
               {getVerifiedFiles().length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
