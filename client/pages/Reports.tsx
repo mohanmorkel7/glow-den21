@@ -434,7 +434,8 @@ export default function Reports() {
 
   const isAdmin =
     currentUser?.role === "super_admin" ||
-    currentUser?.role === "project_manager";
+    currentUser?.role === "project_manager" ||
+    currentUser?.role === "admin";
 
   // Get current data based on time period
   const getCurrentData = () => {
@@ -466,6 +467,7 @@ export default function Reports() {
   const [serverData, setServerData] = useState<any[] | null>(null);
   const [teamPerformanceData, setTeamPerformanceData] = useState<any[]>([]);
   const [individualMetrics, setIndividualMetrics] = useState<any[]>([]);
+  const [projectOverviewState, setProjectOverviewState] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -510,6 +512,24 @@ export default function Reports() {
           } catch (e) {
             setTeamPerformanceData([]);
           }
+
+          // Load real projects overview for Projects tab
+          try {
+            const projs: any = await apiClient.getProjects({ limit: 200 });
+            const projList: any[] =
+              (projs as any)?.data || (Array.isArray(projs) ? (projs as any) : []);
+            const mappedProjects = (projList || []).map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              completed: Number(p.currentCount || 0),
+              target: Number(p.targetCount || 0),
+              activeUsers: Number(p.assignedUsersCount || 0),
+              status: p.status || "",
+            }));
+            setProjectOverviewState(mappedProjects);
+          } catch (e) {
+            setProjectOverviewState([]);
+          }
         } else {
           setServerData(null);
         }
@@ -524,8 +544,8 @@ export default function Reports() {
   const currentData = serverData ?? getCurrentData();
   // Project overview fallback (server data may not include project-level info)
   const projectOverview =
-    serverData && serverData.length > 0
-      ? (serverData as any[])
+    projectOverviewState && projectOverviewState.length > 0
+      ? projectOverviewState
       : (projectPerformanceData as any[]);
 
   // Sanitize numeric fields used in charts to avoid NaN errors

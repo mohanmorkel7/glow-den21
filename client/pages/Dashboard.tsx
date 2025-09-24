@@ -143,7 +143,7 @@ export default function Dashboard() {
           .catch(() => undefined);
       }
 
-      if (user.role === "project_manager" || user.role === "super_admin") {
+      if (user.role === "project_manager" || user.role === "super_admin" || user.role === "admin") {
         try {
           const [tp, fr, fp] = await Promise.all([
             apiClient.getTeamPerformance("week"),
@@ -457,31 +457,44 @@ export default function Dashboard() {
                   <TableHead>Process</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Count</TableHead>
+                  <TableHead>Assigned</TableHead>
+                  <TableHead>Range</TableHead>
+                  <TableHead>Completed</TableHead>
+                  <TableHead>Verified By</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {(pmFileRequests as any[]).slice(0, 50).map((r: any) => (
                   <TableRow key={r.id}>
                     <TableCell>{r.user_name || r.userName || "-"}</TableCell>
-                    <TableCell>
-                      {r.file_process_name || r.fileProcessName || "-"}
-                    </TableCell>
+                    <TableCell>{r.file_process_name || r.fileProcessName || "-"}</TableCell>
                     <TableCell className="capitalize">
                       {String(r.status || "").replace("_", " ")}
                     </TableCell>
                     <TableCell className="text-right">
-                      {Number(
-                        r.assigned_count ?? r.requested_count ?? 0,
-                      ).toLocaleString()}
+                      {Number(r.assigned_count ?? r.requested_count ?? 0).toLocaleString()}
                     </TableCell>
+                    <TableCell>
+                      {r.assigned_date || r.requested_date
+                        ? new Date(r.assigned_date || r.requested_date).toLocaleString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {r.start_row && r.end_row
+                        ? `${Number(r.start_row).toLocaleString()} - ${Number(r.end_row).toLocaleString()}`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {r.completed_date
+                        ? new Date(r.completed_date).toLocaleString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{r.verified_by || "-"}</TableCell>
                   </TableRow>
                 ))}
                 {pmFileRequests.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-muted-foreground"
-                    >
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       No requests
                     </TableCell>
                   </TableRow>
