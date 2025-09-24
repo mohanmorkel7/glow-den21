@@ -64,7 +64,7 @@ router.get("/", async (req: Request, res: Response) => {
 // POST /api/tutorials - create tutorial with metadata and optional steps
 router.post(
   "/",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const currentUser: any = (req as any).user;
@@ -182,7 +182,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 // PUT /api/tutorials/:id - update tutorial (metadata and optionally replace steps)
 router.put(
   "/:id",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -296,7 +296,7 @@ router.put(
 // DELETE /api/tutorials/:id - delete tutorial and associated files
 router.delete(
   "/:id",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -337,7 +337,7 @@ router.delete(
 // POST /api/tutorials/upload - create tutorial and upload video (raw bytes)
 router.post(
   "/upload",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const currentUser: any = (req as any).user;
@@ -479,7 +479,7 @@ router.get("/:id/video", async (req: Request, res: Response) => {
 // POST /api/tutorials/:id/upload - upload or replace video for an existing tutorial
 router.post(
   "/:id/upload",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
