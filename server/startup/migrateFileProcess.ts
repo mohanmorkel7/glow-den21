@@ -83,6 +83,15 @@ export async function ensureFileProcessTables(): Promise<void> {
       "ALTER TABLE projects ADD COLUMN IF NOT EXISTS rate_per_file_usd NUMERIC",
     );
 
+    // Ensure projects table has project_code for external/reference IDs
+    await query(
+      "ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_code TEXT",
+    );
+    await query("DROP INDEX IF EXISTS ux_projects_project_code");
+    await query(
+      "CREATE INDEX IF NOT EXISTS idx_projects_project_code ON projects(project_code)",
+    );
+
     // Indexes for performance
     await query(
       "CREATE INDEX IF NOT EXISTS idx_file_processes_project_id ON file_processes(project_id)",
