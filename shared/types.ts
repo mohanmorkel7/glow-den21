@@ -77,6 +77,7 @@ export interface ProjectRates {
 export interface Project {
   id: string;
   name: string;
+  projectCode?: string;
   description?: string;
   status: ProjectStatus;
   priority: ProjectPriority;
@@ -109,6 +110,7 @@ export interface ProjectDetails extends Project {
 
 export interface CreateProjectRequest {
   name: string;
+  projectCode?: string;
   description?: string;
   status: ProjectStatus;
   priority: ProjectPriority;
@@ -124,6 +126,7 @@ export interface CreateProjectRequest {
 
 export interface UpdateProjectRequest {
   name?: string;
+  projectCode?: string;
   description?: string;
   status?: ProjectStatus;
   priority?: ProjectPriority;
