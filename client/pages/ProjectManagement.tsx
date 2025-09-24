@@ -266,7 +266,8 @@ export default function ProjectManagement() {
     setEditingProject(project);
     setNewProject({
       name: project.name || "",
-      projectCode: (project as any).projectCode ?? (project as any).project_code ?? "",
+      projectCode:
+        (project as any).projectCode ?? (project as any).project_code ?? "",
       description: project.description || "",
       status: project.status || "active",
       priority: project.priority || "medium",
@@ -388,7 +389,10 @@ export default function ProjectManagement() {
                     id="projectCode"
                     value={newProject.projectCode}
                     onChange={(e) =>
-                      setNewProject({ ...newProject, projectCode: e.target.value })
+                      setNewProject({
+                        ...newProject,
+                        projectCode: e.target.value,
+                      })
                     }
                     placeholder="e.g., PROJ-001"
                   />
