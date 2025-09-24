@@ -64,6 +64,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import VerifiedFilesTable from "@/components/VerifiedFilesTable";
 import { apiClient } from "@/lib/api";
 
 interface Project {
@@ -3269,6 +3270,12 @@ export default function FileProcess() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <VerifiedFilesTable
+                files={getVerifiedFiles()}
+                currentUser={currentUser}
+                loadData={loadData}
+                formatDuration={formatDuration}
+              />
               {getVerifiedFiles().length === 0 ? (
                 <div className="text-center py-8">
                   <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -3280,7 +3287,7 @@ export default function FileProcess() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="overflow-x-auto" style={{ display: "none" }}>
                   {getVerifiedFiles()
                     .slice(0, 5)
                     .map((request) => (

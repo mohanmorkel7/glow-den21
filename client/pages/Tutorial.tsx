@@ -2918,39 +2918,46 @@ export default function Tutorial() {
       >
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Upload Tutorial Video</DialogTitle>
+            <DialogTitle>
+              {(videoUpload as any).tutorialId
+                ? "Replace Tutorial Video"
+                : "Upload Tutorial Video"}
+            </DialogTitle>
             <DialogDescription>
-              Upload a video file to enhance your tutorial with visual
-              demonstrations
+              {(videoUpload as any).tutorialId
+                ? `Upload a new video for "${(videoUpload as any).tutorialName || "Selected Tutorial"}"`
+                : "Upload a video file to enhance your tutorial with visual demonstrations"}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Tutorial Selection or New Tutorial */}
-            <div>
-              <Label>Title *</Label>
-              <Input
-                placeholder="Enter tutorial title"
-                value={(videoUpload as any).title || ""}
-                onChange={(e) =>
-                  setVideoUpload({ ...videoUpload, title: e.target.value })
-                }
-                disabled={videoUpload.isUploading}
-              />
-
-              <div className="mt-4">
-                <Label>Description (optional)</Label>
-                <RichTextEditor
-                  value={(videoUpload as any).description || ""}
-                  onChange={(val) =>
-                    setVideoUpload({ ...videoUpload, description: val })
+            {/* New tutorial details (hide when replacing existing) */}
+            {!(videoUpload as any).tutorialId && (
+              <div>
+                <Label>Title *</Label>
+                <Input
+                  placeholder="Enter tutorial title"
+                  value={(videoUpload as any).title || ""}
+                  onChange={(e) =>
+                    setVideoUpload({ ...videoUpload, title: e.target.value })
                   }
-                  placeholder="Enter a brief description"
-                  readOnly={videoUpload.isUploading}
-                  className="min-h-[120px]"
+                  disabled={videoUpload.isUploading}
                 />
+
+                <div className="mt-4">
+                  <Label>Description (optional)</Label>
+                  <RichTextEditor
+                    value={(videoUpload as any).description || ""}
+                    onChange={(val) =>
+                      setVideoUpload({ ...videoUpload, description: val })
+                    }
+                    placeholder="Enter a brief description"
+                    readOnly={videoUpload.isUploading}
+                    className="min-h-[120px]"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* File Upload Area */}
             <div>
@@ -3094,8 +3101,9 @@ export default function Tutorial() {
             <Button
               onClick={handleVideoUpload}
               disabled={
-                !(videoUpload as any).title ||
                 !videoUpload.file ||
+                (!!!(videoUpload as any).tutorialId &&
+                  !(videoUpload as any).title) ||
                 videoUpload.isUploading
               }
             >
@@ -3107,7 +3115,9 @@ export default function Tutorial() {
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload Video
+                  {(videoUpload as any).tutorialId
+                    ? "Replace Video"
+                    : "Upload Video"}
                 </>
               )}
             </Button>

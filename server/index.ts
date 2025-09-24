@@ -194,7 +194,7 @@ export function createServer() {
   app.get("/api/dashboard/recent-projects", getRecentProjects);
   app.get(
     "/api/dashboard/team-performance",
-    requireRole(["super_admin", "project_manager"]),
+    requireRole(["super_admin", "project_manager", "admin"]),
     getTeamPerformance,
   );
   app.get("/api/dashboard/recent-alerts", getRecentAlerts);

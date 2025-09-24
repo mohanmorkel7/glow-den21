@@ -64,7 +64,7 @@ router.get("/", async (req: Request, res: Response) => {
 // POST /api/tutorials - create tutorial with metadata and optional steps
 router.post(
   "/",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const currentUser: any = (req as any).user;
@@ -182,7 +182,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 // PUT /api/tutorials/:id - update tutorial (metadata and optionally replace steps)
 router.put(
   "/:id",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -231,11 +231,9 @@ router.put(
       const sql = `UPDATE tutorials SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING id, title, description, category, status, instructions, target_roles, is_required, tags, "order", video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at`;
       const result = await query(sql, values);
       if (!result.rows.length) {
-        return res
-          .status(404)
-          .json({
-            error: { code: "NOT_FOUND", message: "Tutorial not found" },
-          });
+        return res.status(404).json({
+          error: { code: "NOT_FOUND", message: "Tutorial not found" },
+        });
       }
 
       // Optionally replace steps
@@ -296,7 +294,7 @@ router.put(
 // DELETE /api/tutorials/:id - delete tutorial and associated files
 router.delete(
   "/:id",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -315,11 +313,9 @@ router.delete(
         }
       }
       if (!result.rowCount) {
-        return res
-          .status(404)
-          .json({
-            error: { code: "NOT_FOUND", message: "Tutorial not found" },
-          });
+        return res.status(404).json({
+          error: { code: "NOT_FOUND", message: "Tutorial not found" },
+        });
       }
       res.status(204).send();
     } catch (error) {
@@ -337,7 +333,7 @@ router.delete(
 // POST /api/tutorials/upload - create tutorial and upload video (raw bytes)
 router.post(
   "/upload",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const currentUser: any = (req as any).user;
@@ -479,7 +475,7 @@ router.get("/:id/video", async (req: Request, res: Response) => {
 // POST /api/tutorials/:id/upload - upload or replace video for an existing tutorial
 router.post(
   "/:id/upload",
-  requireRole(["project_manager", "super_admin"]),
+  requireRole(["project_manager", "super_admin", "admin"]),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -505,49 +501,41 @@ router.post(
           [safeName, relPath, mime, id],
         );
         if (!result.rows.length) {
-          return res
-            .status(404)
-            .json({
-              error: { code: "NOT_FOUND", message: "Tutorial not found" },
-            });
+          return res.status(404).json({
+            error: { code: "NOT_FOUND", message: "Tutorial not found" },
+          });
         }
         const r = result.rows[0];
-        res
-          .status(200)
-          .json({
-            data: {
-              id: r.id,
-              title: r.title,
-              description: r.description || "",
-              category: r.category,
-              status: r.status,
-              videoUrl: `/api/tutorials/${r.id}/video`,
-              videoFileName: r.video_file_name,
-            },
-          });
+        res.status(200).json({
+          data: {
+            id: r.id,
+            title: r.title,
+            description: r.description || "",
+            category: r.category,
+            status: r.status,
+            videoUrl: `/api/tutorials/${r.id}/video`,
+            videoFileName: r.video_file_name,
+          },
+        });
       });
 
       ws.on("error", (err) => {
         console.error("Tutorial upload write error:", err);
-        res
-          .status(500)
-          .json({
-            error: {
-              code: "WRITE_ERROR",
-              message: "Failed to save uploaded video",
-            },
-          });
+        res.status(500).json({
+          error: {
+            code: "WRITE_ERROR",
+            message: "Failed to save uploaded video",
+          },
+        });
       });
     } catch (error) {
       console.error("Upload tutorial error:", error);
-      res
-        .status(500)
-        .json({
-          error: {
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to upload tutorial video",
-          },
-        });
+      res.status(500).json({
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to upload tutorial video",
+        },
+      });
     }
   },
 );
