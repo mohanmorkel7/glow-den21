@@ -3282,7 +3282,7 @@ export default function FileProcess() {
                   </p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" style={{display:'none'}}>
                   {getVerifiedFiles()
                     .slice(0, 5)
                     .map((request) => (
