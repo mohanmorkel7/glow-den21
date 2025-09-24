@@ -2919,7 +2919,9 @@ export default function Tutorial() {
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {(videoUpload as any).tutorialId ? "Replace Tutorial Video" : "Upload Tutorial Video"}
+              {(videoUpload as any).tutorialId
+                ? "Replace Tutorial Video"
+                : "Upload Tutorial Video"}
             </DialogTitle>
             <DialogDescription>
               {(videoUpload as any).tutorialId
@@ -3100,7 +3102,8 @@ export default function Tutorial() {
               onClick={handleVideoUpload}
               disabled={
                 !videoUpload.file ||
-                (!!!(videoUpload as any).tutorialId && !(videoUpload as any).title) ||
+                (!!!(videoUpload as any).tutorialId &&
+                  !(videoUpload as any).title) ||
                 videoUpload.isUploading
               }
             >
@@ -3112,7 +3115,9 @@ export default function Tutorial() {
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  {(videoUpload as any).tutorialId ? "Replace Video" : "Upload Video"}
+                  {(videoUpload as any).tutorialId
+                    ? "Replace Video"
+                    : "Upload Video"}
                 </>
               )}
             </Button>

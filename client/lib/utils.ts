@@ -11,7 +11,11 @@ export function formatDuration(
 ): string {
   if (!from) return "-";
   const start = from instanceof Date ? from : new Date(String(from));
-  const end = to ? (to instanceof Date ? to : new Date(String(to))) : new Date();
+  const end = to
+    ? to instanceof Date
+      ? to
+      : new Date(String(to))
+    : new Date();
   if (isNaN(start.getTime()) || isNaN(end.getTime())) return "-";
 
   let delta = Math.max(0, end.getTime() - start.getTime()); // milliseconds

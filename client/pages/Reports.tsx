@@ -517,7 +517,8 @@ export default function Reports() {
           try {
             const projs: any = await apiClient.getProjects({ limit: 200 });
             const projList: any[] =
-              (projs as any)?.data || (Array.isArray(projs) ? (projs as any) : []);
+              (projs as any)?.data ||
+              (Array.isArray(projs) ? (projs as any) : []);
             const mappedProjects = (projList || []).map((p: any) => ({
               id: p.id,
               name: p.name,
