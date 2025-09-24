@@ -64,6 +64,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import VerifiedFilesTable from "@/components/VerifiedFilesTable";
 import { apiClient } from "@/lib/api";
 
 interface Project {
