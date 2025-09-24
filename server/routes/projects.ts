@@ -31,7 +31,7 @@ export const listProjects: RequestHandler = async (req, res) => {
     if (search) {
       paramCount++;
       whereConditions.push(
-        `(p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`,
+        `(p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount} OR p.project_code ILIKE $${paramCount})`,
       );
       queryValues.push(`%${search}%`);
     }
@@ -113,6 +113,7 @@ export const listProjects: RequestHandler = async (req, res) => {
       },
       createdAt: project.created_at,
       updatedAt: project.updated_at,
+      projectCode: project.project_code ?? null,
       ratePerFileUSD: project.rate_per_file_usd ?? null,
     }));
 
@@ -216,6 +217,7 @@ export const getProject: RequestHandler = async (req, res) => {
       },
       createdAt: project.created_at,
       updatedAt: project.updated_at,
+      projectCode: project.project_code ?? null,
       ratePerFileUSD: project.rate_per_file_usd ?? null,
     };
 
@@ -273,14 +275,15 @@ export const createProject: RequestHandler = async (req, res) => {
     const result = await transaction(async (client) => {
       // Create project
       const insertQuery = `
-        INSERT INTO projects (name, description, status, priority, start_date, end_date, target_count, created_by_user_id, rate_per_file_usd)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO projects (name, description, project_code, status, priority, start_date, end_date, target_count, created_by_user_id, rate_per_file_usd)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `;
 
       const projectResult = await client.query(insertQuery, [
         name,
         description,
+        (projectRequest as any).projectCode ?? null,
         status,
         priority,
         startDate,
@@ -398,7 +401,9 @@ export const updateProject: RequestHandler = async (req, res) => {
                 ? "target_count"
                 : key === "ratePerFileUSD"
                   ? "rate_per_file_usd"
-                  : key;
+                  : key === "projectCode"
+                    ? "project_code"
+                    : key;
         updateFields.push(`${dbField} = $${paramCount}`);
         updateValues.push(value);
       }
@@ -491,6 +496,7 @@ export const updateProject: RequestHandler = async (req, res) => {
       },
       createdAt: project.created_at,
       updatedAt: project.updated_at,
+      projectCode: project.project_code ?? null,
       ratePerFileUSD: project.rate_per_file_usd ?? null,
     };
 
