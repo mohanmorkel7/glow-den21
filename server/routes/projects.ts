@@ -251,6 +251,26 @@ export const createProject: RequestHandler = async (req, res) => {
       assignedUsers = [],
     } = projectRequest;
 
+    // If projectCode provided, ensure not already used
+    const incomingCode = (projectRequest as any).projectCode
+      ? String((projectRequest as any).projectCode).trim()
+      : null;
+    if (incomingCode) {
+      const codeRes = await query(
+        "SELECT 1 FROM projects WHERE project_code = $1 LIMIT 1",
+        [incomingCode],
+      );
+      if (codeRes.rows.length > 0) {
+        return res.status(409).json({
+          error: {
+            code: "PROJECT_CODE_EXISTS",
+            message: `Project ID '${incomingCode}' already exists`,
+            details: [{ field: "projectCode", message: "Already exists" }],
+          },
+        } as ApiResponse);
+      }
+    }
+
     // Validate required fields
     if (!name) {
       return res.status(400).json({
@@ -339,7 +359,17 @@ export const createProject: RequestHandler = async (req, res) => {
     res.status(201).json({
       data: responseProject,
     } as ApiResponse);
-  } catch (error) {
+  } catch (error: any) {
+    // Friendly unique violation handling
+    if (error && (error.code === "23505" || error.constraint === "ux_projects_project_code")) {
+      return res.status(409).json({
+        error: {
+          code: "PROJECT_CODE_EXISTS",
+          message: "Project ID already exists",
+          details: [{ field: "projectCode", message: "Already exists" }],
+        },
+      } as ApiResponse);
+    }
     console.error("Create project error:", error);
     res.status(500).json({
       error: {
@@ -371,6 +401,29 @@ export const updateProject: RequestHandler = async (req, res) => {
     }
 
     const existingProject = existingResult.rows[0];
+
+    // If updating projectCode, ensure uniqueness
+    if (
+      Object.prototype.hasOwnProperty.call(projectRequest as any, "projectCode") &&
+      (projectRequest as any).projectCode
+    ) {
+      const newCode = String((projectRequest as any).projectCode).trim();
+      if (newCode && newCode !== (existingProject.project_code || "")) {
+        const codeRes = await query(
+          "SELECT 1 FROM projects WHERE project_code = $1 AND id <> $2 LIMIT 1",
+          [newCode, id],
+        );
+        if (codeRes.rows.length > 0) {
+          return res.status(409).json({
+            error: {
+              code: "PROJECT_CODE_EXISTS",
+              message: `Project ID '${newCode}' already exists`,
+              details: [{ field: "projectCode", message: "Already exists" }],
+            },
+          } as ApiResponse);
+        }
+      }
+    }
 
     // Validate dates if provided
     const startDate = projectRequest.startDate || existingProject.start_date;
@@ -504,7 +557,16 @@ export const updateProject: RequestHandler = async (req, res) => {
     res.json({
       data: responseProject,
     } as ApiResponse);
-  } catch (error) {
+  } catch (error: any) {
+    if (error && (error.code === "23505" || error.constraint === "ux_projects_project_code")) {
+      return res.status(409).json({
+        error: {
+          code: "PROJECT_CODE_EXISTS",
+          message: "Project ID already exists",
+          details: [{ field: "projectCode", message: "Already exists" }],
+        },
+      } as ApiResponse);
+    }
     console.error("Update project error:", error);
     res.status(500).json({
       error: {
