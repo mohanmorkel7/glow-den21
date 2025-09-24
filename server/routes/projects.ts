@@ -332,6 +332,7 @@ export const createProject: RequestHandler = async (req, res) => {
       },
       createdAt: result.created_at,
       updatedAt: result.updated_at,
+      projectCode: result.project_code ?? null,
       ratePerFileUSD: result.rate_per_file_usd ?? null,
     };
 
