@@ -3281,7 +3281,7 @@ export default function FileProcess() {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="overflow-x-auto">
                   {getVerifiedFiles()
                     .slice(0, 5)
                     .map((request) => (
