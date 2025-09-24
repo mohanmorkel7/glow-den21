@@ -256,7 +256,12 @@ export default function ProjectManagement() {
       setIsAddDialogOpen(false);
     } catch (err) {
       console.error("Create project failed", err);
-      setError(String((err as any).message || err));
+      const msg = String((err as any).message || err);
+      if (/project id.*exists/i.test(msg) || /PROJECT_CODE_EXISTS/.test(msg)) {
+        setError("Project ID already exists. Please use a unique ID.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setIsLoading(false);
     }
