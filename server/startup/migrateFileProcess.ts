@@ -88,7 +88,10 @@ export async function ensureFileProcessTables(): Promise<void> {
       "ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_code TEXT",
     );
     await query(
-      "CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_project_code ON projects(project_code) WHERE project_code IS NOT NULL",
+      "DROP INDEX IF EXISTS ux_projects_project_code",
+    );
+    await query(
+      "CREATE INDEX IF NOT EXISTS idx_projects_project_code ON projects(project_code)",
     );
 
     // Indexes for performance
