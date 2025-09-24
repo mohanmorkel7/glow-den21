@@ -88,6 +88,7 @@ interface User {
 interface Project {
   id: string;
   name: string;
+  projectCode?: string;
   description?: string;
   status: "active" | "inactive" | "planning" | "on_hold" | "completed";
   priority: "low" | "medium" | "high";
@@ -121,6 +122,7 @@ export default function ProjectManagement() {
 
   const [newProject, setNewProject] = useState({
     name: "",
+    projectCode: "",
     description: "",
     status: "active" as any,
     priority: "medium" as any,
@@ -138,6 +140,7 @@ export default function ProjectManagement() {
   const mapApiToProject = (p: any): Project => ({
     id: String(p.id),
     name: p.name || "",
+    projectCode: p.projectCode ?? p.project_code ?? "",
     description: p.description || "",
     status: (p.status as Project["status"]) || "active",
     priority: (p.priority as Project["priority"]) || "medium",
@@ -218,6 +221,7 @@ export default function ProjectManagement() {
   const resetNewProject = () => {
     setNewProject({
       name: "",
+      projectCode: "",
       description: "",
       status: "active",
       priority: "medium",
@@ -234,6 +238,7 @@ export default function ProjectManagement() {
       setIsLoading(true);
       const payload: any = {
         name: newProject.name,
+        projectCode: newProject.projectCode?.trim() || undefined,
         description: newProject.description,
         status: newProject.status,
         priority: newProject.priority,
@@ -261,6 +266,7 @@ export default function ProjectManagement() {
     setEditingProject(project);
     setNewProject({
       name: project.name || "",
+      projectCode: (project as any).projectCode ?? (project as any).project_code ?? "",
       description: project.description || "",
       status: project.status || "active",
       priority: project.priority || "medium",
@@ -280,6 +286,7 @@ export default function ProjectManagement() {
       setIsLoading(true);
       const payload: any = {
         name: newProject.name,
+        projectCode: newProject.projectCode?.trim() || undefined,
         description: newProject.description,
         status: newProject.status,
         priority: newProject.priority,
@@ -373,6 +380,17 @@ export default function ProjectManagement() {
                       setNewProject({ ...newProject, name: e.target.value })
                     }
                     placeholder="e.g., MO Project - Data Processing"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="projectCode">Project ID</Label>
+                  <Input
+                    id="projectCode"
+                    value={newProject.projectCode}
+                    onChange={(e) =>
+                      setNewProject({ ...newProject, projectCode: e.target.value })
+                    }
+                    placeholder="e.g., PROJ-001"
                   />
                 </div>
                 <div className="space-y-2">
