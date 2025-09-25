@@ -240,3 +240,28 @@ CREATE TABLE IF NOT EXISTS user_roles (
 -- DASHBOARD helper indexes (optional)
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by_user_id);
+
+
+INSERT INTO users (
+  id, name, email, phone, hashed_password, role, status,
+  department, job_title, avatar_url, theme, language,
+  notifications_enabled, join_date, last_login, created_at, updated_at
+) VALUES (
+  '6c3cfd14-4862-48bf-9a98-16f18286428d',
+  'Super Admin',
+  'admin@websyntactic.com',
+  '9629558605',
+  '$2b$10$lg2cCZkN6y5i4wvaNCOXM.3KMelf8y/sug.Zccm72mAtaBLY/L7Tq',
+  'super_admin',
+  'active',
+  NULL,
+  NULL,
+  NULL,
+  'system',
+  'English',
+  true,
+  '2025-09-17',
+  '2025-09-24 06:02:46.6047',
+  '2025-09-17 06:13:44.566058',
+  '2025-09-24 06:02:46.6047'
+);
