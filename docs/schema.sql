@@ -290,8 +290,6 @@ CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by_user_i
 --   '2025-09-24 06:02:46.6047'
 -- );
 
-You no longer need to manually insert the id like:
-
 INSERT INTO users (
   name, email, phone, hashed_password, role, status,
   department, job_title, avatar_url, theme, language,
