@@ -68,6 +68,7 @@ import tutorialsRoutes from "./routes/tutorials";
 import { ensureInitialAdmin } from "./startup/seedAdmin";
 import * as fileProcess from "./routes/fileProcess";
 import { isDbConfigured } from "./db/connection";
+import { initDatabase } from "./startup/initDatabase.js"; // 👈 add this to run schema.sql
 
 export function createServer() {
   const app = express();
@@ -82,6 +83,9 @@ export function createServer() {
 
   // Trigger initial admin seeding and ensure file process tables (non-blocking)
   if (isDbConfigured()) {
+
+    initDatabase(); // 👈 make sure this runs before starting the server
+
     ensureInitialAdmin().catch((e) => console.error(e));
     ensureFileProcessTables().catch((e) => console.error(e));
     ensureTutorialTables().catch((e) => console.error(e));
