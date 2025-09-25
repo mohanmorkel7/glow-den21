@@ -456,8 +456,9 @@ CREATE TABLE public.user_notifications (
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
+Drop table public.users;
 
-CREATE TABLE public.users (
+Create TABLE public.users (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(255) NOT NULL,
     email character varying(255) NOT NULL,
@@ -484,6 +485,30 @@ CREATE TABLE public.users (
 
 COMMENT ON TABLE public.users IS 'Core user accounts with authentication and profile information';
 
+
+INSERT INTO users (
+  id, name, email, phone, hashed_password, role, status,
+  department, job_title, avatar_url, theme, language,
+  notifications_enabled, join_date, last_login, created_at, updated_at
+) VALUES (
+  '6c3cfd14-4862-48bf-9a98-16f18286428d',
+  'Super Admin',
+  'admin@websyntactic.com',
+  '9629558605',
+  '$2b$10$lg2cCZkN6y5i4wvaNCOXM.3KMelf8y/sug.Zccm72mAtaBLY/L7Tq',
+  'super_admin',
+  'active',
+  NULL,
+  NULL,
+  NULL,
+  'system',
+  'English',
+  true,
+  '2025-09-17',
+  '2025-09-24 06:02:46.6047',
+  '2025-09-17 06:13:44.566058',
+  '2025-09-24 06:02:46.6047'
+);
 
 --
 -- Name: dashboard_stats; Type: VIEW; Schema: public; Owner: -
@@ -995,332 +1020,6 @@ CREATE TABLE public.user_salary_tracking (
     total_earnings numeric(10,2) DEFAULT 0 NOT NULL,
     last_updated timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
-
-
---
--- Data for Name: activity_logs; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.activity_logs (id, user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: backups; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.backups (id, filename, file_size, backup_type, status, started_at, completed_at, error_message, created_by_user_id) FROM stdin;
-\.
-
-
---
--- Data for Name: company_settings; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.company_settings (id, name, address, phone, email, website, timezone, currency, date_format, working_hours_start, working_hours_end, updated_at) FROM stdin;
-1	Web Syntactic Solutions	\N	\N	\N	\N	America/New_York	USD	MM/DD/YYYY	09:00:00	17:00:00	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: daily_counts; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.daily_counts (id, user_id, project_id, date, target_count, submitted_count, status, notes, submitted_at, approved_by_user_id, approved_at, rejection_reason, created_at, updated_at) FROM stdin;
-9b24aef0-1f43-4d8a-b360-8987bc321f30	d243a2a2-3afc-442e-b1cc-83977f32787d	e807c9b6-5f15-4432-bb4d-f495e2228de4	2025-09-18	0	515	approved	checked	2025-09-18 06:30:14.762701	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-18 08:02:07.223383	\N	2025-09-18 06:30:14.762701	2025-09-18 08:02:07.223383
-f4e94554-88da-46d1-bada-97304a7f2111	29acdefe-44da-4114-a65a-f56a497ff6fe	e807c9b6-5f15-4432-bb4d-f495e2228de4	2025-09-18	0	515	approved	good work	2025-09-18 05:33:45.528171	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-18 08:02:12.843575	\N	2025-09-18 05:33:45.528171	2025-09-18 08:02:12.843575
-495a5be1-4d10-49cc-a19d-0f3434b7955c	29acdefe-44da-4114-a65a-f56a497ff6fe	e807c9b6-5f15-4432-bb4d-f495e2228de4	2025-09-20	0	1000	approved	\N	2025-09-20 10:54:06.287137	dad1c730-8ff9-4a1c-ace0-5f20105e2d89	2025-09-20 10:54:06.287137	\N	2025-09-20 10:54:06.287137	2025-09-20 10:54:06.287137
-0e244c4e-abef-4d37-b0df-7d76c36a8487	d243a2a2-3afc-442e-b1cc-83977f32787d	e807c9b6-5f15-4432-bb4d-f495e2228de4	2025-09-22	0	500	approved	\N	2025-09-22 07:05:50.893248	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-22 07:05:50.893248	\N	2025-09-22 07:05:50.893248	2025-09-22 07:05:50.893248
-603dbcad-9803-4698-864f-6e275a30c48a	29acdefe-44da-4114-a65a-f56a497ff6fe	e807c9b6-5f15-4432-bb4d-f495e2228de4	2025-09-23	0	800	approved	\N	2025-09-23 06:28:44.042515	dad1c730-8ff9-4a1c-ace0-5f20105e2d89	2025-09-23 06:40:36.074374	\N	2025-09-23 06:28:44.042515	2025-09-23 06:40:36.074374
-1b759271-36a0-4f93-8a29-cb38cea79718	d243a2a2-3afc-442e-b1cc-83977f32787d	e807c9b6-5f15-4432-bb4d-f495e2228de4	2025-09-23	0	500	approved	not good	2025-09-23 06:32:03.982635	3b5d3941-6b72-426e-99d6-30685f9ee583	2025-09-23 07:11:11.774347	not good	2025-09-23 06:32:03.982635	2025-09-23 07:11:11.774347
-\.
-
-
---
--- Data for Name: email_integration; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.email_integration (id, smtp_server, smtp_port, smtp_security, smtp_username, smtp_password_encrypted, is_configured, last_tested_at, updated_at) FROM stdin;
-1	\N	587	tls	\N	\N	f	\N	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: expense_categories; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.expense_categories (id, name, type, description, is_active, default_budget, requires_approval, requires_receipt, max_amount, created_at, updated_at) FROM stdin;
-b7bb414a-268a-4a64-94c4-01746a4cdbee	Office Rent	administrative	Monthly office space rental costs	t	\N	t	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-d3cc55e0-26fc-408c-916c-bf821e40d29f	Utilities	utilities	Electricity, water, internet, and phone bills	t	\N	t	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-48027015-88b7-47fe-95b2-a1c531142b86	Software Licenses	operational	Annual and monthly software subscription costs	t	\N	t	f	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-f8245f67-03d0-479f-ae14-c21edc00e6be	Marketing Campaigns	marketing	Digital marketing and advertising expenses	t	\N	t	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-1606feb5-0fec-4804-b355-26475c50c9ed	Office Supplies	administrative	Stationery, equipment, and miscellaneous supplies	t	\N	f	f	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-f149a7b6-7979-423c-ac37-211933c307e3	Travel Expenses	administrative	Business travel and transportation costs	t	\N	t	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-0a7cc40c-d4f7-40e3-8fec-41692bdbae7b	Equipment Purchase	operational	Computer hardware and office equipment	t	\N	t	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-d101f37e-8bcd-4dac-9cb1-96f19a2525f6	Professional Services	operational	Consulting, legal, and accounting services	t	\N	t	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-70b03e05-a482-4ee7-8105-8bbcd16da233	Employee Benefits	administrative	Health insurance, retirement, and other benefits	t	\N	t	f	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-160adb5c-2a60-4236-be38-4ed14b352822	Maintenance	operational	Equipment and facility maintenance costs	t	\N	f	t	\N	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: expenses; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.expenses (id, category, description, amount, expense_date, month, type, receipt_path, status, approved_by_user_id, approved_at, approval_notes, rejection_reason, created_by_user_id, created_at, updated_at, frequency, date, receipt, approved_by) FROM stdin;
-673d2c98-2b72-46fd-86d8-d90b7b481ace	Office Rent	Office rent	28000.00	2025-09-20	2025-09	administrative	\N	approved	\N	\N	\N	\N	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-20 06:07:00.52286	2025-09-20 07:14:03.649876	monthly	\N	\N	\N
-e8f0f91c-9027-44d7-ac68-235ac72eaf46	EB Bill	Eb Bill	3000.00	2025-09-22	2025-09	administrative	\N	approved	\N	\N	\N	\N	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-22 07:25:56.058091	2025-09-22 07:40:01.432404	monthly	\N	\N	
-\.
-
-
---
--- Data for Name: file_processes; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.file_processes (id, name, project_id, project_name, file_name, total_rows, header_rows, processed_rows, available_rows, upload_date, status, created_by, active_users, type, daily_target, automation_config, created_at, updated_at) FROM stdin;
-fp_mfs45hcs_vftikk	MI project	e807c9b6-5f15-4432-bb4d-f495e2228de4	MI Project	Sample_1_1000.csv	1000	0	1000	0	2025-09-20 10:16:36.240922+00	active	\N	0	manual	\N	\N	2025-09-20 10:16:36.132904+00	2025-09-20 10:16:36.240922+00
-fp_mfs58mgr_lf05my	Tool Process	f70c9884-8f0e-4dee-a65d-7400338917e3	SC Project	\N	10000	0	2000	8000	\N	active	\N	0	automation	1000	{"toolName": "Python Tool", "lastUpdate": "2025-09-20T10:48:24.989Z", "dailyCompletions": [{"date": "2025-09-20", "completed": 2000}]}	2025-09-20 10:47:02.167165+00	2025-09-20 10:48:48.638807+00
-fp_mfus6i2w_erzngf	New Sep Project	e807c9b6-5f15-4432-bb4d-f495e2228de4	MI Project	Sample_1_1000.csv	1000	0	1000	0	2025-09-22 07:04:45.809244+00	active	\N	0	manual	\N	\N	2025-09-22 07:04:45.677186+00	2025-09-22 07:04:45.809244+00
-fp_mfw62g50_fqz47w	New Sep Project Manual for Testinf	e807c9b6-5f15-4432-bb4d-f495e2228de4	MI Project	Sample_1_1000.csv	1000	0	600	400	2025-09-23 06:21:17.144347+00	active	\N	0	manual	\N	\N	2025-09-23 06:21:16.986857+00	2025-09-23 06:21:17.144347+00
-\.
-
-
---
--- Data for Name: file_requests; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.file_requests (id, user_id, user_name, file_process_id, requested_count, requested_date, status, assigned_by, assigned_date, assigned_count, start_row, end_row, download_link, completed_date, notes, created_at, uploaded_file_name, uploaded_file_path, verification_status, verified_by, verified_at, rework_count, updated_at) FROM stdin;
-fr_03e7d5f6-62b2-4809-ba7e-0450b5731ea9	d243a2a2-3afc-442e-b1cc-83977f32787d	user2	fp_mfw62g50_fqz47w	100	2025-09-23 06:29:26.050507+00	completed	Sulaiman	2025-09-23 06:29:42.386464+00	100	1	100	/api/file-requests/fr_03e7d5f6-62b2-4809-ba7e-0450b5731ea9/download	2025-09-23 06:31:40.854558+00	\N	2025-09-23 06:29:26.050507+00	mylabooknew13.zip	storage\\file-requests\\fr_03e7d5f6-62b2-4809-ba7e-0450b5731ea9\\mylabooknew13.zip	approved	Mari	2025-09-23 06:32:03.982635+00	0	2025-09-23 06:32:03.982635+00
-fr_58e4cf77-6437-41e1-a8db-2409293bfac8	d243a2a2-3afc-442e-b1cc-83977f32787d	user2	fp_mfus6i2w_erzngf	500	2025-09-22 07:02:51.173234+00	completed	Super Admin	2025-09-22 07:04:50.825253+00	500	1	500	/api/file-requests/fr_58e4cf77-6437-41e1-a8db-2409293bfac8/download	2025-09-22 07:05:29.865263+00	\N	2025-09-22 07:02:51.173234+00	scraped_content__1_.zip	storage\\file-requests\\fr_58e4cf77-6437-41e1-a8db-2409293bfac8\\scraped_content__1_.zip	approved	Super Admin	2025-09-22 07:05:50.893248+00	0	2025-09-22 07:05:50.893248+00
-fr_0a0c8982-7401-4eb6-964c-4ec4bece6818	d243a2a2-3afc-442e-b1cc-83977f32787d	user2	fp_mfw62g50_fqz47w	200	2025-09-23 06:37:25.346446+00	completed	Mari	2025-09-23 06:37:40.358407+00	200	201	400	/api/file-requests/fr_0a0c8982-7401-4eb6-964c-4ec4bece6818/download	2025-09-23 07:00:57.050133+00	good	2025-09-23 06:37:25.346446+00	scraped_content.zip	storage\\file-requests\\fr_0a0c8982-7401-4eb6-964c-4ec4bece6818\\scraped_content.zip	approved	Mari	2025-09-23 07:11:11.774347+00	1	2025-09-23 07:11:11.774347+00
-fr_f0bcc0b5-759e-44ad-b172-638a86acc15d	29acdefe-44da-4114-a65a-f56a497ff6fe	user	fp_mfus6i2w_erzngf	500	2025-09-22 09:14:19.528117+00	completed	Mari	2025-09-22 09:15:01.836079+00	500	501	1000	/api/file-requests/fr_f0bcc0b5-759e-44ad-b172-638a86acc15d/download	2025-09-23 06:28:27.794544+00	\N	2025-09-22 09:14:19.528117+00	mylabooknew13__2_.zip	storage\\file-requests\\fr_f0bcc0b5-759e-44ad-b172-638a86acc15d\\mylabooknew13__2_.zip	approved	Super Admin	2025-09-23 06:28:44.042515+00	0	2025-09-23 06:28:44.042515+00
-fr_790e8419-9c6c-44fe-a9fc-d0d91c8cfbec	29acdefe-44da-4114-a65a-f56a497ff6fe	user	fp_mfs45hcs_vftikk	500	2025-09-20 10:17:07.638541+00	completed	Super Admin	2025-09-20 10:17:24.763581+00	1000	1	1000	/api/file-requests/fr_790e8419-9c6c-44fe-a9fc-d0d91c8cfbec/download	2025-09-20 10:53:16.927284+00	\N	2025-09-20 10:17:07.638541+00	scraped_content__1_.zip	storage\\file-requests\\fr_790e8419-9c6c-44fe-a9fc-d0d91c8cfbec\\scraped_content__1_.zip	approved	Sulaiman	2025-09-20 10:54:06.287137+00	0	2025-09-20 10:54:06.287137+00
-fr_d3aa07cd-244d-4784-a0d3-3f8c268e3dbf	29acdefe-44da-4114-a65a-f56a497ff6fe	user	fp_mfw62g50_fqz47w	200	2025-09-23 06:37:13.562426+00	completed	Mari	2025-09-23 06:37:43.8104+00	200	401	600	/api/file-requests/fr_d3aa07cd-244d-4784-a0d3-3f8c268e3dbf/download	2025-09-23 06:39:53.510394+00	Good	2025-09-23 06:37:13.562426+00	scraped_content.zip	storage\\file-requests\\fr_d3aa07cd-244d-4784-a0d3-3f8c268e3dbf\\scraped_content.zip	approved	Sulaiman	2025-09-23 06:40:36.074374+00	0	2025-09-23 06:40:36.074374+00
-fr_d61fb834-363b-4cde-be12-ce2ff249ec7c	29acdefe-44da-4114-a65a-f56a497ff6fe	user	fp_mfw62g50_fqz47w	100	2025-09-23 06:29:11.398534+00	completed	Sulaiman	2025-09-23 06:29:45.354494+00	100	101	200	/api/file-requests/fr_d61fb834-363b-4cde-be12-ce2ff249ec7c/download	2025-09-23 06:31:01.238474+00	\N	2025-09-23 06:29:11.398534+00	mylabooknew13__3_.zip	storage\\file-requests\\fr_d61fb834-363b-4cde-be12-ce2ff249ec7c\\mylabooknew13__3_.zip	approved	Mari	2025-09-23 06:32:00.934513+00	0	2025-09-23 06:32:00.934513+00
-\.
-
-
---
--- Data for Name: monthly_budgets; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.monthly_budgets (id, month, type, budgeted_amount, spent_amount, created_by_user_id, created_at, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: monthly_financial_summary; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.monthly_financial_summary (id, month, project_revenue, other_revenue, total_revenue, user_salaries, pm_salaries, total_salaries, admin_expenses, operational_expenses, marketing_expenses, utilities_expenses, misc_expenses, total_admin_expenses, total_expenses, net_profit, profit_margin, last_calculated, calculation_version) FROM stdin;
-\.
-
-
---
--- Data for Name: notification_category_settings; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.notification_category_settings (id, user_id, category, email_enabled, push_enabled, sms_enabled) FROM stdin;
-\.
-
-
---
--- Data for Name: notification_recipients; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.notification_recipients (id, notification_id, recipient_type, recipient_value, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: notification_settings; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.notification_settings (user_id, email_enabled, push_enabled, sms_enabled, updated_at) FROM stdin;
-\.
-
-
---
--- Data for Name: notifications; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.notifications (id, title, message, type, category, created_by_user_id, expires_at, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: permissions; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.permissions (id, name, description, module, action, is_active, created_at) FROM stdin;
-user_create	Create Users	Ability to create new user accounts	User Management	create	t	2025-09-11 09:33:46.287806
-user_read	View Users	Ability to view user information	User Management	read	t	2025-09-11 09:33:46.287806
-user_update	Edit Users	Ability to modify user accounts	User Management	update	t	2025-09-11 09:33:46.287806
-user_delete	Delete Users	Ability to delete user accounts	User Management	delete	t	2025-09-11 09:33:46.287806
-project_create	Create Projects	Ability to create new projects	Project Management	create	t	2025-09-11 09:33:46.287806
-project_read	View Projects	Ability to view project information	Project Management	read	t	2025-09-11 09:33:46.287806
-project_update	Edit Projects	Ability to modify projects	Project Management	update	t	2025-09-11 09:33:46.287806
-project_delete	Delete Projects	Ability to delete projects	Project Management	delete	t	2025-09-11 09:33:46.287806
-count_submit	Submit Counts	Ability to submit daily counts	Daily Counts	create	t	2025-09-11 09:33:46.287806
-count_approve	Approve Counts	Ability to approve/reject daily counts	Daily Counts	approve	t	2025-09-11 09:33:46.287806
-reports_view	View Reports	Ability to access reports and analytics	Reports	read	t	2025-09-11 09:33:46.287806
-permissions_manage	Manage Permissions	Ability to configure roles and permissions	Permissions	manage	t	2025-09-11 09:33:46.287806
-notifications_manage	Manage Notifications	Ability to send and manage notifications	Notifications	manage	t	2025-09-11 09:33:46.287806
-settings_manage	Manage Settings	Ability to configure system settings	Settings	manage	t	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: pm_salaries; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.pm_salaries (id, user_id, monthly_salary, effective_from, is_active, created_at, updated_at, updated_by_user_id) FROM stdin;
-999957f0-3a97-4eaf-8083-6d89f8826473	3b5d3941-6b72-426e-99d6-30685f9ee583	30000.00	2025-09-19	t	2025-09-19 09:31:32.382962	2025-09-19 09:31:32.382962	\N
-115d74e8-1dc0-4659-818b-f81f849c1b37	dad1c730-8ff9-4a1c-ace0-5f20105e2d89	20000.00	2025-09-19	t	2025-09-19 06:16:37.034253	2025-09-19 09:31:32.550949	\N
-\.
-
-
---
--- Data for Name: projects; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.projects (id, name, description, status, priority, start_date, end_date, target_count, current_count, created_by_user_id, created_at, updated_at, rate_per_file_usd) FROM stdin;
-f70c9884-8f0e-4dee-a65d-7400338917e3	SC Project	South Carolina	active	medium	\N	\N	0	0	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-19 07:46:06.062534	2025-09-19 07:46:06.062534	0.008
-e807c9b6-5f15-4432-bb4d-f495e2228de4	MI Project	Checking the project	active	medium	\N	\N	0	3830	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-17 06:24:32.519733	2025-09-23 07:11:11.774347	0.05
-\.
-
-
---
--- Data for Name: role_permissions; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.role_permissions (role_id, permission_id) FROM stdin;
-super_admin	user_create
-super_admin	user_read
-super_admin	user_update
-super_admin	user_delete
-super_admin	project_create
-super_admin	project_read
-super_admin	project_update
-super_admin	project_delete
-super_admin	count_submit
-super_admin	count_approve
-super_admin	reports_view
-super_admin	permissions_manage
-super_admin	notifications_manage
-super_admin	settings_manage
-project_manager	project_create
-project_manager	project_read
-project_manager	project_update
-project_manager	user_read
-project_manager	count_approve
-project_manager	reports_view
-project_manager	notifications_manage
-user	project_read
-user	count_submit
-\.
-
-
---
--- Data for Name: roles; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.roles (id, name, description, is_default, user_count, created_at, updated_at) FROM stdin;
-super_admin	Super Administrator	Full system access with all permissions	t	0	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-project_manager	Project Manager	Manage projects and team performance	t	0	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-user	User	Basic user with limited access	t	0	2025-09-11 09:33:46.287806	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: salary_config; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.salary_config (id, first_tier_rate, second_tier_rate, first_tier_limit, currency, updated_at, updated_by_user_id) FROM stdin;
-1	0.5000	0.6000	500	INR	2025-09-19 09:31:32.499247	6c3cfd14-4862-48bf-9a98-16f18286428d
-\.
-
-
---
--- Data for Name: security_settings; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.security_settings (id, password_min_length, password_require_special_chars, password_require_numbers, password_require_uppercase, max_login_attempts, lockout_duration, two_factor_enabled, session_security, updated_at) FROM stdin;
-1	8	t	t	t	5	15	f	enhanced	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: system_settings; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.system_settings (id, max_file_size, session_timeout, backup_frequency, maintenance_mode, debug_mode, api_rate_limit, allow_registration, require_email_verification, updated_at) FROM stdin;
-1	50	30	daily	f	f	1000	t	t	2025-09-11 09:33:46.287806
-\.
-
-
---
--- Data for Name: tutorial_steps; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.tutorial_steps (id, tutorial_id, step_number, title, description, image_url, video_timestamp, is_required) FROM stdin;
-\.
-
-
---
--- Data for Name: tutorials; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.tutorials (id, title, description, category, status, video_file_name, video_file_path, video_mime, created_by_user_id, created_at, updated_at, instructions, target_roles, is_required, tags, "order", view_count, completion_count) FROM stdin;
-tut_mfv0j1mv_lu0c3y	How to Use the Application (Step-by-Step Guide)	<h3 data-start="217" data-end="260">🏠 Step 1: Login and Access Dashboard</h3><h3 data-start="253" data-end="295">\n<p data-start="261" data-end="473"></p><ul><li>Login to the system with your credentials</li><li>You will land on the <span data-start="334" data-end="347" style="font-size: 1rem; color: rgb(2, 8, 23);"><b>Dashboard</b></span></li><li>View your performance, file requests, and current activity</li><li><span style="font-size: 1rem; color: rgb(2, 8, 23);">Navigate to </span><span data-start="431" data-end="448" style="font-size: 1rem; color: rgb(2, 8, 23);"><b>Request Files</b></span><span style="font-size: 1rem; color: rgb(2, 8, 23);"> to begin your daily task</span></li></ul><p></p>\n<hr data-start="475" data-end="478">\n</h3><h3 data-start="480" data-end="524">📂 Step 2: Navigate to "Request Files"</h3><h3 data-start="253" data-end="295">\n<p data-start="525" data-end="717"></p><ul><li>Click the <strong data-start="539" data-end="556">Request Files</strong> tab in the menu</li><li>Here, you can see all current and previous task requests</li><li><span style="font-size: 1rem; color: rgb(2, 8, 23);">Track the status: </span><strong data-start="660" data-end="671" style="font-size: 1rem; color: rgb(2, 8, 23);">Pending</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);">, </span><strong data-start="673" data-end="685" style="font-size: 1rem; color: rgb(2, 8, 23);">Assigned</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);">, </span><strong data-start="687" data-end="700" style="font-size: 1rem; color: rgb(2, 8, 23);">Completed</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);">, or </span><strong data-start="705" data-end="717" style="font-size: 1rem; color: rgb(2, 8, 23);">Verified</strong></li></ul><p></p>\n<hr data-start="719" data-end="722">\n</h3><h3 data-start="724" data-end="759">✍️ Step 3: Request a New File</h3><h3 data-start="253" data-end="295">\n<p data-start="760" data-end="903"></p><ul><li>Click the <strong data-start="774" data-end="790">Request File</strong> button</li><li>This sends a task request to your </li><li><strong data-start="838" data-end="857">Project Manager </strong>Wait until the PM assigns a file to you</li></ul><p></p>\n<hr data-start="905" data-end="908">\n</h3><h3 data-start="910" data-end="953">📥 Step 4: Download the Assigned File</h3><h3 data-start="253" data-end="295">\n<p data-start="954" data-end="1130"></p><ul><li>Once assigned, the file status will update to <strong data-start="1004" data-end="1016">Assigned</strong></li><li>Click the <strong data-start="1033" data-end="1045" style="font-size: 1rem; color: rgb(2, 8, 23);">Download</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);"> button next to the task</span></li><li>Start working on the file as per the task instructions</li></ul><p></p>\n<hr data-start="1132" data-end="1135">\n</h3><h3 data-start="1137" data-end="1174">🧑‍💻 Step 5: Complete the Task</h3><h3 data-start="253" data-end="295">\n<p data-start="1175" data-end="1346"></p><ul><li>Work on your assigned task carefully</li><li>Compress your finished output into a <strong data-start="1259" data-end="1274" style="font-size: 1rem; color: rgb(2, 8, 23);"><code data-start="1261" data-end="1267">.zip</code> file</strong></li><li>Ensure the <code data-start="1292" data-end="1298" style="font-size: 1rem; color: rgb(2, 8, 23);">.zip</code><span style="font-size: 1rem; color: rgb(2, 8, 23);"> contains all required documents or deliverables</span></li></ul><p></p>\n<hr data-start="1348" data-end="1351">\n</h3><h3 data-start="1353" data-end="1395">⬆️ Step 6: Upload the Completed File</h3><h3 data-start="253" data-end="295">\n<p data-start="1396" data-end="1557"></p><ul><li>Return to <strong data-start="1410" data-end="1427">Request Files</strong> and find your task</li><li>Change the status to <strong data-start="1474" data-end="1487" style="font-size: 1rem; color: rgb(2, 8, 23);">Completed</strong></li><li>Click <strong data-start="1500" data-end="1510" style="font-size: 1rem; color: rgb(2, 8, 23);">Upload</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);"> and select your </span><strong data-start="1527" data-end="1537" style="font-size: 1rem; color: rgb(2, 8, 23);"><code data-start="1529" data-end="1535">.zip</code></strong><span style="font-size: 1rem; color: rgb(2, 8, 23);"> file for submission</span></li></ul><p></p>\n<hr data-start="1559" data-end="1562">\n</h3><h3 data-start="1564" data-end="1609">🕵️‍♂️ Step 7: Wait for PM Verification</h3><h3 data-start="253" data-end="295">\n<p data-start="1610" data-end="1774"></p><ul><li>Your <strong data-start="1619" data-end="1638">Project Manager</strong> will verify your submission</li><li>The task remains <strong data-start="1690" data-end="1703" style="font-size: 1rem; color: rgb(2, 8, 23);">Completed</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);"> until verified</span></li><li>You will be notified upon successful verification</li></ul><p></p>\n<hr data-start="1776" data-end="1779">\n</h3><h3 data-start="1781" data-end="1819">🔁 Step 8: Request the Next Task</h3><h3 data-start="253" data-end="295">\n<p data-start="1820" data-end="1969"></p><ul><li>After verification, go back to <strong data-start="1855" data-end="1872">Request Files</strong></li><li>Click <strong data-start="1885" data-end="1901" style="font-size: 1rem; color: rgb(2, 8, 23);">Request File</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);"> to get a new task</span></li><li>Repeat the process starting from&nbsp;<strong data-start="1959" data-end="1969" style="font-size: 1rem; color: rgb(2, 8, 23);">Step 3</strong></li></ul><p></p>\n<hr data-start="1971" data-end="1974">\n</h3><h2 data-start="1976" data-end="1997">⚠️ Important Notes</h2><h3 data-start="253" data-end="295">\n<p data-start="1999" data-end="2196"></p><ul><li>🗂️ Upload your task only in <strong data-start="2032" data-end="2049"><code data-start="2034" data-end="2040">.zip</code> format</strong></li><li>✅ Always change the task <strong data-start="2081" data-end="2121" style="font-size: 1rem; color: rgb(2, 8, 23);">status to Completed before uploading</strong></li><li>🔒 You <strong data-start="2135" data-end="2165" style="font-size: 1rem; color: rgb(2, 8, 23);">must wait for verification</strong><span style="font-size: 1rem; color: rgb(2, 8, 23);"> before requesting another file</span></li></ul><p></p></h3>	getting_started	published	istockphoto-2188604143-640_adpp_is.mp4	storage\\tutorials\\tut_mfv0j1mv_lu0c3y\\istockphoto-2188604143-640_adpp_is.mp4	video/mp4	6c3cfd14-4862-48bf-9a98-16f18286428d	2025-09-22 10:58:27.733645	2025-09-23 11:40:30.277228		{user,project_manager,super_admin}	f	{}	0	0	0
-\.
-
-
---
--- Data for Name: user_notifications; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.user_notifications (id, notification_id, user_id, is_read, read_at, created_at) FROM stdin;
-\.
-
-
---
--- Data for Name: user_projects; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.user_projects (user_id, project_id, role_in_project, assigned_at, assigned_by) FROM stdin;
-\.
-
-
---
--- Data for Name: user_roles; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.user_roles (user_id, role_id, assigned_at, assigned_by) FROM stdin;
-\.
-
-
---
--- Data for Name: user_salary_tracking; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.user_salary_tracking (id, user_id, date, files_processed, tier1_files, tier1_earnings, tier2_files, tier2_earnings, total_earnings, last_updated) FROM stdin;
-\.
-
-
---
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: -
---
-
-COPY public.users (id, name, email, phone, hashed_password, role, status, department, job_title, avatar_url, theme, language, notifications_enabled, join_date, last_login, created_at, updated_at) FROM stdin;
-053a7da7-ac9e-4cd0-8106-4b8be411a4bb	Singam	singam@websyntactic.com	+9112345678909	$2b$10$xmLNxTiWm.fak3bmic.eze76q9vu9.8b.knrBJ8bAd3N5fIMQH8TO	super_admin	active	Admin	Admin	\N	system	English	t	2025-09-17	\N	2025-09-17 06:18:29.932752	2025-09-17 06:18:29.932752
-dad1c730-8ff9-4a1c-ace0-5f20105e2d89	Sulaiman	sulaiman@websyntactic.com	\N	$2b$10$rzRjO4Id.Lrvw.RADlVy1.pRY4cvhob7naXBpmSANb61wyMrWHEO6	project_manager	active	Operations	Project Manager	\N	system	English	t	2025-09-17	2025-09-23 07:01:06.774092	2025-09-17 06:40:43.881634	2025-09-23 07:01:06.774092
-3b5d3941-6b72-426e-99d6-30685f9ee583	Mari	mari@websyntactic.com	\N	$2b$10$vJs9i3uWhBmEJdYJ1JWGOOflWOQrGjAiEvjlXv4B/0S6ebI.ZW8eS	project_manager	active	\N	\N	\N	system	English	t	2025-09-19	2025-09-23 07:10:57.066054	2025-09-19 09:31:32.234973	2025-09-23 07:10:57.066054
-d243a2a2-3afc-442e-b1cc-83977f32787d	user2	user2@websyntactic.com	3456783456789	$2b$10$CsORYLO/Z1N/9VTUDjBYCus74DPJ8sR2kgY2f00uuUYhAKEHHztIu	user	active	Operations	User	\N	system	English	t	2025-09-17	2025-09-23 07:11:26.442049	2025-09-17 10:45:35.508952	2025-09-23 07:11:26.442049
-29acdefe-44da-4114-a65a-f56a497ff6fe	user	user@websyntactic.com	\N	$2b$10$CqISaK/A6UisKk/cmgUUmemDkYHnU2s.cEqhbzhX1NSNv8MU61kO2	user	active	Operations	User	\N	system	English	t	2025-09-17	2025-09-23 10:28:55.09457	2025-09-17 06:41:53.511939	2025-09-23 10:28:55.09457
-6c3cfd14-4862-48bf-9a98-16f18286428d	Super Admin	admin@websyntactic.com	9629558605	$2b$10$lg2cCZkN6y5i4wvaNCOXM.3KMelf8y/sug.Zccm72mAtaBLY/L7Tq	super_admin	active	\N	\N	\N	system	English	t	2025-09-17	2025-09-23 10:31:56.014771	2025-09-17 06:13:44.566058	2025-09-23 10:31:56.014771
-\.
-
 
 --
 -- Name: activity_logs activity_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
