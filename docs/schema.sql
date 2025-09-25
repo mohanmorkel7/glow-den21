@@ -307,7 +307,7 @@ SET default_table_access_method = heap;
 -- Name: activity_logs; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.activity_logs (
+CREATE TABLE IF NOT EXISTS public.activity_logs (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid,
     action character varying(100) NOT NULL,
@@ -325,7 +325,7 @@ CREATE TABLE public.activity_logs (
 -- Name: backups; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.backups (
+CREATE TABLE IF NOT EXISTS public.backups (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     filename character varying(255) NOT NULL,
     file_size bigint,
@@ -342,7 +342,7 @@ CREATE TABLE public.backups (
 -- Name: company_settings; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.company_settings (
+CREATE TABLE IF NOT EXISTS public.company_settings (
     id integer DEFAULT 1 NOT NULL,
     name character varying(255) DEFAULT 'Web Syntactic Solutions'::character varying NOT NULL,
     address text,
@@ -363,7 +363,7 @@ CREATE TABLE public.company_settings (
 -- Name: daily_counts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.daily_counts (
+CREATE TABLE IF NOT EXISTS public.daily_counts (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid NOT NULL,
     project_id uuid NOT NULL,
@@ -392,7 +392,7 @@ COMMENT ON TABLE public.daily_counts IS 'Daily work count submissions and approv
 -- Name: notifications; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.notifications (
+CREATE TABLE IF NOT EXISTS public.notifications (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     title character varying(255) NOT NULL,
     message text NOT NULL,
@@ -415,7 +415,7 @@ COMMENT ON TABLE public.notifications IS 'System notifications and alerts';
 -- Name: projects; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.projects (
+CREATE TABLE IF NOT EXISTS public.projects (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(255) NOT NULL,
     description text,
@@ -443,7 +443,7 @@ COMMENT ON TABLE public.projects IS 'Project definitions with progress tracking'
 -- Name: user_notifications; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_notifications (
+CREATE TABLE IF NOT EXISTS public.user_notifications (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     notification_id uuid,
     user_id uuid,
@@ -458,7 +458,7 @@ CREATE TABLE public.user_notifications (
 --
 Drop table public.users;
 
-Create TABLE public.users (
+CREATE TABLE IF NOT EXISTS public.users (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(255) NOT NULL,
     email character varying(255) NOT NULL,
@@ -550,7 +550,7 @@ COMMENT ON VIEW public.dashboard_stats IS 'Real-time dashboard statistics comput
 -- Name: email_integration; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.email_integration (
+CREATE TABLE IF NOT EXISTS public.email_integration (
     id integer DEFAULT 1 NOT NULL,
     smtp_server character varying(255),
     smtp_port integer DEFAULT 587,
@@ -568,7 +568,7 @@ CREATE TABLE public.email_integration (
 -- Name: expense_categories; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.expense_categories (
+CREATE TABLE IF NOT EXISTS public.expense_categories (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(100) NOT NULL,
     type public.expense_type NOT NULL,
@@ -587,7 +587,7 @@ CREATE TABLE public.expense_categories (
 -- Name: expenses; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.expenses (
+CREATE TABLE IF NOT EXISTS public.expenses (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     category character varying(100) NOT NULL,
     description text NOT NULL,
@@ -615,7 +615,7 @@ CREATE TABLE public.expenses (
 -- Name: file_processes; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.file_processes (
+CREATE TABLE IF NOT EXISTS public.file_processes (
     id text NOT NULL,
     name text NOT NULL,
     project_id text,
@@ -641,7 +641,7 @@ CREATE TABLE public.file_processes (
 -- Name: file_requests; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.file_requests (
+CREATE TABLE IF NOT EXISTS public.file_requests (
     id text NOT NULL,
     user_id text,
     user_name text,
@@ -672,7 +672,7 @@ CREATE TABLE public.file_requests (
 -- Name: monthly_budgets; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.monthly_budgets (
+CREATE TABLE IF NOT EXISTS public.monthly_budgets (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     month character varying(7) NOT NULL,
     type public.expense_type NOT NULL,
@@ -688,7 +688,7 @@ CREATE TABLE public.monthly_budgets (
 -- Name: monthly_financial_summary; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.monthly_financial_summary (
+CREATE TABLE IF NOT EXISTS public.monthly_financial_summary (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     month character varying(7) NOT NULL,
     project_revenue numeric(15,2) DEFAULT 0 NOT NULL,
@@ -715,7 +715,7 @@ CREATE TABLE public.monthly_financial_summary (
 -- Name: notification_category_settings; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.notification_category_settings (
+CREATE TABLE IF NOT EXISTS public.notification_category_settings (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid,
     category public.notification_category NOT NULL,
@@ -729,7 +729,7 @@ CREATE TABLE public.notification_category_settings (
 -- Name: notification_recipients; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.notification_recipients (
+CREATE TABLE IF NOT EXISTS public.notification_recipients (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     notification_id uuid,
     recipient_type public.recipient_type NOT NULL,
@@ -742,7 +742,7 @@ CREATE TABLE public.notification_recipients (
 -- Name: notification_settings; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.notification_settings (
+CREATE TABLE IF NOT EXISTS public.notification_settings (
     user_id uuid NOT NULL,
     email_enabled boolean DEFAULT true NOT NULL,
     push_enabled boolean DEFAULT true NOT NULL,
@@ -755,7 +755,7 @@ CREATE TABLE public.notification_settings (
 -- Name: permissions; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.permissions (
+CREATE TABLE IF NOT EXISTS public.permissions (
     id character varying(50) NOT NULL,
     name character varying(100) NOT NULL,
     description text,
@@ -777,7 +777,7 @@ COMMENT ON TABLE public.permissions IS 'Granular permission definitions for RBAC
 -- Name: pm_salaries; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.pm_salaries (
+CREATE TABLE IF NOT EXISTS public.pm_salaries (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid NOT NULL,
     monthly_salary numeric(12,2) NOT NULL,
@@ -823,7 +823,7 @@ COMMENT ON VIEW public.project_summary IS 'Project overview with assignment and 
 -- Name: role_permissions; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.role_permissions (
+CREATE TABLE IF NOT EXISTS public.role_permissions (
     role_id character varying(50) NOT NULL,
     permission_id character varying(50) NOT NULL
 );
@@ -833,7 +833,7 @@ CREATE TABLE public.role_permissions (
 -- Name: roles; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.roles (
+CREATE TABLE IF NOT EXISTS public.roles (
     id character varying(50) NOT NULL,
     name character varying(100) NOT NULL,
     description text,
@@ -855,7 +855,7 @@ COMMENT ON TABLE public.roles IS 'User roles with associated permissions';
 -- Name: salary_config; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.salary_config (
+CREATE TABLE IF NOT EXISTS public.salary_config (
     id integer DEFAULT 1 NOT NULL,
     first_tier_rate numeric(10,4) DEFAULT 0.50 NOT NULL,
     second_tier_rate numeric(10,4) DEFAULT 0.60 NOT NULL,
@@ -871,7 +871,7 @@ CREATE TABLE public.salary_config (
 -- Name: security_settings; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.security_settings (
+CREATE TABLE IF NOT EXISTS public.security_settings (
     id integer DEFAULT 1 NOT NULL,
     password_min_length integer DEFAULT 8 NOT NULL,
     password_require_special_chars boolean DEFAULT true NOT NULL,
@@ -890,7 +890,7 @@ CREATE TABLE public.security_settings (
 -- Name: system_settings; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.system_settings (
+CREATE TABLE IF NOT EXISTS public.system_settings (
     id integer DEFAULT 1 NOT NULL,
     max_file_size integer DEFAULT 50 NOT NULL,
     session_timeout integer DEFAULT 30 NOT NULL,
@@ -909,7 +909,7 @@ CREATE TABLE public.system_settings (
 -- Name: tutorial_steps; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.tutorial_steps (
+CREATE TABLE IF NOT EXISTS public.tutorial_steps (
     id text NOT NULL,
     tutorial_id text NOT NULL,
     step_number integer NOT NULL,
@@ -925,7 +925,7 @@ CREATE TABLE public.tutorial_steps (
 -- Name: tutorials; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.tutorials (
+CREATE TABLE IF NOT EXISTS public.tutorials (
     id text NOT NULL,
     title text NOT NULL,
     description text,
@@ -983,7 +983,7 @@ COMMENT ON VIEW public.user_profiles IS 'Enhanced user information with computed
 -- Name: user_projects; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_projects (
+CREATE TABLE IF NOT EXISTS public.user_projects (
     user_id uuid NOT NULL,
     project_id uuid NOT NULL,
     role_in_project character varying(50),
@@ -996,7 +996,7 @@ CREATE TABLE public.user_projects (
 -- Name: user_roles; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_roles (
+CREATE TABLE IF NOT EXISTS public.user_roles (
     user_id uuid NOT NULL,
     role_id character varying(50) NOT NULL,
     assigned_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -1008,7 +1008,7 @@ CREATE TABLE public.user_roles (
 -- Name: user_salary_tracking; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.user_salary_tracking (
+CREATE TABLE IF NOT EXISTS public.user_salary_tracking (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     user_id uuid NOT NULL,
     date date NOT NULL,
