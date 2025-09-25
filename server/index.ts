@@ -70,7 +70,7 @@ import * as fileProcess from "./routes/fileProcess";
 import { isDbConfigured } from "./db/connection";
 import { initDatabase } from "./startup/initDatabase.js"; // 👈 add this to run schema.sql
 
-export function createServer() {
+export async function createServer() {
   const app = express();
 
   // Disable ETag to prevent 304 caching during development/API usage
@@ -84,7 +84,13 @@ export function createServer() {
   // Trigger initial admin seeding and ensure file process tables (non-blocking)
   if (isDbConfigured()) {
 
-    initDatabase(); // 👈 make sure this runs before starting the server
+    try {
+      await initDatabase();  // <--- await this before continuing
+      console.log("✅ Database initialized, starting server...");
+    } catch (err) {
+      console.error("❌ Failed to initialize database:", err);
+      process.exit(1); // Stop app if DB init fails
+    }
 
     // ensureInitialAdmin().catch((e) => console.error(e));
     // ensureFileProcessTables().catch((e) => console.error(e));
