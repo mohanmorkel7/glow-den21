@@ -26,125 +26,125 @@ COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UU
 -- Name: daily_count_status; Type: TYPE; Schema: public; Owner: -
 --
 
-CREATE TYPE public.daily_count_status AS ENUM (
-    'pending',
-    'submitted',
-    'approved',
-    'rejected'
-);
+-- CREATE TYPE public.daily_count_status AS ENUM (
+--     'pending',
+--     'submitted',
+--     'approved',
+--     'rejected'
+-- );
 
 
---
--- Name: expense_status; Type: TYPE; Schema: public; Owner: -
---
+-- --
+-- -- Name: expense_status; Type: TYPE; Schema: public; Owner: -
+-- --
 
-CREATE TYPE public.expense_status AS ENUM (
-    'pending',
-    'approved',
-    'rejected'
-);
-
-
---
--- Name: expense_type; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.expense_type AS ENUM (
-    'administrative',
-    'operational',
-    'marketing',
-    'utilities',
-    'miscellaneous'
-);
+-- CREATE TYPE public.expense_status AS ENUM (
+--     'pending',
+--     'approved',
+--     'rejected'
+-- );
 
 
---
--- Name: notification_category; Type: TYPE; Schema: public; Owner: -
---
+-- --
+-- -- Name: expense_type; Type: TYPE; Schema: public; Owner: -
+-- --
 
-CREATE TYPE public.notification_category AS ENUM (
-    'system',
-    'project',
-    'user',
-    'deadline'
-);
-
-
---
--- Name: notification_type; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.notification_type AS ENUM (
-    'info',
-    'warning',
-    'error',
-    'success'
-);
+-- CREATE TYPE public.expense_type AS ENUM (
+--     'administrative',
+--     'operational',
+--     'marketing',
+--     'utilities',
+--     'miscellaneous'
+-- );
 
 
---
--- Name: project_priority; Type: TYPE; Schema: public; Owner: -
---
+-- --
+-- -- Name: notification_category; Type: TYPE; Schema: public; Owner: -
+-- --
 
-CREATE TYPE public.project_priority AS ENUM (
-    'low',
-    'medium',
-    'high'
-);
-
-
---
--- Name: project_status; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.project_status AS ENUM (
-    'planning',
-    'active',
-    'on_hold',
-    'completed'
-);
+-- CREATE TYPE public.notification_category AS ENUM (
+--     'system',
+--     'project',
+--     'user',
+--     'deadline'
+-- );
 
 
---
--- Name: recipient_type; Type: TYPE; Schema: public; Owner: -
---
+-- --
+-- -- Name: notification_type; Type: TYPE; Schema: public; Owner: -
+-- --
 
-CREATE TYPE public.recipient_type AS ENUM (
-    'user',
-    'group'
-);
-
-
---
--- Name: session_security; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.session_security AS ENUM (
-    'basic',
-    'enhanced',
-    'strict'
-);
+-- CREATE TYPE public.notification_type AS ENUM (
+--     'info',
+--     'warning',
+--     'error',
+--     'success'
+-- );
 
 
---
--- Name: user_role; Type: TYPE; Schema: public; Owner: -
---
+-- --
+-- -- Name: project_priority; Type: TYPE; Schema: public; Owner: -
+-- --
 
-CREATE TYPE public.user_role AS ENUM (
-    'super_admin',
-    'project_manager',
-    'user'
-);
+-- CREATE TYPE public.project_priority AS ENUM (
+--     'low',
+--     'medium',
+--     'high'
+-- );
 
 
---
--- Name: user_status; Type: TYPE; Schema: public; Owner: -
---
+-- --
+-- -- Name: project_status; Type: TYPE; Schema: public; Owner: -
+-- --
 
-CREATE TYPE public.user_status AS ENUM (
-    'active',
-    'inactive'
-);
+-- CREATE TYPE public.project_status AS ENUM (
+--     'planning',
+--     'active',
+--     'on_hold',
+--     'completed'
+-- );
+
+
+-- --
+-- -- Name: recipient_type; Type: TYPE; Schema: public; Owner: -
+-- --
+
+-- CREATE TYPE public.recipient_type AS ENUM (
+--     'user',
+--     'group'
+-- );
+
+
+-- --
+-- -- Name: session_security; Type: TYPE; Schema: public; Owner: -
+-- --
+
+-- CREATE TYPE public.session_security AS ENUM (
+--     'basic',
+--     'enhanced',
+--     'strict'
+-- );
+
+
+-- --
+-- -- Name: user_role; Type: TYPE; Schema: public; Owner: -
+-- --
+
+-- CREATE TYPE public.user_role AS ENUM (
+--     'super_admin',
+--     'project_manager',
+--     'user'
+-- );
+
+
+-- --
+-- -- Name: user_status; Type: TYPE; Schema: public; Owner: -
+-- --
+
+-- CREATE TYPE public.user_status AS ENUM (
+--     'active',
+--     'inactive'
+-- );
 
 
 
