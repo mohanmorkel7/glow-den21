@@ -1,3 +1,154 @@
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
+
+--
+-- Name: daily_count_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.daily_count_status AS ENUM (
+    'pending',
+    'submitted',
+    'approved',
+    'rejected'
+);
+
+
+--
+-- Name: expense_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.expense_status AS ENUM (
+    'pending',
+    'approved',
+    'rejected'
+);
+
+
+--
+-- Name: expense_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.expense_type AS ENUM (
+    'administrative',
+    'operational',
+    'marketing',
+    'utilities',
+    'miscellaneous'
+);
+
+
+--
+-- Name: notification_category; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_category AS ENUM (
+    'system',
+    'project',
+    'user',
+    'deadline'
+);
+
+
+--
+-- Name: notification_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.notification_type AS ENUM (
+    'info',
+    'warning',
+    'error',
+    'success'
+);
+
+
+--
+-- Name: project_priority; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.project_priority AS ENUM (
+    'low',
+    'medium',
+    'high'
+);
+
+
+--
+-- Name: project_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.project_status AS ENUM (
+    'planning',
+    'active',
+    'on_hold',
+    'completed'
+);
+
+
+--
+-- Name: recipient_type; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.recipient_type AS ENUM (
+    'user',
+    'group'
+);
+
+
+--
+-- Name: session_security; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.session_security AS ENUM (
+    'basic',
+    'enhanced',
+    'strict'
+);
+
+
+--
+-- Name: user_role; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.user_role AS ENUM (
+    'super_admin',
+    'project_manager',
+    'user'
+);
+
+
+--
+-- Name: user_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.user_status AS ENUM (
+    'active',
+    'inactive'
+);
+
+
+
+
 CREATE TABLE IF NOT EXISTS public.users (
     id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
     name character varying(255) NOT NULL,
