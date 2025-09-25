@@ -1,5 +1,8 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+
 CREATE TABLE IF NOT EXISTS public.activity_logs (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid,
     action character varying(100) NOT NULL,
     entity_type character varying(50),
@@ -17,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
 --
 
 CREATE TABLE IF NOT EXISTS public.backups (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     filename character varying(255) NOT NULL,
     file_size bigint,
     backup_type character varying(50) DEFAULT 'full'::character varying,
@@ -55,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.company_settings (
 --
 
 CREATE TABLE IF NOT EXISTS public.daily_counts (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL,
     project_id uuid NOT NULL,
     date date NOT NULL,
@@ -84,7 +87,7 @@ COMMENT ON TABLE public.daily_counts IS 'Daily work count submissions and approv
 --
 
 CREATE TABLE IF NOT EXISTS public.notifications (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title character varying(255) NOT NULL,
     message text NOT NULL,
     type public.notification_type DEFAULT 'info'::public.notification_type NOT NULL,
@@ -107,7 +110,7 @@ COMMENT ON TABLE public.notifications IS 'System notifications and alerts';
 --
 
 CREATE TABLE IF NOT EXISTS public.projects (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name character varying(255) NOT NULL,
     description text,
     status public.project_status DEFAULT 'planning'::public.project_status NOT NULL,
@@ -135,7 +138,7 @@ COMMENT ON TABLE public.projects IS 'Project definitions with progress tracking'
 --
 
 CREATE TABLE IF NOT EXISTS public.user_notifications (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     notification_id uuid,
     user_id uuid,
     is_read boolean DEFAULT false NOT NULL,
@@ -260,7 +263,7 @@ CREATE TABLE IF NOT EXISTS public.email_integration (
 --
 
 CREATE TABLE IF NOT EXISTS public.expense_categories (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name character varying(100) NOT NULL,
     type public.expense_type NOT NULL,
     description text,
@@ -279,7 +282,7 @@ CREATE TABLE IF NOT EXISTS public.expense_categories (
 --
 
 CREATE TABLE IF NOT EXISTS public.expenses (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     category character varying(100) NOT NULL,
     description text NOT NULL,
     amount numeric(12,2) NOT NULL,
@@ -364,7 +367,7 @@ CREATE TABLE IF NOT EXISTS public.file_requests (
 --
 
 CREATE TABLE IF NOT EXISTS public.monthly_budgets (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     month character varying(7) NOT NULL,
     type public.expense_type NOT NULL,
     budgeted_amount numeric(12,2) NOT NULL,
@@ -380,7 +383,7 @@ CREATE TABLE IF NOT EXISTS public.monthly_budgets (
 --
 
 CREATE TABLE IF NOT EXISTS public.monthly_financial_summary (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     month character varying(7) NOT NULL,
     project_revenue numeric(15,2) DEFAULT 0 NOT NULL,
     other_revenue numeric(15,2) DEFAULT 0 NOT NULL,
@@ -407,7 +410,7 @@ CREATE TABLE IF NOT EXISTS public.monthly_financial_summary (
 --
 
 CREATE TABLE IF NOT EXISTS public.notification_category_settings (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid,
     category public.notification_category NOT NULL,
     email_enabled boolean DEFAULT true NOT NULL,
@@ -421,7 +424,7 @@ CREATE TABLE IF NOT EXISTS public.notification_category_settings (
 --
 
 CREATE TABLE IF NOT EXISTS public.notification_recipients (
-    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     notification_id uuid,
     recipient_type public.recipient_type NOT NULL,
     recipient_value character varying(100) NOT NULL,
