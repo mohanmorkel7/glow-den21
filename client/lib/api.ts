@@ -64,7 +64,7 @@ class ApiClient {
         // Clear auth token and redirect to login
         localStorage.removeItem("authToken");
         localStorage.removeItem("refreshToken");
-        window.location.href = "/login";
+        window.location.href = "/";
         throw new Error("Authentication required");
       }
 
