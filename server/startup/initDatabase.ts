@@ -7,7 +7,7 @@ export async function initDatabase() {
     const check = await pool.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
-        WHERE table_name = 'ksadnksdf'
+        WHERE table_name = 'users'
       );
     `);
 
