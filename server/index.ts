@@ -86,13 +86,13 @@ export function createServer() {
 
     initDatabase(); // 👈 make sure this runs before starting the server
 
-    ensureInitialAdmin().catch((e) => console.error(e));
-    ensureFileProcessTables().catch((e) => console.error(e));
-    ensureTutorialTables().catch((e) => console.error(e));
-    ensureExpenseTables().catch((e) => console.error(e));
-    import("./startup/migrateSalary")
-      .then((m) => m.ensureSalaryTables())
-      .catch((e) => console.error(e));
+    // ensureInitialAdmin().catch((e) => console.error(e));
+    // ensureFileProcessTables().catch((e) => console.error(e));
+    // ensureTutorialTables().catch((e) => console.error(e));
+    // ensureExpenseTables().catch((e) => console.error(e));
+    // import("./startup/migrateSalary")
+    //   .then((m) => m.ensureSalaryTables())
+    //   .catch((e) => console.error(e));
   } else {
     console.warn("Database not configured. Skipping startup DB tasks.");
   }
