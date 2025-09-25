@@ -2,8 +2,31 @@
 -- Safe to run repeatedly (IF NOT EXISTS used where possible)
 
 -- USERS
+-- CREATE TABLE IF NOT EXISTS users (
+--   id TEXT PRIMARY KEY,
+--   name TEXT NOT NULL,
+--   email TEXT UNIQUE NOT NULL,
+--   phone TEXT,
+--   hashed_password TEXT NOT NULL,
+--   role TEXT NOT NULL CHECK (role IN ('super_admin','project_manager','user')),
+--   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','inactive')),
+--   department TEXT,
+--   job_title TEXT,
+--   avatar_url TEXT,
+--   theme TEXT,
+--   language TEXT,
+--   notifications_enabled BOOLEAN DEFAULT TRUE,
+--   join_date DATE DEFAULT CURRENT_DATE,
+--   last_login TIMESTAMP WITH TIME ZONE,
+--   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+--   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+-- );
+
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+
 CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   phone TEXT,
@@ -21,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- PROJECTS
 CREATE TABLE IF NOT EXISTS projects (
@@ -242,12 +266,37 @@ CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by_user_id);
 
 
+-- INSERT INTO users (
+--   id, name, email, phone, hashed_password, role, status,
+--   department, job_title, avatar_url, theme, language,
+--   notifications_enabled, join_date, last_login, created_at, updated_at
+-- ) VALUES (
+--   '6c3cfd14-4862-48bf-9a98-16f18286428d',
+--   'Super Admin',
+--   'admin@websyntactic.com',
+--   '9629558605',
+--   '$2b$10$lg2cCZkN6y5i4wvaNCOXM.3KMelf8y/sug.Zccm72mAtaBLY/L7Tq',
+--   'super_admin',
+--   'active',
+--   NULL,
+--   NULL,
+--   NULL,
+--   'system',
+--   'English',
+--   true,
+--   '2025-09-17',
+--   '2025-09-24 06:02:46.6047',
+--   '2025-09-17 06:13:44.566058',
+--   '2025-09-24 06:02:46.6047'
+-- );
+
+You no longer need to manually insert the id like:
+
 INSERT INTO users (
-  id, name, email, phone, hashed_password, role, status,
+  name, email, phone, hashed_password, role, status,
   department, job_title, avatar_url, theme, language,
   notifications_enabled, join_date, last_login, created_at, updated_at
 ) VALUES (
-  '6c3cfd14-4862-48bf-9a98-16f18286428d',
   'Super Admin',
   'admin@websyntactic.com',
   '9629558605',
