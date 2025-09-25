@@ -33,11 +33,11 @@ const dbConfig: DbConfigOptions = process.env.DATABASE_URL
     }
   : isConfigured
     ? {
-        host: "dpg-d36ld96mcj7s73dmu8t0-a",
+        host: "dpg-d3ajrqfdiees73dbe8cg-a",
         port: parseInt("5432"),
-        database: "dev_test_7nca",
-        user: "dev_test_7nca_user",
-        password: "e2bWRSKCx8qFjVt2AdMb8qiPveuuIfiI",
+        database: "dev_test_119e",
+        user: "dev_test_119e_user",
+        password: "1PVh28hh4oVO4XPmrdoLcEWGBWc7TprI",
         ssl:
           process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
         max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
