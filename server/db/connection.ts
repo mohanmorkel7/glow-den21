@@ -20,7 +20,7 @@ const isConfigured = true;
 
 const dbConfig: DbConfigOptions = {
   connectionString:
-    "postgresql://postgres.fxymsjibaysyamevwzxp:Morkel%40%231677@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
+    "postgresql://postgres.fxymsjibaysyamevwzxp:Morkel%40%231677@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres",
   ssl: { rejectUnauthorized: false },
   max: 20,
   idleTimeoutMillis: 30000,
