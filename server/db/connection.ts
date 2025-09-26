@@ -16,37 +16,46 @@ type DbConfigOptions = {
   connectionTimeoutMillis?: number;
 };
 
-const isConfigured = true;
+const isConfigured = false;
 
-const dbConfig: DbConfigOptions = process.env.DATABASE_URL
-  ? {
-      connectionString: process.env.DATABASE_URL,
-      ssl:
-        process.env.DB_SSL === "true" || process.env.DATABASE_SSL === "true"
-          ? { rejectUnauthorized: false }
-          : false,
-      max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
-      idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
-      connectionTimeoutMillis: parseInt(
-        process.env.DB_CONNECTION_TIMEOUT || "2000",
-      ),
-    }
-  : isConfigured
-    ? {
-        host: "db.fxymsjibaysyamevwzxp.supabase.co",
-        port: parseInt("5432"),
-        database: "postgres",
-        user: "postgres",
-        password: "Morkel@#1677",
-        ssl:
-          process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
-        max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
-        idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
-        connectionTimeoutMillis: parseInt(
-          process.env.DB_CONNECTION_TIMEOUT || "2000",
-        ),
-      }
-    : {};
+const dbConfig: DbConfigOptions = {
+  connectionString:
+    "postgresql://postgres.fxymsjibaysyamevwzxp:Morkel%40%231677@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
+  ssl: { rejectUnauthorized: false },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+};
+
+// const dbConfig: DbConfigOptions = process.env.DATABASE_URL
+//   ? {
+//       connectionString: process.env.DATABASE_URL,
+//       ssl:
+//         process.env.DB_SSL === "true" || process.env.DATABASE_SSL === "true"
+//           ? { rejectUnauthorized: false }
+//           : false,
+//       max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
+//       idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
+//       connectionTimeoutMillis: parseInt(
+//         process.env.DB_CONNECTION_TIMEOUT || "2000",
+//       ),
+//     }
+//   : isConfigured
+//     ? {
+//         host: "db.fxymsjibaysyamevwzxp.supabase.co",
+//         port: parseInt("5432"),
+//         database: "postgres",
+//         user: "postgres",
+//         password: "Morkel@#1677",
+//         ssl:
+//           process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+//         max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
+//         idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || "30000"),
+//         connectionTimeoutMillis: parseInt(
+//           process.env.DB_CONNECTION_TIMEOUT || "2000",
+//         ),
+//       }
+//     : {};
 
 let pool: Pool | null = null;
 
