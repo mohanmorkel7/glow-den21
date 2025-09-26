@@ -16,7 +16,7 @@ type DbConfigOptions = {
   connectionTimeoutMillis?: number;
 };
 
-const isConfigured = false;
+const isConfigured = true;
 
 const dbConfig: DbConfigOptions = {
   connectionString:
