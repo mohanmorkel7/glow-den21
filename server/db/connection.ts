@@ -33,11 +33,11 @@ const dbConfig: DbConfigOptions = process.env.DATABASE_URL
     }
   : isConfigured
     ? {
-        host: "dpg-d3ajrqfdiees73dbe8cg-a",
+        host: "db.fxymsjibaysyamevwzxp.supabase.co",
         port: parseInt("5432"),
-        database: "dev_test_119e",
-        user: "dev_test_119e_user",
-        password: "1PVh28hh4oVO4XPmrdoLcEWGBWc7TprI",
+        database: "postgres",
+        user: "postgres",
+        password: "Morkel@#1677",
         ssl:
           process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
         max: parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
