@@ -20,7 +20,7 @@ const isConfigured = true;
 
 const dbConfig: DbConfigOptions = {
   connectionString:
-    "postgresql://postgres.fxymsjibaysyamevwzxp:Morkel%40%231677@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres",
+    "postgresql://neondb_owner:npg_DALqWTvp26eV@ep-floral-rice-adt3cvxt-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   ssl: { rejectUnauthorized: false },
   max: 20,
   idleTimeoutMillis: 30000,
