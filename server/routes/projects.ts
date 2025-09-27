@@ -24,7 +24,7 @@ export const listProjects: RequestHandler = async (req, res) => {
     } = queryParams;
 
     let whereConditions = [];
-    let queryValues = [];
+    let queryValues: any[] = [];
     let paramCount = 0;
 
     // Build WHERE conditions
@@ -65,18 +65,47 @@ export const listProjects: RequestHandler = async (req, res) => {
         : "";
 
     const baseQuery = `
-      SELECT p.*, 
-             u.name as created_by_name,
-             COUNT(DISTINCT up.user_id) as assigned_users_count,
-             CASE 
-               WHEN p.target_count > 0 THEN (p.current_count::FLOAT / p.target_count * 100)
-               ELSE 0 
-             END as progress_percentage
+      SELECT 
+        p.id,
+        p.name,
+        p.description,
+        p.status,
+        p.priority,
+        p.start_date,
+        p.end_date,
+        p.target_count,
+        p.current_count,
+        p.created_by_user_id,
+        p.created_at,
+        p.updated_at,
+        p.rate_per_file_usd,
+        p.project_code,
+        u.name AS created_by_name,
+        COUNT(DISTINCT up.user_id) AS assigned_users_count,
+        CASE 
+          WHEN p.target_count > 0 THEN (p.current_count::FLOAT / p.target_count * 100)
+          ELSE 0
+        END AS progress_percentage
       FROM projects p
       LEFT JOIN users u ON p.created_by_user_id = u.id
       LEFT JOIN user_projects up ON p.id = up.project_id
       ${whereClause}
-      GROUP BY p.id, u.name
+      GROUP BY 
+        p.id,
+        p.name,
+        p.description,
+        p.status,
+        p.priority,
+        p.start_date,
+        p.end_date,
+        p.target_count,
+        p.current_count,
+        p.created_by_user_id,
+        p.created_at,
+        p.updated_at,
+        p.rate_per_file_usd,
+        p.project_code,
+        u.name
       ORDER BY p.created_at DESC
     `;
 
@@ -91,8 +120,8 @@ export const listProjects: RequestHandler = async (req, res) => {
       baseQuery,
       countQuery,
       queryValues,
-      page,
-      limit,
+      Number(page),
+      Number(limit),
     );
 
     const projects = result.data.map((project) => ({
@@ -135,6 +164,7 @@ export const listProjects: RequestHandler = async (req, res) => {
     } as ApiResponse);
   }
 };
+
 
 export const getProject: RequestHandler = async (req, res) => {
   try {
